@@ -128,10 +128,13 @@ private struct DataSettingsView: View {
 // IPA Installer Sheet
 private struct IPAInstallerSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SettingsStore.self) private var settingsStore
+    @State private var installerService: IPAInstallerService?
     @State private var selectedIPAs: [URL] = []
     @State private var isProcessing = false
     @State private var statusMessage = ""
     @State private var progress: Double = 0
+    @State private var showResults = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -139,7 +142,7 @@ private struct IPAInstallerSheet: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            if selectedIPAs.isEmpty {
+            if selectedIPAs.isEmpty && !showResults {
                 VStack(spacing: 16) {
                     Image(systemName: "doc.badge.arrow.up")
                         .font(.system(size: 48))
@@ -155,6 +158,34 @@ private struct IPAInstallerSheet: View {
                     .keyboardShortcut(.defaultAction)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if showResults {
+                // Results view
+                VStack(alignment: .leading, spacing: 16) {
+                    if let service = installerService, !service.installedApps.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("✅ インストール成功: \(service.installedApps.count) 個")
+                                .font(.headline)
+                                .foregroundStyle(.green)
+                            ForEach(service.installedApps, id: \.self) { appName in
+                                Text("  • \(appName)")
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                    
+                    if let service = installerService, !service.failedApps.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("❌ インストール失敗: \(service.failedApps.count) 個")
+                                .font(.headline)
+                                .foregroundStyle(.red)
+                            ForEach(service.failedApps, id: \.self) { error in
+                                Text("  • \(error)")
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("選択された IPA ファイル:")
@@ -178,7 +209,7 @@ private struct IPAInstallerSheet: View {
                     
                     if isProcessing {
                         VStack(spacing: 8) {
-                            ProgressView(value: progress, total: Double(selectedIPAs.count))
+                            ProgressView(value: progress)
                             Text(statusMessage)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -190,14 +221,14 @@ private struct IPAInstallerSheet: View {
             Spacer()
             
             HStack {
-                Button("キャンセル") {
+                Button(showResults ? "閉じる" : "キャンセル") {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
                 
                 Spacer()
                 
-                if !selectedIPAs.isEmpty {
+                if !selectedIPAs.isEmpty && !showResults {
                     Button("別の IPA を追加") {
                         selectIPAFiles()
                     }
@@ -216,6 +247,10 @@ private struct IPAInstallerSheet: View {
         }
         .padding(24)
         .frame(width: 600, height: 500)
+        .onAppear {
+            let diskImageService = DiskImageService(processRunner: ProcessRunner(), settingsStore: settingsStore)
+            installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore)
+        }
     }
     
     private func selectIPAFiles() {
@@ -236,51 +271,37 @@ private struct IPAInstallerSheet: View {
     }
     
     private func startInstallation() async {
+        guard let service = installerService else { return }
+        
         isProcessing = true
         
-        for (index, ipaURL) in selectedIPAs.enumerated() {
-            progress = Double(index)
-            statusMessage = "\(ipaURL.lastPathComponent) をインストール中..."
-            
-            // TODO: Implement actual installation logic
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        do {
+            try await service.installIPAs(selectedIPAs)
+        } catch {
+            statusMessage = "エラー: \(error.localizedDescription)"
         }
         
-        progress = Double(selectedIPAs.count)
-        statusMessage = "すべてのインストールが完了しました"
-        isProcessing = false
+        // Update UI with service state
+        statusMessage = service.currentStatus
+        progress = service.currentProgress
         
-        // Auto-close after 2 seconds
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
-        dismiss()
+        isProcessing = false
+        showResults = true
     }
 }
 
 // App Uninstaller Sheet
 private struct AppUninstallerSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var apps: [UninstallableApp] = []
-    @State private var selectedApps: Set<UUID> = []
+    @Environment(SettingsStore.self) private var settingsStore
+    @State private var uninstallerService: AppUninstallerService?
+    @State private var apps: [AppUninstallerService.InstalledAppInfo] = []
+    @State private var selectedApps: Set<String> = []
     @State private var isLoading = true
-    @State private var totalSize: UInt64 = 0
-    
-    struct UninstallableApp: Identifiable, Hashable {
-        let id = UUID()
-        let bundleID: String
-        let name: String
-        let appSize: UInt64
-        let diskImageSize: UInt64
-        let appURL: URL
-        let diskImageURL: URL?
-        
-        func hash(into hasher: inout Hasher) {
-            hasher.combine(id)
-        }
-        
-        static func == (lhs: UninstallableApp, rhs: UninstallableApp) -> Bool {
-            lhs.id == rhs.id
-        }
-    }
+    @State private var isUninstalling = false
+    @State private var statusMessage = ""
+    @State private var showResults = false
+    @State private var totalSize: Int64 = 0
     
     var body: some View {
         VStack(spacing: 20) {
@@ -290,6 +311,34 @@ private struct AppUninstallerSheet: View {
             
             if isLoading {
                 ProgressView("アプリ一覧を読み込み中...")
+            } else if showResults {
+                // Results view
+                VStack(alignment: .leading, spacing: 16) {
+                    if let service = uninstallerService, !service.uninstalledApps.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("✅ アンインストール成功: \(service.uninstalledApps.count) 個")
+                                .font(.headline)
+                                .foregroundStyle(.green)
+                            ForEach(service.uninstalledApps, id: \.self) { appName in
+                                Text("  • \(appName)")
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                    
+                    if let service = uninstallerService, !service.failedApps.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("❌ アンインストール失敗: \(service.failedApps.count) 個")
+                                .font(.headline)
+                                .foregroundStyle(.red)
+                            ForEach(service.failedApps, id: \.self) { error in
+                                Text("  • \(error)")
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             } else if apps.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "tray")
@@ -305,22 +354,36 @@ private struct AppUninstallerSheet: View {
                         Text("インストール済みアプリ (\(apps.count) 個)")
                             .font(.headline)
                         Spacer()
-                        Text("合計: \(ByteCountFormatter.string(fromByteCount: Int64(totalSize), countStyle: .file))")
+                        Text("合計: \(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                     
-                    List(apps, selection: $selectedApps) { app in
+                    List(apps, id: \.bundleID, selection: $selectedApps) { app in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(app.name)
+                                Text(app.appName)
                                     .font(.body)
                                 Text(app.bundleID)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(ByteCountFormatter.string(fromByteCount: Int64(app.appSize + app.diskImageSize), countStyle: .file))
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(ByteCountFormatter.string(fromByteCount: app.appSize + app.diskImageSize, countStyle: .file))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text("App: \(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+                    }
+                    
+                    if isUninstalling {
+                        VStack(spacing: 8) {
+                            ProgressView()
+                            Text(statusMessage)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -331,19 +394,22 @@ private struct AppUninstallerSheet: View {
             Spacer()
             
             HStack {
-                Button("キャンセル") {
+                Button(showResults ? "閉じる" : "キャンセル") {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
                 
                 Spacer()
                 
-                if !apps.isEmpty && !selectedApps.isEmpty {
+                if !apps.isEmpty && !selectedApps.isEmpty && !showResults {
                     Button("削除 (\(selectedApps.count) 個)") {
-                        // TODO: Implement uninstall
+                        Task {
+                            await startUninstallation()
+                        }
                     }
                     .tint(.red)
                     .buttonStyle(.borderedProminent)
+                    .disabled(isUninstalling)
                 }
             }
         }
@@ -355,9 +421,43 @@ private struct AppUninstallerSheet: View {
     }
     
     private func loadApps() async {
-        // TODO: Load actual apps
-        try? await Task.sleep(nanoseconds: 500_000_000)
+        guard let service = uninstallerService else {
+            let diskImageService = DiskImageService(processRunner: ProcessRunner(), settingsStore: settingsStore)
+            let service = AppUninstallerService(diskImageService: diskImageService, settingsStore: settingsStore)
+            self.uninstallerService = service
+            await loadApps()
+            return
+        }
+        
+        do {
+            apps = try await service.getInstalledApps()
+            totalSize = apps.reduce(0) { $0 + $1.appSize + $1.diskImageSize }
+        } catch {
+            apps = []
+            totalSize = 0
+        }
+        
         isLoading = false
+    }
+    
+    private func startUninstallation() async {
+        guard let service = uninstallerService else { return }
+        
+        let appsToUninstall = apps.filter { selectedApps.contains($0.bundleID) }
+        guard !appsToUninstall.isEmpty else { return }
+        
+        isUninstalling = true
+        statusMessage = "アンインストール中..."
+        
+        do {
+            try await service.uninstallApps(appsToUninstall)
+        } catch {
+            statusMessage = "エラー: \(error.localizedDescription)"
+        }
+        
+        statusMessage = service.currentStatus
+        isUninstalling = false
+        showResults = true
     }
 }
 
