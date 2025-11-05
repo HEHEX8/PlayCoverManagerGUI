@@ -7,6 +7,7 @@ struct QuickLauncherView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @State private var selectedAppForDetail: PlayCoverApp?
     @State private var hasPerformedInitialAnimation = false
+    @State private var showingSettings = false
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -32,6 +33,14 @@ struct QuickLauncherView: View {
                 .keyboardShortcut("r", modifiers: [.command])
                 
                 Button {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
+                } label: {
+                    Image(systemName: "app.badge.checkmark")
+                }
+                .help("PlayCover を開く")
+                .keyboardShortcut("p", modifiers: [.command, .shift])
+                
+                Button {
                     viewModel.unmountAll(applyToPlayCoverContainer: true)
                 } label: {
                     Image(systemName: "eject")
@@ -40,7 +49,7 @@ struct QuickLauncherView: View {
                 .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
                 
                 Button {
-                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    showingSettings = true
                 } label: {
                     Image(systemName: "gear")
                 }
@@ -91,6 +100,9 @@ struct QuickLauncherView: View {
         }
         .sheet(item: $selectedAppForDetail) { app in
             AppDetailSheet(app: app, viewModel: viewModel)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsRootView()
         }
         .frame(minWidth: 960, minHeight: 640)
         .overlay(alignment: .center) {
