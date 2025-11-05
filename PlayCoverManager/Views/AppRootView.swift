@@ -26,6 +26,7 @@ struct AppRootView: View {
             case .launcher:
                 if let launcherVM = appViewModel.launcherViewModel {
                     QuickLauncherView(viewModel: launcherVM)
+                        .environment(launcherVM)
                 } else {
                     CheckingView(status: "アプリ情報を取得しています…") {
                         appViewModel.retry()

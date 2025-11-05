@@ -1,0 +1,33 @@
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# PlayCover Manager runtime files
+.playcover-volume-mapping.tsv
+playcover-log.txt
+
+# Development files
+debug/
+archive/
+*.bak
+*.backup
+*.old
+
+# Build artifacts
+build/
+build-standalone/
+build-platypus/
+*.zip
+*.dmg

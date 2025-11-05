@@ -129,6 +129,7 @@ private struct DataSettingsView: View {
 private struct IPAInstallerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settingsStore
+    @Environment(LauncherViewModel.self) private var launcherViewModel
     @State private var installerService: IPAInstallerService?
     @State private var selectedIPAs: [URL] = []
     @State private var analyzedIPAs: [IPAInstallerService.IPAInfo] = []
@@ -395,6 +396,9 @@ private struct IPAInstallerSheet: View {
                 statusMessage = "エラー: \(error.localizedDescription)"
             }
         }
+        
+        // Refresh launcher to show newly installed apps
+        await launcherViewModel.refresh()
         
         // Update UI with service state on main thread
         await MainActor.run {

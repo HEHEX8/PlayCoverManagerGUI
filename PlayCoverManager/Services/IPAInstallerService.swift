@@ -176,7 +176,7 @@ class IPAInstallerService {
     
     nonisolated func createAppDiskImage(info: IPAInfo) async throws -> URL {
         await MainActor.run {
-            currentStatus = "💾 ディスクイメージを作成中: \(info.volumeName)"
+            currentStatus = "ディスクイメージ作成中"
         }
         
         guard let diskImageDir = await settingsStore.diskImageDirectory else {
@@ -189,7 +189,7 @@ class IPAInstallerService {
         // Check if image already exists
         if FileManager.default.fileExists(atPath: imageURL.path) {
             await MainActor.run {
-                currentStatus = "✅ ディスクイメージは既に存在します"
+                currentStatus = "既存のディスクイメージを使用"
             }
             return imageURL
         }
@@ -202,14 +202,14 @@ class IPAInstallerService {
         )
         
         await MainActor.run {
-            currentStatus = "✅ ディスクイメージを作成しました"
+            currentStatus = "作成完了"
         }
         return imageURL
     }
     
     nonisolated func mountAppDiskImage(imageURL: URL, bundleID: String) async throws -> URL {
         await MainActor.run {
-            currentStatus = "📌 ディスクイメージをマウント中..."
+            currentStatus = "マウント中"
         }
         
         let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
@@ -224,7 +224,7 @@ class IPAInstallerService {
             let mountOutput = try await processRunner.run("/sbin/mount", [])
             if mountOutput.contains(mountPoint.path) {
                 await MainActor.run {
-                    currentStatus = "✅ 既に正しい場所にマウントされています"
+                    currentStatus = "既にマウント済み"
                 }
                 return mountPoint
             }
@@ -234,7 +234,7 @@ class IPAInstallerService {
         try await diskImageService.mountDiskImage(imageURL, at: mountPoint, nobrowse: true)
         
         await MainActor.run {
-            currentStatus = "✅ マウント完了: \(mountPoint.path)"
+            currentStatus = "マウント完了"
         }
         return mountPoint
     }
@@ -243,7 +243,7 @@ class IPAInstallerService {
     
     nonisolated func installIPAToPlayCover(_ ipaURL: URL, info: IPAInfo) async throws {
         await MainActor.run {
-            currentStatus = "PlayCover でインストール中（完了まで待機）..."
+            currentStatus = "PlayCover でインストール中"
         }
         
         // Open IPA with PlayCover
@@ -265,133 +265,42 @@ class IPAInstallerService {
     // MARK: - Installation Progress Monitoring
     
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        let maxWait: TimeInterval = 300 // 5 minutes
-        let checkInterval: TimeInterval = 2
-        let stabilityThreshold: TimeInterval = 4
+        let maxWait: TimeInterval = 180 // 3 minutes
+        let checkInterval: TimeInterval = 3
         
         let playCoverBundleID = "io.playcover.PlayCover"
-        let appSettingsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings", isDirectory: true)
-        let settingsFile = appSettingsDir.appendingPathComponent("\(bundleID).plist")
+        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
         
         var elapsed: TimeInterval = 0
-        var settingsUpdateCount = 0
-        var lastSettingsMTime: TimeInterval = 0
-        var lastStableMTime: TimeInterval = 0
-        var stableDuration: TimeInterval = 0
-        var firstUpdateTime: TimeInterval = 0
-        
-        // Initial settings file check
-        if FileManager.default.fileExists(atPath: settingsFile.path) {
-            if let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
-               let modDate = attributes[.modificationDate] as? Date {
-                lastSettingsMTime = modDate.timeIntervalSince1970
-            }
-        }
         
         while elapsed < maxWait {
-            // Check if PlayCover is still running
-            let psOutput = try await processRunner.run("/bin/ps", ["-ax"])
-            let isPlayCoverRunning = psOutput.contains("PlayCover.app")
-            
-            if !isPlayCoverRunning {
-                // PlayCover crashed or closed - verify installation
-                if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run {
-                        currentStatus = "✅ インストールが完了しました（PlayCover終了後に検知）"
-                    }
-                    return
-                } else {
-                    throw AppError.installation("PlayCover が終了しました", message: "インストール中にクラッシュした可能性があります")
-                }
-            }
-            
-            // Check settings file updates
-            if FileManager.default.fileExists(atPath: settingsFile.path) {
-                if let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
-                   let modDate = attributes[.modificationDate] as? Date {
-                    let currentMTime = modDate.timeIntervalSince1970
-                    
-                    // Detect settings file update
-                    if currentMTime != lastSettingsMTime && lastSettingsMTime > 0 {
-                        settingsUpdateCount += 1
-                        lastSettingsMTime = currentMTime
-                        
-                        if settingsUpdateCount == 1 {
-                            firstUpdateTime = elapsed
-                            await MainActor.run {
-                                currentStatus = "◆ 1回目の更新検知（2回目待ち）..."
-                            }
-                        } else if settingsUpdateCount >= 2 {
-                            await MainActor.run {
-                                currentStatus = "◇ 2回目の更新検知（安定性チェック開始）..."
-                            }
-                        }
-                    }
-                    
-                    // Two-phase detection: 2nd update + stability check
-                    if settingsUpdateCount >= 2 {
-                        // Phase 2: Verify file stability
-                        if currentMTime == lastStableMTime {
-                            stableDuration += checkInterval
-                            
-                            if stableDuration >= stabilityThreshold {
-                                // Check if PlayCover is still writing
-                                let lsofOutput = try? await processRunner.run("/usr/sbin/lsof", [settingsFile.path])
-                                let isPlayCoverWriting = lsofOutput?.contains("PlayCover") ?? false
-                                
-                                if !isPlayCoverWriting {
-                                    await MainActor.run {
-                                        currentStatus = "✅ インストールが完了しました"
-                                    }
-                                    return
-                                } else {
-                                    // Reset stability counter
-                                    stableDuration = 0
-                                }
-                            } else {
-                                await MainActor.run {
-                                    currentStatus = "⏳ 安定性検証中... (\(Int(stableDuration))s/\(Int(stabilityThreshold))s)"
-                                }
-                            }
-                        } else {
-                            // mtime changed - reset stability
-                            lastStableMTime = currentMTime
-                            stableDuration = 0
-                        }
-                    }
-                    // Fallback: Single-update pattern (for very small apps)
-                    else if settingsUpdateCount == 1 && firstUpdateTime > 0 {
-                        let timeSinceFirstUpdate = elapsed - firstUpdateTime
-                        if timeSinceFirstUpdate >= 8 {
-                            // Check stability for single-update pattern
-                            if currentMTime == lastStableMTime {
-                                stableDuration += checkInterval
-                                
-                                if stableDuration >= stabilityThreshold {
-                                    await MainActor.run {
-                                        currentStatus = "✅ インストールが完了しました（極小アプリ）"
-                                    }
-                                    return
-                                }
-                            } else {
-                                lastStableMTime = currentMTime
-                                stableDuration = 0
-                            }
-                        }
-                    }
-                    
-                    lastSettingsMTime = currentMTime
-                } else {
-                    lastSettingsMTime = 0
-                }
-            }
-            
             try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
             elapsed += checkInterval
+            
+            // Check if app has been installed
+            if try await verifyInstallationComplete(bundleID: bundleID) {
+                await MainActor.run {
+                    currentStatus = "完了"
+                }
+                return
+            }
+            
+            // Update status
+            await MainActor.run {
+                currentStatus = "インストール中... (\(Int(elapsed))s)"
+            }
         }
         
-        throw AppError.installation("インストール完了の自動検知がタイムアウトしました", message: "手動で確認してください")
+        // Timeout - check one more time
+        if try await verifyInstallationComplete(bundleID: bundleID) {
+            await MainActor.run {
+                currentStatus = "完了"
+            }
+            return
+        }
+        
+        throw AppError.installation("タイムアウト", message: "インストールに時間がかかりすぎています")
     }
     
     private func verifyInstallationComplete(bundleID: String) async throws -> Bool {
@@ -470,12 +379,12 @@ class IPAInstallerService {
     
     nonisolated func installSingleIPA(_ info: IPAInfo) async throws {
         await MainActor.run {
-            currentStatus = "インストール中: \(info.appName)"
+            currentStatus = "\(info.appName) をインストール中"
         }
         
         // Step 1: Create disk image
         await MainActor.run {
-            currentStatus = "💾 ディスクイメージ作成中..."
+            currentStatus = "ディスクイメージ作成中"
         }
         do {
             _ = try await createAppDiskImage(info: info)
@@ -485,7 +394,7 @@ class IPAInstallerService {
         
         // Step 2: Mount disk image
         await MainActor.run {
-            currentStatus = "📌 マウント中..."
+            currentStatus = "マウント中"
         }
         guard let diskImageDir = await settingsStore.diskImageDirectory else {
             throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "")
@@ -500,7 +409,7 @@ class IPAInstallerService {
         
         // Step 3: Install via PlayCover
         await MainActor.run {
-            currentStatus = "📦 PlayCover でインストール中..."
+            currentStatus = "インストール中"
         }
         do {
             try await installIPAToPlayCover(info.ipaURL, info: info)
@@ -509,7 +418,7 @@ class IPAInstallerService {
         }
         
         await MainActor.run {
-            currentStatus = "✅ 完了: \(info.appName)"
+            currentStatus = "完了"
         }
     }
     
