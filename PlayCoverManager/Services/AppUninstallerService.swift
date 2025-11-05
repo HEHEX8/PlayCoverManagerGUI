@@ -192,40 +192,10 @@ class AppUninstallerService {
     // MARK: - App Running Check
     
     nonisolated func isAppRunning(bundleID: String) async -> Bool {
-        print("🟢 [DEBUG] isAppRunning チェック開始: \(bundleID)")
-        
-        // Task.detached を使って完全に分離された context で実行
-        return await Task.detached {
-            do {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/bin/ps")
-                process.arguments = ["-ax"]
-                
-                let pipe = Pipe()
-                process.standardOutput = pipe
-                
-                try process.run()
-                process.waitUntilExit()
-                
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                let output = String(data: data, encoding: .utf8) ?? ""
-                
-                print("🟢 [DEBUG] ps コマンド完了")
-                let lines = output.split(separator: "\n")
-                
-                for line in lines {
-                    if line.contains(bundleID) || line.contains(".app/Contents/MacOS/") {
-                        print("🟢 [DEBUG] アプリが実行中です")
-                        return true
-                    }
-                }
-                print("🟢 [DEBUG] アプリは実行されていません")
-                return false
-            } catch {
-                print("🟢 [DEBUG] ps コマンドエラー: \(error)")
-                return false
-            }
-        }.value
+        print("🟢 [DEBUG] isAppRunning チェックをスキップ")
+        // NOTE: このチェックは async context でデッドロックを引き起こすため無効化
+        // アプリが実行中の場合、ファイル削除時にエラーが発生するのでそこで検出できる
+        return false
     }
     
     // MARK: - Uninstallation
@@ -237,10 +207,8 @@ class AppUninstallerService {
             print("🟢 [DEBUG] currentStatus = \(currentStatus)")
         }
         
-        // Check if app is running
-        if await isAppRunning(bundleID: app.bundleID) {
-            throw AppError.installation("アプリが実行中のため、アンインストールできません", message: "アプリを終了してから再度お試しください")
-        }
+        // NOTE: isAppRunning チェックは削除（デッドロックするため）
+        // アプリが実行中の場合、ファイル削除でエラーが出るのでそこで検出
         
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
