@@ -25,10 +25,10 @@ class IPAInstallerService {
     var installedApps: [String] = []
     var failedApps: [String] = []
     
-    nonisolated init(processRunner: ProcessRunner = ProcessRunner(),
+    init(processRunner: ProcessRunner? = nil,
          diskImageService: DiskImageService,
          settingsStore: SettingsStore) {
-        self.processRunner = processRunner
+        self.processRunner = processRunner ?? ProcessRunner()
         self.diskImageService = diskImageService
         self.settingsStore = settingsStore
     }
