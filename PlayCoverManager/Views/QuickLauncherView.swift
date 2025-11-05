@@ -62,40 +62,122 @@ struct QuickLauncherView: View {
             
             Divider()
             
-            // iOS-style App Grid
-            if viewModel.filteredApps.isEmpty {
-                EmptyAppListView {
-                    Task { await viewModel.refresh() }
+            // Recently launched app button (fixed at bottom)
+            if let recentApp = viewModel.filteredApps.first(where: { $0.lastLaunchedFlag }) {
+                VStack(spacing: 0) {
+                    // Main app grid
+                    if viewModel.filteredApps.isEmpty {
+                        EmptyAppListView {
+                            Task { await viewModel.refresh() }
+                        }
+                    } else {
+                        ScrollView {
+                            LazyVGrid(columns: gridColumns, spacing: 32) {
+                                ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
+                                    iOSAppIconView(
+                                        app: app, 
+                                        index: index,
+                                        shouldAnimate: !hasPerformedInitialAnimation
+                                    ) {
+                                        // Single tap - launch
+                                        viewModel.launch(app: app)
+                                    } rightClickAction: {
+                                        // Right click - show detail/settings
+                                        selectedAppForDetail = app
+                                    }
+                                }
+                            }
+                            .padding(32)
+                            .onAppear {
+                                // Mark as performed after grid appears
+                                // Use delay to ensure animation starts before flag is set
+                                if !hasPerformedInitialAnimation {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                        hasPerformedInitialAnimation = true
+                                    }
+                                }
+                            }
+                        }
+                        .background(Color(nsColor: .windowBackgroundColor))
+                    }
+                    
+                    // Recently launched app quick launch button
+                    Divider()
+                    
+                    Button {
+                        viewModel.launch(app: recentApp)
+                    } label: {
+                        HStack(spacing: 12) {
+                            if let icon = recentApp.icon {
+                                Image(nsImage: icon)
+                                    .resizable()
+                                    .frame(width: 32, height: 32)
+                                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                            } else {
+                                Image(systemName: "app.fill")
+                                    .resizable()
+                                    .frame(width: 32, height: 32)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Text("\(recentApp.displayName) を起動")
+                                .font(.body)
+                            
+                            Spacer()
+                            
+                            Text("Enter")
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color(nsColor: .controlBackgroundColor))
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .background(Color(nsColor: .controlBackgroundColor))
+                    .keyboardShortcut(.defaultAction)
                 }
             } else {
-                ScrollView {
-                    LazyVGrid(columns: gridColumns, spacing: 32) {
-                        ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                            iOSAppIconView(
-                                app: app, 
-                                index: index,
-                                shouldAnimate: !hasPerformedInitialAnimation
-                            ) {
-                                // Single tap - launch
-                                viewModel.launch(app: app)
-                            } rightClickAction: {
-                                // Right click - show detail/settings
-                                selectedAppForDetail = app
+                // No recent app - show regular grid
+                if viewModel.filteredApps.isEmpty {
+                    EmptyAppListView {
+                        Task { await viewModel.refresh() }
+                    }
+                } else {
+                    ScrollView {
+                        LazyVGrid(columns: gridColumns, spacing: 32) {
+                            ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
+                                iOSAppIconView(
+                                    app: app, 
+                                    index: index,
+                                    shouldAnimate: !hasPerformedInitialAnimation
+                                ) {
+                                    // Single tap - launch
+                                    viewModel.launch(app: app)
+                                } rightClickAction: {
+                                    // Right click - show detail/settings
+                                    selectedAppForDetail = app
+                                }
+                            }
+                        }
+                        .padding(32)
+                        .onAppear {
+                            // Mark as performed after grid appears
+                            // Use delay to ensure animation starts before flag is set
+                            if !hasPerformedInitialAnimation {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    hasPerformedInitialAnimation = true
+                                }
                             }
                         }
                     }
-                    .padding(32)
-                    .onAppear {
-                        // Mark as performed after grid appears
-                        // Use delay to ensure animation starts before flag is set
-                        if !hasPerformedInitialAnimation {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                hasPerformedInitialAnimation = true
-                            }
-                        }
-                    }
+                    .background(Color(nsColor: .windowBackgroundColor))
                 }
-                .background(Color(nsColor: .windowBackgroundColor))
             }
         }
         .sheet(item: $selectedAppForDetail) { app in

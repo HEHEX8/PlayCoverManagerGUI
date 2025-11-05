@@ -33,13 +33,22 @@ class AppUninstallerService {
     
     // MARK: - Installed App Detection
     
-    struct InstalledAppInfo {
+    struct InstalledAppInfo: Sendable {
         let appName: String
         let bundleID: String
         let version: String
         let diskImageURL: URL
         let appSize: Int64
         let diskImageSize: Int64
+        
+        nonisolated init(appName: String, bundleID: String, version: String, diskImageURL: URL, appSize: Int64, diskImageSize: Int64) {
+            self.appName = appName
+            self.bundleID = bundleID
+            self.version = version
+            self.diskImageURL = diskImageURL
+            self.appSize = appSize
+            self.diskImageSize = diskImageSize
+        }
     }
     
     func getInstalledApps() async throws -> [InstalledAppInfo] {

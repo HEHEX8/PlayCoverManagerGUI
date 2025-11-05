@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import AppKit
 import Observation
 
 @MainActor
@@ -33,7 +34,7 @@ class IPAInstallerService {
     
     // MARK: - IPA Information Extraction
     
-    struct IPAInfo: Identifiable {
+    struct IPAInfo: Identifiable, Sendable {
         let id = UUID()
         let ipaURL: URL
         let bundleID: String
@@ -45,6 +46,17 @@ class IPAInstallerService {
         
         // Volume name is always Bundle ID
         var volumeName: String { bundleID }
+        
+        nonisolated init(id: UUID = UUID(), ipaURL: URL, bundleID: String, appName: String, appNameEnglish: String, version: String, icon: NSImage?, fileSize: Int64) {
+            self.id = id
+            self.ipaURL = ipaURL
+            self.bundleID = bundleID
+            self.appName = appName
+            self.appNameEnglish = appNameEnglish
+            self.version = version
+            self.icon = icon
+            self.fileSize = fileSize
+        }
     }
     
     func extractIPAInfo(from ipaURL: URL) async throws -> IPAInfo {
