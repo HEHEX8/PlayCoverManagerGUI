@@ -61,11 +61,55 @@ final class LauncherService {
     }
 
     func openApp(_ app: PlayCoverApp) async throws {
+        // PlayCover-wrapped apps need special handling
+        // Option 1: Use 'open' command (same as Finder double-click)
+        // Option 2: Launch via PlayCover.app itself
+        // We try both approaches for maximum compatibility
+        
+        // Try using open command first (matches Finder behavior)
+        let openResult = await tryOpenWithCommand(app: app)
+        if openResult {
+            writeLastLaunchFlag(for: app.bundleIdentifier)
+            return
+        }
+        
+        // Fallback to NSWorkspace with modified configuration
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        configuration.promptsUserIfNeeded = true
-        try await NSWorkspace.shared.openApplication(at: app.appURL, configuration: configuration)
-        writeLastLaunchFlag(for: app.bundleIdentifier)
+        configuration.promptsUserIfNeeded = false  // Don't prompt, just launch
+        configuration.createsNewApplicationInstance = false
+        
+        // Disable argument validation that might cause issues with PlayCover apps
+        if #available(macOS 10.15, *) {
+            configuration.requiresUniversalLinks = false
+        }
+        
+        do {
+            try await NSWorkspace.shared.openApplication(at: app.appURL, configuration: configuration)
+            writeLastLaunchFlag(for: app.bundleIdentifier)
+        } catch {
+            // If both methods fail, provide helpful error
+            throw NSError(domain: "LauncherService", code: -1, 
+                         userInfo: [NSLocalizedDescriptionKey: "アプリの起動に失敗しました。Finder から直接起動してみてください。\n\nパス: \(app.appURL.path)\n\nエラー: \(error.localizedDescription)"])
+        }
+    }
+    
+    private func tryOpenWithCommand(app: PlayCoverApp) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+                process.arguments = [app.appURL.path]
+                
+                do {
+                    try process.run()
+                    process.waitUntilExit()
+                    continuation.resume(returning: process.terminationStatus == 0)
+                } catch {
+                    continuation.resume(returning: false)
+                }
+            }
+        }
     }
 
     private func mapDataURL() -> URL {
