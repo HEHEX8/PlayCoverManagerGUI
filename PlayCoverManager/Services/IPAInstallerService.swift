@@ -137,8 +137,12 @@ class IPAInstallerService {
     func createAppDiskImage(info: IPAInfo) async throws -> URL {
         currentStatus = "💾 ディスクイメージを作成中: \(info.volumeName)"
         
+        guard let diskImageDir = settingsStore.diskImageDirectory else {
+            throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "設定画面から保存先を指定してください。")
+        }
+        
         let imageName = "\(info.volumeName).asif"
-        let imageURL = settingsStore.diskImageStoragePath.appendingPathComponent(imageName)
+        let imageURL = diskImageDir.appendingPathComponent(imageName)
         
         // Check if image already exists
         if FileManager.default.fileExists(atPath: imageURL.path) {
@@ -384,7 +388,7 @@ class IPAInstallerService {
                 let imageURL = try await createAppDiskImage(info: info)
                 
                 // Step 3: Mount disk image
-                let mountPoint = try await mountAppDiskImage(imageURL: imageURL, bundleID: info.bundleID)
+                _ = try await mountAppDiskImage(imageURL: imageURL, bundleID: info.bundleID)
                 
                 // Step 4: Install to PlayCover
                 try await installIPAToPlayCover(ipaURL, info: info)
