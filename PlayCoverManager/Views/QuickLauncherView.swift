@@ -123,16 +123,18 @@ struct QuickLauncherView: View {
                     RecentAppLaunchButton(
                         app: recentApp,
                         onLaunch: {
-                            // Trigger animation on the grid icon
-                            if let index = viewModel.filteredApps.firstIndex(where: { $0.bundleIdentifier == recentApp.bundleIdentifier }) {
-                                // Find and animate the icon in the grid
+                            // Launch app first
+                            viewModel.launch(app: recentApp)
+                            
+                            // Trigger animation on the grid icon after a brief delay
+                            // to ensure the observer is set up
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                                 NotificationCenter.default.post(
                                     name: NSNotification.Name("TriggerAppIconAnimation"),
                                     object: nil,
                                     userInfo: ["bundleID": recentApp.bundleIdentifier]
                                 )
                             }
-                            viewModel.launch(app: recentApp)
                         }
                     )
                 }
@@ -244,25 +246,6 @@ private struct iOSAppIconView: View {
     @State private var isAnimating = false
     @State private var hasAppeared = false
     
-    private func setupAnimationObserver() {
-        NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("TriggerAppIconAnimation"),
-            object: nil,
-            queue: .main
-        ) { notification in
-            if let bundleID = notification.userInfo?["bundleID"] as? String,
-               bundleID == app.bundleIdentifier {
-                // Delay animation slightly to sync with button animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isAnimating = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                        isAnimating = false
-                    }
-                }
-            }
-        }
-    }
-    
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
@@ -331,8 +314,19 @@ private struct iOSAppIconView: View {
                 // No animation - just show immediately
                 hasAppeared = true
             }
-            // Setup observer for remote animation trigger
-            setupAnimationObserver()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerAppIconAnimation"))) { notification in
+            // Trigger animation when receiving notification for this app
+            if let bundleID = notification.userInfo?["bundleID"] as? String,
+               bundleID == app.bundleIdentifier {
+                // Delay animation slightly to sync with button animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isAnimating = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                        isAnimating = false
+                    }
+                }
+            }
         }
         .onTapGesture {
             // Mac-style bounce animation on launch
