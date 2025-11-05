@@ -265,42 +265,109 @@ class IPAInstallerService {
     // MARK: - Installation Progress Monitoring
     
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        let maxWait: TimeInterval = 180 // 3 minutes
-        let checkInterval: TimeInterval = 3
+        let maxWait: TimeInterval = 300 // 5 minutes
+        let checkInterval: TimeInterval = 2
+        let stabilityThreshold: TimeInterval = 4
         
         let playCoverBundleID = "io.playcover.PlayCover"
-        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        let appSettingsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings", isDirectory: true)
+        let settingsFile = appSettingsDir.appendingPathComponent("\(bundleID).plist")
         
         var elapsed: TimeInterval = 0
+        var settingsUpdateCount = 0
+        var lastSettingsMTime: TimeInterval = 0
+        var lastStableMTime: TimeInterval = 0
+        var stableDuration: TimeInterval = 0
+        var firstUpdateTime: TimeInterval = 0
+        
+        // Initial settings file check
+        if FileManager.default.fileExists(atPath: settingsFile.path),
+           let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
+           let modDate = attributes[.modificationDate] as? Date {
+            lastSettingsMTime = modDate.timeIntervalSince1970
+        }
         
         while elapsed < maxWait {
+            // Check if PlayCover is still running
+            let psOutput = try await processRunner.run("/bin/ps", ["-ax"])
+            let isPlayCoverRunning = psOutput.contains("PlayCover.app")
+            
+            if !isPlayCoverRunning {
+                // PlayCover crashed or closed - verify installation
+                if try await verifyInstallationComplete(bundleID: bundleID) {
+                    await MainActor.run { currentStatus = "完了" }
+                    return
+                } else {
+                    throw AppError.installation("PlayCover が終了しました", message: "")
+                }
+            }
+            
+            // Check settings file updates
+            if FileManager.default.fileExists(atPath: settingsFile.path),
+               let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
+               let modDate = attributes[.modificationDate] as? Date {
+                let currentMTime = modDate.timeIntervalSince1970
+                
+                // Detect settings file update
+                if currentMTime != lastSettingsMTime && lastSettingsMTime > 0 {
+                    settingsUpdateCount += 1
+                    lastSettingsMTime = currentMTime
+                    
+                    if settingsUpdateCount == 1 {
+                        firstUpdateTime = elapsed
+                    }
+                }
+                
+                // Two-phase detection: 2nd update + stability check
+                if settingsUpdateCount >= 2 {
+                    // Verify file stability
+                    if currentMTime == lastStableMTime {
+                        stableDuration += checkInterval
+                        
+                        if stableDuration >= stabilityThreshold {
+                            // Check if PlayCover is still writing
+                            let lsofOutput = try? await processRunner.run("/usr/sbin/lsof", [settingsFile.path])
+                            let isPlayCoverWriting = lsofOutput?.contains("PlayCover") ?? false
+                            
+                            if !isPlayCoverWriting {
+                                await MainActor.run { currentStatus = "完了" }
+                                return
+                            } else {
+                                stableDuration = 0
+                            }
+                        }
+                    } else {
+                        lastStableMTime = currentMTime
+                        stableDuration = 0
+                    }
+                }
+                // Fallback: Single-update pattern (for very small apps)
+                else if settingsUpdateCount == 1 && firstUpdateTime > 0 {
+                    let timeSinceFirstUpdate = elapsed - firstUpdateTime
+                    if timeSinceFirstUpdate >= 8 {
+                        if currentMTime == lastStableMTime {
+                            stableDuration += checkInterval
+                            
+                            if stableDuration >= stabilityThreshold {
+                                await MainActor.run { currentStatus = "完了" }
+                                return
+                            }
+                        } else {
+                            lastStableMTime = currentMTime
+                            stableDuration = 0
+                        }
+                    }
+                }
+                
+                lastSettingsMTime = currentMTime
+            }
+            
             try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
             elapsed += checkInterval
-            
-            // Check if app has been installed
-            if try await verifyInstallationComplete(bundleID: bundleID) {
-                await MainActor.run {
-                    currentStatus = "完了"
-                }
-                return
-            }
-            
-            // Update status
-            await MainActor.run {
-                currentStatus = "インストール中... (\(Int(elapsed))s)"
-            }
         }
         
-        // Timeout - check one more time
-        if try await verifyInstallationComplete(bundleID: bundleID) {
-            await MainActor.run {
-                currentStatus = "完了"
-            }
-            return
-        }
-        
-        throw AppError.installation("タイムアウト", message: "インストールに時間がかかりすぎています")
+        throw AppError.installation("タイムアウト", message: "")
     }
     
     private func verifyInstallationComplete(bundleID: String) async throws -> Bool {
