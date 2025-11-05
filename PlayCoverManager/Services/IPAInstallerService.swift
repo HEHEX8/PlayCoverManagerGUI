@@ -9,7 +9,7 @@
 import Foundation
 import AppKit
 import Observation
-import UserNotifications
+import CoreServices
 
 @MainActor
 @Observable
@@ -320,68 +320,118 @@ class IPAInstallerService {
     
     // MARK: - Installation Progress Monitoring
     
-    // Monitor installation completion by watching for PlayCover's notification
+    // Monitor installation completion by watching Applications directory
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        await MainActor.run { currentStatus = "通知監視を開始..." }
+        await MainActor.run { currentStatus = "インストール監視開始..." }
         
-        // Create a notification observer for PlayCover's completion notification
-        let notificationReceived = await waitForPlayCoverNotification()
+        let playCoverBundleID = "io.playcover.PlayCover"
+        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
         
-        if notificationReceived {
-            await MainActor.run { currentStatus = "通知受信 - 検証中..." }
+        // Record initial app count and app modification times
+        let initialAppURLs = getAppURLs(in: applicationsDir)
+        let initialAppMTimes = getAppModificationTimes(initialAppURLs)
+        
+        await MainActor.run { currentStatus = "アプリディレクトリ監視中..." }
+        
+        let maxWait = 300 // 5 minutes
+        let checkInterval: TimeInterval = 1.0
+        
+        for i in 0..<maxWait {
+            // Check if PlayCover is still running
+            let pgrepOutput = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
+            let isPlayCoverRunning = pgrepOutput != nil && !pgrepOutput!.isEmpty
             
-            // Verify installation actually succeeded
-            try await Task.sleep(nanoseconds: 2_000_000_000)
-            if try await verifyInstallationComplete(bundleID: bundleID) {
-                await MainActor.run { currentStatus = "完了" }
+            if !isPlayCoverRunning {
+                // PlayCover crashed or closed - verify installation
+                await MainActor.run { currentStatus = "PlayCover終了検知 - 検証中..." }
+                try await Task.sleep(nanoseconds: 1_000_000_000)
                 
-                // Quit PlayCover after successful installation
-                await quitPlayCover()
-                return
-            } else {
-                throw AppError.installation("通知を受信しましたが検証に失敗", message: "")
+                if try await verifyInstallationComplete(bundleID: bundleID) {
+                    await MainActor.run { currentStatus = "完了（PlayCover終了後）" }
+                    return
+                } else {
+                    throw AppError.installation("PlayCover が終了しました", message: "インストールが完了していません")
+                }
             }
-        }
-        
-        throw AppError.installation("タイムアウト", message: "通知を受信できませんでした")
-    }
-    
-    // Wait for PlayCover's "App installed!" notification
-    private nonisolated func waitForPlayCoverNotification() async -> Bool {
-        await MainActor.run { currentStatus = "PlayCoverの通知を待機中..." }
-        
-        return await withCheckedContinuation { continuation in
-            var observer: NSObjectProtocol?
-            var timeoutTask: Task<Void, Never>?
             
-            // Observe delivered notifications
-            observer = DistributedNotificationCenter.default().addObserver(
-                forName: NSNotification.Name("com.apple.UserNotificationCenter.delivered"),
-                object: nil,
-                queue: .main
-            ) { notification in
-                Task {
-                    await MainActor.run {
-                        self.currentStatus = "通知受信！"
+            // Check for new or modified apps
+            let currentAppURLs = getAppURLs(in: applicationsDir)
+            let currentAppMTimes = getAppModificationTimes(currentAppURLs)
+            
+            // Look for our specific app by bundle ID
+            for appURL in currentAppURLs {
+                let infoPlist = appURL.appendingPathComponent("Info.plist")
+                guard FileManager.default.fileExists(atPath: infoPlist.path),
+                      let plistData = try? Data(contentsOf: infoPlist),
+                      let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                      let installedBundleID = plist["CFBundleIdentifier"] as? String else {
+                    continue
+                }
+                
+                if installedBundleID == bundleID {
+                    let currentMTime = currentAppMTimes[appURL.path] ?? 0
+                    let initialMTime = initialAppMTimes[appURL.path] ?? 0
+                    
+                    // App was created or updated
+                    if currentMTime > initialMTime {
+                        // Verify _CodeSignature exists (installation complete)
+                        let codeSignatureDir = appURL.appendingPathComponent("_CodeSignature")
+                        if FileManager.default.fileExists(atPath: codeSignatureDir.path) {
+                            await MainActor.run { currentStatus = "完了検知 - 最終確認中..." }
+                            
+                            // Wait for stability
+                            try await Task.sleep(nanoseconds: 2_000_000_000)
+                            
+                            // Re-verify
+                            if try await verifyInstallationComplete(bundleID: bundleID) {
+                                await MainActor.run { currentStatus = "完了" }
+                                
+                                // Quit PlayCover after successful installation
+                                await quitPlayCover()
+                                return
+                            }
+                        }
                     }
                 }
-                
-                if let observer = observer {
-                    DistributedNotificationCenter.default().removeObserver(observer)
-                }
-                timeoutTask?.cancel()
-                continuation.resume(returning: true)
             }
             
-            // Timeout after 5 minutes
-            timeoutTask = Task {
-                try? await Task.sleep(nanoseconds: 300_000_000_000) // 5 minutes
-                if let observer = observer {
-                    DistributedNotificationCenter.default().removeObserver(observer)
-                }
-                continuation.resume(returning: false)
+            // Update status every 5 seconds
+            if i % 5 == 0 {
+                await MainActor.run { currentStatus = "監視中... (\(i)秒経過)" }
+            }
+            
+            try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
+        }
+        
+        throw AppError.installation("タイムアウト", message: "5分以内に完了しませんでした")
+    }
+    
+    // Get all app URLs in directory
+    private nonisolated func getAppURLs(in directory: URL) -> [URL] {
+        guard let appDirs = try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: []
+        ) else {
+            return []
+        }
+        
+        return appDirs.filter { $0.pathExtension == "app" }
+    }
+    
+    // Get modification times for all apps
+    private nonisolated func getAppModificationTimes(_ appURLs: [URL]) -> [String: TimeInterval] {
+        var mtimes: [String: TimeInterval] = [:]
+        
+        for appURL in appURLs {
+            if let attributes = try? FileManager.default.attributesOfItem(atPath: appURL.path),
+               let modDate = attributes[.modificationDate] as? Date {
+                mtimes[appURL.path] = modDate.timeIntervalSince1970
             }
         }
+        
+        return mtimes
     }
     
     // Quit PlayCover.app after successful installation
