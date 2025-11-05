@@ -319,35 +319,88 @@ class IPAInstallerService {
     
     // MARK: - Installation Progress Monitoring
     
-    // Monitor installation completion via macOS notification center
+    // Monitor installation completion by tracking app directory modification time
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
         await MainActor.run { currentStatus = "インストール完了を監視中..." }
         
-        // Wait for PlayCover's "App installed!" notification
-        // PlayCover sends UNUserNotification with title "App installed!" (or localized version)
+        let playCoverBundleID = "io.playcover.PlayCover"
+        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        let appSettingsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings", isDirectory: true)
+        let settingsFile = appSettingsDir.appendingPathComponent("\(bundleID).plist")
+        
+        // Record initial state: check if app already exists and get its modification time
+        var initialAppMTime: TimeInterval = 0
+        var initialSettingsMTime: TimeInterval = 0
+        
+        if let appURL = try? findAppURL(bundleID: bundleID, in: applicationsDir),
+           let attributes = try? FileManager.default.attributesOfItem(atPath: appURL.path),
+           let modDate = attributes[.modificationDate] as? Date {
+            initialAppMTime = modDate.timeIntervalSince1970
+        }
+        
+        if FileManager.default.fileExists(atPath: settingsFile.path),
+           let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
+           let modDate = attributes[.modificationDate] as? Date {
+            initialSettingsMTime = modDate.timeIntervalSince1970
+        }
+        
+        await MainActor.run { currentStatus = "初期状態記録完了、監視開始..." }
+        
         let maxWait = 300 // 5 minutes
-        let checkInterval: TimeInterval = 1.0
+        let checkInterval: TimeInterval = 2.0
+        var settingsUpdateDetected = false
         
         for i in 0..<maxWait {
-            // Check if installation completed by verifying app existence
-            // PlayCover creates the app in Applications directory when done
-            if try await verifyInstallationComplete(bundleID: bundleID) {
-                await MainActor.run { currentStatus = "完了検知 - 最終確認中..." }
-                
-                // Additional verification: wait a bit and re-check
-                try await Task.sleep(nanoseconds: 2_000_000_000)
-                if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { currentStatus = "完了" }
-                    
-                    // Quit PlayCover after successful installation
-                    await quitPlayCover()
-                    return
+            // First, wait for settings file to be updated (indicates installation started)
+            if !settingsUpdateDetected {
+                if FileManager.default.fileExists(atPath: settingsFile.path),
+                   let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
+                   let modDate = attributes[.modificationDate] as? Date {
+                    let currentMTime = modDate.timeIntervalSince1970
+                    if currentMTime > initialSettingsMTime {
+                        settingsUpdateDetected = true
+                        await MainActor.run { currentStatus = "インストール処理を検知..." }
+                    }
+                }
+            }
+            
+            // Only check for completion after we've detected installation started
+            if settingsUpdateDetected {
+                // Check if app directory was modified (new installation or update)
+                if let appURL = try? findAppURL(bundleID: bundleID, in: applicationsDir) {
+                    if let attributes = try? FileManager.default.attributesOfItem(atPath: appURL.path),
+                       let modDate = attributes[.modificationDate] as? Date {
+                        let currentMTime = modDate.timeIntervalSince1970
+                        
+                        // App was created or updated
+                        if currentMTime > initialAppMTime {
+                            // Verify _CodeSignature exists (installation complete)
+                            let codeSignatureDir = appURL.appendingPathComponent("_CodeSignature")
+                            if FileManager.default.fileExists(atPath: codeSignatureDir.path) {
+                                await MainActor.run { currentStatus = "完了検知 - 最終確認中..." }
+                                
+                                // Wait for stability
+                                try await Task.sleep(nanoseconds: 2_000_000_000)
+                                
+                                // Re-verify
+                                if try await verifyInstallationComplete(bundleID: bundleID) {
+                                    await MainActor.run { currentStatus = "完了" }
+                                    
+                                    // Quit PlayCover after successful installation
+                                    await quitPlayCover()
+                                    return
+                                }
+                            }
+                        }
+                    }
                 }
             }
             
             // Update status every 5 seconds
             if i % 5 == 0 {
-                await MainActor.run { currentStatus = "インストール監視中... (\(i)秒経過)" }
+                await MainActor.run { currentStatus = "インストール監視中... (\(i * Int(checkInterval))秒経過)" }
             }
             
             // Check if PlayCover is still running
@@ -356,11 +409,15 @@ class IPAInstallerService {
             
             if !isPlayCoverRunning {
                 // PlayCover closed - check if installation succeeded
-                if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { currentStatus = "完了（PlayCover終了後）" }
-                    return
+                if settingsUpdateDetected {
+                    if try await verifyInstallationComplete(bundleID: bundleID) {
+                        await MainActor.run { currentStatus = "完了（PlayCover終了後）" }
+                        return
+                    } else {
+                        throw AppError.installation("PlayCover が終了しました", message: "インストールが完了していません")
+                    }
                 } else {
-                    throw AppError.installation("PlayCover が終了しました", message: "インストールが完了していません")
+                    throw AppError.installation("PlayCover が終了しました", message: "インストールが開始されませんでした")
                 }
             }
             
@@ -368,6 +425,33 @@ class IPAInstallerService {
         }
         
         throw AppError.installation("タイムアウト", message: "5分以内に完了しませんでした")
+    }
+    
+    // Helper function to find app URL by bundle ID
+    private nonisolated func findAppURL(bundleID: String, in applicationsDir: URL) throws -> URL? {
+        guard let appDirs = try? FileManager.default.contentsOfDirectory(
+            at: applicationsDir,
+            includingPropertiesForKeys: nil
+        ) else {
+            return nil
+        }
+        
+        for appURL in appDirs where appURL.pathExtension == "app" {
+            let infoPlist = appURL.appendingPathComponent("Info.plist")
+            guard FileManager.default.fileExists(atPath: infoPlist.path) else { continue }
+            
+            guard let plistData = try? Data(contentsOf: infoPlist),
+                  let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                  let installedBundleID = plist["CFBundleIdentifier"] as? String else {
+                continue
+            }
+            
+            if installedBundleID == bundleID {
+                return appURL
+            }
+        }
+        
+        return nil
     }
     
     // Quit PlayCover.app after successful installation
