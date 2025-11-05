@@ -12,7 +12,7 @@ enum ProcessRunnerError: Error {
     case commandFailed(command: [String], exitCode: Int32, stderr: String)
 }
 
-final class ProcessRunner {
+final class ProcessRunner: Sendable {
     func run(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {

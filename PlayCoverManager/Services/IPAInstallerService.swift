@@ -14,7 +14,7 @@ import CoreServices
 @MainActor
 @Observable
 class IPAInstallerService {
-    nonisolated(unsafe) let processRunner: ProcessRunner
+    let processRunner: ProcessRunner
     let diskImageService: DiskImageService
     let settingsStore: SettingsStore
     
@@ -47,7 +47,7 @@ class IPAInstallerService {
         let existingVersion: String?
         let installType: InstallType
         
-        enum InstallType: Sendable {
+        nonisolated enum InstallType: Sendable, Equatable {
             case newInstall
             case upgrade
             case downgrade

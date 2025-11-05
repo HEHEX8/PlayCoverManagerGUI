@@ -13,7 +13,7 @@ import Observation
 @MainActor
 @Observable
 class AppUninstallerService {
-    nonisolated(unsafe) let processRunner: ProcessRunner
+    let processRunner: ProcessRunner
     let diskImageService: DiskImageService
     let settingsStore: SettingsStore
     
