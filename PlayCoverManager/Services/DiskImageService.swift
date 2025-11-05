@@ -91,7 +91,7 @@ final class DiskImageService {
             if error.domain == NSCocoaErrorDomain && (error.code == NSFileWriteNoPermissionError || error.code == NSFileNoSuchFileError) {
                 throw AppError.permissionDenied(
                     "保存先へのアクセス権限がありません",
-                    message: "macOS のセキュリティ設定により、保存先ディレクトリへのアクセスが拒否されました。\n\n対処方法：\n1. 設定画面で保存先を再度選択してください\n2. 外部ドライブの場合、接続されているか確認してください\n3. システム設定 > プライバシーとセキュリティ > ファイルとフォルダ で PlayCover Manager の権限を確認してください\n\nパス: \(parentDir.path)"
+                    message: "macOS のセキュリティ設定により、保存先ディレクトリへのアクセスが拒否されました。\n\n対処方法：\n1. システム設定 > プライバシーとセキュリティ > フルディスクアクセス\n2. 「+」ボタンをクリックし、PlayCover Manager を追加\n3. アプリを再起動してください\n\nパス: \(parentDir.path)"
                 )
             }
             throw error
@@ -191,7 +191,18 @@ final class DiskImageService {
         if nobrowse {
             args.append("-nobrowse")
         }
-        _ = try await processRunner.run("/usr/bin/hdiutil", args)
+        
+        do {
+            _ = try await processRunner.run("/usr/bin/hdiutil", args)
+        } catch let error as ProcessRunnerError {
+            if case .commandFailed(_, let exitCode, let stderr) = error, exitCode == 1 && stderr.contains("アクセス権がありません") {
+                throw AppError.permissionDenied(
+                    "マウント先へのアクセス権限がありません",
+                    message: "~/Library/Containers/ へのマウントには「フルディスクアクセス」権限が必要です。\n\n対処方法：\n1. システム設定を開く（⌘Space で「システム設定」を検索）\n2. プライバシーとセキュリティ > フルディスクアクセス\n3. 「+」ボタンで PlayCover Manager を追加\n4. アプリを再起動してください\n\nマウント先: \(mountPoint.path)"
+                )
+            }
+            throw error
+        }
     }
 
     func mountTemporarily(for bundleIdentifier: String, temporaryMountBase: URL) async throws -> URL {

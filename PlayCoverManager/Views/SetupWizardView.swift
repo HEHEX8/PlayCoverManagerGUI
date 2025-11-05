@@ -41,7 +41,18 @@ struct SetupWizardView: View {
             .padding()
         }
         .alert(item: $viewModel.error) { error in
-            if error.requiresAction || error.category == .permissionDenied {
+            if error.category == .permissionDenied {
+                Alert(
+                    title: Text(error.title),
+                    message: Text(error.message),
+                    primaryButton: .default(Text("システム設定を開く")) {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    },
+                    secondaryButton: .cancel(Text("OK"))
+                )
+            } else if error.requiresAction {
                 Alert(
                     title: Text(error.title),
                     message: Text(error.message),

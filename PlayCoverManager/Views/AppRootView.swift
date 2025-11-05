@@ -75,7 +75,14 @@ struct ErrorView: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 500)
             HStack(spacing: 12) {
-                if error.requiresAction || error.category == .permissionDenied {
+                if error.category == .permissionDenied {
+                    Button("システム設定を開く") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .keyboardShortcut("s", modifiers: [.command])
+                } else if error.requiresAction {
                     Button("設定を開く") {
                         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
                     }
