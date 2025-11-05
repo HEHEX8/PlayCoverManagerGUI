@@ -118,76 +118,83 @@ struct QuickLauncherView: View {
                         .background(Color(nsColor: .windowBackgroundColor))
                     }
                     
-                    // Recently launched app quick launch button - Enhanced UI
+                    // Recently launched app quick launch button - Center-aligned adaptive design
                     Divider()
                     
-                    // Center-aligned recent app button with adaptive design
-                    VStack(spacing: 0) {
-                        Divider()
-                        
-                        Button {
-                            viewModel.launch(app: recentApp)
-                        } label: {
-                            VStack(spacing: 12) {
-                                // Icon with adaptive shadow
+                    Button {
+                        viewModel.launch(app: recentApp)
+                    } label: {
+                        HStack(spacing: 0) {
+                            Spacer()
+                            
+                            HStack(spacing: 16) {
+                                // Icon with subtle shadow
                                 ZStack {
                                     if let icon = recentApp.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 56, height: 56)
-                                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                                            .shadow(color: .primary.opacity(0.15), radius: 6, x: 0, y: 3)
+                                            .frame(width: 52, height: 52)
+                                            .clipShape(RoundedRectangle(cornerRadius: 11))
+                                            .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color.secondary.opacity(0.2))
-                                            .frame(width: 56, height: 56)
+                                        RoundedRectangle(cornerRadius: 11)
+                                            .fill(Color(nsColor: .controlBackgroundColor))
+                                            .frame(width: 52, height: 52)
                                             .overlay {
                                                 Image(systemName: "app.fill")
-                                                    .font(.system(size: 28))
-                                                    .foregroundStyle(.secondary)
+                                                    .font(.system(size: 26))
+                                                    .foregroundStyle(.tertiary)
                                             }
                                     }
                                 }
                                 
-                                // App name and subtitle
-                                VStack(spacing: 3) {
+                                // App info - center aligned
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(recentApp.displayName)
-                                        .font(.system(size: 15, weight: .semibold))
+                                        .font(.system(size: 16, weight: .semibold))
                                         .foregroundStyle(.primary)
                                     Text("前回起動したアプリ")
-                                        .font(.system(size: 11))
+                                        .font(.system(size: 12))
                                         .foregroundStyle(.secondary)
                                 }
                                 
-                                // Enter key hint - subtle design
-                                HStack(spacing: 4) {
+                                // Enter key hint with better contrast
+                                HStack(spacing: 5) {
                                     Image(systemName: "return")
-                                        .font(.system(size: 9, weight: .medium))
+                                        .font(.system(size: 10, weight: .semibold))
                                     Text("Enter")
-                                        .font(.system(size: 10, weight: .medium))
+                                        .font(.system(size: 11, weight: .semibold))
                                 }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(.secondary.opacity(0.15))
-                                .clipShape(Capsule())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(Color(nsColor: .controlBackgroundColor))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
+                                )
                                 .foregroundStyle(.secondary)
                             }
-                            .padding(.vertical, 16)
-                            .frame(maxWidth: .infinity)
-                            .contentShape(Rectangle())
+                            
+                            Spacer()
                         }
-                        .buttonStyle(.plain)
-                        .background(
-                            Color.primary.opacity(0.03)
-                        )
-                        .overlay(
-                            Rectangle()
-                                .fill(.primary.opacity(0.08))
-                                .frame(height: 1),
-                            alignment: .top
-                        )
-                        .keyboardShortcut(.defaultAction)
+                        .padding(.vertical, 14)
+                        .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .background(
+                        Color(nsColor: .controlBackgroundColor).opacity(0.5)
+                    )
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.primary.opacity(0.08))
+                            .frame(height: 1),
+                        alignment: .top
+                    )
+                    .keyboardShortcut(.defaultAction)
                 }
             } else {
                 // No recent app - show regular grid
