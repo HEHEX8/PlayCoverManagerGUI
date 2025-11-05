@@ -187,13 +187,29 @@ final class DiskImageService {
             throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
         }
         try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
-        var args: [String] = ["attach", imageURL.path, "-mountpoint", mountPoint.path, "-owners", "on"]
-        if nobrowse {
-            args.append("-nobrowse")
+        
+        // ASIF requires diskutil, legacy formats use hdiutil
+        let command: String
+        var args: [String]
+        
+        if settings.diskImageFormat == .asif {
+            // diskutil image attach <image> -mountPoint <path> -owners on [-nobrowse]
+            command = "/usr/sbin/diskutil"
+            args = ["image", "attach", imageURL.path, "-mountPoint", mountPoint.path, "-owners", "on"]
+            if nobrowse {
+                args.append("-nobrowse")
+            }
+        } else {
+            // hdiutil attach <image> -mountpoint <path> -owners on [-nobrowse]
+            command = "/usr/bin/hdiutil"
+            args = ["attach", imageURL.path, "-mountpoint", mountPoint.path, "-owners", "on"]
+            if nobrowse {
+                args.append("-nobrowse")
+            }
         }
         
         do {
-            _ = try await processRunner.run("/usr/bin/hdiutil", args)
+            _ = try await processRunner.run(command, args)
         } catch let error as ProcessRunnerError {
             if case .commandFailed(_, let exitCode, let stderr) = error, exitCode == 1 && stderr.contains("アクセス権がありません") {
                 throw AppError.permissionDenied(
@@ -209,8 +225,20 @@ final class DiskImageService {
         let imageURL = try diskImageURL(for: bundleIdentifier)
         let tempMountPoint = temporaryMountBase.appendingPathComponent(bundleIdentifier, isDirectory: true)
         try fileManager.createDirectory(at: tempMountPoint, withIntermediateDirectories: true)
-        let args: [String] = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
-        _ = try await processRunner.run("/usr/bin/hdiutil", args)
+        
+        // ASIF requires diskutil, legacy formats use hdiutil
+        let command: String
+        let args: [String]
+        
+        if settings.diskImageFormat == .asif {
+            command = "/usr/sbin/diskutil"
+            args = ["image", "attach", imageURL.path, "-mountPoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
+        } else {
+            command = "/usr/bin/hdiutil"
+            args = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
+        }
+        
+        _ = try await processRunner.run(command, args)
         return tempMountPoint
     }
 
