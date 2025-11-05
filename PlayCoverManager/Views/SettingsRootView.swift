@@ -269,18 +269,49 @@ private struct IPAInstallerSheet: View {
     // MARK: - Installing View
     private var installingView: some View {
         VStack(spacing: 16) {
-            ProgressView(value: progress)
-            if let service = installerService {
-                Text(service.currentStatus)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text(statusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            Text("インストール中")
+                .font(.headline)
+            
+            ScrollView {
+                if let service = installerService {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(service.installedApps, id: \.self) { app in
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                                Text(app)
+                                    .font(.system(.body, design: .monospaced))
+                            }
+                        }
+                        
+                        if !service.currentStatus.isEmpty {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .controlSize(.small)
+                                Text(service.currentStatus)
+                                    .font(.system(.body, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        ForEach(service.failedApps, id: \.self) { error in
+                            HStack(spacing: 8) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.red)
+                                Text(error)
+                                    .font(.system(.body, design: .monospaced))
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(nsColor: .textBackgroundColor))
+                    .cornerRadius(8)
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
         .onAppear {
             startStatusUpdater()
         }
@@ -397,15 +428,14 @@ private struct IPAInstallerSheet: View {
     }
     
     private func startStatusUpdater() {
-        guard let service = installerService else { return }
-        
         statusUpdateTask = Task {
             while !Task.isCancelled && isInstalling {
+                // Trigger view update
                 await MainActor.run {
-                    statusMessage = service.currentStatus
-                    progress = service.currentProgress
+                    // Force view refresh by updating a dummy state
+                    _ = Date()
                 }
-                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second
             }
         }
     }
@@ -434,8 +464,6 @@ private struct IPAInstallerSheet: View {
         
         // Update UI with service state on main thread
         await MainActor.run {
-            statusMessage = service.currentStatus
-            progress = service.currentProgress
             isInstalling = false
             currentPhase = .results
             showResults = true
