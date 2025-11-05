@@ -55,12 +55,20 @@ final class LauncherService {
     }
 
     private func getLocalizedAppName(for bundle: Bundle, url: URL) -> String {
-        // Method 1: Use NSWorkspace to get the localized name (most reliable for system language)
-        if let localizedName = NSWorkspace.shared.localizedLabel(forFile: url.path), !localizedName.isEmpty {
+        // Get current system language
+        let preferredLanguages = Locale.preferredLanguages
+        let primaryLanguage = preferredLanguages.first ?? "en"
+        
+        // Try to find localized strings for current language
+        // Check .lproj directories inside the app bundle
+        let languageCode = String(primaryLanguage.prefix(2)) // "ja" from "ja-JP"
+        
+        // Try language-specific lproj (e.g., ja.lproj)
+        if let localizedName = getLocalizedName(from: url, languageCode: languageCode) {
             return localizedName
         }
         
-        // Method 2: Try localizedInfoDictionary (system language)
+        // Try bundle's localizedInfoDictionary as fallback
         if let localizedDict = bundle.localizedInfoDictionary {
             if let displayName = localizedDict["CFBundleDisplayName"] as? String, !displayName.isEmpty {
                 return displayName
@@ -70,7 +78,7 @@ final class LauncherService {
             }
         }
         
-        // Method 3: Try main Info.plist
+        // Try main Info.plist
         if let info = bundle.infoDictionary {
             if let displayName = info["CFBundleDisplayName"] as? String, !displayName.isEmpty {
                 return displayName
@@ -82,6 +90,25 @@ final class LauncherService {
         
         // Fallback: Use filename
         return url.deletingPathExtension().lastPathComponent
+    }
+    
+    private func getLocalizedName(from appURL: URL, languageCode: String) -> String? {
+        // Try language.lproj/InfoPlist.strings
+        let lprojURL = appURL.appendingPathComponent("\(languageCode).lproj")
+        let infoPlistStringsURL = lprojURL.appendingPathComponent("InfoPlist.strings")
+        
+        if fileManager.fileExists(atPath: infoPlistStringsURL.path) {
+            if let dict = NSDictionary(contentsOf: infoPlistStringsURL) as? [String: String] {
+                if let displayName = dict["CFBundleDisplayName"], !displayName.isEmpty {
+                    return displayName
+                }
+                if let name = dict["CFBundleName"], !displayName.isEmpty {
+                    return name
+                }
+            }
+        }
+        
+        return nil
     }
     
     func openApp(_ app: PlayCoverApp) async throws {
