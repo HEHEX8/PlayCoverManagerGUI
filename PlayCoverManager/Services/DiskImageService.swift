@@ -44,8 +44,8 @@ final class DiskImageService {
         var isMounted = false
         var volumePath: URL? = nil
         do {
-            let result = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
-            if let data = result.stdout.data(using: .utf8),
+            let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
+            if let data = output.data(using: .utf8),
                let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                let volumeName = plist["VolumeName"] as? String {
                 // Compare expected volume name with the image file name (without extension)
@@ -165,6 +165,41 @@ final class DiskImageService {
                 throw AppError.diskImage("ディスクイメージのアンマウントに失敗", message: url.path, underlying: error)
             }
         }
+    }
+    
+    // Convenience methods for IPAInstallerService compatibility
+    func createDiskImage(at imageURL: URL, volumeName: String, size: String) async throws {
+        let parentDir = imageURL.deletingLastPathComponent()
+        try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
+        
+        // Create ASIF disk image using diskutil (macOS Tahoe 26.0+ only)
+        let args = [
+            "image", "create", "blank",
+            "--format", "ASIF",
+            "--size", size,
+            "--volumeName", volumeName,
+            imageURL.path
+        ]
+        _ = try await processRunner.run("/usr/sbin/diskutil", args)
+    }
+    
+    func mountDiskImage(_ imageURL: URL, at mountPoint: URL, nobrowse: Bool) async throws {
+        guard fileManager.fileExists(atPath: imageURL.path) else {
+            throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
+        }
+        try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
+        
+        // Mount ASIF disk image using diskutil (mounts read-write by default)
+        var args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path]
+        if nobrowse {
+            args.append("--nobrowse")
+        }
+        
+        _ = try await processRunner.run("/usr/sbin/diskutil", args)
+    }
+    
+    func unmountVolume(_ volumeURL: URL) async throws {
+        try await detach(volumeURL: volumeURL)
     }
 }
 
