@@ -131,10 +131,21 @@ private struct IPAInstallerSheet: View {
     @Environment(SettingsStore.self) private var settingsStore
     @State private var installerService: IPAInstallerService?
     @State private var selectedIPAs: [URL] = []
-    @State private var isProcessing = false
+    @State private var analyzedIPAs: [IPAInstallerService.IPAInfo] = []
+    @State private var isAnalyzing = false
+    @State private var isInstalling = false
     @State private var statusMessage = ""
     @State private var progress: Double = 0
     @State private var showResults = false
+    @State private var currentPhase: InstallPhase = .selection
+    
+    enum InstallPhase {
+        case selection      // IPA選択
+        case analyzing      // 解析中
+        case confirmation   // 確認画面
+        case installing     // インストール中
+        case results        // 結果表示
+    }
     
     var body: some View {
         VStack(spacing: 20) {
@@ -142,114 +153,188 @@ private struct IPAInstallerSheet: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            if selectedIPAs.isEmpty && !showResults {
-                VStack(spacing: 16) {
-                    Image(systemName: "doc.badge.arrow.up")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("IPA ファイルを選択してください")
-                        .font(.headline)
-                    
-                    Button("IPA を選択") {
-                        selectIPAFiles()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if showResults {
-                // Results view
-                VStack(alignment: .leading, spacing: 16) {
-                    if let service = installerService, !service.installedApps.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("✅ インストール成功: \(service.installedApps.count) 個")
-                                .font(.headline)
-                                .foregroundStyle(.green)
-                            ForEach(service.installedApps, id: \.self) { appName in
-                                Text("  • \(appName)")
-                                    .font(.caption)
-                            }
-                        }
-                    }
-                    
-                    if let service = installerService, !service.failedApps.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("❌ インストール失敗: \(service.failedApps.count) 個")
-                                .font(.headline)
-                                .foregroundStyle(.red)
-                            ForEach(service.failedApps, id: \.self) { error in
-                                Text("  • \(error)")
-                                    .font(.caption)
-                            }
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("選択された IPA ファイル:")
-                        .font(.headline)
-                    
-                    List(selectedIPAs, id: \.self) { ipa in
-                        HStack {
-                            Image(systemName: "doc.fill")
-                            Text(ipa.lastPathComponent)
-                            Spacer()
-                            Button {
-                                selectedIPAs.removeAll { $0 == ipa }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .frame(height: 200)
-                    
-                    if isProcessing {
-                        VStack(spacing: 8) {
-                            ProgressView(value: progress)
-                            Text(statusMessage)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
+            switch currentPhase {
+            case .selection:
+                selectionView
+            case .analyzing:
+                analyzingView
+            case .confirmation:
+                confirmationView
+            case .installing:
+                installingView
+            case .results:
+                resultsView
             }
             
             Spacer()
             
-            HStack {
-                Button(showResults ? "閉じる" : "キャンセル") {
-                    dismiss()
-                }
-                .keyboardShortcut(.cancelAction)
-                
-                Spacer()
-                
-                if !selectedIPAs.isEmpty && !showResults {
-                    Button("別の IPA を追加") {
-                        selectIPAFiles()
-                    }
-                    .disabled(isProcessing)
-                    
-                    Button("インストール開始") {
-                        Task {
-                            await startInstallation()
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isProcessing)
-                    .keyboardShortcut(.defaultAction)
-                }
-            }
+            bottomButtons
         }
         .padding(24)
-        .frame(width: 600, height: 500)
+        .frame(width: 700, height: 600)
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore)
+        }
+    }
+    
+    // MARK: - Selection View
+    private var selectionView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "doc.badge.arrow.up")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            
+            Text("IPA ファイルを選択してください")
+                .font(.headline)
+            
+            Button("IPA を選択") {
+                selectIPAFiles()
+            }
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut(.defaultAction)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Analyzing View
+    private var analyzingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+            Text("IPA ファイルを解析中...")
+                .font(.headline)
+            Text(statusMessage)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Confirmation View
+    private var confirmationView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("インストール内容の確認")
+                .font(.headline)
+            
+            List(analyzedIPAs) { info in
+                HStack(spacing: 12) {
+                    if let icon = info.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: 48, height: 48)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    } else {
+                        Image(systemName: "app.fill")
+                            .resizable()
+                            .frame(width: 48, height: 48)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(info.appName)
+                            .font(.body)
+                            .fontWeight(.medium)
+                        Text(info.bundleID)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("v\(info.version)")
+                            .font(.caption)
+                        Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Button {
+                        analyzedIPAs.removeAll { $0.id == info.id }
+                        selectedIPAs.removeAll { $0 == info.ipaURL }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.vertical, 4)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Installing View
+    private var installingView: some View {
+        VStack(spacing: 16) {
+            ProgressView(value: progress)
+            Text(statusMessage)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Results View
+    private var resultsView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if showResults {
+                if let service = installerService, !service.installedApps.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("✅ インストール成功: \(service.installedApps.count) 個")
+                            .font(.headline)
+                            .foregroundStyle(.green)
+                        ForEach(service.installedApps, id: \.self) { appName in
+                            Text("  • \(appName)")
+                                .font(.caption)
+                        }
+                    }
+                }
+                
+                if let service = installerService, !service.failedApps.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("❌ インストール失敗: \(service.failedApps.count) 個")
+                            .font(.headline)
+                            .foregroundStyle(.red)
+                        ForEach(service.failedApps, id: \.self) { error in
+                            Text("  • \(error)")
+                                .font(.caption)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+    
+    // MARK: - Bottom Buttons
+    private var bottomButtons: some View {
+        HStack {
+            Button(currentPhase == .results ? "閉じる" : "キャンセル") {
+                dismiss()
+            }
+            .keyboardShortcut(.cancelAction)
+            
+            Spacer()
+            
+            switch currentPhase {
+            case .confirmation:
+                Button("別の IPA を追加") {
+                    selectIPAFiles()
+                }
+                
+                Button("インストール開始") {
+                    Task {
+                        await startInstallation()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(analyzedIPAs.isEmpty)
+                .keyboardShortcut(.defaultAction)
+                
+            default:
+                EmptyView()
+            }
         }
     }
     
@@ -266,19 +351,45 @@ private struct IPAInstallerSheet: View {
         panel.message = "インストールする IPA ファイルを選択してください"
         
         if panel.runModal() == .OK {
-            selectedIPAs.append(contentsOf: panel.urls)
+            let newIPAs = panel.urls.filter { !selectedIPAs.contains($0) }
+            selectedIPAs.append(contentsOf: newIPAs)
+            
+            // Start analysis
+            Task {
+                await analyzeSelectedIPAs()
+            }
+        }
+    }
+    
+    private func analyzeSelectedIPAs() async {
+        guard let service = installerService else { return }
+        
+        currentPhase = .analyzing
+        isAnalyzing = true
+        
+        let results = await service.analyzeIPAs(selectedIPAs)
+        
+        await MainActor.run {
+            analyzedIPAs = results
+            isAnalyzing = false
+            
+            if analyzedIPAs.isEmpty {
+                currentPhase = .selection
+                statusMessage = "すべての IPA の解析に失敗しました"
+            } else {
+                currentPhase = .confirmation
+            }
         }
     }
     
     private func startInstallation() async {
-        guard let service = installerService else { return }
+        guard let service = installerService, !analyzedIPAs.isEmpty else { return }
         
-        await MainActor.run {
-            isProcessing = true
-        }
+        currentPhase = .installing
+        isInstalling = true
         
         do {
-            try await service.installIPAs(selectedIPAs)
+            try await service.installIPAs(analyzedIPAs)
         } catch {
             await MainActor.run {
                 statusMessage = "エラー: \(error.localizedDescription)"
@@ -289,7 +400,8 @@ private struct IPAInstallerSheet: View {
         await MainActor.run {
             statusMessage = service.currentStatus
             progress = service.currentProgress
-            isProcessing = false
+            isInstalling = false
+            currentPhase = .results
             showResults = true
         }
     }

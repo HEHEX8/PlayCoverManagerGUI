@@ -33,12 +33,18 @@ class IPAInstallerService {
     
     // MARK: - IPA Information Extraction
     
-    struct IPAInfo {
+    struct IPAInfo: Identifiable {
+        let id = UUID()
+        let ipaURL: URL
         let bundleID: String
         let appName: String
         let appNameEnglish: String
         let version: String
-        let volumeName: String
+        let icon: NSImage?
+        let fileSize: Int64
+        
+        // Volume name is always Bundle ID
+        var volumeName: String { bundleID }
     }
     
     func extractIPAInfo(from ipaURL: URL) async throws -> IPAInfo {
@@ -113,23 +119,64 @@ class IPAInstallerService {
             }
         }
         
-        // Generate volume name (ASCII-only)
-        var volumeName = appNameEn.replacingOccurrences(of: "[^a-zA-Z0-9]", with: "", options: .regularExpression)
+        // Get system language for localization
+        let preferredLanguages = Locale.preferredLanguages
+        let systemLanguage = preferredLanguages.first?.split(separator: "-").first.map(String.init) ?? "en"
         
-        // Fallback: use last segment of Bundle ID if volume name is empty
-        if volumeName.isEmpty {
-            let bundleSegments = bundleID.split(separator: ".")
-            if let lastSegment = bundleSegments.last {
-                volumeName = String(lastSegment).replacingOccurrences(of: "[^a-zA-Z0-9]", with: "", options: .regularExpression)
+        // Try to extract localized app name for system language
+        if systemLanguage != "en" && systemLanguage != "ja" {
+            let sysLangPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/\(systemLanguage).lproj/InfoPlist.strings") })
+                .flatMap { $0.split(separator: " ").last.map(String.init) }
+            
+            if let langPath = sysLangPath {
+                do {
+                    _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path, langPath, "-d", tempDir.path])
+                    let langStringsURL = tempDir.appendingPathComponent(langPath)
+                    
+                    if FileManager.default.fileExists(atPath: langStringsURL.path) {
+                        let stringsData = try Data(contentsOf: langStringsURL)
+                        if let stringsDict = try PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                            if let displayName = stringsDict["CFBundleDisplayName"], !displayName.isEmpty {
+                                appName = displayName
+                            } else if let bundleName = stringsDict["CFBundleName"], !bundleName.isEmpty {
+                                appName = bundleName
+                            }
+                        }
+                    }
+                } catch {
+                    // Fallback to Japanese or English
+                }
             }
         }
         
+        // Extract icon
+        var icon: NSImage? = nil
+        if let iconFiles = plist["CFBundleIconFiles"] as? [String], let iconName = iconFiles.first {
+            let iconPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/\(iconName)") })
+                .flatMap { $0.split(separator: " ").last.map(String.init) }
+            
+            if let iconPath = iconPath {
+                do {
+                    _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path, iconPath, "-d", tempDir.path])
+                    let iconURL = tempDir.appendingPathComponent(iconPath)
+                    if let imageData = try? Data(contentsOf: iconURL) {
+                        icon = NSImage(data: imageData)
+                    }
+                } catch {}
+            }
+        }
+        
+        // Get file size
+        let fileSize = (try? FileManager.default.attributesOfItem(atPath: ipaURL.path)[.size] as? Int64) ?? 0
+        
         return IPAInfo(
+            ipaURL: ipaURL,
             bundleID: bundleID,
             appName: appName,
             appNameEnglish: appNameEn,
             version: version,
-            volumeName: volumeName
+            icon: icon,
+            fileSize: fileSize
         )
     }
     
@@ -363,9 +410,80 @@ class IPAInstallerService {
         return false
     }
     
-    // MARK: - Complete Installation Workflow
+    // MARK: - Batch IPA Analysis
     
-    func installIPAs(_ ipaURLs: [URL]) async throws {
+    func analyzeIPAs(_ ipaURLs: [URL]) async -> [IPAInfo] {
+        var results: [IPAInfo] = []
+        
+        for ipaURL in ipaURLs {
+            currentStatus = "解析中: \(ipaURL.lastPathComponent)"
+            
+            do {
+                let info = try await extractIPAInfo(from: ipaURL)
+                results.append(info)
+            } catch {
+                // Skip failed analysis
+                failedApps.append("\(ipaURL.lastPathComponent): 解析失敗 - \(error.localizedDescription)")
+            }
+        }
+        
+        return results
+    }
+    
+    // MARK: - Single IPA Installation
+    
+    enum InstallationError: Error, LocalizedError {
+        case diskImageCreationFailed(String)
+        case mountFailed(String)
+        case playCoverInstallFailed(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .diskImageCreationFailed(let msg): return "ディスクイメージ作成エラー: \(msg)"
+            case .mountFailed(let msg): return "マウントエラー: \(msg)"
+            case .playCoverInstallFailed(let msg): return "インストールエラー: \(msg)"
+            }
+        }
+    }
+    
+    func installSingleIPA(_ info: IPAInfo) async throws {
+        currentStatus = "インストール中: \(info.appName)"
+        
+        // Step 1: Create disk image
+        currentStatus = "💾 ディスクイメージ作成中..."
+        do {
+            _ = try await createAppDiskImage(info: info)
+        } catch {
+            throw InstallationError.diskImageCreationFailed(error.localizedDescription)
+        }
+        
+        // Step 2: Mount disk image
+        currentStatus = "📌 マウント中..."
+        guard let diskImageDir = settingsStore.diskImageDirectory else {
+            throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "")
+        }
+        let imageURL = diskImageDir.appendingPathComponent("\(info.bundleID).asif")
+        
+        do {
+            _ = try await mountAppDiskImage(imageURL: imageURL, bundleID: info.bundleID)
+        } catch {
+            throw InstallationError.mountFailed(error.localizedDescription)
+        }
+        
+        // Step 3: Install via PlayCover
+        currentStatus = "📦 PlayCover でインストール中..."
+        do {
+            try await installIPAToPlayCover(info.ipaURL, info: info)
+        } catch {
+            throw InstallationError.playCoverInstallFailed(error.localizedDescription)
+        }
+        
+        currentStatus = "✅ 完了: \(info.appName)"
+    }
+    
+    // MARK: - Batch Installation Workflow
+    
+    func installIPAs(_ ipasInfo: [IPAInfo]) async throws {
         isInstalling = true
         installedApps.removeAll()
         failedApps.removeAll()
@@ -375,29 +493,17 @@ class IPAInstallerService {
             isInstalling = false
         }
         
-        let totalIPAs = ipaURLs.count
+        let totalIPAs = ipasInfo.count
         
-        for (index, ipaURL) in ipaURLs.enumerated() {
+        for (index, info) in ipasInfo.enumerated() {
             currentProgress = Double(index) / Double(totalIPAs)
-            currentStatus = "[\(index + 1)/\(totalIPAs)] \(ipaURL.lastPathComponent)"
+            currentStatus = "[\(index + 1)/\(totalIPAs)] \(info.appName)"
             
             do {
-                // Step 1: Extract IPA info
-                let info = try await extractIPAInfo(from: ipaURL)
-                
-                // Step 2: Create disk image
-                let imageURL = try await createAppDiskImage(info: info)
-                
-                // Step 3: Mount disk image
-                _ = try await mountAppDiskImage(imageURL: imageURL, bundleID: info.bundleID)
-                
-                // Step 4: Install to PlayCover
-                try await installIPAToPlayCover(ipaURL, info: info)
-                
+                try await installSingleIPA(info)
                 installedApps.append(info.appName)
-                
             } catch {
-                failedApps.append(ipaURL.lastPathComponent + ": \(error.localizedDescription)")
+                failedApps.append("\(info.appName): \(error.localizedDescription)")
             }
         }
         
