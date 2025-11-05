@@ -23,6 +23,7 @@ final class LauncherViewModel {
     }
     var selectedApp: PlayCoverApp?
     var isBusy: Bool = false
+    var isShowingStatus: Bool = false  // Only show status overlay for time-consuming operations
     var error: AppError?
     var pendingDataHandling: DataHandlingRequest?
     var pendingImageCreation: PlayCoverApp?
@@ -80,8 +81,12 @@ final class LauncherViewModel {
 
     private func performLaunch(app: PlayCoverApp, resume: Bool) async {
         isBusy = true
+        isShowingStatus = false  // Don't show status overlay for normal launch
         statusMessage = "\(app.displayName) を準備しています…"
-        defer { isBusy = false }
+        defer { 
+            isBusy = false
+            isShowingStatus = false
+        }
         do {
             let containerURL = containerURL(for: app.bundleIdentifier)
             let descriptor = try diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: containerURL)
@@ -129,8 +134,12 @@ final class LauncherViewModel {
 
     private func createImageAndResume(app: PlayCoverApp, context: LaunchContext) async {
         isBusy = true
+        isShowingStatus = true  // Show status for disk image creation (time-consuming)
         statusMessage = "\(app.displayName) 用のディスクイメージを作成しています…"
-        defer { isBusy = false }
+        defer { 
+            isBusy = false
+            isShowingStatus = false
+        }
         do {
             _ = try await diskImageService.ensureDiskImageExists(for: app.bundleIdentifier, volumeName: app.bundleIdentifier)
             pendingLaunchContext = nil
@@ -152,7 +161,12 @@ final class LauncherViewModel {
 
     private func handleInternalData(strategy: SettingsStore.InternalDataStrategy, request: DataHandlingRequest, context: LaunchContext) async {
         isBusy = true
-        defer { isBusy = false }
+        isShowingStatus = true  // Show status for data handling (time-consuming)
+        statusMessage = "内部データを処理しています…"
+        defer { 
+            isBusy = false
+            isShowingStatus = false
+        }
         let containerURL = context.containerURL
         do {
             switch strategy {
@@ -229,8 +243,12 @@ final class LauncherViewModel {
 
     private func performUnmountAll(applyToPlayCoverContainer: Bool) async {
         isBusy = true
+        isShowingStatus = true  // Show status for unmount operation
         statusMessage = "ディスクイメージをアンマウントしています…"
-        defer { isBusy = false }
+        defer { 
+            isBusy = false
+            isShowingStatus = false
+        }
         do {
             var volumeURLs: [URL] = []
             for app in apps {

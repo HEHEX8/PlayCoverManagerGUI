@@ -182,7 +182,8 @@ struct QuickLauncherView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .overlay(alignment: .center) {
-            if viewModel.isBusy {
+            // Only show status overlay for time-consuming operations (disk image creation, data handling, unmount)
+            if viewModel.isBusy && viewModel.isShowingStatus {
                 VStack(spacing: 12) {
                     ProgressView()
                     if !viewModel.statusMessage.isEmpty {
@@ -555,14 +556,13 @@ private struct RecentAppLaunchButton: View {
     
     var body: some View {
         Button {
-            // Start animation immediately
+            // Start animation and launch immediately in parallel
             isAnimating = true
+            onLaunch()
             
-            // Wait for animation to complete before launching
+            // Stop animation after completion
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
                 isAnimating = false
-                // Launch after animation completes
-                onLaunch()
             }
         } label: {
             HStack(spacing: 0) {
