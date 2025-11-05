@@ -102,7 +102,7 @@ final class LauncherService {
                 if let displayName = dict["CFBundleDisplayName"], !displayName.isEmpty {
                     return displayName
                 }
-                if let name = dict["CFBundleName"], !displayName.isEmpty {
+                if let name = dict["CFBundleName"], !name.isEmpty {
                     return name
                 }
             }

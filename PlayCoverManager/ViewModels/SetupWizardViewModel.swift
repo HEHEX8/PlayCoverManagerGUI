@@ -145,7 +145,7 @@ final class SetupWizardViewModel {
         statusMessage = "ディスクイメージを作成しています…"
         defer { isBusy = false }
         do {
-            try await diskImageService.ensureDiskImageExists(for: bundleID, volumeName: bundleID)
+            _ = try await diskImageService.ensureDiskImageExists(for: bundleID, volumeName: bundleID)
             let nobrowse = settings.nobrowseEnabled
             try await diskImageService.mountDiskImage(for: bundleID, at: mountPoint, nobrowse: nobrowse)
             
