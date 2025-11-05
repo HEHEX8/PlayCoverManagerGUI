@@ -9,6 +9,7 @@
 import Foundation
 import AppKit
 import Observation
+import UserNotifications
 
 @MainActor
 @Observable
@@ -319,55 +320,68 @@ class IPAInstallerService {
     
     // MARK: - Installation Progress Monitoring
     
-    // Monitor installation completion via macOS notification center
+    // Monitor installation completion by watching for PlayCover's notification
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        await MainActor.run { currentStatus = "インストール完了を監視中..." }
+        await MainActor.run { currentStatus = "通知監視を開始..." }
         
-        // Wait for PlayCover's "App installed!" notification
-        // PlayCover sends UNUserNotification with title "App installed!" (or localized version)
-        let maxWait = 300 // 5 minutes
-        let checkInterval: TimeInterval = 1.0
+        // Create a notification observer for PlayCover's completion notification
+        let notificationReceived = await waitForPlayCoverNotification()
         
-        for i in 0..<maxWait {
-            // Check if installation completed by verifying app existence
-            // PlayCover creates the app in Applications directory when done
+        if notificationReceived {
+            await MainActor.run { currentStatus = "通知受信 - 検証中..." }
+            
+            // Verify installation actually succeeded
+            try await Task.sleep(nanoseconds: 2_000_000_000)
             if try await verifyInstallationComplete(bundleID: bundleID) {
-                await MainActor.run { currentStatus = "完了検知 - 最終確認中..." }
+                await MainActor.run { currentStatus = "完了" }
                 
-                // Additional verification: wait a bit and re-check
-                try await Task.sleep(nanoseconds: 2_000_000_000)
-                if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { currentStatus = "完了" }
-                    
-                    // Quit PlayCover after successful installation
-                    await quitPlayCover()
-                    return
-                }
+                // Quit PlayCover after successful installation
+                await quitPlayCover()
+                return
+            } else {
+                throw AppError.installation("通知を受信しましたが検証に失敗", message: "")
             }
-            
-            // Update status every 5 seconds
-            if i % 5 == 0 {
-                await MainActor.run { currentStatus = "インストール監視中... (\(i)秒経過)" }
-            }
-            
-            // Check if PlayCover is still running
-            let pgrepOutput = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
-            let isPlayCoverRunning = pgrepOutput != nil && !pgrepOutput!.isEmpty
-            
-            if !isPlayCoverRunning {
-                // PlayCover closed - check if installation succeeded
-                if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { currentStatus = "完了（PlayCover終了後）" }
-                    return
-                } else {
-                    throw AppError.installation("PlayCover が終了しました", message: "インストールが完了していません")
-                }
-            }
-            
-            try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
         }
         
-        throw AppError.installation("タイムアウト", message: "5分以内に完了しませんでした")
+        throw AppError.installation("タイムアウト", message: "通知を受信できませんでした")
+    }
+    
+    // Wait for PlayCover's "App installed!" notification
+    private nonisolated func waitForPlayCoverNotification() async -> Bool {
+        await MainActor.run { currentStatus = "PlayCoverの通知を待機中..." }
+        
+        return await withCheckedContinuation { continuation in
+            var observer: NSObjectProtocol?
+            var timeoutTask: Task<Void, Never>?
+            
+            // Observe delivered notifications
+            observer = DistributedNotificationCenter.default().addObserver(
+                forName: NSNotification.Name("com.apple.UserNotificationCenter.delivered"),
+                object: nil,
+                queue: .main
+            ) { notification in
+                Task {
+                    await MainActor.run {
+                        self.currentStatus = "通知受信！"
+                    }
+                }
+                
+                if let observer = observer {
+                    DistributedNotificationCenter.default().removeObserver(observer)
+                }
+                timeoutTask?.cancel()
+                continuation.resume(returning: true)
+            }
+            
+            // Timeout after 5 minutes
+            timeoutTask = Task {
+                try? await Task.sleep(nanoseconds: 300_000_000_000) // 5 minutes
+                if let observer = observer {
+                    DistributedNotificationCenter.default().removeObserver(observer)
+                }
+                continuation.resume(returning: false)
+            }
+        }
     }
     
     // Quit PlayCover.app after successful installation
