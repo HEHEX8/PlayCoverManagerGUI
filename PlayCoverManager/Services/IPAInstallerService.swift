@@ -319,224 +319,79 @@ class IPAInstallerService {
     
     // MARK: - Installation Progress Monitoring
     
-    // Quit PlayCover.app after successful installation
-    private nonisolated func quitPlayCover() async {
-        do {
-            // Use AppleScript to quit PlayCover gracefully
-            _ = try await processRunner.run("/usr/bin/osascript", ["-e", "tell application \"PlayCover\" to quit"])
-            await MainActor.run { currentStatus = "PlayCoverを終了しました" }
-        } catch {
-            // Silently ignore errors (PlayCover might already be closed)
-        }
-    }
-    
-    // Try to access PlayCover's InstallVM directly (if available in runtime)
-    private func tryMonitorPlayCoverDirectly(bundleID: String) async -> Bool {
+    // Monitor PlayCover's InstallVM directly using runtime introspection
+    private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
+        await MainActor.run { currentStatus = "PlayCover内部監視を開始..." }
+        
         // Attempt to get PlayCover's InstallVM class dynamically
         guard let installVMClass = NSClassFromString("PlayCover.InstallVM") as? NSObject.Type else {
-            return false
+            await MainActor.run { currentStatus = "エラー: PlayCover.InstallVMクラスが見つかりません" }
+            throw AppError.installation("PlayCover内部監視に失敗", message: "InstallVMクラスにアクセスできません")
         }
         
         // Try to get the shared instance
         let sharedSelector = NSSelectorFromString("shared")
         guard installVMClass.responds(to: sharedSelector),
               let installVM = installVMClass.perform(sharedSelector)?.takeUnretainedValue() as? NSObject else {
-            return false
+            await MainActor.run { currentStatus = "エラー: InstallVM.sharedにアクセスできません" }
+            throw AppError.installation("PlayCover内部監視に失敗", message: "shared instanceが取得できません")
         }
+        
+        await MainActor.run { currentStatus = "InstallVMに接続しました" }
         
         // Monitor inProgress property
         var lastStatus: String? = nil
-        for _ in 0..<300 { // 5 minutes max (1 sec intervals)
+        let maxWait = 300 // 5 minutes
+        
+        for i in 0..<maxWait {
             // Check inProgress property
-            if let inProgress = installVM.value(forKey: "inProgress") as? Bool,
-               !inProgress {
-                // Installation completed
-                await MainActor.run { currentStatus = "完了" }
-                return true
+            if let inProgress = installVM.value(forKey: "inProgress") as? Bool {
+                if !inProgress {
+                    // Installation completed
+                    await MainActor.run { currentStatus = "完了検知 - 検証中..." }
+                    
+                    // Verify installation actually succeeded
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                    if try await verifyInstallationComplete(bundleID: bundleID) {
+                        await MainActor.run { currentStatus = "完了" }
+                        
+                        // Quit PlayCover after successful installation
+                        await quitPlayCover()
+                        return
+                    } else {
+                        await MainActor.run { currentStatus = "検証失敗 - 継続監視中..." }
+                    }
+                }
+            } else {
+                await MainActor.run { currentStatus = "警告: inProgressプロパティが読めません (\(i)秒)" }
             }
             
             // Get current status
             if let status = installVM.value(forKey: "status") as? NSObject,
                let rawValue = status.value(forKey: "rawValue") as? String {
                 if rawValue != lastStatus {
-                    await MainActor.run { currentStatus = "PlayCover: \(rawValue)" }
+                    await MainActor.run { currentStatus = "状態: \(rawValue)" }
                     lastStatus = rawValue
                 }
             }
             
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
         }
         
-        return false
+        throw AppError.installation("タイムアウト", message: "5分以内に完了しませんでした")
     }
     
-    private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        // Try PlayCover direct monitoring first
-        if await tryMonitorPlayCoverDirectly(bundleID: bundleID) {
-            // Verify installation actually succeeded
-            try await Task.sleep(nanoseconds: 2_000_000_000)
-            if try await verifyInstallationComplete(bundleID: bundleID) {
-                // Close PlayCover after successful installation
-                await quitPlayCover()
-                return
-            }
-            // Fall through to traditional monitoring if verification failed
+    // Quit PlayCover.app after successful installation
+    private nonisolated func quitPlayCover() async {
+        do {
+            _ = try await processRunner.run("/usr/bin/osascript", ["-e", "tell application \"PlayCover\" to quit"])
+            await MainActor.run { currentStatus = "PlayCoverを終了しました" }
+        } catch {
+            // Silently ignore errors
         }
-        
-        // Fall back to traditional file-based monitoring
-        let maxWait: TimeInterval = 300 // 5 minutes
-        let checkInterval: TimeInterval = 2
-        let stabilityThreshold: TimeInterval = 4
-        
-        let playCoverBundleID = "io.playcover.PlayCover"
-        let appSettingsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings", isDirectory: true)
-        let settingsFile = appSettingsDir.appendingPathComponent("\(bundleID).plist")
-        
-        var elapsed: TimeInterval = 0
-        var settingsUpdateCount = 0
-        var lastSettingsMTime: TimeInterval = 0
-        var lastStableMTime: TimeInterval = 0
-        var stableDuration: TimeInterval = 0
-        var firstUpdateTime: TimeInterval = 0
-        
-        // Initial settings file check
-        if FileManager.default.fileExists(atPath: settingsFile.path),
-           let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
-           let modDate = attributes[.modificationDate] as? Date {
-            lastSettingsMTime = modDate.timeIntervalSince1970
-        }
-        
-        while elapsed < maxWait {
-            // Check if PlayCover is still running (use pgrep for reliability)
-            let pgrepOutput = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
-            let isPlayCoverRunning = pgrepOutput != nil && !pgrepOutput!.isEmpty
-            
-            if !isPlayCoverRunning {
-                // PlayCover crashed or closed - verify installation
-                if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { currentStatus = "完了" }
-                    return
-                } else {
-                    throw AppError.installation("PlayCover が終了しました", message: "")
-                }
-            }
-            
-            // Check settings file updates
-            if FileManager.default.fileExists(atPath: settingsFile.path),
-               let attributes = try? FileManager.default.attributesOfItem(atPath: settingsFile.path),
-               let modDate = attributes[.modificationDate] as? Date {
-                let currentMTime = modDate.timeIntervalSince1970
-                
-                // Detect settings file update
-                if currentMTime != lastSettingsMTime && lastSettingsMTime > 0 {
-                    settingsUpdateCount += 1
-                    lastSettingsMTime = currentMTime
-                    
-                    if settingsUpdateCount == 1 {
-                        firstUpdateTime = elapsed
-                    }
-                }
-                
-                // Two-phase detection: 2nd update + stability check
-                if settingsUpdateCount >= 2 {
-                    // Verify file stability
-                    if currentMTime == lastStableMTime {
-                        stableDuration += checkInterval
-                        
-                        if stableDuration >= stabilityThreshold {
-                            // Check if PlayCover is still writing
-                            let lsofOutput = try? await processRunner.run("/usr/sbin/lsof", [settingsFile.path])
-                            let isPlayCoverWriting = lsofOutput?.contains("PlayCover") ?? false
-                            
-                            if !isPlayCoverWriting {
-                                // Final verification: check app actually exists
-                                if try await verifyInstallationComplete(bundleID: bundleID) {
-                                    // Additional check: ensure PlayCover didn't crash right after completion
-                                    try await Task.sleep(nanoseconds: 2_000_000_000) // 2 second delay
-                                    
-                                    let pgrepCheck = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
-                                    let stillRunning = pgrepCheck != nil && !pgrepCheck!.isEmpty
-                                    
-                                    if !stillRunning {
-                                        // PlayCover exited right after completion - re-verify
-                                        await MainActor.run { currentStatus = "最終確認中" }
-                                        try await Task.sleep(nanoseconds: 2_000_000_000)
-                                        
-                                        if try await verifyInstallationComplete(bundleID: bundleID) {
-                                            await MainActor.run { currentStatus = "完了" }
-                                            return
-                                        } else {
-                                            throw AppError.installation("完了直後にPlayCoverがクラッシュしました", message: "")
-                                        }
-                                    }
-                                    
-                                    await MainActor.run { currentStatus = "完了" }
-                                    return
-                                } else {
-                                    // Settings stable but app not installed - reset and continue
-                                    stableDuration = 0
-                                }
-                            } else {
-                                stableDuration = 0
-                            }
-                        }
-                    } else {
-                        lastStableMTime = currentMTime
-                        stableDuration = 0
-                    }
-                }
-                // Fallback: Single-update pattern (for very small apps)
-                else if settingsUpdateCount == 1 && firstUpdateTime > 0 {
-                    let timeSinceFirstUpdate = elapsed - firstUpdateTime
-                    if timeSinceFirstUpdate >= 8 {
-                        if currentMTime == lastStableMTime {
-                            stableDuration += checkInterval
-                            
-                            if stableDuration >= stabilityThreshold {
-                                // Final verification: check app actually exists
-                                if try await verifyInstallationComplete(bundleID: bundleID) {
-                                    // Additional check: ensure PlayCover didn't crash right after completion
-                                    try await Task.sleep(nanoseconds: 2_000_000_000) // 2 second delay
-                                    
-                                    let pgrepCheck = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
-                                    let stillRunning = pgrepCheck != nil && !pgrepCheck!.isEmpty
-                                    
-                                    if !stillRunning {
-                                        // PlayCover exited right after completion - re-verify
-                                        await MainActor.run { currentStatus = "最終確認中" }
-                                        try await Task.sleep(nanoseconds: 2_000_000_000)
-                                        
-                                        if try await verifyInstallationComplete(bundleID: bundleID) {
-                                            await MainActor.run { currentStatus = "完了" }
-                                            return
-                                        } else {
-                                            throw AppError.installation("完了直後にPlayCoverがクラッシュしました", message: "")
-                                        }
-                                    }
-                                    
-                                    await MainActor.run { currentStatus = "完了" }
-                                    return
-                                } else {
-                                    stableDuration = 0
-                                }
-                            }
-                        } else {
-                            lastStableMTime = currentMTime
-                            stableDuration = 0
-                        }
-                    }
-                }
-                
-                lastSettingsMTime = currentMTime
-            }
-            
-            try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
-            elapsed += checkInterval
-        }
-        
-        throw AppError.installation("タイムアウト", message: "")
     }
+    
+    // MARK: - Installation Verification
     
     private func verifyInstallationComplete(bundleID: String) async throws -> Bool {
         let playCoverBundleID = "io.playcover.PlayCover"
