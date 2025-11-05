@@ -8,6 +8,20 @@ final class PlayCoverEnvironmentService {
         self.processRunner = processRunner
         self.fileManager = fileManager
     }
+    
+    /// Check if the current macOS version supports ASIF format (Tahoe 26.0+)
+    func checkASIFSupport() throws {
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        
+        // macOS Tahoe is version 26.0
+        guard osVersion.majorVersion >= 26 else {
+            let versionString = "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
+            throw AppError.environment(
+                "macOS のバージョンが古すぎます",
+                message: "このアプリは macOS Tahoe 26.0 以降が必要です。\n\n現在のバージョン: macOS \(versionString)\n必要なバージョン: macOS Tahoe 26.0 以降\n\nシステムをアップデートしてから再度お試しください。"
+            )
+        }
+    }
 
     func detectPlayCover() throws -> PlayCoverPaths {
         let appURL = PlayCoverPaths.defaultApplicationURL

@@ -40,21 +40,14 @@ private struct GeneralSettingsView: View {
                     chooseStorageDirectory()
                 }
                 Toggle("マウント時に Finder に表示しない (-nobrowse)", isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }))
-                Picker("形式", selection: Binding<SettingsStore.DiskImageFormat>(get: { settingsStore.diskImageFormat }, set: { settingsStore.diskImageFormat = $0 })) {
-                    ForEach(SettingsStore.DiskImageFormat.allCases) { fmt in
-                        Text(fmt.localizedDescription).tag(fmt)
-                    }
+                LabeledContent("ディスクイメージ形式") {
+                    Text("ASIF（固定）")
+                        .font(.body)
                 }
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("推奨：ASIF（macOS Tahoe 専用、最速）")
+                    Text("ASIF 形式のみサポート（macOS Tahoe 26.0 以降専用）")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    Text("外部ドライブが APFS でない場合のみ「スパース HFS+」を選択してください。")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    Text("※ 形式変更は新規作成時のみ有効。既存イメージは再作成が必要です。")
-                        .font(.footnote)
-                        .foregroundStyle(.orange)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

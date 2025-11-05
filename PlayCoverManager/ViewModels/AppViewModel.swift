@@ -44,6 +44,9 @@ final class AppViewModel {
 
     private func runStartupChecks() async {
         do {
+            // Check macOS version first (ASIF requires Tahoe 26.0+)
+            try environmentService.checkASIFSupport()
+            
             let playCoverPaths = try environmentService.detectPlayCover()
             self.playCoverPaths = playCoverPaths
 
