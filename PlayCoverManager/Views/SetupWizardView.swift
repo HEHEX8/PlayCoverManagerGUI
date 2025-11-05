@@ -77,29 +77,70 @@ struct SetupWizardView: View {
                     .keyboardShortcut("o", modifiers: [.command])
             }
         case .selectStorage:
-            VStack(alignment: .leading, spacing: 12) {
-                if let storageURL = viewModel.storageURL {
-                    LabeledContent("現在の保存先") {
-                        Text(storageURL.path)
-                            .font(.system(.body, design: .monospaced))
+            VStack(alignment: .leading, spacing: 16) {
+                Group {
+                    if let storageURL = viewModel.storageURL {
+                        LabeledContent("現在の保存先") {
+                            Text(storageURL.path)
+                                .font(.system(.body, design: .monospaced))
+                        }
+                    } else {
+                        Text("保存先が未設定です。")
+                            .foregroundStyle(.secondary)
                     }
-                } else {
-                    Text("保存先が未設定です。")
+                    Button("保存先を選択", action: viewModel.chooseStorageDirectory)
+                        .keyboardShortcut("s", modifiers: [.command])
+                    Text("外部ストレージを推奨しますが必須ではありません。")
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                Button("保存先を選択", action: viewModel.chooseStorageDirectory)
-                    .keyboardShortcut("s", modifiers: [.command])
-                Text("外部ストレージを推奨しますが必須ではありません。").font(.footnote)
+                
+                Divider()
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("ディスクイメージ形式")
+                        .font(.headline)
+                    Picker("形式", selection: Binding(
+                        get: { settingsStore.diskImageFormat },
+                        set: { settingsStore.diskImageFormat = $0 }
+                    )) {
+                        ForEach(SettingsStore.DiskImageFormat.allCases) { fmt in
+                            Text(fmt.localizedDescription).tag(fmt)
+                        }
+                    }
+                    .pickerStyle(.radioGroup)
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("推奨：ASIF（macOS Tahoe 専用、最速）")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("外部ドライブが APFS でない場合のみ「スパース HFS+」を選択してください。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         case .prepareDiskImage:
             VStack(alignment: .leading, spacing: 12) {
                 if viewModel.isBusy {
                     ProgressView(viewModel.statusMessage)
                 }
-                Text("io.playcover.PlayCover.asif を作成・マウントします。")
+                let ext: String = {
+                    switch settingsStore.diskImageFormat {
+                    case .asif: return "asif"
+                    case .sparse, .sparseHFS: return "sparseimage"
+                    case .sparseBundle: return "sparsebundle"
+                    }
+                }()
+                Text("io.playcover.PlayCover.\(ext) を作成・マウントします。")
+                    .font(.body)
+                Text("形式: \(settingsStore.diskImageFormat.localizedDescription)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 if let dir = viewModel.storageURL ?? settingsStore.diskImageDirectory {
                     Text("保存先: \(dir.path)")
-                        .font(.system(.body, design: .monospaced))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
                 }
             }
         case .finished:
