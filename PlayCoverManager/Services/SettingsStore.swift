@@ -33,21 +33,33 @@ final class SettingsStore {
     enum DiskImageFormat: String, CaseIterable, Identifiable {
         case sparse
         case sparseBundle
+        case sparseHFS
         case asif
 
         var id: String { rawValue }
         var localizedDescription: String {
             switch self {
             case .sparse:
-                return "スパース（単一ファイル）"
+                return "スパース APFS（単一ファイル）"
             case .sparseBundle:
-                return "スパースバンドル（分割ファイル）"
+                return "スパースバンドル APFS（分割ファイル）"
+            case .sparseHFS:
+                return "スパース HFS+（互換性重視）"
             case .asif:
-                return "ASIF（Tahoe）"
+                return "ASIF（Tahoe、最速）"
+            }
+        }
+        
+        var requiresAPFS: Bool {
+            switch self {
+            case .sparse, .sparseBundle, .asif:
+                return true
+            case .sparseHFS:
+                return false
             }
         }
 
-        static let `default`: DiskImageFormat = .sparse
+        static let `default`: DiskImageFormat = .sparseHFS
     }
 
     var diskImageDirectory: URL? = nil {

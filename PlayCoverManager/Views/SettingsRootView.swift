@@ -45,6 +45,9 @@ private struct GeneralSettingsView: View {
                         Text(fmt.localizedDescription).tag(fmt)
                     }
                 }
+                Text("外部ドライブが APFS でない場合は「スパース HFS+」を選択してください。ASIF は最速ですが APFS 必須です。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
         }
     }

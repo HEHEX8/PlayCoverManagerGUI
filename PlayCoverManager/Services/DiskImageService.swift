@@ -33,7 +33,7 @@ final class DiskImageService {
         }
         let ext: String
         switch settings.diskImageFormat {
-        case .sparse:
+        case .sparse, .sparseHFS:
             ext = "sparseimage"
         case .sparseBundle:
             ext = "sparsebundle"
@@ -110,19 +110,46 @@ final class DiskImageService {
         } else {
             // hdiutil create for sparse/sparsebundle
             let typeFlag: String
+            let filesystem: String
             switch settings.diskImageFormat {
             case .sparse:
                 typeFlag = "SPARSE"
+                filesystem = "APFS"
             case .sparseBundle:
                 typeFlag = "SPARSEBUNDLE"
+                filesystem = "APFS"
+            case .sparseHFS:
+                typeFlag = "SPARSE"
+                filesystem = "HFS+J"
             case .asif:
                 typeFlag = "ASIF" // unreachable
+                filesystem = "APFS"
             }
+            
+            // Check if parent directory filesystem is APFS (required for APFS sparse images)
+            if settings.diskImageFormat.requiresAPFS {
+                let parentURL = imageURL.deletingLastPathComponent()
+                if let volumeURL = try? parentURL.resourceValues(forKeys: [.volumeURLKey]).volumeURL {
+                    let result = try? processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", volumeURL.path])
+                    if let data = result?.stdout.data(using: .utf8),
+                       let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                       let filesystemType = plist["FilesystemType"] as? String {
+                        
+                        if filesystemType != "apfs" {
+                            throw AppError.diskImage(
+                                "APFS ディスクイメージを作成できません",
+                                message: "保存先のファイルシステムが \(filesystemType) です。APFS 形式が選択されていますが、保存先が APFS でないため作成できません。設定で「スパース HFS+（互換性重視）」を選択するか、APFS ボリュームを保存先に指定してください。"
+                            )
+                        }
+                    }
+                }
+            }
+            
             var args: [String] = [
                 "create",
                 "-size", "50g",
                 "-type", typeFlag,
-                "-fs", "APFS",
+                "-fs", filesystem,
                 "-volname", volName,
                 imageURL.path
             ]
