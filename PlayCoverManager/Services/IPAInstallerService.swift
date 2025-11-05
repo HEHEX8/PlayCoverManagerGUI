@@ -488,6 +488,17 @@ class IPAInstallerService {
         return false
     }
     
+    // MARK: - App Running Check
+    
+    nonisolated func isAppRunning(bundleID: String) async -> Bool {
+        // NSRunningApplication を使用（Process よりも安全で MainActor の影響を受けない）
+        let runningApps = NSWorkspace.shared.runningApplications
+        let isRunning = runningApps.contains { app in
+            app.bundleIdentifier == bundleID && !app.isTerminated
+        }
+        return isRunning
+    }
+    
     // MARK: - Batch IPA Analysis
     
     func analyzeIPAs(_ ipaURLs: [URL]) async -> [IPAInfo] {
@@ -531,6 +542,16 @@ class IPAInstallerService {
     nonisolated func installSingleIPA(_ info: IPAInfo) async throws {
         await MainActor.run {
             currentStatus = "\(info.appName) をインストール中"
+        }
+        
+        // Check if app is running (for upgrade/reinstall cases)
+        if info.installType != .newInstall {
+            await MainActor.run {
+                currentStatus = "アプリの実行状態を確認中"
+            }
+            if await isAppRunning(bundleID: info.bundleID) {
+                throw AppError.installation("アプリが実行中のため、インストールできません", message: "アプリを終了してから再度お試しください")
+            }
         }
         
         // Step 1: Create disk image
