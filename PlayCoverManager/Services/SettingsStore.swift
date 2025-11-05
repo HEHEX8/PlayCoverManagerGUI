@@ -1,10 +1,13 @@
 import Foundation
+import Observation
 
-final class SettingsStore: ObservableObject {
+@Observable
+final class SettingsStore {
     private enum Keys {
         static let diskImageDirectory = "diskImageDirectory"
         static let nobrowseEnabled = "nobrowseEnabled"
         static let defaultDataHandling = "defaultDataHandling"
+        static let imageFormat = "diskImageFormat"
     }
 
     enum InternalDataStrategy: String, CaseIterable, Identifiable {
@@ -27,16 +30,40 @@ final class SettingsStore: ObservableObject {
         static let `default`: InternalDataStrategy = .mergeThenDelete
     }
 
-    @Published var diskImageDirectory: URL? {
+    enum DiskImageFormat: String, CaseIterable, Identifiable {
+        case sparse
+        case sparseBundle
+        case asif
+
+        var id: String { rawValue }
+        var localizedDescription: String {
+            switch self {
+            case .sparse:
+                return "スパース（単一ファイル）"
+            case .sparseBundle:
+                return "スパースバンドル（分割ファイル）"
+            case .asif:
+                return "ASIF（Tahoe）"
+            }
+        }
+
+        static let `default`: DiskImageFormat = .sparse
+    }
+
+    var diskImageDirectory: URL? = nil {
         didSet { saveDiskImageDirectory() }
     }
 
-    @Published var nobrowseEnabled: Bool {
+    var nobrowseEnabled: Bool = true {
         didSet { UserDefaults.standard.set(nobrowseEnabled, forKey: Keys.nobrowseEnabled) }
     }
 
-    @Published var defaultDataHandling: InternalDataStrategy {
+    var defaultDataHandling: InternalDataStrategy = .default {
         didSet { UserDefaults.standard.set(defaultDataHandling.rawValue, forKey: Keys.defaultDataHandling) }
+    }
+
+    var diskImageFormat: DiskImageFormat = .default {
+        didSet { UserDefaults.standard.set(diskImageFormat.rawValue, forKey: Keys.imageFormat) }
     }
 
     init(userDefaults: UserDefaults = .standard) {
@@ -55,6 +82,13 @@ final class SettingsStore: ObservableObject {
         } else {
             defaultDataHandling = .default
             userDefaults.set(defaultDataHandling.rawValue, forKey: Keys.defaultDataHandling)
+        }
+        if let rawFormat = userDefaults.string(forKey: Keys.imageFormat),
+           let fmt = DiskImageFormat(rawValue: rawFormat) {
+            diskImageFormat = fmt
+        } else {
+            diskImageFormat = .default
+            userDefaults.set(diskImageFormat.rawValue, forKey: Keys.imageFormat)
         }
     }
 

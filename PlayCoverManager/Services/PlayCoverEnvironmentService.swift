@@ -50,7 +50,7 @@ final class PlayCoverEnvironmentService {
 
     private func isVolumeMounted(at mountPoint: URL, expectedVolumeName: String) async -> Bool {
         do {
-            let result = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
+            let result = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
             guard let data = result.stdout.data(using: .utf8) else { return false }
             let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
             if let dict = plist as? [String: Any], let volumeName = dict["VolumeName"] as? String {

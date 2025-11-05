@@ -54,4 +54,47 @@ final class ProcessRunner {
             }
         }
     }
+
+    func runSync(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil) throws -> CommandResult {
+        let process = Process()
+        process.launchPath = launchPath
+        process.arguments = arguments
+        if let currentDirectoryURL {
+            process.currentDirectoryURL = currentDirectoryURL
+        }
+        if let environment {
+            process.environment = environment
+        }
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+
+        try process.run()
+        process.waitUntilExit()
+
+        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        let stdoutString = String(data: stdoutData, encoding: .utf8) ?? ""
+        let stderrString = String(data: stderrData, encoding: .utf8) ?? ""
+        let result = CommandResult(terminationStatus: process.terminationStatus, stdout: stdoutString, stderr: stderrString)
+
+        if result.succeeded {
+            return result
+        } else {
+            throw ProcessRunnerError.commandFailed(command: [launchPath] + arguments, exitCode: result.terminationStatus, stderr: result.stderr)
+        }
+    }
+}
+
+extension ProcessRunnerError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .commandFailed(let command, let exitCode, let stderr):
+            let cmd = command.joined(separator: " ")
+            let tail = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+            return "Command failed (exit code: \(exitCode))\n\(cmd)\n\(tail)"
+        }
+    }
 }

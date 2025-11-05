@@ -1,8 +1,10 @@
 import Foundation
 import AppKit
+import Observation
 
 @MainActor
-final class SetupWizardViewModel: ObservableObject {
+@Observable
+final class SetupWizardViewModel {
     enum Step: Int, CaseIterable, Identifiable {
         case installPlayCover
         case selectStorage
@@ -38,12 +40,12 @@ final class SetupWizardViewModel: ObservableObject {
         }
     }
 
-    @Published var currentStep: Step
-    @Published var isBusy = false
-    @Published var statusMessage: String = ""
-    @Published var error: AppError?
-    @Published var storageURL: URL?
-    @Published var completionMessage: String = "セットアップが完了しました。"
+    var currentStep: Step
+    var isBusy = false
+    var statusMessage: String = ""
+    var error: AppError?
+    var storageURL: URL?
+    var completionMessage: String = "セットアップが完了しました。"
 
     var onCompletion: (() -> Void)?
 

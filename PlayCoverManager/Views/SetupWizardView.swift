@@ -1,9 +1,10 @@
 import SwiftUI
+import Observation
 
 struct SetupWizardView: View {
-    @ObservedObject var viewModel: SetupWizardViewModel
+    @Bindable var viewModel: SetupWizardViewModel
     let playCoverPaths: PlayCoverPaths?
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         HStack(spacing: 24) {
@@ -111,3 +112,4 @@ struct SetupWizardView: View {
         }
     }
 }
+

@@ -1,9 +1,10 @@
 import SwiftUI
 import AppKit
+import Observation
 
 struct QuickLauncherView: View {
-    @ObservedObject var viewModel: LauncherViewModel
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Bindable var viewModel: LauncherViewModel
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         NavigationSplitView {
@@ -172,3 +173,4 @@ private struct AppDetailView: View {
         .padding(24)
     }
 }
+

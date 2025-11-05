@@ -33,11 +33,17 @@ final class InstallerService {
     }
 
     private func extractBundleIdentifier(from url: URL) throws -> String {
-        try extractInfoPlistValue(from: url, key: "CFBundleIdentifier") as? String ?? { throw AppError.installation("Bundle ID を取得できません", message: url.lastPathComponent) }()
+        if let value = try extractInfoPlistValue(from: url, key: "CFBundleIdentifier") as? String {
+            return value
+        }
+        throw AppError.installation("Bundle ID を取得できません", message: url.lastPathComponent)
     }
 
     private func extractDisplayName(from url: URL) throws -> String? {
-        (try extractInfoPlistValue(from: url, key: "CFBundleDisplayName") as? String) ?? (try extractInfoPlistValue(from: url, key: "CFBundleName") as? String)
+        if let value = try extractInfoPlistValue(from: url, key: "CFBundleDisplayName") as? String {
+            return value
+        }
+        return try extractInfoPlistValue(from: url, key: "CFBundleName") as? String
     }
 
     private func extractVersion(from url: URL) throws -> String? {
@@ -48,7 +54,7 @@ final class InstallerService {
         let tempDirectory = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true).appendingPathComponent(UUID().uuidString)
         try fileManager.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: tempDirectory) }
-        _ = try processRunner.run("/usr/bin/unzip", ["-qq", url.path, "-d", tempDirectory.path])
+        _ = try processRunner.runSync("/usr/bin/unzip", ["-qq", url.path, "-d", tempDirectory.path])
         let payloadURL = tempDirectory.appendingPathComponent("Payload")
         guard let appBundleURL = try fileManager.contentsOfDirectory(at: payloadURL, includingPropertiesForKeys: nil, options: []).first(where: { $0.pathExtension == "app" }) else {
             throw AppError.installation("IPA の構造が不正です", message: url.lastPathComponent)
@@ -65,6 +71,7 @@ final class InstallerService {
     func installIPA(_ ipa: IPAInfo, via playCoverApp: URL) async throws {
         // Placeholder: Future implementation to automate PlayCover CLI / AppleScript
         // For now, we open PlayCover and let user complete installation manually.
-        try NSWorkspace.shared.open([ipa.fileURL], withApplicationAt: playCoverApp, configuration: NSWorkspace.OpenConfiguration())
+        try await NSWorkspace.shared.open([ipa.fileURL], withApplicationAt: playCoverApp, configuration: NSWorkspace.OpenConfiguration())
     }
 }
+

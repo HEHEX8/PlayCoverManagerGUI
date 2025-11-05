@@ -1,9 +1,10 @@
 import SwiftUI
 import AppKit
+import Observation
 
 struct AppRootView: View {
-    @EnvironmentObject private var appViewModel: AppViewModel
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Environment(AppViewModel.self) private var appViewModel
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         Group {
@@ -41,7 +42,6 @@ struct AppRootView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .onAppear { appViewModel.onAppear() }
-        .environmentObject(settingsStore)
     }
 }
 

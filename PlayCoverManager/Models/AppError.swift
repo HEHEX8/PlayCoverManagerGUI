@@ -37,4 +37,10 @@ struct AppError: Identifiable, Equatable, Error {
     static func unknown(_ title: String, message: String, underlying: Error? = nil) -> AppError {
         .init(category: .unknown, title: title, message: message, underlying: underlying)
     }
+
+    static func == (lhs: AppError, rhs: AppError) -> Bool {
+        return lhs.category == rhs.category &&
+               lhs.title == rhs.title &&
+               lhs.message == rhs.message
+    }
 }

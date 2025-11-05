@@ -46,11 +46,11 @@ final class LauncherService {
         return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
     }
 
-    func openApp(_ app: PlayCoverApp) throws {
+    func openApp(_ app: PlayCoverApp) async throws {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
         configuration.promptsUserIfNeeded = true
-        try NSWorkspace.shared.openApplication(at: app.appURL, configuration: configuration)
+        try await NSWorkspace.shared.openApplication(at: app.appURL, configuration: configuration)
         writeLastLaunchFlag(for: app.bundleIdentifier)
     }
 

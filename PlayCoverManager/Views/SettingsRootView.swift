@@ -1,25 +1,22 @@
 import SwiftUI
 import AppKit
+import Observation
 
 struct SettingsRootView: View {
-    @EnvironmentObject private var settingsStore: SettingsStore
-    @EnvironmentObject private var appViewModel: AppViewModel
+    @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppViewModel.self) private var appViewModel
 
     var body: some View {
         TabView {
             GeneralSettingsView()
-                .environmentObject(settingsStore)
                 .tabItem {
                     Label("一般", systemImage: "gear")
                 }
             DataSettingsView()
-                .environmentObject(settingsStore)
                 .tabItem {
                     Label("データ", systemImage: "internaldrive")
                 }
             MaintenanceSettingsView()
-                .environmentObject(settingsStore)
-                .environmentObject(appViewModel)
                 .tabItem {
                     Label("メンテナンス", systemImage: "wrench")
                 }
@@ -30,7 +27,7 @@ struct SettingsRootView: View {
 }
 
 private struct GeneralSettingsView: View {
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         Form {
@@ -42,7 +39,12 @@ private struct GeneralSettingsView: View {
                 Button("保存先を変更") {
                     chooseStorageDirectory()
                 }
-                Toggle("マウント時に Finder に表示しない (-nobrowse)", isOn: $settingsStore.nobrowseEnabled)
+                Toggle("マウント時に Finder に表示しない (-nobrowse)", isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }))
+                Picker("形式", selection: Binding<SettingsStore.DiskImageFormat>(get: { settingsStore.diskImageFormat }, set: { settingsStore.diskImageFormat = $0 })) {
+                    ForEach(SettingsStore.DiskImageFormat.allCases) { fmt in
+                        Text(fmt.localizedDescription).tag(fmt)
+                    }
+                }
             }
         }
     }
@@ -60,12 +62,12 @@ private struct GeneralSettingsView: View {
 }
 
 private struct DataSettingsView: View {
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         Form {
             Section(header: Text("内部データ処理の既定値")) {
-                Picker("既定の処理", selection: $settingsStore.defaultDataHandling) {
+                Picker("既定の処理", selection: Binding<SettingsStore.InternalDataStrategy>(get: { settingsStore.defaultDataHandling }, set: { settingsStore.defaultDataHandling = $0 })) {
                     ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
                         Text(strategy.localizedDescription).tag(strategy)
                     }
@@ -81,8 +83,8 @@ private struct DataSettingsView: View {
 }
 
 private struct MaintenanceSettingsView: View {
-    @EnvironmentObject private var settingsStore: SettingsStore
-    @EnvironmentObject private var appViewModel: AppViewModel
+    @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppViewModel.self) private var appViewModel
 
     var body: some View {
         Form {
@@ -101,3 +103,4 @@ private struct MaintenanceSettingsView: View {
         }
     }
 }
+

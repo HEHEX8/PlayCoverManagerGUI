@@ -31,25 +31,42 @@ final class DiskImageService {
         guard let base = settings.diskImageDirectory else {
             throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "設定画面から保存先を指定してください。")
         }
-        return base.appendingPathComponent("\(bundleIdentifier).asif")
+        let ext: String
+        switch settings.diskImageFormat {
+        case .sparse:
+            ext = "sparseimage"
+        case .sparseBundle:
+            ext = "sparsebundle"
+        case .asif:
+            ext = "asif"
+        }
+        return base.appendingPathComponent("\(bundleIdentifier).\(ext)")
     }
 
     func diskImageDescriptor(for bundleIdentifier: String, containerURL: URL) throws -> DiskImageDescriptor {
         let imageURL = try diskImageURL(for: bundleIdentifier)
         let exists = fileManager.fileExists(atPath: imageURL.path)
         let mountPoint = containerURL
-        var resourceValues = try? mountPoint.resourceValues(forKeys: [.volumeURLKey])
-        var isMounted = resourceValues?.volumeURL != nil
-        if !isMounted {
-            // Fallback: check if mount point is currently a disk image device by checking system attributes
-            var isDirectory: ObjCBool = false
-            if fileManager.fileExists(atPath: mountPoint.path, isDirectory: &isDirectory), isDirectory.boolValue {
-                // Directory exists but no volume info; treat as not mounted
-            } else {
-                isMounted = false
+
+        // Determine if mountPoint is currently a mounted volume by asking diskutil synchronously
+        var isMounted = false
+        var volumePath: URL? = nil
+        do {
+            let result = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
+            if let data = result.stdout.data(using: .utf8),
+               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let volumeName = plist["VolumeName"] as? String {
+                // Compare expected volume name with the image file name (without extension)
+                let expected = imageURL.deletingPathExtension().lastPathComponent
+                isMounted = (volumeName == expected)
+                volumePath = isMounted ? mountPoint : nil
             }
+        } catch {
+            // If diskutil fails, we conservatively treat it as not mounted
+            isMounted = false
+            volumePath = nil
         }
-        let volumePath: URL? = isMounted ? mountPoint : nil
+
         return DiskImageDescriptor(bundleIdentifier: bundleIdentifier,
                                    imageURL: imageURL,
                                    mountPoint: mountPoint,
@@ -65,14 +82,30 @@ final class DiskImageService {
         }
         try fileManager.createDirectory(at: imageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         let volName = volumeName ?? bundleIdentifier
-        let args = [
-            "image", "create", "blank",
-            "--format", "ASIF",
-            "--size", "50G",
-            "--volumeName", volName,
+        // Select image type based on settings
+        let typeFlag: String
+        switch settings.diskImageFormat {
+        case .sparse:
+            typeFlag = "SPARSE"
+        case .sparseBundle:
+            typeFlag = "SPARSEBUNDLE"
+        case .asif:
+            typeFlag = "ASIF"
+        }
+        var args: [String] = [
+            "create",
+            "-size", "50g",
+            "-type", typeFlag,
+            "-fs", "APFS",
+            "-volname", volName,
             imageURL.path
         ]
-        _ = try await processRunner.run("/usr/sbin/diskutil", args)
+        // Optionally tune band size for sparsebundle
+        if settings.diskImageFormat == .sparseBundle {
+            // 32 MiB bands can improve performance with many small writes
+            args.insert(contentsOf: ["-imagekey", "sparse-band-size=33554432"], at: 1)
+        }
+        _ = try await processRunner.run("/usr/bin/hdiutil", args)
         return imageURL
     }
 

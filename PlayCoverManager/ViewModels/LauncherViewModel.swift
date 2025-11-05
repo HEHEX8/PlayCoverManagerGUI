@@ -1,8 +1,10 @@
 import Foundation
 import AppKit
+import Observation
 
 @MainActor
-final class LauncherViewModel: ObservableObject {
+@Observable
+final class LauncherViewModel {
     struct DataHandlingRequest: Identifiable {
         let id = UUID()
         let app: PlayCoverApp
@@ -14,17 +16,17 @@ final class LauncherViewModel: ObservableObject {
         let containerURL: URL
     }
 
-    @Published var apps: [PlayCoverApp]
-    @Published var filteredApps: [PlayCoverApp]
-    @Published var searchText: String = "" {
+    var apps: [PlayCoverApp]
+    var filteredApps: [PlayCoverApp]
+    var searchText: String = "" {
         didSet { applySearch() }
     }
-    @Published var selectedApp: PlayCoverApp?
-    @Published var isBusy: Bool = false
-    @Published var error: AppError?
-    @Published var pendingDataHandling: DataHandlingRequest?
-    @Published var pendingImageCreation: PlayCoverApp?
-    @Published var statusMessage: String = ""
+    var selectedApp: PlayCoverApp?
+    var isBusy: Bool = false
+    var error: AppError?
+    var pendingDataHandling: DataHandlingRequest?
+    var pendingImageCreation: PlayCoverApp?
+    var statusMessage: String = ""
 
     private let playCoverPaths: PlayCoverPaths
     private let diskImageService: DiskImageService
@@ -102,9 +104,9 @@ final class LauncherViewModel: ObservableObject {
                 try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: settings.nobrowseEnabled)
             }
 
-            try launcherService.openApp(app)
+            try await launcherService.openApp(app)
             pendingLaunchContext = nil
-            try await refresh()
+            await refresh()
         } catch let error as AppError {
             self.error = error
         } catch {
@@ -251,3 +253,4 @@ final class LauncherViewModel: ObservableObject {
         }
     }
 }
+
