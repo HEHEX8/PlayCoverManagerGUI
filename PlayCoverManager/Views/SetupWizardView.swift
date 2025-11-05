@@ -71,10 +71,43 @@ struct SetupWizardView: View {
     private var content: some View {
         switch viewModel.currentStep {
         case .installPlayCover:
-            VStack(alignment: .leading, spacing: 12) {
-                Text("PlayCover.app が \(PlayCoverPaths.defaultApplicationURL.path) に存在する必要があります。")
-                Button("PlayCover サイトを開く", action: viewModel.openPlayCoverWebsite)
-                    .keyboardShortcut("o", modifiers: [.command])
+            VStack(alignment: .leading, spacing: 16) {
+                if let paths = playCoverPaths ?? viewModel.detectedPlayCoverPaths {
+                    // PlayCover detected
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PlayCover が見つかりました")
+                                .font(.headline)
+                            Text(paths.applicationURL.path)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding()
+                    .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                } else {
+                    // PlayCover not detected
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PlayCover が見つかりません")
+                                .font(.headline)
+                            Text("PlayCover.app を \(PlayCoverPaths.defaultApplicationURL.path) にインストールしてください。")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding()
+                    .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                    
+                    Button("PlayCover サイトを開く", action: viewModel.openPlayCoverWebsite)
+                        .keyboardShortcut("o", modifiers: [.command])
+                }
             }
         case .selectStorage:
             VStack(alignment: .leading, spacing: 16) {
@@ -118,6 +151,12 @@ struct SetupWizardView: View {
 
     private var buttonTitle: String {
         switch viewModel.currentStep {
+        case .installPlayCover:
+            if playCoverPaths != nil || viewModel.detectedPlayCoverPaths != nil {
+                return "次へ"
+            } else {
+                return "確認"
+            }
         case .finished:
             return "完了"
         case .prepareDiskImage:

@@ -53,7 +53,7 @@ final class SetupWizardViewModel {
     private let environmentService: PlayCoverEnvironmentService
     private let diskImageService: DiskImageService
     private let context: AppPhase.SetupContext
-    private var detectedPlayCoverPaths: PlayCoverPaths?
+    var detectedPlayCoverPaths: PlayCoverPaths?
 
     init(settings: SettingsStore,
          environmentService: PlayCoverEnvironmentService,
@@ -67,6 +67,12 @@ final class SetupWizardViewModel {
         self.detectedPlayCoverPaths = initialPlayCoverPaths
         if context.missingPlayCover {
             currentStep = .installPlayCover
+            // Try to detect PlayCover immediately on init
+            Task { @MainActor in
+                if let paths = try? environmentService.detectPlayCover() {
+                    self.detectedPlayCoverPaths = paths
+                }
+            }
         } else if settings.diskImageDirectory == nil {
             currentStep = .selectStorage
         } else {
