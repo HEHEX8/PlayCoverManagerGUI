@@ -367,11 +367,22 @@ private struct iOSAppIconView: View {
     }
 }
 
-// App detail and settings sheet
+// App detail and settings sheet with tabbed interface
 private struct AppDetailSheet: View {
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedTab: SettingsTab = .basic
+    
+    enum SettingsTab: String, CaseIterable, Identifiable {
+        case basic = "基本"
+        case graphics = "グラフィックス"
+        case controls = "コントロール"
+        case advanced = "詳細"
+        case info = "情報"
+        
+        var id: String { rawValue }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -405,47 +416,63 @@ private struct AppDetailSheet: View {
                 }
                 
                 Spacer()
+                
+                // Quick launch button
+                Button {
+                    dismiss()
+                    viewModel.launch(app: app)
+                } label: {
+                    Label("起動", systemImage: "play.circle.fill")
+                }
+                .buttonStyle(.borderedProminent)
             }
             .padding(24)
             
             Divider()
             
-            // Actions
-            Form {
-                Section("操作") {
-                    Button {
-                        dismiss()
-                        viewModel.launch(app: app)
-                    } label: {
-                        Label("アプリを起動", systemImage: "play.circle.fill")
-                    }
-                    
-                    Button {
-                        NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                    } label: {
-                        Label("Finder で表示", systemImage: "folder")
-                    }
-                }
-                
-                Section("アプリ情報") {
-                    LabeledContent("パス") {
-                        Text(app.appURL.path)
-                            .font(.system(.caption, design: .monospaced))
-                            .textSelection(.enabled)
-                    }
-                }
-                
-                Section("アプリ固有設定") {
-                    PerAppSettingsView(app: app, viewModel: viewModel)
+            // Tab selector
+            Picker("", selection: $selectedTab) {
+                ForEach(SettingsTab.allCases) { tab in
+                    Text(tab.rawValue).tag(tab)
                 }
             }
-            .formStyle(.grouped)
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
             
-            Spacer()
+            Divider()
+            
+            // Tab content
+            ScrollView {
+                Group {
+                    switch selectedTab {
+                    case .basic:
+                        BasicSettingsView(app: app, viewModel: viewModel)
+                    case .graphics:
+                        GraphicsSettingsView(app: app)
+                    case .controls:
+                        ControlsSettingsView(app: app)
+                    case .advanced:
+                        AdvancedSettingsView(app: app)
+                    case .info:
+                        InfoView(app: app)
+                    }
+                }
+                .padding(24)
+            }
+            
+            Divider()
             
             // Footer
             HStack {
+                Button {
+                    NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                } label: {
+                    Label("Finder で表示", systemImage: "folder")
+                }
+                
                 Spacer()
+                
                 Button("閉じる") {
                     dismiss()
                 }
@@ -453,7 +480,7 @@ private struct AppDetailSheet: View {
             }
             .padding()
         }
-        .frame(width: 500, height: 500)
+        .frame(width: 700, height: 600)
     }
 }
 
@@ -670,8 +697,9 @@ private struct RippleEffect: View {
     }
 }
 
-// Per-app settings view
-private struct PerAppSettingsView: View {
+// MARK: - Basic Settings Tab
+
+private struct BasicSettingsView: View {
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
@@ -715,9 +743,12 @@ private struct PerAppSettingsView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("基本設定")
+                .font(.headline)
+            
             // Nobrowse setting
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Finder に表示しない (nobrowse)")
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -746,7 +777,7 @@ private struct PerAppSettingsView: View {
             Divider()
             
             // Data handling strategy
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("内部データ処理方法")
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -782,8 +813,10 @@ private struct PerAppSettingsView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.red)
+            
+            Spacer()
         }
-        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
             loadCurrentSettings()
         }
@@ -831,5 +864,369 @@ private struct PerAppSettingsView: View {
         perAppSettings.removeSettings(for: app.bundleIdentifier)
         nobrowseOverride = .useGlobal
         dataHandlingOverride = .useGlobal
+    }
+}
+
+// MARK: - Graphics Settings Tab
+
+private struct GraphicsSettingsView: View {
+    let app: PlayCoverApp
+    @State private var settings: PlayCoverAppSettings
+    
+    init(app: PlayCoverApp) {
+        self.app = app
+        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("グラフィックス設定")
+                .font(.headline)
+            
+            // iOS Device Model
+            VStack(alignment: .leading, spacing: 8) {
+                Text("iOS デバイスモデル")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Picker("", selection: $settings.iosDeviceModel) {
+                    ForEach(PlayCoverAppSettings.IOSDeviceModel.allCases) { model in
+                        VStack(alignment: .leading) {
+                            Text(model.displayName)
+                            Text(model.description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .tag(model.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: settings.iosDeviceModel) { _, _ in saveSettings() }
+                
+                if let model = PlayCoverAppSettings.IOSDeviceModel(rawValue: settings.iosDeviceModel) {
+                    Text(model.description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            Divider()
+            
+            // Resolution
+            VStack(alignment: .leading, spacing: 8) {
+                Text("解像度")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Picker("", selection: $settings.resolution) {
+                    ForEach(PlayCoverAppSettings.Resolution.allCases) { resolution in
+                        Text(resolution.displayName).tag(resolution.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: settings.resolution) { _, _ in saveSettings() }
+                
+                // Custom resolution fields
+                if settings.resolution == PlayCoverAppSettings.Resolution.custom.rawValue {
+                    HStack {
+                        TextField("幅", value: $settings.windowWidth, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 100)
+                            .onChange(of: settings.windowWidth) { _, _ in saveSettings() }
+                        
+                        Text("×")
+                        
+                        TextField("高さ", value: $settings.windowHeight, format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 100)
+                            .onChange(of: settings.windowHeight) { _, _ in saveSettings() }
+                    }
+                }
+            }
+            
+            Divider()
+            
+            // Aspect Ratio
+            VStack(alignment: .leading, spacing: 8) {
+                Text("アスペクト比")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Picker("", selection: $settings.aspectRatio) {
+                    ForEach(PlayCoverAppSettings.AspectRatio.allCases) { ratio in
+                        Text(ratio.displayName).tag(ratio.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: settings.aspectRatio) { _, _ in saveSettings() }
+            }
+            
+            Divider()
+            
+            // Display Options
+            VStack(alignment: .leading, spacing: 8) {
+                Text("表示オプション")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Toggle("ノッチを表示", isOn: $settings.notch)
+                    .onChange(of: settings.notch) { _, _ in saveSettings() }
+                
+                Toggle("タイトルバーを非表示", isOn: $settings.hideTitleBar)
+                    .onChange(of: settings.hideTitleBar) { _, _ in saveSettings() }
+                
+                Toggle("フローティングウィンドウ", isOn: $settings.floatingWindow)
+                    .onChange(of: settings.floatingWindow) { _, _ in saveSettings() }
+                
+                Toggle("Metal HUD を表示", isOn: $settings.metalHUD)
+                    .onChange(of: settings.metalHUD) { _, _ in saveSettings() }
+            }
+            
+            Divider()
+            
+            // Display Sleep
+            Toggle("ディスプレイスリープを無効化", isOn: $settings.disableTimeout)
+                .onChange(of: settings.disableTimeout) { _, _ in saveSettings() }
+            
+            Text("アプリ実行中にディスプレイが自動的にスリープするのを防ぎます。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private func saveSettings() {
+        try? PlayCoverAppSettingsStore.save(settings, for: app.bundleIdentifier)
+    }
+}
+
+// MARK: - Controls Settings Tab
+
+private struct ControlsSettingsView: View {
+    let app: PlayCoverApp
+    @State private var settings: PlayCoverAppSettings
+    
+    init(app: PlayCoverApp) {
+        self.app = app
+        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("コントロール設定")
+                .font(.headline)
+            
+            // Keymapping
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("キーマッピングを有効化", isOn: $settings.keymapping)
+                    .onChange(of: settings.keymapping) { _, _ in saveSettings() }
+                
+                Text("画面上のタッチ操作をキーボード/マウスに割り当てます。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Divider()
+            
+            // Mouse Sensitivity
+            VStack(alignment: .leading, spacing: 8) {
+                Text("マウス感度: \(Int(settings.sensitivity))")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Slider(value: $settings.sensitivity, in: 0...100, step: 1)
+                    .onChange(of: settings.sensitivity) { _, _ in saveSettings() }
+                
+                Text("マウスカーソルの移動速度を調整します。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Divider()
+            
+            // Input Options
+            VStack(alignment: .leading, spacing: 8) {
+                Text("入力オプション")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Toggle("テキスト入力時にキーマッピングを無効化", isOn: $settings.noKMOnInput)
+                    .onChange(of: settings.noKMOnInput) { _, _ in saveSettings() }
+                
+                Toggle("スクロールホイールを有効化", isOn: $settings.enableScrollWheel)
+                    .onChange(of: settings.enableScrollWheel) { _, _ in saveSettings() }
+                
+                Toggle("内蔵マウスを無効化", isOn: $settings.disableBuiltinMouse)
+                    .onChange(of: settings.disableBuiltinMouse) { _, _ in saveSettings() }
+            }
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private func saveSettings() {
+        try? PlayCoverAppSettingsStore.save(settings, for: app.bundleIdentifier)
+    }
+}
+
+// MARK: - Advanced Settings Tab
+
+private struct AdvancedSettingsView: View {
+    let app: PlayCoverApp
+    @State private var settings: PlayCoverAppSettings
+    
+    init(app: PlayCoverApp) {
+        self.app = app
+        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("詳細設定")
+                .font(.headline)
+            
+            // PlayChain
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("PlayChain を有効化", isOn: $settings.playChain)
+                    .onChange(of: settings.playChain) { _, _ in saveSettings() }
+                
+                Text("PlayCover の実行時パッチ機能を有効にします。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                if settings.playChain {
+                    Toggle("PlayChain デバッグモード", isOn: $settings.playChainDebugging)
+                        .onChange(of: settings.playChainDebugging) { _, _ in saveSettings() }
+                        .padding(.leading)
+                }
+            }
+            
+            Divider()
+            
+            // Bypass
+            VStack(alignment: .leading, spacing: 8) {
+                Toggle("Jailbreak 検出回避", isOn: $settings.bypass)
+                    .onChange(of: settings.bypass) { _, _ in saveSettings() }
+                
+                Text("一部のアプリで必要な jailbreak 検出を回避します。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Divider()
+            
+            // Window Fix Method
+            VStack(alignment: .leading, spacing: 8) {
+                Text("ウィンドウ修正方法")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Picker("", selection: $settings.windowFixMethod) {
+                    ForEach(PlayCoverAppSettings.WindowFixMethod.allCases) { method in
+                        Text(method.displayName).tag(method.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: settings.windowFixMethod) { _, _ in saveSettings() }
+                
+                Text("ウィンドウ表示の問題を修正します。動作しない場合は別の方法を試してください。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Divider()
+            
+            // Other Advanced Options
+            VStack(alignment: .leading, spacing: 8) {
+                Text("その他のオプション")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Toggle("作業ディレクトリをルートに設定", isOn: $settings.rootWorkDir)
+                    .onChange(of: settings.rootWorkDir) { _, _ in saveSettings() }
+                
+                Toggle("画面値を反転", isOn: $settings.inverseScreenValues)
+                    .onChange(of: settings.inverseScreenValues) { _, _ in saveSettings() }
+                
+                Toggle("Introspection を注入", isOn: $settings.injectIntrospection)
+                    .onChange(of: settings.injectIntrospection) { _, _ in saveSettings() }
+            }
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private func saveSettings() {
+        try? PlayCoverAppSettingsStore.save(settings, for: app.bundleIdentifier)
+    }
+}
+
+// MARK: - Info Tab
+
+private struct InfoView: View {
+    let app: PlayCoverApp
+    @State private var settings: PlayCoverAppSettings
+    
+    init(app: PlayCoverApp) {
+        self.app = app
+        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("アプリ情報")
+                .font(.headline)
+            
+            Form {
+                LabeledContent("Bundle ID") {
+                    Text(app.bundleIdentifier)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                }
+                
+                if let version = app.version {
+                    LabeledContent("バージョン") {
+                        Text(version)
+                            .textSelection(.enabled)
+                    }
+                }
+                
+                LabeledContent("パス") {
+                    Text(app.appURL.path)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                }
+                
+                Divider()
+                
+                LabeledContent("設定バージョン") {
+                    Text(settings.version)
+                        .textSelection(.enabled)
+                }
+                
+                if PlayCoverAppSettingsStore.exists(for: app.bundleIdentifier) {
+                    LabeledContent("設定ファイル") {
+                        Button("Finder で表示") {
+                            let url = PlayCoverAppSettingsStore.settingsURL(for: app.bundleIdentifier)
+                            NSWorkspace.shared.activateFileViewerSelecting([url])
+                        }
+                        .buttonStyle(.link)
+                    }
+                } else {
+                    LabeledContent("設定ファイル") {
+                        Text("未作成（デフォルト値を使用中）")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
