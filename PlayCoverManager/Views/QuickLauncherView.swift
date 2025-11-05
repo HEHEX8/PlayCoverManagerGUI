@@ -68,14 +68,17 @@ struct QuickLauncherView: View {
                         }
                     }
                     .padding(32)
-                }
-                .background(Color(nsColor: .windowBackgroundColor))
-                .onAppear {
-                    // Only animate on first appearance
-                    if !hasPerformedInitialAnimation {
-                        hasPerformedInitialAnimation = true
+                    .onAppear {
+                        // Mark as performed after grid appears
+                        // Use delay to ensure animation starts before flag is set
+                        if !hasPerformedInitialAnimation {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                hasPerformedInitialAnimation = true
+                            }
+                        }
                     }
                 }
+                .background(Color(nsColor: .windowBackgroundColor))
             }
         }
         .sheet(item: $selectedAppForDetail) { app in
