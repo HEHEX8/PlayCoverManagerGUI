@@ -132,10 +132,10 @@ struct QuickLauncherView: View {
                                         .resizable()
                                         .frame(width: 48, height: 48)
                                         .clipShape(RoundedRectangle(cornerRadius: 10))
-                                        .shadow(color: .accentColor.opacity(0.3), radius: 8, x: 0, y: 2)
+                                        .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 2)
                                 } else {
                                     RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.accentColor.opacity(0.2))
+                                        .fill(Color.blue.opacity(0.2))
                                         .frame(width: 48, height: 48)
                                         .overlay {
                                             Image(systemName: "app.fill")
@@ -166,9 +166,9 @@ struct QuickLauncherView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(0.15))
+                            .background(Color.blue.opacity(0.15))
                             .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(.blue)
                         }
                         .padding(.horizontal, 24)
                         .padding(.vertical, 16)
@@ -179,8 +179,8 @@ struct QuickLauncherView: View {
                     .background(
                         LinearGradient(
                             colors: [
-                                Color.accentColor.opacity(0.08),
-                                Color.accentColor.opacity(0.04)
+                                Color.blue.opacity(0.08),
+                                Color.blue.opacity(0.04)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
@@ -188,7 +188,7 @@ struct QuickLauncherView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 0)
-                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+                            .stroke(Color.blue.opacity(0.2), lineWidth: 1)
                             .frame(height: 1),
                         alignment: .top
                     )
