@@ -82,30 +82,42 @@ final class DiskImageService {
         }
         try fileManager.createDirectory(at: imageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         let volName = volumeName ?? bundleIdentifier
-        // Select image type based on settings
-        let typeFlag: String
-        switch settings.diskImageFormat {
-        case .sparse:
-            typeFlag = "SPARSE"
-        case .sparseBundle:
-            typeFlag = "SPARSEBUNDLE"
-        case .asif:
-            typeFlag = "ASIF"
+        
+        // Use diskutil for ASIF, hdiutil for legacy formats
+        if settings.diskImageFormat == .asif {
+            // diskutil image create blank --format ASIF --size 50G --volumeName <name> <path>
+            let args = [
+                "image", "create", "blank",
+                "--format", "ASIF",
+                "--size", "50G",
+                "--volumeName", volName,
+                imageURL.path
+            ]
+            _ = try await processRunner.run("/usr/sbin/diskutil", args)
+        } else {
+            // hdiutil create for sparse/sparsebundle
+            let typeFlag: String
+            switch settings.diskImageFormat {
+            case .sparse:
+                typeFlag = "SPARSE"
+            case .sparseBundle:
+                typeFlag = "SPARSEBUNDLE"
+            case .asif:
+                typeFlag = "ASIF" // unreachable
+            }
+            var args: [String] = [
+                "create",
+                "-size", "50g",
+                "-type", typeFlag,
+                "-fs", "APFS",
+                "-volname", volName,
+                imageURL.path
+            ]
+            if settings.diskImageFormat == .sparseBundle {
+                args.insert(contentsOf: ["-imagekey", "sparse-band-size=33554432"], at: 1)
+            }
+            _ = try await processRunner.run("/usr/bin/hdiutil", args)
         }
-        var args: [String] = [
-            "create",
-            "-size", "50g",
-            "-type", typeFlag,
-            "-fs", "APFS",
-            "-volname", volName,
-            imageURL.path
-        ]
-        // Optionally tune band size for sparsebundle
-        if settings.diskImageFormat == .sparseBundle {
-            // 32 MiB bands can improve performance with many small writes
-            args.insert(contentsOf: ["-imagekey", "sparse-band-size=33554432"], at: 1)
-        }
-        _ = try await processRunner.run("/usr/bin/hdiutil", args)
         return imageURL
     }
 
