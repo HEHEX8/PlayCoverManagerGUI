@@ -563,6 +563,7 @@ private struct IPAInstallerSheet: View {
 private struct AppUninstallerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppViewModel.self) private var appViewModel
     @State private var uninstallerService: AppUninstallerService?
     @State private var apps: [AppUninstallerService.InstalledAppInfo] = []
     @State private var selectedApps: Set<String> = []
@@ -780,6 +781,12 @@ private struct AppUninstallerSheet: View {
         print("🔵 [UI] 結果表示")
         isUninstalling = false
         showResults = true
+        
+        // Update quick launcher
+        print("🔵 [UI] クイックランチャーを更新")
+        if let launcher = appViewModel.launcherViewModel {
+            await launcher.refresh()
+        }
     }
 }
 
