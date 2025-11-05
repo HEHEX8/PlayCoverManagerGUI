@@ -45,9 +45,18 @@ private struct GeneralSettingsView: View {
                         Text(fmt.localizedDescription).tag(fmt)
                     }
                 }
-                Text("外部ドライブが APFS でない場合は「スパース HFS+」を選択してください。ASIF は最速ですが APFS 必須です。")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("推奨：ASIF（macOS Tahoe 専用、最速）")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Text("外部ドライブが APFS でない場合のみ「スパース HFS+」を選択してください。")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    Text("※ 形式変更は新規作成時のみ有効。既存イメージは再作成が必要です。")
+                        .font(.footnote)
+                        .foregroundStyle(.orange)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }

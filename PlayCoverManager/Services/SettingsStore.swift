@@ -41,13 +41,13 @@ final class SettingsStore {
         var localizedDescription: String {
             switch self {
             case .sparse:
-                return "スパース APFS（単一ファイル）"
+                return "スパース APFS（.sparseimage）"
             case .sparseBundle:
-                return "スパースバンドル APFS（分割ファイル）"
+                return "スパースバンドル APFS（.sparsebundle）"
             case .sparseHFS:
-                return "スパース HFS+（互換性重視）"
+                return "スパース HFS+（.sparseimage、互換性重視）"
             case .asif:
-                return "ASIF（Tahoe、最速）"
+                return "ASIF（.asif、Tahoe 推奨・最速）"
             }
         }
         
@@ -60,7 +60,7 @@ final class SettingsStore {
             }
         }
 
-        static let `default`: DiskImageFormat = .sparseHFS
+        static let `default`: DiskImageFormat = .asif
     }
 
     var diskImageDirectory: URL? = nil {
