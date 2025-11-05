@@ -333,6 +333,25 @@ class IPAInstallerService {
                             if !isPlayCoverWriting {
                                 // Final verification: check app actually exists
                                 if try await verifyInstallationComplete(bundleID: bundleID) {
+                                    // Additional check: ensure PlayCover didn't crash right after completion
+                                    try await Task.sleep(nanoseconds: 2_000_000_000) // 2 second delay
+                                    
+                                    let pgrepCheck = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
+                                    let stillRunning = pgrepCheck != nil && !pgrepCheck!.isEmpty
+                                    
+                                    if !stillRunning {
+                                        // PlayCover exited right after completion - re-verify
+                                        await MainActor.run { currentStatus = "最終確認中" }
+                                        try await Task.sleep(nanoseconds: 2_000_000_000)
+                                        
+                                        if try await verifyInstallationComplete(bundleID: bundleID) {
+                                            await MainActor.run { currentStatus = "完了" }
+                                            return
+                                        } else {
+                                            throw AppError.installation("完了直後にPlayCoverがクラッシュしました", message: "")
+                                        }
+                                    }
+                                    
                                     await MainActor.run { currentStatus = "完了" }
                                     return
                                 } else {
@@ -358,6 +377,25 @@ class IPAInstallerService {
                             if stableDuration >= stabilityThreshold {
                                 // Final verification: check app actually exists
                                 if try await verifyInstallationComplete(bundleID: bundleID) {
+                                    // Additional check: ensure PlayCover didn't crash right after completion
+                                    try await Task.sleep(nanoseconds: 2_000_000_000) // 2 second delay
+                                    
+                                    let pgrepCheck = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
+                                    let stillRunning = pgrepCheck != nil && !pgrepCheck!.isEmpty
+                                    
+                                    if !stillRunning {
+                                        // PlayCover exited right after completion - re-verify
+                                        await MainActor.run { currentStatus = "最終確認中" }
+                                        try await Task.sleep(nanoseconds: 2_000_000_000)
+                                        
+                                        if try await verifyInstallationComplete(bundleID: bundleID) {
+                                            await MainActor.run { currentStatus = "完了" }
+                                            return
+                                        } else {
+                                            throw AppError.installation("完了直後にPlayCoverがクラッシュしました", message: "")
+                                        }
+                                    }
+                                    
                                     await MainActor.run { currentStatus = "完了" }
                                     return
                                 } else {
