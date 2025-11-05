@@ -435,11 +435,8 @@ private struct AppDetailSheet: View {
                     }
                 }
                 
-                // TODO: Add per-app settings here
-                Section("設定") {
-                    Text("アプリ毎の設定機能は今後実装予定")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Section("アプリ固有設定") {
+                    PerAppSettingsView(app: app, viewModel: viewModel)
                 }
             }
             .formStyle(.grouped)
@@ -673,5 +670,166 @@ private struct RippleEffect: View {
     }
 }
 
-
-
+// Per-app settings view
+private struct PerAppSettingsView: View {
+    let app: PlayCoverApp
+    @Bindable var viewModel: LauncherViewModel
+    @Environment(SettingsStore.self) private var settingsStore
+    
+    @State private var nobrowseOverride: NobrowseOverride = .useGlobal
+    @State private var dataHandlingOverride: DataHandlingOverride = .useGlobal
+    
+    enum NobrowseOverride: String, CaseIterable, Identifiable {
+        case useGlobal = "グローバル設定を使用"
+        case enabled = "有効"
+        case disabled = "無効"
+        
+        var id: String { rawValue }
+    }
+    
+    enum DataHandlingOverride: String, CaseIterable, Identifiable {
+        case useGlobal = "グローバル設定を使用"
+        case discard = "内部データを破棄"
+        case mergeThenDelete = "内部データを統合"
+        case leave = "何もしない"
+        
+        var id: String { rawValue }
+        
+        var strategy: SettingsStore.InternalDataStrategy? {
+            switch self {
+            case .useGlobal: return nil
+            case .discard: return .discard
+            case .mergeThenDelete: return .mergeThenDelete
+            case .leave: return .leave
+            }
+        }
+        
+        static func from(strategy: SettingsStore.InternalDataStrategy?) -> DataHandlingOverride {
+            guard let strategy = strategy else { return .useGlobal }
+            switch strategy {
+            case .discard: return .discard
+            case .mergeThenDelete: return .mergeThenDelete
+            case .leave: return .leave
+            }
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Nobrowse setting
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Finder に表示しない (nobrowse)")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Picker("", selection: $nobrowseOverride) {
+                    ForEach(NobrowseOverride.allCases) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: nobrowseOverride) { _, newValue in
+                    saveNobrowseSetting(newValue)
+                }
+                
+                Text("このアプリのディスクイメージを Finder で非表示にするかどうかを設定します。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                if nobrowseOverride == .useGlobal {
+                    Text("現在のグローバル設定: \(settingsStore.nobrowseEnabled ? "有効" : "無効")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            Divider()
+            
+            // Data handling strategy
+            VStack(alignment: .leading, spacing: 4) {
+                Text("内部データ処理方法")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Picker("", selection: $dataHandlingOverride) {
+                    ForEach(DataHandlingOverride.allCases) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: dataHandlingOverride) { _, newValue in
+                    saveDataHandlingSetting(newValue)
+                }
+                
+                Text("起動時に内部データが見つかった場合の処理方法を設定します。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                if dataHandlingOverride == .useGlobal {
+                    Text("現在のグローバル設定: \(settingsStore.defaultDataHandling.localizedDescription)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            Divider()
+            
+            // Reset button
+            Button(role: .destructive) {
+                resetToGlobalDefaults()
+            } label: {
+                Label("グローバル設定に戻す", systemImage: "arrow.counterclockwise")
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.red)
+        }
+        .padding(.vertical, 8)
+        .onAppear {
+            loadCurrentSettings()
+        }
+    }
+    
+    private func loadCurrentSettings() {
+        let perAppSettings = viewModel.getPerAppSettings()
+        let settings = perAppSettings.getSettings(for: app.bundleIdentifier)
+        
+        // Load nobrowse setting
+        if let nobrowse = settings.nobrowseEnabled {
+            nobrowseOverride = nobrowse ? .enabled : .disabled
+        } else {
+            nobrowseOverride = .useGlobal
+        }
+        
+        // Load data handling strategy
+        if let strategyRaw = settings.dataHandlingStrategy,
+           let strategy = SettingsStore.InternalDataStrategy(rawValue: strategyRaw) {
+            dataHandlingOverride = DataHandlingOverride.from(strategy: strategy)
+        } else {
+            dataHandlingOverride = .useGlobal
+        }
+    }
+    
+    private func saveNobrowseSetting(_ override: NobrowseOverride) {
+        let perAppSettings = viewModel.getPerAppSettings()
+        switch override {
+        case .useGlobal:
+            perAppSettings.setNobrowse(nil, for: app.bundleIdentifier)
+        case .enabled:
+            perAppSettings.setNobrowse(true, for: app.bundleIdentifier)
+        case .disabled:
+            perAppSettings.setNobrowse(false, for: app.bundleIdentifier)
+        }
+    }
+    
+    private func saveDataHandlingSetting(_ override: DataHandlingOverride) {
+        let perAppSettings = viewModel.getPerAppSettings()
+        perAppSettings.setDataHandlingStrategy(override.strategy, for: app.bundleIdentifier)
+    }
+    
+    private func resetToGlobalDefaults() {
+        let perAppSettings = viewModel.getPerAppSettings()
+        perAppSettings.removeSettings(for: app.bundleIdentifier)
+        nobrowseOverride = .useGlobal
+        dataHandlingOverride = .useGlobal
+    }
+}

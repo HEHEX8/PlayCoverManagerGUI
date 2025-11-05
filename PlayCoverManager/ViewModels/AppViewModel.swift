@@ -14,6 +14,7 @@ final class AppViewModel {
 
     private let fileManager: FileManager
     private let settings: SettingsStore
+    private let perAppSettings: PerAppSettingsStore
     private let environmentService: PlayCoverEnvironmentService
     private var diskImageService: DiskImageService!
     private let launcherService: LauncherService
@@ -21,11 +22,13 @@ final class AppViewModel {
 
     init(fileManager: FileManager = .default,
          settings: SettingsStore,
+         perAppSettings: PerAppSettingsStore = PerAppSettingsStore(),
          environmentService: PlayCoverEnvironmentService = PlayCoverEnvironmentService(),
          launcherService: LauncherService = LauncherService(),
          installerService: InstallerService = InstallerService()) {
         self.fileManager = fileManager
         self.settings = settings
+        self.perAppSettings = perAppSettings
         self.environmentService = environmentService
         self.launcherService = launcherService
         self.installerService = installerService
@@ -119,7 +122,8 @@ final class AppViewModel {
                                        playCoverPaths: playCoverPaths,
                                        diskImageService: diskImageService,
                                        launcherService: launcherService,
-                                       settings: settings)
+                                       settings: settings,
+                                       perAppSettings: perAppSettings)
             launcherViewModel = vm
             phase = .launcher
         } catch {

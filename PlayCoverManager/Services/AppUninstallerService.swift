@@ -16,6 +16,7 @@ class AppUninstallerService {
     let processRunner: ProcessRunner
     let diskImageService: DiskImageService
     let settingsStore: SettingsStore
+    let perAppSettingsStore: PerAppSettingsStore
     
     // Uninstallation state
     var isUninstalling = false
@@ -26,10 +27,12 @@ class AppUninstallerService {
     
     init(processRunner: ProcessRunner? = nil,
          diskImageService: DiskImageService,
-         settingsStore: SettingsStore) {
+         settingsStore: SettingsStore,
+         perAppSettingsStore: PerAppSettingsStore = PerAppSettingsStore()) {
         self.processRunner = processRunner ?? ProcessRunner()
         self.diskImageService = diskImageService
         self.settingsStore = settingsStore
+        self.perAppSettingsStore = perAppSettingsStore
     }
     
     // MARK: - Installed App Detection
@@ -337,6 +340,12 @@ class AppUninstallerService {
             } catch {
                 // Ignore cache update errors
             }
+        }
+        
+        // Step 8: Remove per-app settings
+        await MainActor.run { 
+            currentStatus = "アプリ設定を削除中..."
+            perAppSettingsStore.removeSettings(for: app.bundleID)
         }
         
         await MainActor.run { currentStatus = "✅ \(app.appName) をアンインストールしました" }

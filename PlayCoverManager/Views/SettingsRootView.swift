@@ -563,6 +563,7 @@ struct IPAInstallerSheet: View {
 private struct AppUninstallerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settingsStore
+    @Environment(PerAppSettingsStore.self) private var perAppSettingsStore
     @Environment(AppViewModel.self) private var appViewModel
     @State private var uninstallerService: AppUninstallerService?
     @State private var apps: [AppUninstallerService.InstalledAppInfo] = []
@@ -744,7 +745,7 @@ private struct AppUninstallerSheet: View {
     private func loadApps() async {
         guard let service = uninstallerService else {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
-            let service = AppUninstallerService(diskImageService: diskImageService, settingsStore: settingsStore)
+            let service = AppUninstallerService(diskImageService: diskImageService, settingsStore: settingsStore, perAppSettingsStore: perAppSettingsStore)
             self.uninstallerService = service
             await loadApps()
             return

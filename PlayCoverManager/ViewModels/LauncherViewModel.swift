@@ -33,6 +33,7 @@ final class LauncherViewModel {
     private let diskImageService: DiskImageService
     private let launcherService: LauncherService
     private let settings: SettingsStore
+    private let perAppSettings: PerAppSettingsStore
     private let fileManager: FileManager
 
     private var pendingLaunchContext: LaunchContext?
@@ -42,6 +43,7 @@ final class LauncherViewModel {
          diskImageService: DiskImageService,
          launcherService: LauncherService,
          settings: SettingsStore,
+         perAppSettings: PerAppSettingsStore,
          fileManager: FileManager = .default) {
         self.apps = apps
         self.filteredApps = apps
@@ -49,6 +51,7 @@ final class LauncherViewModel {
         self.diskImageService = diskImageService
         self.launcherService = launcherService
         self.settings = settings
+        self.perAppSettings = perAppSettings
         self.fileManager = fileManager
     }
 
@@ -106,7 +109,9 @@ final class LauncherViewModel {
             }
 
             if !descriptor.isMounted {
-                try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: settings.nobrowseEnabled)
+                // Use per-app nobrowse setting if available, otherwise use global default
+                let nobrowse = perAppSettings.getNobrowse(for: app.bundleIdentifier, globalDefault: settings.nobrowseEnabled)
+                try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: nobrowse)
             }
 
             try await launcherService.openApp(app)
@@ -245,6 +250,10 @@ final class LauncherViewModel {
 
     func unmountAll(applyToPlayCoverContainer: Bool = true) {
         Task { await performUnmountAll(applyToPlayCoverContainer: applyToPlayCoverContainer) }
+    }
+    
+    func getPerAppSettings() -> PerAppSettingsStore {
+        return perAppSettings
     }
 
     private func performUnmountAll(applyToPlayCoverContainer: Bool) async {
