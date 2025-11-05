@@ -302,14 +302,6 @@ private struct iOSAppIconView: View {
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
-    @State private var isRunning = false
-    
-    private func checkAppRunning() {
-        let runningApps = NSWorkspace.shared.runningApplications
-        isRunning = runningApps.contains { runningApp in
-            runningApp.bundleIdentifier == app.bundleIdentifier && !runningApp.isTerminated
-        }
-    }
     
     var body: some View {
         VStack(spacing: 8) {
@@ -333,7 +325,7 @@ private struct iOSAppIconView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
             .overlay(alignment: .topTrailing) {
-                if isRunning {
+                if app.isRunning {
                     // Running indicator - adaptive for light/dark mode
                     ZStack {
                         Circle()
@@ -379,12 +371,6 @@ private struct iOSAppIconView: View {
                 // No animation - just show immediately
                 hasAppeared = true
             }
-            // Initial check and start periodic updates
-            checkAppRunning()
-        }
-        .onReceive(Timer.publish(every: 2.0, on: .main, in: .common).autoconnect()) { _ in
-            // Check running status every 2 seconds
-            checkAppRunning()
         }
         .onTapGesture {
             // Mac-style bounce animation on launch

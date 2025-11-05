@@ -10,6 +10,7 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
     let appURL: URL
     let icon: NSImage?
     let lastLaunchedFlag: Bool
+    let isRunning: Bool
 
     static func == (lhs: PlayCoverApp, rhs: PlayCoverApp) -> Bool {
         lhs.bundleIdentifier == rhs.bundleIdentifier && lhs.appURL == rhs.appURL
@@ -48,8 +49,9 @@ final class LauncherService {
             let version = info?["CFBundleShortVersionString"] as? String
             let icon = NSWorkspace.shared.icon(forFile: url.path)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
-            print("🟣 [LauncherService] アプリ検出: \(displayName) (\(bundleID)), lastLaunchFlag=\(lastLaunchFlag)")
-            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag)
+            let isRunning = checkIfAppRunning(bundleID: bundleID)
+            print("🟣 [LauncherService] アプリ検出: \(displayName) (\(bundleID)), lastLaunchFlag=\(lastLaunchFlag), isRunning=\(isRunning)")
+            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning)
             apps.append(app)
         }
         return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
@@ -134,6 +136,13 @@ final class LauncherService {
         return supportURL?.appendingPathComponent("PlayCoverManager", isDirectory: true).appendingPathComponent("map.dat") ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/PlayCoverManager/map.dat")
     }
 
+    private func checkIfAppRunning(bundleID: String) -> Bool {
+        let runningApps = NSWorkspace.shared.runningApplications
+        return runningApps.contains { app in
+            app.bundleIdentifier == bundleID && !app.isTerminated
+        }
+    }
+    
     private func readLastLaunchFlag(for bundleID: String) -> Bool {
         guard let data = try? Data(contentsOf: mapDataURL()), let text = String(data: data, encoding: .utf8) else {
             print("🟣 [LauncherService] map.dat が存在しないか読み込めません")
