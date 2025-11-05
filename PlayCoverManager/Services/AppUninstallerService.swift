@@ -346,32 +346,44 @@ class AppUninstallerService {
         await MainActor.run { currentStatus = "✅ \(app.appName) をアンインストールしました" }
     }
     
-    func uninstallApps(_ apps: [InstalledAppInfo]) async throws {
-        isUninstalling = true
-        uninstalledApps.removeAll()
-        failedApps.removeAll()
-        currentProgress = 0.0
+    nonisolated func uninstallApps(_ apps: [InstalledAppInfo]) async throws {
+        await MainActor.run {
+            isUninstalling = true
+            uninstalledApps.removeAll()
+            failedApps.removeAll()
+            currentProgress = 0.0
+        }
         
         defer {
-            isUninstalling = false
+            Task { @MainActor in
+                isUninstalling = false
+            }
         }
         
         let totalApps = apps.count
         
         for (index, app) in apps.enumerated() {
-            currentProgress = Double(index) / Double(totalApps)
-            currentStatus = "[\(index + 1)/\(totalApps)] \(app.appName)"
+            await MainActor.run {
+                currentProgress = Double(index) / Double(totalApps)
+                currentStatus = "[\(index + 1)/\(totalApps)] \(app.appName)"
+            }
             
             do {
                 try await uninstallApp(app)
-                uninstalledApps.append(app.appName)
+                await MainActor.run {
+                    uninstalledApps.append(app.appName)
+                }
             } catch {
-                failedApps.append("\(app.appName): \(error.localizedDescription)")
+                await MainActor.run {
+                    failedApps.append("\(app.appName): \(error.localizedDescription)")
+                }
             }
         }
         
-        currentProgress = 1.0
-        currentStatus = "完了"
+        await MainActor.run {
+            currentProgress = 1.0
+            currentStatus = "完了"
+        }
     }
     
     // MARK: - Size Formatting
