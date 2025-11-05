@@ -52,8 +52,8 @@ struct QuickLauncherView: View {
             } else {
                 ScrollView {
                     LazyVGrid(columns: gridColumns, spacing: 32) {
-                        ForEach(viewModel.filteredApps) { app in
-                            iOSAppIconView(app: app) {
+                        ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
+                            iOSAppIconView(app: app, index: index) {
                                 // Single tap - launch
                                 viewModel.launch(app: app)
                             } rightClickAction: {
@@ -125,8 +125,12 @@ struct QuickLauncherView: View {
 // iOS-style app icon with name below
 private struct iOSAppIconView: View {
     let app: PlayCoverApp
+    let index: Int
     let tapAction: () -> Void
     let rightClickAction: () -> Void
+    
+    @State private var isAnimating = false
+    @State private var hasAppeared = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -149,6 +153,14 @@ private struct iOSAppIconView: View {
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .scaleEffect(isAnimating ? 0.85 : 1.0)
+            .animation(
+                isAnimating ? 
+                    Animation.interpolatingSpring(stiffness: 300, damping: 10)
+                        .repeatCount(3, autoreverses: true) :
+                    .easeOut(duration: 0.2),
+                value: isAnimating
+            )
             
             // App name below icon
             Text(app.displayName)
@@ -160,11 +172,39 @@ private struct iOSAppIconView: View {
         }
         .frame(width: 100, height: 120)
         .contentShape(Rectangle())
+        .opacity(hasAppeared ? 1 : 0)
+        .scaleEffect(hasAppeared ? 1 : 0.3)
+        .offset(y: hasAppeared ? 0 : 20)
+        .onAppear {
+            // Staggered fade-in animation (Mac Dock style)
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(Double(index) * 0.05)) {
+                hasAppeared = true
+            }
+        }
         .onTapGesture {
-            tapAction()
+            // Mac-style bounce animation on launch
+            isAnimating = true
+            
+            // Trigger launch after brief animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                tapAction()
+                
+                // Stop animation after launch
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    isAnimating = false
+                }
+            }
         }
         .contextMenu {
-            Button("起動") { tapAction() }
+            Button("起動") { 
+                isAnimating = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    tapAction()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        isAnimating = false
+                    }
+                }
+            }
             Divider()
             Button("詳細と設定") { rightClickAction() }
             Divider()
