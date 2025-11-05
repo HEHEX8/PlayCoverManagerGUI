@@ -73,8 +73,13 @@ class IPAInstallerService {
         let systemLanguage = preferredLanguages.first?.split(separator: "-").first.map(String.init) ?? "en"
         
         // Extract Info.plist and localized strings using wildcards (FAST - no listing needed)
-        // Use wildcards to extract: Payload/*.app/Info.plist, ja.lproj, system language .lproj
-        var extractPatterns = ["Payload/*.app/Info.plist", "Payload/*.app/ja.lproj/InfoPlist.strings"]
+        // Use wildcards to extract: Payload/*.app/Info.plist, ja.lproj, system language .lproj, and app icon
+        var extractPatterns = [
+            "Payload/*.app/Info.plist",
+            "Payload/*.app/ja.lproj/InfoPlist.strings",
+            "Payload/*.app/AppIcon60x60@2x.png",  // Most common iOS app icon
+            "Payload/*.app/AppIcon76x76@2x~ipad.png"  // iPad icon
+        ]
         if systemLanguage != "en" && systemLanguage != "ja" {
             extractPatterns.append("Payload/*.app/\(systemLanguage).lproj/InfoPlist.strings")
         }
@@ -141,8 +146,17 @@ class IPAInstallerService {
             }
         }
         
-        // Skip icon extraction for speed (icon is optional and slows down analysis)
+        // Try to load extracted icon (already extracted with Info.plist in one command)
         var icon: NSImage? = nil
+        let possibleIconNames = ["AppIcon60x60@2x.png", "AppIcon76x76@2x~ipad.png"]
+        for iconName in possibleIconNames {
+            let iconURL = tempDir.appendingPathComponent(iconName)
+            if FileManager.default.fileExists(atPath: iconURL.path),
+               let imageData = try? Data(contentsOf: iconURL) {
+                icon = NSImage(data: imageData)
+                break
+            }
+        }
         
         // Get file size
         let fileSize = (try? FileManager.default.attributesOfItem(atPath: ipaURL.path)[.size] as? Int64) ?? 0
