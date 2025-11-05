@@ -117,83 +117,24 @@ struct QuickLauncherView: View {
                         .background(Color(nsColor: .windowBackgroundColor))
                     }
                     
-                    // Recently launched app quick launch button - Center-aligned adaptive design
+                    // Recently launched app quick launch button with ripple effect
                     Divider()
                     
-                    Button {
-                        viewModel.launch(app: recentApp)
-                    } label: {
-                        HStack(spacing: 0) {
-                            Spacer()
-                            
-                            HStack(spacing: 16) {
-                                // Icon with subtle shadow
-                                ZStack {
-                                    if let icon = recentApp.icon {
-                                        Image(nsImage: icon)
-                                            .resizable()
-                                            .frame(width: 52, height: 52)
-                                            .clipShape(RoundedRectangle(cornerRadius: 11))
-                                            .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 11)
-                                            .fill(Color(nsColor: .controlBackgroundColor))
-                                            .frame(width: 52, height: 52)
-                                            .overlay {
-                                                Image(systemName: "app.fill")
-                                                    .font(.system(size: 26))
-                                                    .foregroundStyle(.tertiary)
-                                            }
-                                    }
-                                }
-                                
-                                // App info - center aligned
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(recentApp.displayName)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(.primary)
-                                    Text("前回起動したアプリ")
-                                        .font(.system(size: 12))
-                                        .foregroundStyle(.secondary)
-                                }
-                                
-                                // Enter key hint with better contrast
-                                HStack(spacing: 5) {
-                                    Image(systemName: "return")
-                                        .font(.system(size: 10, weight: .semibold))
-                                    Text("Enter")
-                                        .font(.system(size: 11, weight: .semibold))
-                                }
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .fill(Color(nsColor: .controlBackgroundColor))
+                    RecentAppLaunchButton(
+                        app: recentApp,
+                        onLaunch: {
+                            // Trigger animation on the grid icon
+                            if let index = viewModel.filteredApps.firstIndex(where: { $0.bundleIdentifier == recentApp.bundleIdentifier }) {
+                                // Find and animate the icon in the grid
+                                NotificationCenter.default.post(
+                                    name: NSNotification.Name("TriggerAppIconAnimation"),
+                                    object: nil,
+                                    userInfo: ["bundleID": recentApp.bundleIdentifier]
                                 )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6)
-                                        .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
-                                )
-                                .foregroundStyle(.secondary)
                             }
-                            
-                            Spacer()
+                            viewModel.launch(app: recentApp)
                         }
-                        .padding(.vertical, 14)
-                        .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .background(
-                        Color(nsColor: .controlBackgroundColor).opacity(0.5)
                     )
-                    .overlay(
-                        Rectangle()
-                            .fill(Color.primary.opacity(0.08))
-                            .frame(height: 1),
-                        alignment: .top
-                    )
-                    .keyboardShortcut(.defaultAction)
                 }
             } else {
                 // No recent app - show regular grid
@@ -302,6 +243,22 @@ private struct iOSAppIconView: View {
     @State private var isAnimating = false
     @State private var hasAppeared = false
     
+    private func setupAnimationObserver() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("TriggerAppIconAnimation"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let bundleID = notification.userInfo?["bundleID"] as? String,
+               bundleID == app.bundleIdentifier {
+                isAnimating = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    isAnimating = false
+                }
+            }
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
@@ -370,6 +327,8 @@ private struct iOSAppIconView: View {
                 // No animation - just show immediately
                 hasAppeared = true
             }
+            // Setup observer for remote animation trigger
+            setupAnimationObserver()
         }
         .onTapGesture {
             // Mac-style bounce animation on launch
@@ -581,6 +540,135 @@ private struct IPAInstallerSheetWrapper: View {
         IPAInstallerSheet()
             .environment(settingsStore)
             .environment(launcherViewModel)
+    }
+}
+
+// Recent app launch button with ripple effect
+private struct RecentAppLaunchButton: View {
+    let app: PlayCoverApp
+    let onLaunch: () -> Void
+    
+    @State private var isAnimating = false
+    
+    var body: some View {
+        Button {
+            isAnimating = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                onLaunch()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    isAnimating = false
+                }
+            }
+        } label: {
+            HStack(spacing: 0) {
+                Spacer()
+                
+                HStack(spacing: 16) {
+                    // Icon (no animation here)
+                    ZStack {
+                        if let icon = app.icon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 52, height: 52)
+                                .clipShape(RoundedRectangle(cornerRadius: 11))
+                                .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                        } else {
+                            RoundedRectangle(cornerRadius: 11)
+                                .fill(Color(nsColor: .controlBackgroundColor))
+                                .frame(width: 52, height: 52)
+                                .overlay {
+                                    Image(systemName: "app.fill")
+                                        .font(.system(size: 26))
+                                        .foregroundStyle(.tertiary)
+                                }
+                        }
+                    }
+                    
+                    // App info
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(app.displayName)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.primary)
+                        Text("前回起動したアプリ")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    // Enter key hint
+                    HStack(spacing: 5) {
+                        Image(systemName: "return")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("Enter")
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color(nsColor: .controlBackgroundColor))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
+                    )
+                    .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(
+            ZStack {
+                // Base background
+                Color(nsColor: .controlBackgroundColor).opacity(0.5)
+                
+                // Ripple effect
+                if isAnimating {
+                    RippleEffect()
+                }
+            }
+        )
+        .overlay(
+            Rectangle()
+                .fill(Color.primary.opacity(0.08))
+                .frame(height: 1),
+            alignment: .top
+        )
+        .keyboardShortcut(.defaultAction)
+    }
+}
+
+// Ripple effect animation
+private struct RippleEffect: View {
+    @State private var scale: CGFloat = 0.5
+    @State private var opacity: Double = 0.6
+    
+    var body: some View {
+        Circle()
+            .fill(
+                RadialGradient(
+                    colors: [
+                        Color.primary.opacity(opacity),
+                        Color.primary.opacity(opacity * 0.5),
+                        Color.clear
+                    ],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 200
+                )
+            )
+            .scaleEffect(scale)
+            .opacity(opacity)
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.6)) {
+                    scale = 3.0
+                    opacity = 0.0
+                }
+            }
     }
 }
 
