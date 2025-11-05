@@ -65,8 +65,11 @@ final class LauncherViewModel {
         startMonitoringAppTerminations()
     }
     
-    deinit {
-        stopMonitoringAppTerminations()
+    nonisolated deinit {
+        // Stop monitoring - need to do this synchronously in deinit
+        if let observer = appTerminationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+        }
     }
     
     private func cleanupStaleLockFiles() {
@@ -144,7 +147,6 @@ final class LauncherViewModel {
             }
 
             // Acquire lock on container before launching
-            let containerURL = containerURL(for: app.bundleIdentifier)
             _ = lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
             
             try await launcherService.openApp(app)
@@ -297,27 +299,23 @@ final class LauncherViewModel {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let self = self else { return }
             guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
             guard let bundleID = app.bundleIdentifier else { return }
             
-            // Check if this is one of our managed apps
-            let isManagedApp = self.apps.contains { $0.bundleIdentifier == bundleID }
-            guard isManagedApp else { return }
-            
-            // Unmount the container for this app
-            Task { @MainActor in
+            // Handle app termination on MainActor
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
+                // Check if this is one of our managed apps
+                let isManagedApp = self.apps.contains { $0.bundleIdentifier == bundleID }
+                guard isManagedApp else { return }
+                
+                // Unmount the container for this app
                 await self.unmountContainer(for: bundleID)
+                
                 // Refresh to update running indicator
                 await self.refresh()
             }
-        }
-    }
-    
-    private func stopMonitoringAppTerminations() {
-        if let observer = appTerminationObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-            appTerminationObserver = nil
         }
     }
     
