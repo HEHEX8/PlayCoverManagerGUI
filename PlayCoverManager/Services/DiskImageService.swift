@@ -81,14 +81,6 @@ final class DiskImageService {
             return imageURL
         }
         
-        // Start accessing security-scoped resource
-        let hasAccess = settings.startAccessingSecurityScopedResource()
-        defer {
-            if hasAccess {
-                settings.stopAccessingSecurityScopedResource()
-            }
-        }
-        
         // Verify parent directory is accessible and writable
         let parentDir = imageURL.deletingLastPathComponent()
         
@@ -191,14 +183,6 @@ final class DiskImageService {
 
     func mountDiskImage(for bundleIdentifier: String, at mountPoint: URL, nobrowse: Bool) async throws {
         let imageURL = try diskImageURL(for: bundleIdentifier)
-        
-        let hasAccess = settings.startAccessingSecurityScopedResource()
-        defer {
-            if hasAccess {
-                settings.stopAccessingSecurityScopedResource()
-            }
-        }
-        
         guard fileManager.fileExists(atPath: imageURL.path) else {
             throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
         }
@@ -212,14 +196,6 @@ final class DiskImageService {
 
     func mountTemporarily(for bundleIdentifier: String, temporaryMountBase: URL) async throws -> URL {
         let imageURL = try diskImageURL(for: bundleIdentifier)
-        
-        let hasAccess = settings.startAccessingSecurityScopedResource()
-        defer {
-            if hasAccess {
-                settings.stopAccessingSecurityScopedResource()
-            }
-        }
-        
         let tempMountPoint = temporaryMountBase.appendingPathComponent(bundleIdentifier, isDirectory: true)
         try fileManager.createDirectory(at: tempMountPoint, withIntermediateDirectories: true)
         let args: [String] = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]

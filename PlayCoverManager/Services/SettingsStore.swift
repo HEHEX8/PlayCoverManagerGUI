@@ -108,44 +108,8 @@ final class SettingsStore {
     private func saveDiskImageDirectory() {
         if let diskImageDirectory {
             UserDefaults.standard.set(diskImageDirectory.path, forKey: Keys.diskImageDirectory)
-            // Save security-scoped bookmark for persistent access (read/write)
-            if let bookmarkData = try? diskImageDirectory.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil) {
-                UserDefaults.standard.set(bookmarkData, forKey: Keys.diskImageDirectoryBookmark)
-            }
         } else {
             UserDefaults.standard.removeObject(forKey: Keys.diskImageDirectory)
-            UserDefaults.standard.removeObject(forKey: Keys.diskImageDirectoryBookmark)
         }
-    }
-    
-    func resolveBookmark() -> URL? {
-        guard let bookmarkData = UserDefaults.standard.data(forKey: Keys.diskImageDirectoryBookmark) else {
-            return diskImageDirectory
-        }
-        
-        var isStale = false
-        do {
-            let url = try URL(resolvingBookmarkData: bookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
-            if isStale {
-                // Bookmark is stale, try to refresh
-                if let newBookmark = try? url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil) {
-                    UserDefaults.standard.set(newBookmark, forKey: Keys.diskImageDirectoryBookmark)
-                }
-            }
-            return url
-        } catch {
-            // Bookmark resolution failed
-            return nil
-        }
-    }
-    
-    func startAccessingSecurityScopedResource() -> Bool {
-        guard let url = resolveBookmark() else { return false }
-        return url.startAccessingSecurityScopedResource()
-    }
-    
-    func stopAccessingSecurityScopedResource() {
-        guard let url = resolveBookmark() else { return }
-        url.stopAccessingSecurityScopedResource()
     }
 }
