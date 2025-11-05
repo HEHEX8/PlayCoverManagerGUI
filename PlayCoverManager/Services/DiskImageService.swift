@@ -80,7 +80,20 @@ final class DiskImageService {
         if fileManager.fileExists(atPath: imageURL.path) {
             return imageURL
         }
-        try fileManager.createDirectory(at: imageURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        
+        // Verify parent directory is writable
+        let parentDir = imageURL.deletingLastPathComponent()
+        try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
+        
+        var isWritable = false
+        if let values = try? parentDir.resourceValues(forKeys: [.volumeIsReadOnlyKey, .isWritableKey]) {
+            isWritable = (values.isWritable == true) && (values.volumeIsReadOnly == false)
+        }
+        
+        guard isWritable else {
+            throw AppError.diskImage("保存先に書き込み権限がありません", message: "別の場所を選択してください: \(parentDir.path)")
+        }
+        
         let volName = volumeName ?? bundleIdentifier
         
         // Use diskutil for ASIF, hdiutil for legacy formats
