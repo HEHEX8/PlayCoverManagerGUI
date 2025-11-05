@@ -322,34 +322,64 @@ private struct IPAInstallerSheet: View {
     
     // MARK: - Results View
     private var resultsView: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if showResults {
-                if let service = installerService, !service.installedApps.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("✅ インストール成功: \(service.installedApps.count) 個")
-                            .font(.headline)
-                            .foregroundStyle(.green)
-                        ForEach(service.installedApps, id: \.self) { appName in
-                            Text("  • \(appName)")
-                                .font(.caption)
+        VStack(spacing: 16) {
+            Text("インストール結果")
+                .font(.headline)
+            
+            ScrollView {
+                if let service = installerService {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if !service.installedApps.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                        .font(.title3)
+                                    Text("インストール成功: \(service.installedApps.count) 個")
+                                        .font(.headline)
+                                }
+                                
+                                ForEach(service.installedApps, id: \.self) { appName in
+                                    HStack(spacing: 8) {
+                                        Text("•")
+                                        Text(appName)
+                                            .font(.system(.body, design: .monospaced))
+                                    }
+                                    .padding(.leading, 32)
+                                }
+                            }
+                        }
+                        
+                        if !service.failedApps.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.red)
+                                        .font(.title3)
+                                    Text("インストール失敗: \(service.failedApps.count) 個")
+                                        .font(.headline)
+                                }
+                                
+                                ForEach(service.failedApps, id: \.self) { error in
+                                    HStack(spacing: 8) {
+                                        Text("•")
+                                        Text(error)
+                                            .font(.system(.body, design: .monospaced))
+                                    }
+                                    .padding(.leading, 32)
+                                }
+                            }
                         }
                     }
-                }
-                
-                if let service = installerService, !service.failedApps.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("❌ インストール失敗: \(service.failedApps.count) 個")
-                            .font(.headline)
-                            .foregroundStyle(.red)
-                        ForEach(service.failedApps, id: \.self) { error in
-                            Text("  • \(error)")
-                                .font(.caption)
-                        }
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(Color(nsColor: .textBackgroundColor))
+                    .cornerRadius(8)
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
     
     // MARK: - Bottom Buttons

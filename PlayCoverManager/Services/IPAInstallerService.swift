@@ -331,8 +331,14 @@ class IPAInstallerService {
                             let isPlayCoverWriting = lsofOutput?.contains("PlayCover") ?? false
                             
                             if !isPlayCoverWriting {
-                                await MainActor.run { currentStatus = "完了" }
-                                return
+                                // Final verification: check app actually exists
+                                if try await verifyInstallationComplete(bundleID: bundleID) {
+                                    await MainActor.run { currentStatus = "完了" }
+                                    return
+                                } else {
+                                    // Settings stable but app not installed - reset and continue
+                                    stableDuration = 0
+                                }
                             } else {
                                 stableDuration = 0
                             }
@@ -350,8 +356,13 @@ class IPAInstallerService {
                             stableDuration += checkInterval
                             
                             if stableDuration >= stabilityThreshold {
-                                await MainActor.run { currentStatus = "完了" }
-                                return
+                                // Final verification: check app actually exists
+                                if try await verifyInstallationComplete(bundleID: bundleID) {
+                                    await MainActor.run { currentStatus = "完了" }
+                                    return
+                                } else {
+                                    stableDuration = 0
+                                }
                             }
                         } else {
                             lastStableMTime = currentMTime
