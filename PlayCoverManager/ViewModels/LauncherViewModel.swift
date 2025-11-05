@@ -132,7 +132,7 @@ final class LauncherViewModel {
         statusMessage = "\(app.displayName) 用のディスクイメージを作成しています…"
         defer { isBusy = false }
         do {
-            try await diskImageService.ensureDiskImageExists(for: app.bundleIdentifier, volumeName: app.bundleIdentifier)
+            _ = try await diskImageService.ensureDiskImageExists(for: app.bundleIdentifier, volumeName: app.bundleIdentifier)
             pendingLaunchContext = nil
             Task { await performLaunch(app: app, resume: true) }
         } catch let error as AppError {

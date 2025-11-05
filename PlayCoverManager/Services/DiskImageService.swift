@@ -152,19 +152,24 @@ final class DiskImageService {
             // Check if parent directory filesystem is APFS (required for APFS sparse images)
             if settings.diskImageFormat.requiresAPFS {
                 let parentURL = imageURL.deletingLastPathComponent()
-                if let volumeURL = try? parentURL.resourceValues(forKeys: [.volumeURLKey]).volumeURL {
-                    let result = try? processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", volumeURL.path])
-                    if let data = result?.stdout.data(using: .utf8),
-                       let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
-                       let filesystemType = plist["FilesystemType"] as? String {
-                        
-                        if filesystemType != "apfs" {
-                            throw AppError.diskImage(
-                                "APFS ディスクイメージを作成できません",
-                                message: "保存先のファイルシステムが \(filesystemType) です。APFS 形式が選択されていますが、保存先が APFS でないため作成できません。設定で「スパース HFS+（互換性重視）」を選択するか、APFS ボリュームを保存先に指定してください。"
-                            )
+                do {
+                    let resourceValues = try parentURL.resourceValues(forKeys: [.volumeURLKey])
+                    if let volumeURL = resourceValues.volumeURL {
+                        let result = try? processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", volumeURL.path])
+                        if let data = result?.stdout.data(using: String.Encoding.utf8),
+                           let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                           let filesystemType = plist["FilesystemType"] as? String {
+                            
+                            if filesystemType != "apfs" {
+                                throw AppError.diskImage(
+                                    "APFS ディスクイメージを作成できません",
+                                    message: "保存先のファイルシステムが \(filesystemType) です。APFS 形式が選択されていますが、保存先が APFS でないため作成できません。設定で「スパース HFS+（互換性重視）」を選択するか、APFS ボリュームを保存先に指定してください。"
+                                )
+                            }
                         }
                     }
+                } catch {
+                    // Volume info not available, proceed anyway
                 }
             }
             
@@ -217,7 +222,7 @@ final class DiskImageService {
         
         let tempMountPoint = temporaryMountBase.appendingPathComponent(bundleIdentifier, isDirectory: true)
         try fileManager.createDirectory(at: tempMountPoint, withIntermediateDirectories: true)
-        var args: [String] = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
+        let args: [String] = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
         _ = try await processRunner.run("/usr/bin/hdiutil", args)
         return tempMountPoint
     }
