@@ -6,6 +6,7 @@ struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
     @State private var selectedAppForDetail: PlayCoverApp?
+    @State private var hasPerformedInitialAnimation = false
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -53,7 +54,11 @@ struct QuickLauncherView: View {
                 ScrollView {
                     LazyVGrid(columns: gridColumns, spacing: 32) {
                         ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                            iOSAppIconView(app: app, index: index) {
+                            iOSAppIconView(
+                                app: app, 
+                                index: index,
+                                shouldAnimate: !hasPerformedInitialAnimation
+                            ) {
                                 // Single tap - launch
                                 viewModel.launch(app: app)
                             } rightClickAction: {
@@ -65,6 +70,12 @@ struct QuickLauncherView: View {
                     .padding(32)
                 }
                 .background(Color(nsColor: .windowBackgroundColor))
+                .onAppear {
+                    // Only animate on first appearance
+                    if !hasPerformedInitialAnimation {
+                        hasPerformedInitialAnimation = true
+                    }
+                }
             }
         }
         .sheet(item: $selectedAppForDetail) { app in
@@ -126,6 +137,7 @@ struct QuickLauncherView: View {
 private struct iOSAppIconView: View {
     let app: PlayCoverApp
     let index: Int
+    let shouldAnimate: Bool
     let tapAction: () -> Void
     let rightClickAction: () -> Void
     
@@ -172,12 +184,17 @@ private struct iOSAppIconView: View {
         }
         .frame(width: 100, height: 120)
         .contentShape(Rectangle())
-        .opacity(hasAppeared ? 1 : 0)
-        .scaleEffect(hasAppeared ? 1 : 0.3)
-        .offset(y: hasAppeared ? 0 : 20)
+        .opacity(shouldAnimate ? (hasAppeared ? 1 : 0) : 1)
+        .scaleEffect(shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1)
+        .offset(y: shouldAnimate ? (hasAppeared ? 0 : 20) : 0)
         .onAppear {
-            // Staggered fade-in animation (Mac Dock style)
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(Double(index) * 0.05)) {
+            if shouldAnimate && !hasAppeared {
+                // Staggered fade-in animation (Mac Dock style) - only on first load
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(Double(index) * 0.05)) {
+                    hasAppeared = true
+                }
+            } else {
+                // No animation - just show immediately
                 hasAppeared = true
             }
         }
