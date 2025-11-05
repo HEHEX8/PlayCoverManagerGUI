@@ -193,11 +193,11 @@ final class DiskImageService {
         var args: [String]
         
         if settings.diskImageFormat == .asif {
-            // diskutil image attach <image> -mountPoint <path> -owners on [-nobrowse]
+            // diskutil image attach <image> --mountPoint <path> --mountOptions owners [--nobrowse]
             command = "/usr/sbin/diskutil"
-            args = ["image", "attach", imageURL.path, "-mountPoint", mountPoint.path, "-owners", "on"]
+            args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path, "--mountOptions", "owners"]
             if nobrowse {
-                args.append("-nobrowse")
+                args.append("--nobrowse")
             }
         } else {
             // hdiutil attach <image> -mountpoint <path> -owners on [-nobrowse]
@@ -232,7 +232,7 @@ final class DiskImageService {
         
         if settings.diskImageFormat == .asif {
             command = "/usr/sbin/diskutil"
-            args = ["image", "attach", imageURL.path, "-mountPoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
+            args = ["image", "attach", imageURL.path, "--mountPoint", tempMountPoint.path, "--mountOptions", "owners", "--nobrowse"]
         } else {
             command = "/usr/bin/hdiutil"
             args = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
