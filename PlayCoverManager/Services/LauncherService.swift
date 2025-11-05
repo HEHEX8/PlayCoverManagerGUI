@@ -114,16 +114,12 @@ final class LauncherService {
     }
     
     func openApp(_ app: PlayCoverApp) async throws {
-        // Use 'open' command - same as Finder double-click
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = [app.appURL.path]
+        // Use NSWorkspace.open - same as Finder double-click, but faster
+        // This returns immediately without waiting for app to fully launch
+        let success = await NSWorkspace.shared.open(app.appURL)
         
-        try process.run()
-        process.waitUntilExit()
-        
-        guard process.terminationStatus == 0 else {
-            throw NSError(domain: "LauncherService", code: Int(process.terminationStatus),
+        guard success else {
+            throw NSError(domain: "LauncherService", code: -1,
                          userInfo: [NSLocalizedDescriptionKey: "アプリの起動に失敗しました"])
         }
         

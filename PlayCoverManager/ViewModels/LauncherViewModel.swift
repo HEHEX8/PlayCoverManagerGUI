@@ -111,7 +111,13 @@ final class LauncherViewModel {
 
             try await launcherService.openApp(app)
             pendingLaunchContext = nil
-            await refresh()
+            
+            // Refresh after a short delay to allow the app to start
+            // This updates the "running" indicator
+            Task {
+                try? await Task.sleep(for: .seconds(0.5))
+                await refresh()
+            }
         } catch let error as AppError {
             self.error = error
         } catch {
