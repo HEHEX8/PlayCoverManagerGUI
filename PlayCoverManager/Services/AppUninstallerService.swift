@@ -211,7 +211,11 @@ class AppUninstallerService {
     // MARK: - Uninstallation
     
     nonisolated func uninstallApp(_ app: InstalledAppInfo) async throws {
-        await MainActor.run { currentStatus = "アプリを削除中: \(app.appName)" }
+        print("🟢 [DEBUG] uninstallApp 開始: \(app.appName)")
+        await MainActor.run { 
+            currentStatus = "アプリを削除中: \(app.appName)"
+            print("🟢 [DEBUG] currentStatus = \(currentStatus)")
+        }
         
         // Check if app is running
         if await isAppRunning(bundleID: app.bundleID) {
@@ -347,7 +351,10 @@ class AppUninstallerService {
     }
     
     nonisolated func uninstallApps(_ apps: [InstalledAppInfo]) async throws {
+        print("🔴 [DEBUG] uninstallApps 開始: \(apps.count) 個")
+        
         await MainActor.run {
+            print("🔴 [DEBUG] MainActor: isUninstalling = true")
             isUninstalling = true
             uninstalledApps.removeAll()
             failedApps.removeAll()
@@ -356,33 +363,43 @@ class AppUninstallerService {
         
         defer {
             Task { @MainActor in
+                print("🔴 [DEBUG] defer: isUninstalling = false")
                 isUninstalling = false
             }
         }
         
         let totalApps = apps.count
+        print("🔴 [DEBUG] totalApps = \(totalApps)")
         
         for (index, app) in apps.enumerated() {
+            print("🔴 [DEBUG] アプリ処理開始 [\(index + 1)/\(totalApps)]: \(app.appName)")
+            
             await MainActor.run {
                 currentProgress = Double(index) / Double(totalApps)
                 currentStatus = "[\(index + 1)/\(totalApps)] \(app.appName)"
+                print("🔴 [DEBUG] MainActor: currentStatus = \(currentStatus)")
             }
             
             do {
+                print("🔴 [DEBUG] uninstallApp 呼び出し: \(app.appName)")
                 try await uninstallApp(app)
+                print("🔴 [DEBUG] uninstallApp 完了: \(app.appName)")
                 await MainActor.run {
                     uninstalledApps.append(app.appName)
                 }
             } catch {
+                print("🔴 [DEBUG] uninstallApp エラー: \(app.appName) - \(error)")
                 await MainActor.run {
                     failedApps.append("\(app.appName): \(error.localizedDescription)")
                 }
             }
         }
         
+        print("🔴 [DEBUG] すべて完了")
         await MainActor.run {
             currentProgress = 1.0
             currentStatus = "完了"
+            print("🔴 [DEBUG] MainActor: currentStatus = 完了")
         }
     }
     

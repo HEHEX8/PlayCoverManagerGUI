@@ -649,10 +649,10 @@ private struct AppUninstallerSheet: View {
                         }
                     }
                     
-                    if isUninstalling {
+                    if isUninstalling, let service = uninstallerService {
                         VStack(spacing: 8) {
-                            ProgressView()
-                            Text(statusMessage)
+                            ProgressView(value: service.currentProgress)
+                            Text(service.currentStatus)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -715,16 +715,18 @@ private struct AppUninstallerSheet: View {
         let appsToUninstall = apps.filter { selectedApps.contains($0.bundleID) }
         guard !appsToUninstall.isEmpty else { return }
         
+        print("🔵 [UI] startUninstallation 開始: \(appsToUninstall.count) 個")
         isUninstalling = true
-        statusMessage = "アンインストール中..."
         
         do {
+            print("🔵 [UI] service.uninstallApps 呼び出し")
             try await service.uninstallApps(appsToUninstall)
+            print("🔵 [UI] service.uninstallApps 完了")
         } catch {
-            statusMessage = "エラー: \(error.localizedDescription)"
+            print("🔵 [UI] エラー: \(error)")
         }
         
-        statusMessage = service.currentStatus
+        print("🔵 [UI] 結果表示")
         isUninstalling = false
         showResults = true
     }
