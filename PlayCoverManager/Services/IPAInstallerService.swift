@@ -14,7 +14,7 @@ import CoreServices
 @MainActor
 @Observable
 class IPAInstallerService {
-    let processRunner: ProcessRunner
+    nonisolated(unsafe) let processRunner: ProcessRunner
     let diskImageService: DiskImageService
     let settingsStore: SettingsStore
     
