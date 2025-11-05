@@ -89,7 +89,8 @@ class AppUninstallerService {
                 
                 // Find corresponding disk image
                 let imageName = findDiskImageName(for: bundleID)
-                let imageURL = settingsStore.diskImageStoragePath.appendingPathComponent(imageName)
+                guard let diskImageDir = settingsStore.diskImageDirectory else { continue }
+                let imageURL = diskImageDir.appendingPathComponent(imageName)
                 let diskImageSize = fileSize(at: imageURL) ?? 0
                 
                 apps.append(InstalledAppInfo(
@@ -246,7 +247,7 @@ class AppUninstallerService {
         if mountOutput.contains(internalContainer.path) {
             // Unmount first
             currentStatus = "ディスクイメージをアンマウント中..."
-            try await diskImageService.unmountVolume(internalContainer)
+            try await diskImageService.detach(volumeURL: internalContainer)
         } else if FileManager.default.fileExists(atPath: internalContainer.path) {
             // Remove regular directory
             try? FileManager.default.removeItem(at: internalContainer)
