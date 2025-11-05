@@ -1,12 +1,13 @@
 import Foundation
 
 /// Service to manage file locks on containers to prevent unmounting while apps are running
-@MainActor
+/// Not isolated to MainActor since file operations can be called from any context
 final class ContainerLockService {
     private let fileManager: FileManager
     
     // Track locks by bundle identifier
     private var activeLocks: [String: FileHandle] = [:]
+    private let lockQueue = DispatchQueue(label: "com.playcover.lockservice", attributes: .concurrent)
     
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
@@ -14,7 +15,10 @@ final class ContainerLockService {
     
     deinit {
         // Release all locks on cleanup
-        releaseAllLocks()
+        // Safe to call synchronously in deinit
+        lockQueue.sync {
+            releaseAllLocksUnsafe()
+        }
     }
     
     /// Lock a container by creating a lock file
@@ -23,71 +27,77 @@ final class ContainerLockService {
     ///   - containerURL: The container directory URL
     /// - Returns: true if lock was successfully acquired, false if already locked
     func lockContainer(for bundleID: String, at containerURL: URL) -> Bool {
-        // If already locked, return true
-        if activeLocks[bundleID] != nil {
-            return true
-        }
-        
-        // Create lock file path
-        let lockFileURL = containerURL.appendingPathComponent(".playcover_lock")
-        
-        do {
-            // Ensure container directory exists
-            if !fileManager.fileExists(atPath: containerURL.path) {
-                try fileManager.createDirectory(at: containerURL, withIntermediateDirectories: true)
-            }
-            
-            // Create lock file if it doesn't exist
-            if !fileManager.fileExists(atPath: lockFileURL.path) {
-                fileManager.createFile(atPath: lockFileURL.path, contents: Data(), attributes: nil)
-            }
-            
-            // Open file with exclusive lock
-            let fileHandle = try FileHandle(forUpdating: lockFileURL)
-            
-            // Try to acquire exclusive lock (non-blocking)
-            // flock with LOCK_EX | LOCK_NB for non-blocking exclusive lock
-            let fd = fileHandle.fileDescriptor
-            let result = flock(fd, LOCK_EX | LOCK_NB)
-            
-            if result == 0 {
-                // Lock acquired successfully
-                activeLocks[bundleID] = fileHandle
+        return lockQueue.sync(flags: .barrier) {
+            // If already locked, return true
+            if activeLocks[bundleID] != nil {
                 return true
-            } else {
-                // Lock failed (another process has it)
-                try? fileHandle.close()
+            }
+            
+            // Create lock file path
+            let lockFileURL = containerURL.appendingPathComponent(".playcover_lock")
+            
+            do {
+                // Ensure container directory exists
+                if !fileManager.fileExists(atPath: containerURL.path) {
+                    try fileManager.createDirectory(at: containerURL, withIntermediateDirectories: true)
+                }
+                
+                // Create lock file if it doesn't exist
+                if !fileManager.fileExists(atPath: lockFileURL.path) {
+                    fileManager.createFile(atPath: lockFileURL.path, contents: Data(), attributes: nil)
+                }
+                
+                // Open file with exclusive lock
+                let fileHandle = try FileHandle(forUpdating: lockFileURL)
+                
+                // Try to acquire exclusive lock (non-blocking)
+                // flock with LOCK_EX | LOCK_NB for non-blocking exclusive lock
+                let fd = fileHandle.fileDescriptor
+                let result = flock(fd, LOCK_EX | LOCK_NB)
+                
+                if result == 0 {
+                    // Lock acquired successfully
+                    activeLocks[bundleID] = fileHandle
+                    return true
+                } else {
+                    // Lock failed (another process has it)
+                    try? fileHandle.close()
+                    return false
+                }
+            } catch {
+                // Failed to create lock
                 return false
             }
-        } catch {
-            // Failed to create lock
-            return false
         }
     }
     
     /// Unlock a container by releasing the lock file
     /// - Parameter bundleID: The bundle identifier of the app
     func unlockContainer(for bundleID: String) {
-        guard let fileHandle = activeLocks[bundleID] else {
-            return
+        lockQueue.sync(flags: .barrier) {
+            guard let fileHandle = activeLocks[bundleID] else {
+                return
+            }
+            
+            // Release lock
+            let fd = fileHandle.fileDescriptor
+            flock(fd, LOCK_UN)
+            
+            // Close file handle
+            try? fileHandle.close()
+            
+            // Remove from active locks
+            activeLocks.removeValue(forKey: bundleID)
         }
-        
-        // Release lock
-        let fd = fileHandle.fileDescriptor
-        flock(fd, LOCK_UN)
-        
-        // Close file handle
-        try? fileHandle.close()
-        
-        // Remove from active locks
-        activeLocks.removeValue(forKey: bundleID)
     }
     
     /// Check if a container is locked
     /// - Parameter bundleID: The bundle identifier of the app
     /// - Returns: true if locked by this instance
     func isLocked(for bundleID: String) -> Bool {
-        return activeLocks[bundleID] != nil
+        return lockQueue.sync {
+            return activeLocks[bundleID] != nil
+        }
     }
     
     /// Try to acquire a lock on a container (test without holding)
@@ -131,11 +141,14 @@ final class ContainerLockService {
         }
     }
     
-    /// Release all locks (called on deinit)
-    private func releaseAllLocks() {
-        for (bundleID, _) in activeLocks {
-            unlockContainer(for: bundleID)
+    /// Release all locks (called on deinit) - unsafe version without queue sync
+    private func releaseAllLocksUnsafe() {
+        for (_, fileHandle) in activeLocks {
+            let fd = fileHandle.fileDescriptor
+            flock(fd, LOCK_UN)
+            try? fileHandle.close()
         }
+        activeLocks.removeAll()
     }
     
     // MARK: - Cleanup
