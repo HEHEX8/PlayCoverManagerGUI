@@ -135,6 +135,7 @@ final class LauncherService {
 
     private func readLastLaunchFlag(for bundleID: String) -> Bool {
         guard let data = try? Data(contentsOf: mapDataURL()), let text = String(data: data, encoding: .utf8) else {
+            print("🟣 [LauncherService] map.dat が存在しないか読み込めません")
             return false
         }
         let lines = text.split(separator: "\n")
@@ -142,7 +143,9 @@ final class LauncherService {
             let parts = line.split(separator: "\t")
             guard parts.count >= 4 else { continue }
             if parts[0] == bundleID {
-                return parts[3] == "1"
+                let isLastLaunched = parts[3] == "1"
+                print("🟣 [LauncherService] \(bundleID): lastLaunchFlag = \(isLastLaunched)")
+                return isLastLaunched
             }
         }
         return false
@@ -150,6 +153,7 @@ final class LauncherService {
 
     private func writeLastLaunchFlag(for bundleID: String) {
         let url = mapDataURL()
+        print("🟣 [LauncherService] writeLastLaunchFlag: \(bundleID) -> \(url.path)")
         var lines: [String] = []
         if let data = try? Data(contentsOf: url), let text = String(data: data, encoding: .utf8) {
             lines = text.split(separator: "\n").map(String.init)
@@ -162,6 +166,7 @@ final class LauncherService {
                 parts[3] = "1"
                 lines[index] = parts.joined(separator: "\t")
                 updated = true
+                print("🟣 [LauncherService] 既存エントリを更新: \(bundleID)")
             } else {
                 parts[3] = "0"
                 lines[index] = parts.joined(separator: "\t")
