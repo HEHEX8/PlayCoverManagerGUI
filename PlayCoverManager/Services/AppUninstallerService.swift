@@ -257,24 +257,39 @@ class AppUninstallerService {
         
         try? FileManager.default.removeItem(at: keymappingFile)
         
-        // Step 5: Remove internal container if exists
+        // Step 5: Unmount and remove container (this is what we mounted during installation)
         let internalContainer = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(app.bundleID)", isDirectory: true)
         
-        currentStatus = "コンテナを削除中..."
+        currentStatus = "コンテナ確認中..."
         
         // Check if it's a mount point
-        let mountOutput = try await processRunner.run("/sbin/mount", [])
-        if mountOutput.contains(internalContainer.path) {
-            // Unmount first
-            currentStatus = "ディスクイメージをアンマウント中..."
-            try await diskImageService.detach(volumeURL: internalContainer)
-        } else if FileManager.default.fileExists(atPath: internalContainer.path) {
-            // Remove regular directory
+        do {
+            let mountOutput = try await processRunner.run("/sbin/mount", [])
+            if mountOutput.contains(internalContainer.path) {
+                // It's mounted - unmount it
+                currentStatus = "ディスクイメージをアンマウント中..."
+                try await diskImageService.detach(volumeURL: internalContainer)
+                
+                // After unmounting, the mount point directory should be removed automatically by the system
+                // But sometimes it remains as an empty directory - clean it up
+                try await Task.sleep(nanoseconds: 500_000_000) // Wait 0.5 sec for system to clean up
+                
+                if FileManager.default.fileExists(atPath: internalContainer.path) {
+                    try? FileManager.default.removeItem(at: internalContainer)
+                }
+            } else if FileManager.default.fileExists(atPath: internalContainer.path) {
+                // Not mounted but directory exists - this shouldn't happen in normal cases
+                // but remove it anyway (might be leftover from previous failed uninstall)
+                currentStatus = "残存ディレクトリを削除中..."
+                try? FileManager.default.removeItem(at: internalContainer)
+            }
+        } catch {
+            // If mount check fails, try to remove directory anyway
             try? FileManager.default.removeItem(at: internalContainer)
         }
         
-        // Step 6: Delete disk image
+        // Step 6: Delete disk image file (this is what we created during installation)
         if FileManager.default.fileExists(atPath: app.diskImageURL.path) {
             currentStatus = "ディスクイメージを削除中..."
             try FileManager.default.removeItem(at: app.diskImageURL)
