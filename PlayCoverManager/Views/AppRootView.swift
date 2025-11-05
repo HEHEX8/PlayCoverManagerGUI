@@ -83,6 +83,12 @@ struct ErrorView: View {
                         }
                     }
                     .keyboardShortcut("s", modifiers: [.command])
+                } else if error.category == .diskImage {
+                    // Disk image errors (e.g., drive not connected)
+                    Button("設定を変更") {
+                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    }
+                    .keyboardShortcut("s", modifiers: [.command])
                 } else if error.requiresAction {
                     Button("設定を開く") {
                         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)

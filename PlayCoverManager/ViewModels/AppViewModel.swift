@@ -63,11 +63,15 @@ final class AppViewModel {
             }
 
             let diskImageURL = baseDirectory.appendingPathComponent("\(playCoverPaths.bundleIdentifier).asif")
+            
+            // Check if the storage drive is accessible
             guard fileManager.fileExists(atPath: baseDirectory.path) else {
-                statusMessage = "ディスクイメージ保存先が見つかりません"
-                let context = AppPhase.SetupContext(missingPlayCover: false, missingDiskImage: true, diskImageMountRequired: true)
-                await presentSetup(context: context)
-                return
+                // Drive is not accessible - show error with options
+                let volumeName = baseDirectory.pathComponents.dropFirst().first ?? "不明なボリューム"
+                throw AppError.diskImage(
+                    "ディスクイメージ保存先にアクセスできません",
+                    message: "保存先のドライブが接続されていない可能性があります。\n\n保存先: \(baseDirectory.path)\nボリューム: \(volumeName)\n\n対処方法：\n• 外部ドライブを接続してから「再試行」をクリック\n• 別の保存先に変更する場合は「設定を変更」をクリック"
+                )
             }
 
             if !fileManager.fileExists(atPath: diskImageURL.path) {
