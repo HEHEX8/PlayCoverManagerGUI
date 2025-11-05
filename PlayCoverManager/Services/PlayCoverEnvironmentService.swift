@@ -8,6 +8,20 @@ final class PlayCoverEnvironmentService {
         self.processRunner = processRunner
         self.fileManager = fileManager
     }
+    
+    /// Check if the current macOS version supports ASIF format (Tahoe 26.0+)
+    func checkASIFSupport() throws {
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        
+        // macOS Tahoe is version 26.0
+        guard osVersion.majorVersion >= 26 else {
+            let versionString = "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
+            throw AppError.environment(
+                "macOS のバージョンが古すぎます",
+                message: "このアプリは macOS Tahoe 26.0 以降が必要です。\n\n現在のバージョン: macOS \(versionString)\n必要なバージョン: macOS Tahoe 26.0 以降\n\nシステムをアップデートしてから再度お試しください。"
+            )
+        }
+    }
 
     func detectPlayCover() throws -> PlayCoverPaths {
         let appURL = PlayCoverPaths.defaultApplicationURL
@@ -36,21 +50,18 @@ final class PlayCoverEnvironmentService {
         }
 
         try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
-        let attachArgs = buildAttachArguments(for: diskImageURL, mountPoint: mountPoint, nobrowse: nobrowse)
-        _ = try await processRunner.run("/usr/bin/hdiutil", attachArgs)
-    }
-
-    func buildAttachArguments(for diskImageURL: URL, mountPoint: URL, nobrowse: Bool) -> [String] {
-        var args = ["attach", diskImageURL.path, "-mountpoint", mountPoint.path, "-owners", "on"]
+        
+        // Mount ASIF image using diskutil (macOS Tahoe 26.0+)
+        var args = ["image", "attach", diskImageURL.path, "--mountPoint", mountPoint.path]
         if nobrowse {
-            args.append("-nobrowse")
+            args.append("--nobrowse")
         }
-        return args
+        _ = try await processRunner.run("/usr/sbin/diskutil", args)
     }
 
     private func isVolumeMounted(at mountPoint: URL, expectedVolumeName: String) async -> Bool {
         do {
-            let result = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
+            let result = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
             guard let data = result.stdout.data(using: .utf8) else { return false }
             let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
             if let dict = plist as? [String: Any], let volumeName = dict["VolumeName"] as? String {
