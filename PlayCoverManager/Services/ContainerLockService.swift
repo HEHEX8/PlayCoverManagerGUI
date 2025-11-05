@@ -137,4 +137,45 @@ final class ContainerLockService {
             unlockContainer(for: bundleID)
         }
     }
+    
+    // MARK: - Cleanup
+    
+    /// Clean up stale lock files from containers
+    /// Removes lock files that are not currently held by any process
+    /// - Parameter containerURLs: Array of container URLs to check
+    func cleanupStaleLocks(in containerURLs: [URL]) {
+        for containerURL in containerURLs {
+            let lockFileURL = containerURL.appendingPathComponent(".playcover_lock")
+            
+            // Skip if lock file doesn't exist
+            guard fileManager.fileExists(atPath: lockFileURL.path) else {
+                continue
+            }
+            
+            // Try to acquire lock to see if it's stale
+            do {
+                let fileHandle = try FileHandle(forUpdating: lockFileURL)
+                let fd = fileHandle.fileDescriptor
+                
+                // Try non-blocking lock
+                let result = flock(fd, LOCK_EX | LOCK_NB)
+                
+                if result == 0 {
+                    // Lock acquired = no one is using it = stale lock file
+                    // Release lock immediately
+                    flock(fd, LOCK_UN)
+                    try? fileHandle.close()
+                    
+                    // Delete stale lock file
+                    try? fileManager.removeItem(at: lockFileURL)
+                } else {
+                    // Lock failed = someone is using it = keep it
+                    try? fileHandle.close()
+                }
+            } catch {
+                // Failed to check lock, leave it alone
+                continue
+            }
+        }
+    }
 }

@@ -58,12 +58,30 @@ final class LauncherViewModel {
         self.lockService = lockService
         self.fileManager = fileManager
         
+        // Cleanup stale lock files on startup
+        cleanupStaleLockFiles()
+        
         // Start monitoring app terminations
         startMonitoringAppTerminations()
     }
     
     deinit {
         stopMonitoringAppTerminations()
+    }
+    
+    private func cleanupStaleLockFiles() {
+        // Get all container URLs for installed apps
+        var containerURLs: [URL] = []
+        for app in apps {
+            let container = containerURL(for: app.bundleIdentifier)
+            containerURLs.append(container)
+        }
+        
+        // Also include PlayCover's container
+        containerURLs.append(playCoverPaths.containerRootURL)
+        
+        // Cleanup stale locks
+        lockService.cleanupStaleLocks(in: containerURLs)
     }
 
     func refresh() async {
