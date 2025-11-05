@@ -219,16 +219,27 @@ class AppUninstallerService {
         }
         
         let playCoverBundleID = "io.playcover.PlayCover"
+        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
         
         // Step 1: Remove app from PlayCover Applications/
-        let appPath = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications/\(app.bundleID).app", isDirectory: true)
-        
-        if FileManager.default.fileExists(atPath: appPath.path) {
-            try FileManager.default.removeItem(at: appPath)
+        // Find actual app by bundle ID (app name might differ from bundle ID)
+        if let appDirs = try? FileManager.default.contentsOfDirectory(at: applicationsDir, includingPropertiesForKeys: nil) {
+            for appURL in appDirs where appURL.pathExtension == "app" {
+                let infoPlist = appURL.appendingPathComponent("Info.plist")
+                if let plistData = try? Data(contentsOf: infoPlist),
+                   let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                   let bundleID = plist["CFBundleIdentifier"] as? String,
+                   bundleID == app.bundleID {
+                    currentStatus = "アプリを削除中..."
+                    try FileManager.default.removeItem(at: appURL)
+                    break
+                }
+            }
         }
         
         // Step 2: Remove app settings
+        currentStatus = "設定ファイルを削除中..."
         let settingsFile = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings/\(app.bundleID).plist")
         

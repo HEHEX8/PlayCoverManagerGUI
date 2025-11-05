@@ -153,8 +153,8 @@ final class DiskImageService {
     }
 
     func detach(volumeURL: URL) async throws {
-        // Use diskutil unmount for ASIF images
-        _ = try await processRunner.run("/usr/sbin/diskutil", ["unmount", volumeURL.path])
+        // Use diskutil unmount for ASIF images with force flag
+        _ = try await processRunner.run("/usr/sbin/diskutil", ["unmount", "force", volumeURL.path])
     }
 
     func detachAll(volumeURLs: [URL]) async throws {
