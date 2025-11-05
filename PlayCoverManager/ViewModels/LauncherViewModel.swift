@@ -38,7 +38,7 @@ final class LauncherViewModel {
     private let lockService: ContainerLockService
 
     private var pendingLaunchContext: LaunchContext?
-    private var appTerminationObserver: NSObjectProtocol?
+    private nonisolated(unsafe) var appTerminationObserver: NSObjectProtocol?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
