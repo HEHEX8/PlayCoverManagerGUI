@@ -191,17 +191,22 @@ class AppUninstallerService {
     
     // MARK: - App Running Check
     
-    func isAppRunning(bundleID: String) async -> Bool {
+    nonisolated func isAppRunning(bundleID: String) async -> Bool {
+        print("🟢 [DEBUG] isAppRunning チェック開始: \(bundleID)")
         do {
             let psOutput = try await processRunner.run("/bin/ps", ["-ax"])
+            print("🟢 [DEBUG] ps コマンド完了")
             let lines = psOutput.split(separator: "\n")
             
             for line in lines {
                 if line.contains(bundleID) || line.contains(".app/Contents/MacOS/") {
+                    print("🟢 [DEBUG] アプリが実行中です")
                     return true
                 }
             }
+            print("🟢 [DEBUG] アプリは実行されていません")
         } catch {
+            print("🟢 [DEBUG] ps コマンドエラー: \(error)")
             return false
         }
         
