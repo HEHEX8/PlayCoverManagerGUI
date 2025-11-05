@@ -118,45 +118,80 @@ struct QuickLauncherView: View {
                         .background(Color(nsColor: .windowBackgroundColor))
                     }
                     
-                    // Recently launched app quick launch button
+                    // Recently launched app quick launch button - Enhanced UI
                     Divider()
                     
                     Button {
                         viewModel.launch(app: recentApp)
                     } label: {
-                        HStack(spacing: 12) {
-                            if let icon = recentApp.icon {
-                                Image(nsImage: icon)
-                                    .resizable()
-                                    .frame(width: 32, height: 32)
-                                    .clipShape(RoundedRectangle(cornerRadius: 7))
-                            } else {
-                                Image(systemName: "app.fill")
-                                    .resizable()
-                                    .frame(width: 32, height: 32)
+                        HStack(spacing: 16) {
+                            // Icon with glow effect
+                            ZStack {
+                                if let icon = recentApp.icon {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 48, height: 48)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .shadow(color: .accentColor.opacity(0.3), radius: 8, x: 0, y: 2)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.accentColor.opacity(0.2))
+                                        .frame(width: 48, height: 48)
+                                        .overlay {
+                                            Image(systemName: "app.fill")
+                                                .font(.system(size: 24))
+                                                .foregroundStyle(.secondary)
+                                        }
+                                }
+                            }
+                            
+                            // App name and action
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(recentApp.displayName)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text("前回起動したアプリ")
+                                    .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                             
-                            Text("\(recentApp.displayName) を起動")
-                                .font(.body)
-                            
                             Spacer()
                             
-                            Text("Enter")
-                                .font(.caption)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color(nsColor: .controlBackgroundColor))
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                                .foregroundStyle(.secondary)
+                            // Enter key hint with accent color
+                            HStack(spacing: 6) {
+                                Image(systemName: "return")
+                                    .font(.caption)
+                                Text("Enter")
+                                    .font(.caption)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.accentColor.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .foregroundStyle(.accentColor)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 16)
                         .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .background(Color(nsColor: .controlBackgroundColor))
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color.accentColor.opacity(0.08),
+                                Color.accentColor.opacity(0.04)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 0)
+                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+                            .frame(height: 1),
+                        alignment: .top
+                    )
                     .keyboardShortcut(.defaultAction)
                 }
             } else {
@@ -266,6 +301,13 @@ private struct iOSAppIconView: View {
     @State private var isAnimating = false
     @State private var hasAppeared = false
     
+    private func isAppRunning(bundleID: String) -> Bool {
+        let runningApps = NSWorkspace.shared.runningApplications
+        return runningApps.contains { app in
+            app.bundleIdentifier == bundleID && !app.isTerminated
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
@@ -287,6 +329,19 @@ private struct iOSAppIconView: View {
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .overlay(alignment: .topTrailing) {
+                if isAppRunning(bundleID: app.bundleIdentifier) {
+                    Circle()
+                        .fill(.green)
+                        .frame(width: 16, height: 16)
+                        .overlay {
+                            Circle()
+                                .stroke(.white, lineWidth: 2)
+                        }
+                        .shadow(radius: 2)
+                        .offset(x: 4, y: -4)
+                }
+            }
             .scaleEffect(isAnimating ? 0.85 : 1.0)
             .animation(
                 isAnimating ? 
