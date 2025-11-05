@@ -40,26 +40,50 @@ final class LauncherService {
             guard let bundle = Bundle(url: url) else { continue }
             let bundleID = bundle.bundleIdentifier ?? url.deletingPathExtension().lastPathComponent
             
-            // Get localized name for current system language
-            let localizedName = bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String 
-                ?? bundle.localizedInfoDictionary?["CFBundleName"] as? String
+            // Get display name with proper localization
+            // Try multiple methods to get the best localized name
+            let displayName = getLocalizedAppName(for: bundle, url: url)
             
-            // Fallback to non-localized name if localized version not available
             let info = bundle.infoDictionary
-            let displayName = localizedName 
-                ?? info?["CFBundleDisplayName"] as? String 
-                ?? info?["CFBundleName"] as? String 
-                ?? url.deletingPathExtension().lastPathComponent
-            
             let version = info?["CFBundleShortVersionString"] as? String
             let icon = NSWorkspace.shared.icon(forFile: url.path)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
-            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: localizedName, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag)
+            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag)
             apps.append(app)
         }
         return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
     }
 
+    private func getLocalizedAppName(for bundle: Bundle, url: URL) -> String {
+        // Method 1: Use NSWorkspace to get the localized name (most reliable for system language)
+        if let localizedName = NSWorkspace.shared.localizedLabel(forFile: url.path), !localizedName.isEmpty {
+            return localizedName
+        }
+        
+        // Method 2: Try localizedInfoDictionary (system language)
+        if let localizedDict = bundle.localizedInfoDictionary {
+            if let displayName = localizedDict["CFBundleDisplayName"] as? String, !displayName.isEmpty {
+                return displayName
+            }
+            if let name = localizedDict["CFBundleName"] as? String, !name.isEmpty {
+                return name
+            }
+        }
+        
+        // Method 3: Try main Info.plist
+        if let info = bundle.infoDictionary {
+            if let displayName = info["CFBundleDisplayName"] as? String, !displayName.isEmpty {
+                return displayName
+            }
+            if let name = info["CFBundleName"] as? String, !name.isEmpty {
+                return name
+            }
+        }
+        
+        // Fallback: Use filename
+        return url.deletingPathExtension().lastPathComponent
+    }
+    
     func openApp(_ app: PlayCoverApp) async throws {
         // Use 'open' command - same as Finder double-click
         let process = Process()

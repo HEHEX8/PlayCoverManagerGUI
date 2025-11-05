@@ -5,57 +5,57 @@ import Observation
 struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
+    
+    private let gridColumns = [
+        GridItem(.adaptive(minimum: 120, maximum: 160), spacing: 20)
+    ]
 
     var body: some View {
-        NavigationSplitView {
-            List(viewModel.filteredApps, selection: $viewModel.selectedApp) { app in
-                HStack(alignment: .center, spacing: 12) {
-                    AppIconView(icon: app.icon)
-                    VStack(alignment: .leading) {
-                        Text(app.displayName)
-                        Text(app.bundleIdentifier)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if app.lastLaunchedFlag {
-                        Image(systemName: "clock.badge.checkmark")
-                            .foregroundStyle(.green)
-                            .help("前回起動")
-                    }
+        VStack(spacing: 0) {
+            // Toolbar
+            HStack {
+                TextField("アプリを検索", text: $viewModel.searchText)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 300)
+                
+                Spacer()
+                
+                Button {
+                    Task { await viewModel.refresh() }
+                } label: {
+                    Label("再読み込み", systemImage: "arrow.clockwise")
                 }
-                .padding(4)
-                .contentShape(Rectangle())
-                .onTapGesture(count: 2) { viewModel.launch(app: app) }
-            }
-            .searchable(text: $viewModel.searchText, prompt: Text("アプリを検索"))
-            .toolbar {
-                ToolbarItemGroup(placement: .primaryAction) {
-                    Button {
-                        Task { await viewModel.refresh() }
-                    } label: {
-                        Label("再読み込み", systemImage: "arrow.clockwise")
-                    }
-                    .keyboardShortcut("r", modifiers: [.command])
-
-                    Button {
-                        viewModel.unmountAll(applyToPlayCoverContainer: true)
-                    } label: {
-                        Label("すべてアンマウント", systemImage: "eject")
-                    }
-                    .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
+                .keyboardShortcut("r", modifiers: [.command])
+                
+                Button {
+                    viewModel.unmountAll(applyToPlayCoverContainer: true)
+                } label: {
+                    Label("すべてアンマウント", systemImage: "eject")
                 }
+                .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
             }
-        } detail: {
-            if let selected = viewModel.selectedApp ?? viewModel.filteredApps.first {
-                AppDetailView(app: selected) {
-                    viewModel.launch(app: selected)
-                } refreshAction: {
+            .padding()
+            .background(Color(nsColor: .controlBackgroundColor))
+            
+            Divider()
+            
+            // App Grid
+            if viewModel.filteredApps.isEmpty {
+                EmptyAppListView {
                     Task { await viewModel.refresh() }
                 }
             } else {
-                EmptyAppListView {
-                    Task { await viewModel.refresh() }
+                ScrollView {
+                    LazyVGrid(columns: gridColumns, spacing: 20) {
+                        ForEach(viewModel.filteredApps) { app in
+                            AppGridItemView(app: app) {
+                                viewModel.launch(app: app)
+                            } contextAction: {
+                                viewModel.selectedApp = app
+                            }
+                        }
+                    }
+                    .padding(20)
                 }
             }
         }
@@ -106,6 +106,58 @@ struct QuickLauncherView: View {
             }
             if viewModel.selectedApp == nil {
                 viewModel.selectedApp = viewModel.filteredApps.first
+            }
+        }
+    }
+}
+
+private struct AppGridItemView: View {
+    let app: PlayCoverApp
+    let launchAction: () -> Void
+    let contextAction: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            // Icon
+            Group {
+                if let icon = app.icon {
+                    Image(nsImage: icon)
+                        .resizable()
+                } else {
+                    Image(systemName: "app.dashed")
+                        .resizable()
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: 80, height: 80)
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            
+            // App name
+            Text(app.displayName)
+                .font(.system(size: 13))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(height: 32)
+        }
+        .frame(width: 120)
+        .padding(8)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(8)
+        .onTapGesture(count: 2) {
+            launchAction()
+        }
+        .onTapGesture {
+            contextAction()
+        }
+        .contextMenu {
+            Button("起動") { launchAction() }
+            Divider()
+            Button("Finder で表示") {
+                NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+            }
+            Button("アプリフォルダを開く") {
+                NSWorkspace.shared.open(app.appURL.deletingLastPathComponent())
             }
         }
     }
@@ -178,48 +230,5 @@ private struct EmptyAppListView: View {
     }
 }
 
-private struct AppDetailView: View {
-    let app: PlayCoverApp
-    let launchAction: () -> Void
-    let refreshAction: () -> Void
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 16) {
-                AppIconView(icon: app.icon)
-                    .frame(width: 80, height: 80)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(app.displayName)
-                        .font(.title2)
-                    if let version = app.version {
-                        Text("Version \(version)")
-                            .foregroundStyle(.secondary)
-                    }
-                    Text(app.bundleIdentifier)
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-            }
-
-            HStack(spacing: 12) {
-                Button {
-                    launchAction()
-                } label: {
-                    Label("起動", systemImage: "play.circle.fill")
-                }
-                .keyboardShortcut(.defaultAction)
-
-                Button {
-                    refreshAction()
-                } label: {
-                    Label("再読み込み", systemImage: "arrow.clockwise")
-                }
-            }
-
-            Spacer()
-        }
-        .padding(24)
-    }
-}
 
