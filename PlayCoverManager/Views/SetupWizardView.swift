@@ -41,7 +41,18 @@ struct SetupWizardView: View {
             .padding()
         }
         .alert(item: $viewModel.error) { error in
-            Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
+            if error.requiresAction || error.category == .permissionDenied {
+                Alert(
+                    title: Text(error.title),
+                    message: Text(error.message),
+                    primaryButton: .default(Text("設定を開く")) {
+                        viewModel.openSettings()
+                    },
+                    secondaryButton: .cancel(Text("OK"))
+                )
+            } else {
+                Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
+            }
         }
     }
 

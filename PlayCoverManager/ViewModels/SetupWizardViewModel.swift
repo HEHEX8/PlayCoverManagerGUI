@@ -80,6 +80,10 @@ final class SetupWizardViewModel {
             NSWorkspace.shared.open(url)
         }
     }
+    
+    func openSettings() {
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
 
     func chooseStorageDirectory() {
         let panel = NSOpenPanel()

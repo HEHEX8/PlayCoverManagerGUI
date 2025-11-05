@@ -81,17 +81,40 @@ final class DiskImageService {
             return imageURL
         }
         
-        // Verify parent directory is writable
-        let parentDir = imageURL.deletingLastPathComponent()
-        try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
-        
-        var isWritable = false
-        if let values = try? parentDir.resourceValues(forKeys: [.volumeIsReadOnlyKey, .isWritableKey]) {
-            isWritable = (values.isWritable == true) && (values.volumeIsReadOnly == false)
+        // Start accessing security-scoped resource
+        let hasAccess = settings.startAccessingSecurityScopedResource()
+        defer {
+            if hasAccess {
+                settings.stopAccessingSecurityScopedResource()
+            }
         }
         
-        guard isWritable else {
-            throw AppError.diskImage("保存先に書き込み権限がありません", message: "別の場所を選択してください: \(parentDir.path)")
+        // Verify parent directory is accessible and writable
+        let parentDir = imageURL.deletingLastPathComponent()
+        
+        // Try to create directory - this will fail if we don't have access
+        do {
+            try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
+        } catch let error as NSError {
+            if error.domain == NSCocoaErrorDomain && (error.code == NSFileWriteNoPermissionError || error.code == NSFileNoSuchFileError) {
+                throw AppError.permissionDenied(
+                    "保存先へのアクセス権限がありません",
+                    message: "macOS のセキュリティ設定により、保存先ディレクトリへのアクセスが拒否されました。\n\n対処方法：\n1. 設定画面で保存先を再度選択してください\n2. 外部ドライブの場合、接続されているか確認してください\n3. システム設定 > プライバシーとセキュリティ > ファイルとフォルダ で PlayCover Manager の権限を確認してください\n\nパス: \(parentDir.path)"
+                )
+            }
+            throw error
+        }
+        
+        // Test write permission by creating a temp file
+        let testFile = parentDir.appendingPathComponent(".playcover_test_\(UUID().uuidString)")
+        do {
+            try "test".write(to: testFile, atomically: true, encoding: .utf8)
+            try fileManager.removeItem(at: testFile)
+        } catch {
+            throw AppError.permissionDenied(
+                "保存先に書き込み権限がありません",
+                message: "ディレクトリは作成できましたが、ファイルの書き込みテストに失敗しました。\n\n対処方法：\n• 設定画面で別の保存先を選択してください\n• 外部ドライブの場合、マウントされているか確認してください\n• ドライブが読み取り専用でないか確認してください\n\nパス: \(parentDir.path)\nエラー: \(error.localizedDescription)"
+            )
         }
         
         let volName = volumeName ?? bundleIdentifier
@@ -163,6 +186,14 @@ final class DiskImageService {
 
     func mountDiskImage(for bundleIdentifier: String, at mountPoint: URL, nobrowse: Bool) async throws {
         let imageURL = try diskImageURL(for: bundleIdentifier)
+        
+        let hasAccess = settings.startAccessingSecurityScopedResource()
+        defer {
+            if hasAccess {
+                settings.stopAccessingSecurityScopedResource()
+            }
+        }
+        
         guard fileManager.fileExists(atPath: imageURL.path) else {
             throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
         }
@@ -176,6 +207,14 @@ final class DiskImageService {
 
     func mountTemporarily(for bundleIdentifier: String, temporaryMountBase: URL) async throws -> URL {
         let imageURL = try diskImageURL(for: bundleIdentifier)
+        
+        let hasAccess = settings.startAccessingSecurityScopedResource()
+        defer {
+            if hasAccess {
+                settings.stopAccessingSecurityScopedResource()
+            }
+        }
+        
         let tempMountPoint = temporaryMountBase.appendingPathComponent(bundleIdentifier, isDirectory: true)
         try fileManager.createDirectory(at: tempMountPoint, withIntermediateDirectories: true)
         var args: [String] = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]

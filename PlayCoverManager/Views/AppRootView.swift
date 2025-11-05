@@ -66,19 +66,43 @@ struct ErrorView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
+            Image(systemName: iconName)
                 .font(.system(size: 48, weight: .medium))
-                .foregroundStyle(.orange)
+                .foregroundStyle(iconColor)
             Text(error.title)
                 .font(.title2)
             Text(error.message)
                 .multilineTextAlignment(.center)
-            HStack {
+                .frame(maxWidth: 500)
+            HStack(spacing: 12) {
+                if error.requiresAction || error.category == .permissionDenied {
+                    Button("設定を開く") {
+                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    }
+                }
                 Button("終了") { NSApplication.shared.terminate(nil) }
                 Button("再試行", action: retry)
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding()
+    }
+    
+    private var iconName: String {
+        switch error.category {
+        case .permissionDenied:
+            return "lock.shield"
+        default:
+            return "exclamationmark.triangle"
+        }
+    }
+    
+    private var iconColor: Color {
+        switch error.category {
+        case .permissionDenied:
+            return .red
+        default:
+            return .orange
+        }
     }
 }
