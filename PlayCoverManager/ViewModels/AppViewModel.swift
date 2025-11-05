@@ -19,19 +19,22 @@ final class AppViewModel {
     private var diskImageService: DiskImageService!
     private let launcherService: LauncherService
     private let installerService: InstallerService
+    private let lockService: ContainerLockService
 
     init(fileManager: FileManager = .default,
          settings: SettingsStore,
          perAppSettings: PerAppSettingsStore,
          environmentService: PlayCoverEnvironmentService = PlayCoverEnvironmentService(),
          launcherService: LauncherService = LauncherService(),
-         installerService: InstallerService = InstallerService()) {
+         installerService: InstallerService = InstallerService(),
+         lockService: ContainerLockService = ContainerLockService()) {
         self.fileManager = fileManager
         self.settings = settings
         self.perAppSettings = perAppSettings
         self.environmentService = environmentService
         self.launcherService = launcherService
         self.installerService = installerService
+        self.lockService = lockService
         self.diskImageService = DiskImageService(fileManager: fileManager, processRunner: ProcessRunner(), settings: settings)
     }
 
@@ -123,7 +126,8 @@ final class AppViewModel {
                                        diskImageService: diskImageService,
                                        launcherService: launcherService,
                                        settings: settings,
-                                       perAppSettings: perAppSettings)
+                                       perAppSettings: perAppSettings,
+                                       lockService: lockService)
             launcherViewModel = vm
             phase = .launcher
         } catch {

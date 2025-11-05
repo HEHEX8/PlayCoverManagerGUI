@@ -35,6 +35,7 @@ final class LauncherViewModel {
     private let settings: SettingsStore
     private let perAppSettings: PerAppSettingsStore
     private let fileManager: FileManager
+    private let lockService: ContainerLockService
 
     private var pendingLaunchContext: LaunchContext?
     private var appTerminationObserver: NSObjectProtocol?
@@ -45,6 +46,7 @@ final class LauncherViewModel {
          launcherService: LauncherService,
          settings: SettingsStore,
          perAppSettings: PerAppSettingsStore,
+         lockService: ContainerLockService,
          fileManager: FileManager = .default) {
         self.apps = apps
         self.filteredApps = apps
@@ -53,6 +55,7 @@ final class LauncherViewModel {
         self.launcherService = launcherService
         self.settings = settings
         self.perAppSettings = perAppSettings
+        self.lockService = lockService
         self.fileManager = fileManager
         
         // Start monitoring app terminations
@@ -122,6 +125,10 @@ final class LauncherViewModel {
                 try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: nobrowse)
             }
 
+            // Acquire lock on container before launching
+            let containerURL = containerURL(for: app.bundleIdentifier)
+            _ = lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
+            
             try await launcherService.openApp(app)
             pendingLaunchContext = nil
             
@@ -299,9 +306,19 @@ final class LauncherViewModel {
     private func unmountContainer(for bundleID: String) async {
         let containerURL = containerURL(for: bundleID)
         
+        // Release lock first
+        lockService.unlockContainer(for: bundleID)
+        
         // Check if container is mounted
         let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
         guard let descriptor = descriptor, descriptor.isMounted else {
+            return
+        }
+        
+        // Check if any other process has a lock on this container
+        if !lockService.canLockContainer(for: bundleID, at: containerURL) {
+            // Another process (possibly PlayCover) is using this container
+            // Don't unmount
             return
         }
         
