@@ -257,6 +257,36 @@ class AppUninstallerService {
         
         try? FileManager.default.removeItem(at: keymappingFile)
         
+        // Step 4.5: Remove PlayChain files (if they exist)
+        let playChainDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/PlayChain")
+        let playChainFile = playChainDir.appendingPathComponent(app.bundleID)
+        let playChainEncrypted = playChainDir.appendingPathComponent("\(app.bundleID).keyCover")
+        
+        try? FileManager.default.removeItem(at: playChainFile)
+        try? FileManager.default.removeItem(at: playChainEncrypted)
+        
+        // Step 4.6: Remove external caches (various locations)
+        currentStatus = "キャッシュを削除中..."
+        let libraryURL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library")
+        let cacheDirs = [
+            "Application Scripts",
+            "Caches",
+            "HTTPStorages",
+            "Saved Application State"
+        ]
+        
+        for cacheDir in cacheDirs {
+            let cachePath = libraryURL.appendingPathComponent(cacheDir)
+            if let contents = try? FileManager.default.contentsOfDirectory(at: cachePath, includingPropertiesForKeys: nil) {
+                for item in contents {
+                    if item.lastPathComponent.contains(app.bundleID) {
+                        try? FileManager.default.removeItem(at: item)
+                    }
+                }
+            }
+        }
+        
         // Step 5: Unmount and remove container (this is what we mounted during installation)
         let internalContainer = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(app.bundleID)", isDirectory: true)
@@ -293,6 +323,23 @@ class AppUninstallerService {
         if FileManager.default.fileExists(atPath: app.diskImageURL.path) {
             currentStatus = "ディスクイメージを削除中..."
             try FileManager.default.removeItem(at: app.diskImageURL)
+        }
+        
+        // Step 7: Remove from BundleID Cache (PlayCover's app registry)
+        currentStatus = "キャッシュを更新中..."
+        let bundleIDCacheURL = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/CACHE")
+        
+        if FileManager.default.fileExists(atPath: bundleIDCacheURL.path) {
+            do {
+                let cacheContent = try String(contentsOf: bundleIDCacheURL)
+                let bundleIDs = cacheContent.split(separator: "\n").map(String.init)
+                let filteredIDs = bundleIDs.filter { $0 != app.bundleID }
+                let newContent = filteredIDs.joined(separator: "\n") + "\n"
+                try newContent.write(to: bundleIDCacheURL, atomically: false, encoding: .utf8)
+            } catch {
+                // Ignore cache update errors
+            }
         }
         
         currentStatus = "✅ \(app.appName) をアンインストールしました"
