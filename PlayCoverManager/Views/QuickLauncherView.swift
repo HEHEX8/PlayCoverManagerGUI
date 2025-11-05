@@ -38,6 +38,14 @@ struct QuickLauncherView: View {
                 }
                 .help("すべてアンマウント")
                 .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
+                
+                Button {
+                    NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                } label: {
+                    Image(systemName: "gear")
+                }
+                .help("設定")
+                .keyboardShortcut(",", modifiers: [.command])
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)

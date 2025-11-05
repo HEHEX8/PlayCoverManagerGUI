@@ -9,6 +9,7 @@
 import Foundation
 import Observation
 
+@MainActor
 @Observable
 class IPAInstallerService {
     let processRunner: ProcessRunner

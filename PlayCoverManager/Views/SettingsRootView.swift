@@ -273,20 +273,25 @@ private struct IPAInstallerSheet: View {
     private func startInstallation() async {
         guard let service = installerService else { return }
         
-        isProcessing = true
+        await MainActor.run {
+            isProcessing = true
+        }
         
         do {
             try await service.installIPAs(selectedIPAs)
         } catch {
-            statusMessage = "エラー: \(error.localizedDescription)"
+            await MainActor.run {
+                statusMessage = "エラー: \(error.localizedDescription)"
+            }
         }
         
-        // Update UI with service state
-        statusMessage = service.currentStatus
-        progress = service.currentProgress
-        
-        isProcessing = false
-        showResults = true
+        // Update UI with service state on main thread
+        await MainActor.run {
+            statusMessage = service.currentStatus
+            progress = service.currentProgress
+            isProcessing = false
+            showResults = true
+        }
     }
 }
 
