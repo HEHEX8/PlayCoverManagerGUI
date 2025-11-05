@@ -68,43 +68,25 @@ class IPAInstallerService {
         
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         
-        // Find Info.plist path in IPA
-        let unzipListOutput = try await processRunner.run("/usr/bin/unzip", ["-l", ipaURL.path])
-        let lines = unzipListOutput.split(separator: "\n")
-        
-        guard let plistLine = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/Info.plist") }),
-              let plistPath = plistLine.split(separator: " ").last.map(String.init) else {
-            throw AppError.installation("IPA 内に Info.plist が見つかりません", message: "")
-        }
-        
         // Get system language for localization
         let preferredLanguages = Locale.preferredLanguages
         let systemLanguage = preferredLanguages.first?.split(separator: "-").first.map(String.init) ?? "en"
         
-        // Find localized strings paths
-        let jaStringsPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/ja.lproj/InfoPlist.strings") })
-            .flatMap { $0.split(separator: " ").last.map(String.init) }
-        
-        let sysLangPath: String? = (systemLanguage != "en" && systemLanguage != "ja") 
-            ? lines.first(where: { $0.contains("Payload/") && $0.contains(".app/\(systemLanguage).lproj/InfoPlist.strings") })
-                .flatMap { $0.split(separator: " ").last.map(String.init) }
-            : nil
-        
-        // Build list of files to extract in one go
-        var filesToExtract = [plistPath]
-        if let jaPath = jaStringsPath {
-            filesToExtract.append(jaPath)
-        }
-        if let langPath = sysLangPath {
-            filesToExtract.append(langPath)
+        // Extract Info.plist and localized strings using wildcards (FAST - no listing needed)
+        // Use wildcards to extract: Payload/*.app/Info.plist, ja.lproj, system language .lproj
+        var extractPatterns = ["Payload/*.app/Info.plist", "Payload/*.app/ja.lproj/InfoPlist.strings"]
+        if systemLanguage != "en" && systemLanguage != "ja" {
+            extractPatterns.append("Payload/*.app/\(systemLanguage).lproj/InfoPlist.strings")
         }
         
-        // Extract all needed files in ONE unzip command
-        _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path] + filesToExtract + ["-d", tempDir.path])
+        // Extract with wildcards - unzip handles pattern matching internally (much faster)
+        // -j flag flattens directory structure, so files are extracted directly to tempDir
+        _ = try? await processRunner.run("/usr/bin/unzip", ["-q", "-j", ipaURL.path] + extractPatterns + ["-d", tempDir.path])
         
-        let infoPlistURL = tempDir.appendingPathComponent(plistPath)
+        // Info.plist is now directly in tempDir (flattened with -j)
+        let infoPlistURL = tempDir.appendingPathComponent("Info.plist")
         guard FileManager.default.fileExists(atPath: infoPlistURL.path) else {
-            throw AppError.installation("Info.plist の解凍に失敗しました", message: "")
+            throw AppError.installation("IPA 内に Info.plist が見つかりません", message: "")
         }
         
         // Read plist data
@@ -132,8 +114,8 @@ class IPAInstallerService {
         var appName: String = appNameEn
         
         // Try system language first (if not en/ja)
-        if let langPath = sysLangPath {
-            let langStringsURL = tempDir.appendingPathComponent(langPath)
+        if systemLanguage != "en" && systemLanguage != "ja" {
+            let langStringsURL = tempDir.appendingPathComponent("InfoPlist.strings")
             if FileManager.default.fileExists(atPath: langStringsURL.path),
                let stringsData = try? Data(contentsOf: langStringsURL),
                let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
@@ -146,8 +128,8 @@ class IPAInstallerService {
         }
         
         // Fallback to Japanese if system language didn't work
-        if appName == appNameEn, let jaPath = jaStringsPath {
-            let jaStringsURL = tempDir.appendingPathComponent(jaPath)
+        if appName == appNameEn {
+            let jaStringsURL = tempDir.appendingPathComponent("InfoPlist.strings")
             if FileManager.default.fileExists(atPath: jaStringsURL.path),
                let stringsData = try? Data(contentsOf: jaStringsURL),
                let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
@@ -159,22 +141,8 @@ class IPAInstallerService {
             }
         }
         
-        // Extract icon (separate unzip is OK for icon - optional and may not exist)
+        // Skip icon extraction for speed (icon is optional and slows down analysis)
         var icon: NSImage? = nil
-        if let iconFiles = plist["CFBundleIconFiles"] as? [String], let iconName = iconFiles.first {
-            let iconPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/\(iconName)") })
-                .flatMap { $0.split(separator: " ").last.map(String.init) }
-            
-            if let iconPath = iconPath {
-                do {
-                    _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path, iconPath, "-d", tempDir.path])
-                    let iconURL = tempDir.appendingPathComponent(iconPath)
-                    if let imageData = try? Data(contentsOf: iconURL) {
-                        icon = NSImage(data: imageData)
-                    }
-                } catch {}
-            }
-        }
         
         // Get file size
         let fileSize = (try? FileManager.default.attributesOfItem(atPath: ipaURL.path)[.size] as? Int64) ?? 0
