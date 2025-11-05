@@ -37,6 +37,7 @@ final class LauncherViewModel {
     private let fileManager: FileManager
 
     private var pendingLaunchContext: LaunchContext?
+    private var appTerminationObserver: NSObjectProtocol?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -53,6 +54,13 @@ final class LauncherViewModel {
         self.settings = settings
         self.perAppSettings = perAppSettings
         self.fileManager = fileManager
+        
+        // Start monitoring app terminations
+        startMonitoringAppTerminations()
+    }
+    
+    deinit {
+        stopMonitoringAppTerminations()
     }
 
     func refresh() async {
@@ -254,6 +262,55 @@ final class LauncherViewModel {
     
     func getPerAppSettings() -> PerAppSettingsStore {
         return perAppSettings
+    }
+    
+    // MARK: - App Termination Monitoring
+    
+    private func startMonitoringAppTerminations() {
+        appTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self else { return }
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+            guard let bundleID = app.bundleIdentifier else { return }
+            
+            // Check if this is one of our managed apps
+            let isManagedApp = self.apps.contains { $0.bundleIdentifier == bundleID }
+            guard isManagedApp else { return }
+            
+            // Unmount the container for this app
+            Task { @MainActor in
+                await self.unmountContainer(for: bundleID)
+                // Refresh to update running indicator
+                await self.refresh()
+            }
+        }
+    }
+    
+    private func stopMonitoringAppTerminations() {
+        if let observer = appTerminationObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
+            appTerminationObserver = nil
+        }
+    }
+    
+    private func unmountContainer(for bundleID: String) async {
+        let containerURL = containerURL(for: bundleID)
+        
+        // Check if container is mounted
+        let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
+        guard let descriptor = descriptor, descriptor.isMounted else {
+            return
+        }
+        
+        do {
+            try await diskImageService.detach(volumeURL: containerURL)
+        } catch {
+            // Silently fail - don't show error for auto-unmount
+            // The user might have manually unmounted it already
+        }
     }
 
     private func performUnmountAll(applyToPlayCoverContainer: Bool) async {
