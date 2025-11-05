@@ -142,6 +142,11 @@ final class SetupWizardViewModel {
             try await diskImageService.ensureDiskImageExists(for: bundleID, volumeName: bundleID)
             let nobrowse = settings.nobrowseEnabled
             try await diskImageService.mountDiskImage(for: bundleID, at: mountPoint, nobrowse: nobrowse)
+            
+            // Create Applications directory structure in the mounted volume
+            let applicationsDir = mountPoint.appendingPathComponent("Applications", isDirectory: true)
+            try FileManager.default.createDirectory(at: applicationsDir, withIntermediateDirectories: true)
+            
             advance()
         } catch let error as AppError {
             self.error = error

@@ -29,6 +29,11 @@ final class LauncherService {
     }
 
     func fetchInstalledApps(at applicationsRoot: URL) throws -> [PlayCoverApp] {
+        // Create Applications directory if it doesn't exist
+        if !fileManager.fileExists(atPath: applicationsRoot.path) {
+            try fileManager.createDirectory(at: applicationsRoot, withIntermediateDirectories: true)
+        }
+        
         let contents = try fileManager.contentsOfDirectory(at: applicationsRoot, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
         var apps: [PlayCoverApp] = []
         for url in contents where url.pathExtension == "app" {
