@@ -154,7 +154,7 @@ final class DiskImageService {
                 let parentURL = imageURL.deletingLastPathComponent()
                 do {
                     let resourceValues = try parentURL.resourceValues(forKeys: [.volumeURLKey])
-                    if let volumeURL = resourceValues.volumeURL {
+                    if let volumeURL = resourceValues.volume as? URL {
                         let result = try? processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", volumeURL.path])
                         if let data = result?.stdout.data(using: String.Encoding.utf8),
                            let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
