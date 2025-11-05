@@ -126,7 +126,7 @@ private struct DataSettingsView: View {
 }
 
 // IPA Installer Sheet
-private struct IPAInstallerSheet: View {
+struct IPAInstallerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(LauncherViewModel.self) private var launcherViewModel

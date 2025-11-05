@@ -470,6 +470,7 @@ private struct AppIconView: View {
 
 private struct EmptyAppListView: View {
     let refreshAction: () -> Void
+    @State private var showingInstaller = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -482,12 +483,12 @@ private struct EmptyAppListView: View {
                 .foregroundStyle(.primary)
             
             VStack(spacing: 8) {
-                Text("PlayCover でアプリをインストールすると、ここに表示されます。")
+                Text("IPA ファイルをインストールすると、ここに表示されます。")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 
-                Text("PlayCover を開いてアプリをインストールしてください。")
+                Text("下のボタンから IPA をインストールしてください。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -496,12 +497,12 @@ private struct EmptyAppListView: View {
             
             HStack(spacing: 12) {
                 Button {
-                    if let url = URL(string: "file:///Applications/PlayCover.app") {
-                        NSWorkspace.shared.open(url)
-                    }
+                    showingInstaller = true
                 } label: {
-                    Label("PlayCover を開く", systemImage: "app.badge")
+                    Label("IPA をインストール", systemImage: "square.and.arrow.down")
                 }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
                 
                 Button {
                     refreshAction()
@@ -513,6 +514,21 @@ private struct EmptyAppListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
+        .sheet(isPresented: $showingInstaller) {
+            IPAInstallerSheetWrapper()
+        }
+    }
+}
+
+// Wrapper to access Environment in sheet
+private struct IPAInstallerSheetWrapper: View {
+    @Environment(SettingsStore.self) private var settingsStore
+    @Environment(LauncherViewModel.self) private var launcherViewModel
+    
+    var body: some View {
+        IPAInstallerSheet()
+            .environment(settingsStore)
+            .environment(launcherViewModel)
     }
 }
 
