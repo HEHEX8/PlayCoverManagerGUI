@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import AppKit
 import Observation
 
 @MainActor
@@ -192,10 +193,16 @@ class AppUninstallerService {
     // MARK: - App Running Check
     
     nonisolated func isAppRunning(bundleID: String) async -> Bool {
-        print("🟢 [DEBUG] isAppRunning チェックをスキップ")
-        // NOTE: このチェックは async context でデッドロックを引き起こすため無効化
-        // アプリが実行中の場合、ファイル削除時にエラーが発生するのでそこで検出できる
-        return false
+        print("🟢 [DEBUG] isAppRunning チェック開始: \(bundleID)")
+        
+        // NSRunningApplication を使用（Process よりも安全で MainActor の影響を受けない）
+        let runningApps = NSWorkspace.shared.runningApplications
+        let isRunning = runningApps.contains { app in
+            app.bundleIdentifier == bundleID && !app.isTerminated
+        }
+        
+        print("🟢 [DEBUG] アプリ実行状態: \(isRunning)")
+        return isRunning
     }
     
     // MARK: - Uninstallation
@@ -207,8 +214,10 @@ class AppUninstallerService {
             print("🟢 [DEBUG] currentStatus = \(currentStatus)")
         }
         
-        // NOTE: isAppRunning チェックは削除（デッドロックするため）
-        // アプリが実行中の場合、ファイル削除でエラーが出るのでそこで検出
+        // Check if app is running using NSRunningApplication
+        if await isAppRunning(bundleID: app.bundleID) {
+            throw AppError.installation("アプリが実行中のため、アンインストールできません", message: "アプリを終了してから再度お試しください")
+        }
         
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
