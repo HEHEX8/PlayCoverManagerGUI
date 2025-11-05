@@ -68,7 +68,23 @@ final class InstallerService {
         return plist[key]
     }
 
+    // Check if an app with the given bundle ID is currently running
+    func isAppRunning(bundleID: String) -> Bool {
+        let runningApps = NSWorkspace.shared.runningApplications
+        return runningApps.contains { app in
+            app.bundleIdentifier == bundleID && !app.isTerminated
+        }
+    }
+    
     func installIPA(_ ipa: IPAInfo, via playCoverApp: URL) async throws {
+        // Check if app is already running
+        if isAppRunning(bundleID: ipa.bundleIdentifier) {
+            throw AppError.installation(
+                "アプリが実行中のため、インストールできません",
+                message: "\(ipa.displayName) を終了してから再度お試しください"
+            )
+        }
+        
         // Placeholder: Future implementation to automate PlayCover CLI / AppleScript
         // For now, we open PlayCover and let user complete installation manually.
         try await NSWorkspace.shared.open([ipa.fileURL], withApplicationAt: playCoverApp, configuration: NSWorkspace.OpenConfiguration())

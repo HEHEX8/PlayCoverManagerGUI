@@ -193,25 +193,20 @@ class AppUninstallerService {
     // MARK: - App Running Check
     
     nonisolated func isAppRunning(bundleID: String) async -> Bool {
-        print("🟢 [DEBUG] isAppRunning チェック開始: \(bundleID)")
-        
-        // NSRunningApplication を使用（Process よりも安全で MainActor の影響を受けない）
+        // Use NSRunningApplication (safer than Process and not affected by MainActor)
         let runningApps = NSWorkspace.shared.runningApplications
         let isRunning = runningApps.contains { app in
             app.bundleIdentifier == bundleID && !app.isTerminated
         }
         
-        print("🟢 [DEBUG] アプリ実行状態: \(isRunning)")
         return isRunning
     }
     
     // MARK: - Uninstallation
     
     nonisolated func uninstallApp(_ app: InstalledAppInfo) async throws {
-        print("🟢 [DEBUG] uninstallApp 開始: \(app.appName)")
         await MainActor.run { 
             currentStatus = "アプリを削除中: \(app.appName)"
-            print("🟢 [DEBUG] currentStatus = \(currentStatus)")
         }
         
         // Check if app is running using NSRunningApplication
@@ -348,10 +343,7 @@ class AppUninstallerService {
     }
     
     nonisolated func uninstallApps(_ apps: [InstalledAppInfo]) async throws {
-        print("🔴 [DEBUG] uninstallApps 開始: \(apps.count) 個")
-        
         await MainActor.run {
-            print("🔴 [DEBUG] MainActor: isUninstalling = true")
             isUninstalling = true
             uninstalledApps.removeAll()
             failedApps.removeAll()
@@ -360,43 +352,33 @@ class AppUninstallerService {
         
         defer {
             Task { @MainActor in
-                print("🔴 [DEBUG] defer: isUninstalling = false")
                 isUninstalling = false
             }
         }
         
         let totalApps = apps.count
-        print("🔴 [DEBUG] totalApps = \(totalApps)")
         
         for (index, app) in apps.enumerated() {
-            print("🔴 [DEBUG] アプリ処理開始 [\(index + 1)/\(totalApps)]: \(app.appName)")
-            
             await MainActor.run {
                 currentProgress = Double(index) / Double(totalApps)
                 currentStatus = "[\(index + 1)/\(totalApps)] \(app.appName)"
-                print("🔴 [DEBUG] MainActor: currentStatus = \(currentStatus)")
             }
             
             do {
-                print("🔴 [DEBUG] uninstallApp 呼び出し: \(app.appName)")
                 try await uninstallApp(app)
-                print("🔴 [DEBUG] uninstallApp 完了: \(app.appName)")
                 await MainActor.run {
                     uninstalledApps.append(app.appName)
                 }
             } catch {
-                print("🔴 [DEBUG] uninstallApp エラー: \(app.appName) - \(error)")
                 await MainActor.run {
                     failedApps.append("\(app.appName): \(error.localizedDescription)")
                 }
             }
         }
         
-        print("🔴 [DEBUG] すべて完了")
         await MainActor.run {
             currentProgress = 1.0
             currentStatus = "完了"
-            print("🔴 [DEBUG] MainActor: currentStatus = 完了")
         }
     }
     
