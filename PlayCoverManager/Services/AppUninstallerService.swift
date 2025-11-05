@@ -193,30 +193,39 @@ class AppUninstallerService {
     
     nonisolated func isAppRunning(bundleID: String) async -> Bool {
         print("🟢 [DEBUG] isAppRunning チェック開始: \(bundleID)")
-        // TODO: 一時的にスキップ - デッドロックの原因調査中
-        print("🟢 [DEBUG] isAppRunning を一時的にスキップ（false を返す）")
-        return false
         
-        /*
-        do {
-            let psOutput = try await processRunner.run("/bin/ps", ["-ax"])
-            print("🟢 [DEBUG] ps コマンド完了")
-            let lines = psOutput.split(separator: "\n")
-            
-            for line in lines {
-                if line.contains(bundleID) || line.contains(".app/Contents/MacOS/") {
-                    print("🟢 [DEBUG] アプリが実行中です")
-                    return true
+        // Task.detached を使って完全に分離された context で実行
+        return await Task.detached {
+            do {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/ps")
+                process.arguments = ["-ax"]
+                
+                let pipe = Pipe()
+                process.standardOutput = pipe
+                
+                try process.run()
+                process.waitUntilExit()
+                
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                let output = String(data: data, encoding: .utf8) ?? ""
+                
+                print("🟢 [DEBUG] ps コマンド完了")
+                let lines = output.split(separator: "\n")
+                
+                for line in lines {
+                    if line.contains(bundleID) || line.contains(".app/Contents/MacOS/") {
+                        print("🟢 [DEBUG] アプリが実行中です")
+                        return true
+                    }
                 }
+                print("🟢 [DEBUG] アプリは実行されていません")
+                return false
+            } catch {
+                print("🟢 [DEBUG] ps コマンドエラー: \(error)")
+                return false
             }
-            print("🟢 [DEBUG] アプリは実行されていません")
-        } catch {
-            print("🟢 [DEBUG] ps コマンドエラー: \(error)")
-            return false
-        }
-        
-        return false
-        */
+        }.value
     }
     
     // MARK: - Uninstallation
