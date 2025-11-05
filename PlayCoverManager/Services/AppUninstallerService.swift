@@ -193,6 +193,11 @@ class AppUninstallerService {
     
     nonisolated func isAppRunning(bundleID: String) async -> Bool {
         print("🟢 [DEBUG] isAppRunning チェック開始: \(bundleID)")
+        // TODO: 一時的にスキップ - デッドロックの原因調査中
+        print("🟢 [DEBUG] isAppRunning を一時的にスキップ（false を返す）")
+        return false
+        
+        /*
         do {
             let psOutput = try await processRunner.run("/bin/ps", ["-ax"])
             print("🟢 [DEBUG] ps コマンド完了")
@@ -211,6 +216,7 @@ class AppUninstallerService {
         }
         
         return false
+        */
     }
     
     // MARK: - Uninstallation
