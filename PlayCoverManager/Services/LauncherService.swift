@@ -48,6 +48,7 @@ final class LauncherService {
             let version = info?["CFBundleShortVersionString"] as? String
             let icon = NSWorkspace.shared.icon(forFile: url.path)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
+            print("🟣 [LauncherService] アプリ検出: \(displayName) (\(bundleID)), lastLaunchFlag=\(lastLaunchFlag)")
             let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag)
             apps.append(app)
         }
@@ -175,9 +176,12 @@ final class LauncherService {
         if !updated {
             let entry = [bundleID, "", "", "1"].joined(separator: "\t")
             lines.append(entry)
+            print("🟣 [LauncherService] 新規エントリを追加: \(bundleID)")
         }
         let content = lines.joined(separator: "\n")
+        print("🟣 [LauncherService] map.dat の内容:\n\(content)")
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? content.data(using: .utf8)?.write(to: url)
+        print("🟣 [LauncherService] ファイルを書き込みました: \(url.path)")
     }
 }
