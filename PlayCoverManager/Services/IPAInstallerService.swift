@@ -24,7 +24,7 @@ class IPAInstallerService {
     var installedApps: [String] = []
     var failedApps: [String] = []
     
-    init(processRunner: ProcessRunner = ProcessRunner(),
+    nonisolated init(processRunner: ProcessRunner = ProcessRunner(),
          diskImageService: DiskImageService,
          settingsStore: SettingsStore) {
         self.processRunner = processRunner
@@ -35,7 +35,7 @@ class IPAInstallerService {
     // MARK: - IPA Information Extraction
     
     struct IPAInfo: Identifiable, Sendable {
-        let id = UUID()
+        let id: UUID
         let ipaURL: URL
         let bundleID: String
         let appName: String
