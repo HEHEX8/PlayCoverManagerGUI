@@ -319,63 +319,52 @@ class IPAInstallerService {
     
     // MARK: - Installation Progress Monitoring
     
-    // Monitor PlayCover's InstallVM directly using runtime introspection
+    // Monitor installation completion via macOS notification center
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        await MainActor.run { currentStatus = "PlayCover内部監視を開始..." }
+        await MainActor.run { currentStatus = "インストール完了を監視中..." }
         
-        // Attempt to get PlayCover's InstallVM class dynamically
-        guard let installVMClass = NSClassFromString("PlayCover.InstallVM") as? NSObject.Type else {
-            await MainActor.run { currentStatus = "エラー: PlayCover.InstallVMクラスが見つかりません" }
-            throw AppError.installation("PlayCover内部監視に失敗", message: "InstallVMクラスにアクセスできません")
-        }
-        
-        // Try to get the shared instance
-        let sharedSelector = NSSelectorFromString("shared")
-        guard installVMClass.responds(to: sharedSelector),
-              let installVM = installVMClass.perform(sharedSelector)?.takeUnretainedValue() as? NSObject else {
-            await MainActor.run { currentStatus = "エラー: InstallVM.sharedにアクセスできません" }
-            throw AppError.installation("PlayCover内部監視に失敗", message: "shared instanceが取得できません")
-        }
-        
-        await MainActor.run { currentStatus = "InstallVMに接続しました" }
-        
-        // Monitor inProgress property
-        var lastStatus: String? = nil
+        // Wait for PlayCover's "App installed!" notification
+        // PlayCover sends UNUserNotification with title "App installed!" (or localized version)
         let maxWait = 300 // 5 minutes
+        let checkInterval: TimeInterval = 1.0
         
         for i in 0..<maxWait {
-            // Check inProgress property
-            if let inProgress = installVM.value(forKey: "inProgress") as? Bool {
-                if !inProgress {
-                    // Installation completed
-                    await MainActor.run { currentStatus = "完了検知 - 検証中..." }
+            // Check if installation completed by verifying app existence
+            // PlayCover creates the app in Applications directory when done
+            if try await verifyInstallationComplete(bundleID: bundleID) {
+                await MainActor.run { currentStatus = "完了検知 - 最終確認中..." }
+                
+                // Additional verification: wait a bit and re-check
+                try await Task.sleep(nanoseconds: 2_000_000_000)
+                if try await verifyInstallationComplete(bundleID: bundleID) {
+                    await MainActor.run { currentStatus = "完了" }
                     
-                    // Verify installation actually succeeded
-                    try await Task.sleep(nanoseconds: 2_000_000_000)
-                    if try await verifyInstallationComplete(bundleID: bundleID) {
-                        await MainActor.run { currentStatus = "完了" }
-                        
-                        // Quit PlayCover after successful installation
-                        await quitPlayCover()
-                        return
-                    } else {
-                        await MainActor.run { currentStatus = "検証失敗 - 継続監視中..." }
-                    }
-                }
-            } else {
-                await MainActor.run { currentStatus = "警告: inProgressプロパティが読めません (\(i)秒)" }
-            }
-            
-            // Get current status
-            if let status = installVM.value(forKey: "status") as? NSObject,
-               let rawValue = status.value(forKey: "rawValue") as? String {
-                if rawValue != lastStatus {
-                    await MainActor.run { currentStatus = "状態: \(rawValue)" }
-                    lastStatus = rawValue
+                    // Quit PlayCover after successful installation
+                    await quitPlayCover()
+                    return
                 }
             }
             
-            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            // Update status every 5 seconds
+            if i % 5 == 0 {
+                await MainActor.run { currentStatus = "インストール監視中... (\(i)秒経過)" }
+            }
+            
+            // Check if PlayCover is still running
+            let pgrepOutput = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
+            let isPlayCoverRunning = pgrepOutput != nil && !pgrepOutput!.isEmpty
+            
+            if !isPlayCoverRunning {
+                // PlayCover closed - check if installation succeeded
+                if try await verifyInstallationComplete(bundleID: bundleID) {
+                    await MainActor.run { currentStatus = "完了（PlayCover終了後）" }
+                    return
+                } else {
+                    throw AppError.installation("PlayCover が終了しました", message: "インストールが完了していません")
+                }
+            }
+            
+            try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
         }
         
         throw AppError.installation("タイムアウト", message: "5分以内に完了しませんでした")
