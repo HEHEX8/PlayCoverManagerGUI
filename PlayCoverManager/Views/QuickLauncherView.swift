@@ -54,8 +54,9 @@ struct QuickLauncherView: View {
                     Task { await viewModel.refresh() }
                 }
             } else {
-                Text("左の一覧からアプリを選択してください")
-                    .foregroundStyle(.secondary)
+                EmptyAppListView {
+                    Task { await viewModel.refresh() }
+                }
             }
         }
         .frame(minWidth: 960, minHeight: 640)
@@ -126,6 +127,54 @@ private struct AppIconView: View {
         }
         .frame(width: 40, height: 40)
         .cornerRadius(8)
+    }
+}
+
+private struct EmptyAppListView: View {
+    let refreshAction: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "tray")
+                .font(.system(size: 64))
+                .foregroundStyle(.secondary)
+            
+            Text("インストール済みアプリがありません")
+                .font(.title2)
+                .foregroundStyle(.primary)
+            
+            VStack(spacing: 8) {
+                Text("PlayCover でアプリをインストールすると、ここに表示されます。")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Text("PlayCover を開いてアプリをインストールしてください。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: 400)
+            
+            HStack(spacing: 12) {
+                Button {
+                    if let url = URL(string: "file:///Applications/PlayCover.app") {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Label("PlayCover を開く", systemImage: "app.badge")
+                }
+                
+                Button {
+                    refreshAction()
+                } label: {
+                    Label("再読み込み", systemImage: "arrow.clockwise")
+                }
+                .keyboardShortcut("r", modifiers: [.command])
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
     }
 }
 

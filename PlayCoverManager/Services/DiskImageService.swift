@@ -31,16 +31,8 @@ final class DiskImageService {
         guard let base = settings.diskImageDirectory else {
             throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "設定画面から保存先を指定してください。")
         }
-        let ext: String
-        switch settings.diskImageFormat {
-        case .sparse, .sparseHFS:
-            ext = "sparseimage"
-        case .sparseBundle:
-            ext = "sparsebundle"
-        case .asif:
-            ext = "asif"
-        }
-        return base.appendingPathComponent("\(bundleIdentifier).\(ext)")
+        // ASIF format only (macOS Tahoe 26.0+)
+        return base.appendingPathComponent("\(bundleIdentifier).asif")
     }
 
     func diskImageDescriptor(for bundleIdentifier: String, containerURL: URL) throws -> DiskImageDescriptor {
@@ -111,73 +103,15 @@ final class DiskImageService {
         
         let volName = volumeName ?? bundleIdentifier
         
-        // Use diskutil for ASIF, hdiutil for legacy formats
-        if settings.diskImageFormat == .asif {
-            // diskutil image create blank --format ASIF --size 50G --volumeName <name> <path>
-            let args = [
-                "image", "create", "blank",
-                "--format", "ASIF",
-                "--size", "50G",
-                "--volumeName", volName,
-                imageURL.path
-            ]
-            _ = try await processRunner.run("/usr/sbin/diskutil", args)
-        } else {
-            // hdiutil create for sparse/sparsebundle
-            let typeFlag: String
-            let filesystem: String
-            switch settings.diskImageFormat {
-            case .sparse:
-                typeFlag = "SPARSE"
-                filesystem = "APFS"
-            case .sparseBundle:
-                typeFlag = "SPARSEBUNDLE"
-                filesystem = "APFS"
-            case .sparseHFS:
-                typeFlag = "SPARSE"
-                filesystem = "HFS+J"
-            case .asif:
-                typeFlag = "ASIF" // unreachable
-                filesystem = "APFS"
-            }
-            
-            // Check if parent directory filesystem is APFS (required for APFS sparse images)
-            if settings.diskImageFormat.requiresAPFS {
-                let parentURL = imageURL.deletingLastPathComponent()
-                do {
-                    let resourceValues = try parentURL.resourceValues(forKeys: [.volumeURLKey])
-                    if let volumeURL = resourceValues.volume as? URL {
-                        let result = try? processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", volumeURL.path])
-                        if let data = result?.stdout.data(using: String.Encoding.utf8),
-                           let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
-                           let filesystemType = plist["FilesystemType"] as? String {
-                            
-                            if filesystemType != "apfs" {
-                                throw AppError.diskImage(
-                                    "APFS ディスクイメージを作成できません",
-                                    message: "保存先のファイルシステムが \(filesystemType) です。APFS 形式が選択されていますが、保存先が APFS でないため作成できません。設定で「スパース HFS+（互換性重視）」を選択するか、APFS ボリュームを保存先に指定してください。"
-                                )
-                            }
-                        }
-                    }
-                } catch {
-                    // Volume info not available, proceed anyway
-                }
-            }
-            
-            var args: [String] = [
-                "create",
-                "-size", "50g",
-                "-type", typeFlag,
-                "-fs", filesystem,
-                "-volname", volName,
-                imageURL.path
-            ]
-            if settings.diskImageFormat == .sparseBundle {
-                args.insert(contentsOf: ["-imagekey", "sparse-band-size=33554432"], at: 1)
-            }
-            _ = try await processRunner.run("/usr/bin/hdiutil", args)
-        }
+        // Create ASIF disk image using diskutil (macOS Tahoe 26.0+ only)
+        let args = [
+            "image", "create", "blank",
+            "--format", "ASIF",
+            "--size", "50G",
+            "--volumeName", volName,
+            imageURL.path
+        ]
+        _ = try await processRunner.run("/usr/sbin/diskutil", args)
         return imageURL
     }
 
@@ -188,30 +122,14 @@ final class DiskImageService {
         }
         try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
         
-        // ASIF requires diskutil, legacy formats use hdiutil
-        let command: String
-        var args: [String]
-        
-        if settings.diskImageFormat == .asif {
-            // diskutil image attach <image> --mountPoint <path> [--nobrowse]
-            // Note: diskutil image attach mounts as read-write by default (no --readOnly flag)
-            // owners option is not needed for diskutil (unlike hdiutil)
-            command = "/usr/sbin/diskutil"
-            args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path]
-            if nobrowse {
-                args.append("--nobrowse")
-            }
-        } else {
-            // hdiutil attach <image> -mountpoint <path> -owners on [-nobrowse]
-            command = "/usr/bin/hdiutil"
-            args = ["attach", imageURL.path, "-mountpoint", mountPoint.path, "-owners", "on"]
-            if nobrowse {
-                args.append("-nobrowse")
-            }
+        // Mount ASIF disk image using diskutil (mounts read-write by default)
+        var args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path]
+        if nobrowse {
+            args.append("--nobrowse")
         }
         
         do {
-            _ = try await processRunner.run(command, args)
+            _ = try await processRunner.run("/usr/sbin/diskutil", args)
         } catch let error as ProcessRunnerError {
             if case .commandFailed(_, let exitCode, let stderr) = error, exitCode == 1 && stderr.contains("アクセス権がありません") {
                 throw AppError.permissionDenied(
@@ -228,24 +146,15 @@ final class DiskImageService {
         let tempMountPoint = temporaryMountBase.appendingPathComponent(bundleIdentifier, isDirectory: true)
         try fileManager.createDirectory(at: tempMountPoint, withIntermediateDirectories: true)
         
-        // ASIF requires diskutil, legacy formats use hdiutil
-        let command: String
-        let args: [String]
-        
-        if settings.diskImageFormat == .asif {
-            command = "/usr/sbin/diskutil"
-            args = ["image", "attach", imageURL.path, "--mountPoint", tempMountPoint.path, "--nobrowse"]
-        } else {
-            command = "/usr/bin/hdiutil"
-            args = ["attach", imageURL.path, "-mountpoint", tempMountPoint.path, "-owners", "on", "-nobrowse"]
-        }
-        
-        _ = try await processRunner.run(command, args)
+        // Mount ASIF image using diskutil
+        let args = ["image", "attach", imageURL.path, "--mountPoint", tempMountPoint.path, "--nobrowse"]
+        _ = try await processRunner.run("/usr/sbin/diskutil", args)
         return tempMountPoint
     }
 
     func detach(volumeURL: URL) async throws {
-        _ = try await processRunner.run("/usr/bin/hdiutil", ["detach", volumeURL.path])
+        // Use diskutil unmount for ASIF images
+        _ = try await processRunner.run("/usr/sbin/diskutil", ["unmount", volumeURL.path])
     }
 
     func detachAll(volumeURLs: [URL]) async throws {

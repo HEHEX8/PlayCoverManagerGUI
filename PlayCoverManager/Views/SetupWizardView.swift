@@ -97,27 +97,13 @@ struct SetupWizardView: View {
                 
                 Divider()
                 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("ディスクイメージ形式")
-                        .font(.headline)
-                    Picker("形式", selection: Binding(
-                        get: { settingsStore.diskImageFormat },
-                        set: { settingsStore.diskImageFormat = $0 }
-                    )) {
-                        ForEach(SettingsStore.DiskImageFormat.allCases) { fmt in
-                            Text(fmt.localizedDescription).tag(fmt)
-                        }
-                    }
-                    .pickerStyle(.radioGroup)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("推奨：ASIF（macOS Tahoe 専用、最速）")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text("外部ドライブが APFS でない場合のみ「スパース HFS+」を選択してください。")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("ディスクイメージ形式: ASIF（固定）")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("macOS Tahoe 26.0 以降が必要です。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
         case .prepareDiskImage:
@@ -125,16 +111,9 @@ struct SetupWizardView: View {
                 if viewModel.isBusy {
                     ProgressView(viewModel.statusMessage)
                 }
-                let ext: String = {
-                    switch settingsStore.diskImageFormat {
-                    case .asif: return "asif"
-                    case .sparse, .sparseHFS: return "sparseimage"
-                    case .sparseBundle: return "sparsebundle"
-                    }
-                }()
-                Text("io.playcover.PlayCover.\(ext) を作成・マウントします。")
+                Text("io.playcover.PlayCover.asif を作成・マウントします。")
                     .font(.body)
-                Text("形式: \(settingsStore.diskImageFormat.localizedDescription)")
+                Text("形式: ASIF（macOS Tahoe 26.0+）")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if let dir = viewModel.storageURL ?? settingsStore.diskImageDirectory {

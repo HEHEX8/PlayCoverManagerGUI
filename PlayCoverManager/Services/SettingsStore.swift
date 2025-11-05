@@ -31,36 +31,13 @@ final class SettingsStore {
         static let `default`: InternalDataStrategy = .mergeThenDelete
     }
 
-    enum DiskImageFormat: String, CaseIterable, Identifiable {
-        case sparse
-        case sparseBundle
-        case sparseHFS
-        case asif
-
-        var id: String { rawValue }
-        var localizedDescription: String {
-            switch self {
-            case .sparse:
-                return "スパース APFS（.sparseimage）"
-            case .sparseBundle:
-                return "スパースバンドル APFS（.sparsebundle）"
-            case .sparseHFS:
-                return "スパース HFS+（.sparseimage、互換性重視）"
-            case .asif:
-                return "ASIF（.asif、Tahoe 推奨・最速）"
-            }
-        }
+    // ASIF format only - macOS Tahoe 26.0+ required
+    // Legacy formats removed for simplicity and modern macOS compatibility
+    enum DiskImageFormat: String {
+        case asif = "asif"
         
-        var requiresAPFS: Bool {
-            switch self {
-            case .sparse, .sparseBundle, .asif:
-                return true
-            case .sparseHFS:
-                return false
-            }
-        }
-
-        static let `default`: DiskImageFormat = .asif
+        var fileExtension: String { "asif" }
+        var localizedDescription: String { "ASIF（macOS Tahoe 専用）" }
     }
 
     var diskImageDirectory: URL? = nil {
@@ -75,9 +52,8 @@ final class SettingsStore {
         didSet { UserDefaults.standard.set(defaultDataHandling.rawValue, forKey: Keys.defaultDataHandling) }
     }
 
-    var diskImageFormat: DiskImageFormat = .default {
-        didSet { UserDefaults.standard.set(diskImageFormat.rawValue, forKey: Keys.imageFormat) }
-    }
+    // ASIF format is hardcoded - no user selection needed
+    let diskImageFormat: DiskImageFormat = .asif
 
     init(userDefaults: UserDefaults = .standard) {
         if let path = userDefaults.string(forKey: Keys.diskImageDirectory) {
@@ -95,13 +71,6 @@ final class SettingsStore {
         } else {
             defaultDataHandling = .default
             userDefaults.set(defaultDataHandling.rawValue, forKey: Keys.defaultDataHandling)
-        }
-        if let rawFormat = userDefaults.string(forKey: Keys.imageFormat),
-           let fmt = DiskImageFormat(rawValue: rawFormat) {
-            diskImageFormat = fmt
-        } else {
-            diskImageFormat = .default
-            userDefaults.set(diskImageFormat.rawValue, forKey: Keys.imageFormat)
         }
     }
 

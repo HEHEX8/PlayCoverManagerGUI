@@ -36,16 +36,13 @@ final class PlayCoverEnvironmentService {
         }
 
         try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
-        let attachArgs = buildAttachArguments(for: diskImageURL, mountPoint: mountPoint, nobrowse: nobrowse)
-        _ = try await processRunner.run("/usr/bin/hdiutil", attachArgs)
-    }
-
-    func buildAttachArguments(for diskImageURL: URL, mountPoint: URL, nobrowse: Bool) -> [String] {
-        var args = ["attach", diskImageURL.path, "-mountpoint", mountPoint.path, "-owners", "on"]
+        
+        // Mount ASIF image using diskutil (macOS Tahoe 26.0+)
+        var args = ["image", "attach", diskImageURL.path, "--mountPoint", mountPoint.path]
         if nobrowse {
-            args.append("-nobrowse")
+            args.append("--nobrowse")
         }
-        return args
+        _ = try await processRunner.run("/usr/sbin/diskutil", args)
     }
 
     private func isVolumeMounted(at mountPoint: URL, expectedVolumeName: String) async -> Bool {
