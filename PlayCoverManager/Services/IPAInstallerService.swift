@@ -25,7 +25,7 @@ class IPAInstallerService {
     var installedApps: [String] = []
     var failedApps: [String] = []
     
-    init(processRunner: ProcessRunner = ProcessRunner(),
+    nonisolated init(processRunner: ProcessRunner = ProcessRunner(),
          diskImageService: DiskImageService,
          settingsStore: SettingsStore) {
         self.processRunner = processRunner
@@ -55,7 +55,7 @@ class IPAInstallerService {
         }
         
         // Volume name is always Bundle ID
-        var volumeName: String { bundleID }
+        nonisolated var volumeName: String { bundleID }
         
         var installTypeDescription: String {
             switch installType {

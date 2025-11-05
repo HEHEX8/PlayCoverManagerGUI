@@ -23,7 +23,7 @@ class AppUninstallerService {
     var uninstalledApps: [String] = []
     var failedApps: [String] = []
     
-    init(processRunner: ProcessRunner = ProcessRunner(),
+    nonisolated init(processRunner: ProcessRunner = ProcessRunner(),
          diskImageService: DiskImageService,
          settingsStore: SettingsStore) {
         self.processRunner = processRunner
@@ -333,7 +333,7 @@ class AppUninstallerService {
         
         if FileManager.default.fileExists(atPath: bundleIDCacheURL.path) {
             do {
-                let cacheContent = try String(contentsOf: bundleIDCacheURL)
+                let cacheContent = try String(contentsOf: bundleIDCacheURL, encoding: .utf8)
                 let bundleIDs = cacheContent.split(separator: "\n").map(String.init)
                 let filteredIDs = bundleIDs.filter { $0 != app.bundleID }
                 let newContent = filteredIDs.joined(separator: "\n") + "\n"
