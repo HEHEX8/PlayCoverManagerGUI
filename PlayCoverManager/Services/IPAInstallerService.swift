@@ -319,7 +319,58 @@ class IPAInstallerService {
     
     // MARK: - Installation Progress Monitoring
     
+    // Try to access PlayCover's InstallVM directly (if available in runtime)
+    private func tryMonitorPlayCoverDirectly(bundleID: String) async -> Bool {
+        // Attempt to get PlayCover's InstallVM class dynamically
+        guard let installVMClass = NSClassFromString("PlayCover.InstallVM") as? NSObject.Type else {
+            return false
+        }
+        
+        // Try to get the shared instance
+        guard let sharedSelector = NSSelectorFromString("shared"),
+              installVMClass.responds(to: sharedSelector),
+              let installVM = installVMClass.perform(sharedSelector)?.takeUnretainedValue() as? NSObject else {
+            return false
+        }
+        
+        // Monitor inProgress property
+        var lastStatus: String? = nil
+        for _ in 0..<300 { // 5 minutes max (1 sec intervals)
+            // Check inProgress property
+            if let inProgress = installVM.value(forKey: "inProgress") as? Bool,
+               !inProgress {
+                // Installation completed
+                await MainActor.run { currentStatus = "完了" }
+                return true
+            }
+            
+            // Get current status
+            if let status = installVM.value(forKey: "status") as? NSObject,
+               let rawValue = status.value(forKey: "rawValue") as? String {
+                if rawValue != lastStatus {
+                    await MainActor.run { currentStatus = "PlayCover: \(rawValue)" }
+                    lastStatus = rawValue
+                }
+            }
+            
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        }
+        
+        return false
+    }
+    
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
+        // Try PlayCover direct monitoring first
+        if await tryMonitorPlayCoverDirectly(bundleID: bundleID) {
+            // Verify installation actually succeeded
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+            if try await verifyInstallationComplete(bundleID: bundleID) {
+                return
+            }
+            // Fall through to traditional monitoring if verification failed
+        }
+        
+        // Fall back to traditional file-based monitoring
         let maxWait: TimeInterval = 300 // 5 minutes
         let checkInterval: TimeInterval = 2
         let stabilityThreshold: TimeInterval = 4
