@@ -13,6 +13,16 @@ struct QuickLauncherView: View {
     private let gridColumns = [
         GridItem(.adaptive(minimum: 100, maximum: 100), spacing: 24)
     ]
+    
+    // Get PlayCover.app icon (macOS app)
+    private func getPlayCoverIcon() -> NSImage? {
+        let playCoverPath = "/Applications/PlayCover.app"
+        guard FileManager.default.fileExists(atPath: playCoverPath) else {
+            return nil
+        }
+        // Use NSWorkspace to get the app icon (works for macOS apps)
+        return NSWorkspace.shared.icon(forFile: playCoverPath)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,7 +45,13 @@ struct QuickLauncherView: View {
                 Button {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
                 } label: {
-                    Image(systemName: "app.badge.checkmark")
+                    if let playCoverIcon = getPlayCoverIcon() {
+                        Image(nsImage: playCoverIcon)
+                            .resizable()
+                            .frame(width: 20, height: 20)
+                    } else {
+                        Image(systemName: "app.badge.checkmark")
+                    }
                 }
                 .help("PlayCover を開く")
                 .keyboardShortcut("p", modifiers: [.command, .shift])
