@@ -89,7 +89,8 @@ struct QuickLauncherView: View {
                     } else {
                         ScrollView {
                             LazyVGrid(columns: gridColumns, spacing: 32) {
-                                ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
+                                ForEach(viewModel.filteredApps) { app in
+                                    let index = viewModel.filteredApps.firstIndex(of: app) ?? 0
                                     iOSAppIconView(
                                         app: app, 
                                         index: index,
@@ -147,7 +148,8 @@ struct QuickLauncherView: View {
                 } else {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 32) {
-                            ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
+                            ForEach(viewModel.filteredApps) { app in
+                                let index = viewModel.filteredApps.firstIndex(of: app) ?? 0
                                 iOSAppIconView(
                                     app: app, 
                                     index: index,

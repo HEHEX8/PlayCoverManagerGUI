@@ -2,7 +2,10 @@ import Foundation
 import AppKit
 
 struct PlayCoverApp: Identifiable, Equatable, Hashable {
-    let id = UUID()
+    // Use bundleIdentifier as stable ID for SwiftUI identity
+    // This ensures the same app keeps the same view identity across refreshes
+    var id: String { bundleIdentifier }
+    
     let bundleIdentifier: String
     let displayName: String
     let localizedName: String?
@@ -12,13 +15,19 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
     let lastLaunchedFlag: Bool
     let isRunning: Bool
 
+    // Include all properties in equality check so SwiftUI detects changes
     static func == (lhs: PlayCoverApp, rhs: PlayCoverApp) -> Bool {
-        lhs.bundleIdentifier == rhs.bundleIdentifier && lhs.appURL == rhs.appURL
+        lhs.bundleIdentifier == rhs.bundleIdentifier &&
+        lhs.appURL == rhs.appURL &&
+        lhs.lastLaunchedFlag == rhs.lastLaunchedFlag &&
+        lhs.isRunning == rhs.isRunning
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(bundleIdentifier)
         hasher.combine(appURL)
+        hasher.combine(lastLaunchedFlag)
+        hasher.combine(isRunning)
     }
 }
 
