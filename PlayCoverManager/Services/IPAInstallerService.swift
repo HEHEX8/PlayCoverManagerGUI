@@ -77,8 +77,30 @@ class IPAInstallerService {
             throw AppError.installation("IPA 内に Info.plist が見つかりません", message: "")
         }
         
-        // Extract Info.plist
-        _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path, plistPath, "-d", tempDir.path])
+        // Get system language for localization
+        let preferredLanguages = Locale.preferredLanguages
+        let systemLanguage = preferredLanguages.first?.split(separator: "-").first.map(String.init) ?? "en"
+        
+        // Find localized strings paths
+        let jaStringsPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/ja.lproj/InfoPlist.strings") })
+            .flatMap { $0.split(separator: " ").last.map(String.init) }
+        
+        let sysLangPath: String? = (systemLanguage != "en" && systemLanguage != "ja") 
+            ? lines.first(where: { $0.contains("Payload/") && $0.contains(".app/\(systemLanguage).lproj/InfoPlist.strings") })
+                .flatMap { $0.split(separator: " ").last.map(String.init) }
+            : nil
+        
+        // Build list of files to extract in one go
+        var filesToExtract = [plistPath]
+        if let jaPath = jaStringsPath {
+            filesToExtract.append(jaPath)
+        }
+        if let langPath = sysLangPath {
+            filesToExtract.append(langPath)
+        }
+        
+        // Extract all needed files in ONE unzip command
+        _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path] + filesToExtract + ["-d", tempDir.path])
         
         let infoPlistURL = tempDir.appendingPathComponent(plistPath)
         guard FileManager.default.fileExists(atPath: infoPlistURL.path) else {
@@ -106,62 +128,38 @@ class IPAInstallerService {
         }
         appNameEnglish = appNameEn
         
-        // Try to extract Japanese app name
+        // Try to extract localized app name (system language first, then Japanese fallback)
         var appName: String = appNameEn
-        let jaStringsPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/ja.lproj/InfoPlist.strings") })
-            .flatMap { $0.split(separator: " ").last.map(String.init) }
         
-        if let jaPath = jaStringsPath {
-            do {
-                _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path, jaPath, "-d", tempDir.path])
-                let jaStringsURL = tempDir.appendingPathComponent(jaPath)
-                
-                if FileManager.default.fileExists(atPath: jaStringsURL.path) {
-                    let stringsData = try Data(contentsOf: jaStringsURL)
-                    if let stringsDict = try PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
-                        if let displayName = stringsDict["CFBundleDisplayName"], !displayName.isEmpty {
-                            appName = displayName
-                        } else if let bundleName = stringsDict["CFBundleName"], !bundleName.isEmpty {
-                            appName = bundleName
-                        }
-                    }
-                }
-            } catch {
-                // Fallback to English name
-            }
-        }
-        
-        // Get system language for localization
-        let preferredLanguages = Locale.preferredLanguages
-        let systemLanguage = preferredLanguages.first?.split(separator: "-").first.map(String.init) ?? "en"
-        
-        // Try to extract localized app name for system language
-        if systemLanguage != "en" && systemLanguage != "ja" {
-            let sysLangPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/\(systemLanguage).lproj/InfoPlist.strings") })
-                .flatMap { $0.split(separator: " ").last.map(String.init) }
-            
-            if let langPath = sysLangPath {
-                do {
-                    _ = try await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path, langPath, "-d", tempDir.path])
-                    let langStringsURL = tempDir.appendingPathComponent(langPath)
-                    
-                    if FileManager.default.fileExists(atPath: langStringsURL.path) {
-                        let stringsData = try Data(contentsOf: langStringsURL)
-                        if let stringsDict = try PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
-                            if let displayName = stringsDict["CFBundleDisplayName"], !displayName.isEmpty {
-                                appName = displayName
-                            } else if let bundleName = stringsDict["CFBundleName"], !bundleName.isEmpty {
-                                appName = bundleName
-                            }
-                        }
-                    }
-                } catch {
-                    // Fallback to Japanese or English
+        // Try system language first (if not en/ja)
+        if let langPath = sysLangPath {
+            let langStringsURL = tempDir.appendingPathComponent(langPath)
+            if FileManager.default.fileExists(atPath: langStringsURL.path),
+               let stringsData = try? Data(contentsOf: langStringsURL),
+               let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                if let displayName = stringsDict["CFBundleDisplayName"], !displayName.isEmpty {
+                    appName = displayName
+                } else if let bundleName = stringsDict["CFBundleName"], !bundleName.isEmpty {
+                    appName = bundleName
                 }
             }
         }
         
-        // Extract icon
+        // Fallback to Japanese if system language didn't work
+        if appName == appNameEn, let jaPath = jaStringsPath {
+            let jaStringsURL = tempDir.appendingPathComponent(jaPath)
+            if FileManager.default.fileExists(atPath: jaStringsURL.path),
+               let stringsData = try? Data(contentsOf: jaStringsURL),
+               let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                if let displayName = stringsDict["CFBundleDisplayName"], !displayName.isEmpty {
+                    appName = displayName
+                } else if let bundleName = stringsDict["CFBundleName"], !bundleName.isEmpty {
+                    appName = bundleName
+                }
+            }
+        }
+        
+        // Extract icon (separate unzip is OK for icon - optional and may not exist)
         var icon: NSImage? = nil
         if let iconFiles = plist["CFBundleIconFiles"] as? [String], let iconName = iconFiles.first {
             let iconPath = lines.first(where: { $0.contains("Payload/") && $0.contains(".app/\(iconName)") })
