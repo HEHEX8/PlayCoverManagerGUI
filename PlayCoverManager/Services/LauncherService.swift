@@ -155,31 +155,51 @@ final class LauncherService {
     private func writeLastLaunchFlag(for bundleID: String) {
         let url = mapDataURL()
         print("🟣 [LauncherService] writeLastLaunchFlag: \(bundleID) -> \(url.path)")
+        
+        // Read existing entries and deduplicate
+        var bundleIDs: Set<String> = []
         var lines: [String] = []
+        
         if let data = try? Data(contentsOf: url), let text = String(data: data, encoding: .utf8) {
-            lines = text.split(separator: "\n").map(String.init)
-        }
-        var updated = false
-        for index in lines.indices {
-            var parts = lines[index].split(separator: "\t").map(String.init)
-            guard parts.count >= 4 else { continue }
-            if parts[0] == bundleID {
-                parts[3] = "1"
-                lines[index] = parts.joined(separator: "\t")
-                updated = true
-                print("🟣 [LauncherService] 既存エントリを更新: \(bundleID)")
-            } else {
-                parts[3] = "0"
-                lines[index] = parts.joined(separator: "\t")
+            let existingLines = text.split(separator: "\n").map(String.init)
+            for line in existingLines {
+                let parts = line.split(separator: "\t").map(String.init)
+                guard parts.count >= 1 else { continue }
+                let bid = parts[0]
+                if !bundleIDs.contains(bid) {
+                    bundleIDs.insert(bid)
+                    // Ensure 4 columns
+                    let normalized = [
+                        bid,
+                        parts.count > 1 ? parts[1] : "",
+                        parts.count > 2 ? parts[2] : "",
+                        "0" // Reset all to 0
+                    ].joined(separator: "\t")
+                    lines.append(normalized)
+                }
             }
         }
+        
+        // Update or add the launched app
+        var updated = false
+        for index in lines.indices {
+            let parts = lines[index].split(separator: "\t").map(String.init)
+            if parts[0] == bundleID {
+                lines[index] = [parts[0], parts[1], parts[2], "1"].joined(separator: "\t")
+                updated = true
+                print("🟣 [LauncherService] 既存エントリを更新: \(bundleID)")
+                break
+            }
+        }
+        
         if !updated {
             let entry = [bundleID, "", "", "1"].joined(separator: "\t")
             lines.append(entry)
             print("🟣 [LauncherService] 新規エントリを追加: \(bundleID)")
         }
+        
         let content = lines.joined(separator: "\n")
-        print("🟣 [LauncherService] map.dat の内容:\n\(content)")
+        print("🟣 [LauncherService] map.dat エントリ数: \(lines.count)")
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? content.data(using: .utf8)?.write(to: url)
         print("🟣 [LauncherService] ファイルを書き込みました: \(url.path)")
