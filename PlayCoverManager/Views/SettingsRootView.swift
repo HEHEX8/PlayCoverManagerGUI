@@ -112,7 +112,34 @@ private struct MaintenanceSettingsView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
+            
+            Section(header: Text("デバッグ情報")) {
+                LabeledContent("現在のフォーマット") {
+                    Text(settingsStore.diskImageFormat.rawValue)
+                        .font(.system(.caption, design: .monospaced))
+                }
+            }
+            
+            Section(header: Text("リセット")) {
+                Button("設定をリセット") {
+                    resetSettings()
+                }
+                .foregroundStyle(.red)
+                Text("すべての設定を初期値に戻します（ディスクイメージは削除されません）。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
         }
+    }
+    
+    private func resetSettings() {
+        UserDefaults.standard.removeObject(forKey: "diskImageDirectory")
+        UserDefaults.standard.removeObject(forKey: "diskImageDirectoryBookmark")
+        UserDefaults.standard.removeObject(forKey: "nobrowseEnabled")
+        UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
+        UserDefaults.standard.removeObject(forKey: "diskImageFormat")
+        
+        NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
     }
 }
 
