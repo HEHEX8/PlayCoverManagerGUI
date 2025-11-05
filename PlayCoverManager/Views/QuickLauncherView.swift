@@ -121,78 +121,73 @@ struct QuickLauncherView: View {
                     // Recently launched app quick launch button - Enhanced UI
                     Divider()
                     
-                    Button {
-                        viewModel.launch(app: recentApp)
-                    } label: {
-                        HStack(spacing: 16) {
-                            // Icon with glow effect
-                            ZStack {
-                                if let icon = recentApp.icon {
-                                    Image(nsImage: icon)
-                                        .resizable()
-                                        .frame(width: 48, height: 48)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                                        .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 2)
-                                } else {
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color.blue.opacity(0.2))
-                                        .frame(width: 48, height: 48)
-                                        .overlay {
-                                            Image(systemName: "app.fill")
-                                                .font(.system(size: 24))
-                                                .foregroundStyle(.secondary)
-                                        }
+                    // Center-aligned recent app button with adaptive design
+                    VStack(spacing: 0) {
+                        Divider()
+                        
+                        Button {
+                            viewModel.launch(app: recentApp)
+                        } label: {
+                            VStack(spacing: 12) {
+                                // Icon with adaptive shadow
+                                ZStack {
+                                    if let icon = recentApp.icon {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .frame(width: 56, height: 56)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                                            .shadow(color: .primary.opacity(0.15), radius: 6, x: 0, y: 3)
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.secondary.opacity(0.2))
+                                            .frame(width: 56, height: 56)
+                                            .overlay {
+                                                Image(systemName: "app.fill")
+                                                    .font(.system(size: 28))
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                    }
                                 }
+                                
+                                // App name and subtitle
+                                VStack(spacing: 3) {
+                                    Text(recentApp.displayName)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                    Text("前回起動したアプリ")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                // Enter key hint - subtle design
+                                HStack(spacing: 4) {
+                                    Image(systemName: "return")
+                                        .font(.system(size: 9, weight: .medium))
+                                    Text("Enter")
+                                        .font(.system(size: 10, weight: .medium))
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(.secondary.opacity(0.15))
+                                .clipShape(Capsule())
+                                .foregroundStyle(.secondary)
                             }
-                            
-                            // App name and action
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(recentApp.displayName)
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                Text("前回起動したアプリ")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            // Enter key hint with accent color
-                            HStack(spacing: 6) {
-                                Image(systemName: "return")
-                                    .font(.caption)
-                                Text("Enter")
-                                    .font(.caption)
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.blue.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.blue)
+                            .padding(.vertical, 16)
+                            .frame(maxWidth: .infinity)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .background(
-                        LinearGradient(
-                            colors: [
-                                Color.blue.opacity(0.08),
-                                Color.blue.opacity(0.04)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
+                        .buttonStyle(.plain)
+                        .background(
+                            Color.primary.opacity(0.03)
                         )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 0)
-                            .stroke(Color.blue.opacity(0.2), lineWidth: 1)
-                            .frame(height: 1),
-                        alignment: .top
-                    )
-                    .keyboardShortcut(.defaultAction)
+                        .overlay(
+                            Rectangle()
+                                .fill(.primary.opacity(0.08))
+                                .frame(height: 1),
+                            alignment: .top
+                        )
+                        .keyboardShortcut(.defaultAction)
+                    }
                 }
             } else {
                 // No recent app - show regular grid
@@ -331,15 +326,17 @@ private struct iOSAppIconView: View {
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
             .overlay(alignment: .topTrailing) {
                 if isAppRunning(bundleID: app.bundleIdentifier) {
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 16, height: 16)
-                        .overlay {
-                            Circle()
-                                .stroke(.white, lineWidth: 2)
-                        }
-                        .shadow(radius: 2)
-                        .offset(x: 4, y: -4)
+                    // Running indicator - adaptive for light/dark mode
+                    ZStack {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 14, height: 14)
+                        Circle()
+                            .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                            .frame(width: 14, height: 14)
+                    }
+                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                    .offset(x: 6, y: -6)
                 }
             }
             .scaleEffect(isAnimating ? 0.85 : 1.0)
