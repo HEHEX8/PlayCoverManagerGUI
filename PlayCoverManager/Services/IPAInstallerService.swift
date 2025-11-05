@@ -289,9 +289,9 @@ class IPAInstallerService {
         }
         
         while elapsed < maxWait {
-            // Check if PlayCover is still running
-            let psOutput = try await processRunner.run("/bin/ps", ["-ax"])
-            let isPlayCoverRunning = psOutput.contains("PlayCover.app")
+            // Check if PlayCover is still running (use pgrep for reliability)
+            let pgrepOutput = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
+            let isPlayCoverRunning = pgrepOutput != nil && !pgrepOutput!.isEmpty
             
             if !isPlayCoverRunning {
                 // PlayCover crashed or closed - verify installation

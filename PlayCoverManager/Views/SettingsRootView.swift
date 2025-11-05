@@ -139,6 +139,7 @@ private struct IPAInstallerSheet: View {
     @State private var progress: Double = 0
     @State private var showResults = false
     @State private var currentPhase: InstallPhase = .selection
+    @State private var statusUpdateTask: Task<Void, Never>?
     
     enum InstallPhase {
         case selection      // IPA選択
@@ -269,11 +270,23 @@ private struct IPAInstallerSheet: View {
     private var installingView: some View {
         VStack(spacing: 16) {
             ProgressView(value: progress)
-            Text(statusMessage)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            if let service = installerService {
+                Text(service.currentStatus)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text(statusMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            startStatusUpdater()
+        }
+        .onDisappear {
+            stopStatusUpdater()
+        }
     }
     
     // MARK: - Results View
@@ -383,6 +396,25 @@ private struct IPAInstallerSheet: View {
         }
     }
     
+    private func startStatusUpdater() {
+        guard let service = installerService else { return }
+        
+        statusUpdateTask = Task {
+            while !Task.isCancelled && isInstalling {
+                await MainActor.run {
+                    statusMessage = service.currentStatus
+                    progress = service.currentProgress
+                }
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
+            }
+        }
+    }
+    
+    private func stopStatusUpdater() {
+        statusUpdateTask?.cancel()
+        statusUpdateTask = nil
+    }
+    
     private func startInstallation() async {
         guard let service = installerService, !analyzedIPAs.isEmpty else { return }
         
@@ -408,6 +440,8 @@ private struct IPAInstallerSheet: View {
             currentPhase = .results
             showResults = true
         }
+        
+        stopStatusUpdater()
     }
 }
 
