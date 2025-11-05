@@ -43,11 +43,29 @@ class IPAInstallerService {
         let version: String
         let icon: NSImage?
         let fileSize: Int64
+        let existingVersion: String?
+        let installType: InstallType
+        
+        enum InstallType: Sendable {
+            case newInstall
+            case upgrade
+            case downgrade
+            case reinstall
+        }
         
         // Volume name is always Bundle ID
         var volumeName: String { bundleID }
         
-        nonisolated init(id: UUID = UUID(), ipaURL: URL, bundleID: String, appName: String, appNameEnglish: String, version: String, icon: NSImage?, fileSize: Int64) {
+        var installTypeDescription: String {
+            switch installType {
+            case .newInstall: return "新規インストール"
+            case .upgrade: return "アップグレード"
+            case .downgrade: return "ダウングレード"
+            case .reinstall: return "上書き"
+            }
+        }
+        
+        nonisolated init(id: UUID = UUID(), ipaURL: URL, bundleID: String, appName: String, appNameEnglish: String, version: String, icon: NSImage?, fileSize: Int64, existingVersion: String? = nil, installType: InstallType = .newInstall) {
             self.id = id
             self.ipaURL = ipaURL
             self.bundleID = bundleID
@@ -56,6 +74,8 @@ class IPAInstallerService {
             self.version = version
             self.icon = icon
             self.fileSize = fileSize
+            self.existingVersion = existingVersion
+            self.installType = installType
         }
     }
     
@@ -161,6 +181,39 @@ class IPAInstallerService {
         // Get file size
         let fileSize = (try? FileManager.default.attributesOfItem(atPath: ipaURL.path)[.size] as? Int64) ?? 0
         
+        // Check if app already installed and get existing version
+        let playCoverBundleID = "io.playcover.PlayCover"
+        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        
+        var existingVersion: String? = nil
+        var installType: IPAInfo.InstallType = .newInstall
+        
+        if let appDirs = try? FileManager.default.contentsOfDirectory(at: applicationsDir, includingPropertiesForKeys: nil) {
+            for appURL in appDirs where appURL.pathExtension == "app" {
+                let appInfoPlist = appURL.appendingPathComponent("Info.plist")
+                if FileManager.default.fileExists(atPath: appInfoPlist.path),
+                   let appPlistData = try? Data(contentsOf: appInfoPlist),
+                   let appPlist = try? PropertyListSerialization.propertyList(from: appPlistData, format: nil) as? [String: Any],
+                   let installedBundleID = appPlist["CFBundleIdentifier"] as? String,
+                   installedBundleID == bundleID {
+                    // Found existing installation
+                    existingVersion = (appPlist["CFBundleShortVersionString"] as? String) ?? (appPlist["CFBundleVersion"] as? String)
+                    
+                    if let existing = existingVersion {
+                        if version == existing {
+                            installType = .reinstall
+                        } else if version.compare(existing, options: .numeric) == .orderedDescending {
+                            installType = .upgrade
+                        } else {
+                            installType = .downgrade
+                        }
+                    }
+                    break
+                }
+            }
+        }
+        
         return IPAInfo(
             ipaURL: ipaURL,
             bundleID: bundleID,
@@ -168,7 +221,9 @@ class IPAInstallerService {
             appNameEnglish: appNameEn,
             version: version,
             icon: icon,
-            fileSize: fileSize
+            fileSize: fileSize,
+            existingVersion: existingVersion,
+            installType: installType
         )
     }
     
@@ -423,6 +478,14 @@ class IPAInstallerService {
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        let appSettingsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings", isDirectory: true)
+        let settingsFile = appSettingsDir.appendingPathComponent("\(bundleID).plist")
+        
+        // Settings file must exist
+        guard FileManager.default.fileExists(atPath: settingsFile.path) else {
+            return false
+        }
         
         guard let appDirs = try? FileManager.default.contentsOfDirectory(
             at: applicationsDir,
@@ -442,7 +505,7 @@ class IPAInstallerService {
             }
             
             if installedBundleID == bundleID {
-                // Verify structure integrity
+                // Verify structure integrity: both _CodeSignature and settings file must exist
                 let codeSignatureDir = appURL.appendingPathComponent("_CodeSignature")
                 if FileManager.default.fileExists(atPath: codeSignatureDir.path) {
                     return true

@@ -243,12 +243,59 @@ private struct IPAInstallerSheet: View {
                     
                     Spacer()
                     
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("v\(info.version)")
-                            .font(.caption)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        // Install type badge
+                        HStack(spacing: 4) {
+                            switch info.installType {
+                            case .newInstall:
+                                Image(systemName: "sparkles")
+                                    .font(.caption2)
+                                    .foregroundStyle(.blue)
+                                Text("新規")
+                                    .font(.caption2)
+                                    .foregroundStyle(.blue)
+                            case .upgrade:
+                                Image(systemName: "arrow.up.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.green)
+                                Text("アップグレード")
+                                    .font(.caption2)
+                                    .foregroundStyle(.green)
+                            case .downgrade:
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.orange)
+                                Text("ダウングレード")
+                                    .font(.caption2)
+                                    .foregroundStyle(.orange)
+                            case .reinstall:
+                                Image(systemName: "arrow.clockwise.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                Text("上書き")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color(nsColor: .controlBackgroundColor))
+                        .cornerRadius(4)
+                        
+                        // Version info
+                        if let existing = info.existingVersion {
+                            Text("\(existing) → \(info.version)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("v\(info.version)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        
                         Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
                     }
                     
                     Button {
@@ -323,58 +370,67 @@ private struct IPAInstallerSheet: View {
     // MARK: - Results View
     private var resultsView: some View {
         VStack(spacing: 16) {
-            Text("インストール結果")
-                .font(.headline)
+            HStack {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.title2)
+                    .foregroundStyle(.green)
+                Text("インストール結果")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+            }
             
             ScrollView {
-                if let service = installerService {
-                    VStack(alignment: .leading, spacing: 12) {
-                        if !service.installedApps.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
-                                        .font(.title3)
-                                    Text("インストール成功: \(service.installedApps.count) 個")
-                                        .font(.headline)
+                VStack(spacing: 12) {
+                    if let service = installerService {
+                        // Success list
+                        ForEach(service.installedApps, id: \.self) { appName in
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.green)
+                                    .frame(width: 48)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(appName)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text("インストール完了")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
                                 }
                                 
-                                ForEach(service.installedApps, id: \.self) { appName in
-                                    HStack(spacing: 8) {
-                                        Text("•")
-                                        Text(appName)
-                                            .font(.system(.body, design: .monospaced))
-                                    }
-                                    .padding(.leading, 32)
-                                }
+                                Spacer()
                             }
+                            .padding()
+                            .background(Color(nsColor: .controlBackgroundColor))
+                            .cornerRadius(8)
                         }
                         
-                        if !service.failedApps.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                HStack {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundStyle(.red)
-                                        .font(.title3)
-                                    Text("インストール失敗: \(service.failedApps.count) 個")
-                                        .font(.headline)
+                        // Failure list
+                        ForEach(service.failedApps, id: \.self) { error in
+                            HStack(spacing: 12) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.red)
+                                    .frame(width: 48)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(error.components(separatedBy: ":").first ?? error)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
                                 }
                                 
-                                ForEach(service.failedApps, id: \.self) { error in
-                                    HStack(spacing: 8) {
-                                        Text("•")
-                                        Text(error)
-                                            .font(.system(.body, design: .monospaced))
-                                    }
-                                    .padding(.leading, 32)
-                                }
+                                Spacer()
                             }
+                            .padding()
+                            .background(Color(nsColor: .controlBackgroundColor))
+                            .cornerRadius(8)
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(nsColor: .textBackgroundColor))
-                    .cornerRadius(8)
                 }
             }
         }
