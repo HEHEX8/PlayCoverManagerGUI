@@ -251,9 +251,12 @@ private struct iOSAppIconView: View {
         ) { notification in
             if let bundleID = notification.userInfo?["bundleID"] as? String,
                bundleID == app.bundleIdentifier {
-                isAnimating = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    isAnimating = false
+                // Delay animation slightly to sync with button animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isAnimating = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                        isAnimating = false
+                    }
                 }
             }
         }
@@ -552,12 +555,14 @@ private struct RecentAppLaunchButton: View {
     
     var body: some View {
         Button {
+            // Start animation immediately
             isAnimating = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            
+            // Wait for animation to complete before launching
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                isAnimating = false
+                // Launch after animation completes
                 onLaunch()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    isAnimating = false
-                }
             }
         } label: {
             HStack(spacing: 0) {
