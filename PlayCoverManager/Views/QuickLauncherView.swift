@@ -80,7 +80,6 @@ struct QuickLauncherView: View {
             
             // Recently launched app button (fixed at bottom)
             if let recentApp = viewModel.filteredApps.first(where: { $0.lastLaunchedFlag }) {
-                let _ = print("🟣 [QuickLauncher] 前回起動アプリ検出: \(recentApp.displayName)")
                 VStack(spacing: 0) {
                     // Main app grid
                     if viewModel.filteredApps.isEmpty {

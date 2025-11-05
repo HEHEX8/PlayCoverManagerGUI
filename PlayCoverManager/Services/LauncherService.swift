@@ -50,7 +50,6 @@ final class LauncherService {
             let icon = NSWorkspace.shared.icon(forFile: url.path)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
             let isRunning = checkIfAppRunning(bundleID: bundleID)
-            print("🟣 [LauncherService] アプリ検出: \(displayName) (\(bundleID)), lastLaunchFlag=\(lastLaunchFlag), isRunning=\(isRunning)")
             let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning)
             apps.append(app)
         }
@@ -145,7 +144,6 @@ final class LauncherService {
     
     private func readLastLaunchFlag(for bundleID: String) -> Bool {
         guard let data = try? Data(contentsOf: mapDataURL()), let text = String(data: data, encoding: .utf8) else {
-            print("🟣 [LauncherService] map.dat が存在しないか読み込めません")
             return false
         }
         let lines = text.split(separator: "\n")
@@ -153,9 +151,7 @@ final class LauncherService {
             let parts = line.split(separator: "\t")
             guard parts.count >= 4 else { continue }
             if parts[0] == bundleID {
-                let isLastLaunched = parts[3] == "1"
-                print("🟣 [LauncherService] \(bundleID): lastLaunchFlag = \(isLastLaunched)")
-                return isLastLaunched
+                return parts[3] == "1"
             }
         }
         return false
@@ -163,7 +159,6 @@ final class LauncherService {
 
     private func writeLastLaunchFlag(for bundleID: String) {
         let url = mapDataURL()
-        print("🟣 [LauncherService] writeLastLaunchFlag: \(bundleID) -> \(url.path)")
         
         // Read existing entries and deduplicate
         var bundleIDs: Set<String> = []
@@ -196,7 +191,6 @@ final class LauncherService {
             if parts[0] == bundleID {
                 lines[index] = [parts[0], parts[1], parts[2], "1"].joined(separator: "\t")
                 updated = true
-                print("🟣 [LauncherService] 既存エントリを更新: \(bundleID)")
                 break
             }
         }
@@ -204,13 +198,10 @@ final class LauncherService {
         if !updated {
             let entry = [bundleID, "", "", "1"].joined(separator: "\t")
             lines.append(entry)
-            print("🟣 [LauncherService] 新規エントリを追加: \(bundleID)")
         }
         
         let content = lines.joined(separator: "\n")
-        print("🟣 [LauncherService] map.dat エントリ数: \(lines.count)")
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? content.data(using: .utf8)?.write(to: url)
-        print("🟣 [LauncherService] ファイルを書き込みました: \(url.path)")
     }
 }
