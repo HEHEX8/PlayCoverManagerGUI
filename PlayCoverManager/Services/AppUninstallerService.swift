@@ -28,7 +28,7 @@ class AppUninstallerService {
     init(processRunner: ProcessRunner? = nil,
          diskImageService: DiskImageService,
          settingsStore: SettingsStore,
-         perAppSettingsStore: PerAppSettingsStore = PerAppSettingsStore()) {
+         perAppSettingsStore: PerAppSettingsStore) {
         self.processRunner = processRunner ?? ProcessRunner()
         self.diskImageService = diskImageService
         self.settingsStore = settingsStore

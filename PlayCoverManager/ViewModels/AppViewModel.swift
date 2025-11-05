@@ -22,7 +22,7 @@ final class AppViewModel {
 
     init(fileManager: FileManager = .default,
          settings: SettingsStore,
-         perAppSettings: PerAppSettingsStore = PerAppSettingsStore(),
+         perAppSettings: PerAppSettingsStore,
          environmentService: PlayCoverEnvironmentService = PlayCoverEnvironmentService(),
          launcherService: LauncherService = LauncherService(),
          installerService: InstallerService = InstallerService()) {
