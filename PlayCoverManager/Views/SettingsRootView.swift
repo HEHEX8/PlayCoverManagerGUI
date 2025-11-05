@@ -672,8 +672,11 @@ private struct AppUninstallerSheet: View {
                 
                 if !apps.isEmpty && !selectedApps.isEmpty && !showResults {
                     Button("削除 (\(selectedApps.count) 個)") {
+                        print("🟡 [UI] ボタンがクリックされました")
                         Task {
+                            print("🟡 [UI] Task 開始")
                             await startUninstallation()
+                            print("🟡 [UI] Task 完了")
                         }
                     }
                     .tint(.red)
