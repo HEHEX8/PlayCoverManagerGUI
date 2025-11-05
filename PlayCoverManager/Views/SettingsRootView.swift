@@ -40,16 +40,6 @@ private struct GeneralSettingsView: View {
                     chooseStorageDirectory()
                 }
                 Toggle("マウント時に Finder に表示しない (-nobrowse)", isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }))
-                LabeledContent("ディスクイメージ形式") {
-                    Text("ASIF（固定）")
-                        .font(.body)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("ASIF 形式のみサポート（macOS Tahoe 26.0 以降専用）")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }

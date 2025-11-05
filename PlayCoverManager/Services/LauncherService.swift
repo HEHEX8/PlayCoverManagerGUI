@@ -39,9 +39,18 @@ final class LauncherService {
         for url in contents where url.pathExtension == "app" {
             guard let bundle = Bundle(url: url) else { continue }
             let bundleID = bundle.bundleIdentifier ?? url.deletingPathExtension().lastPathComponent
+            
+            // Get localized name for current system language
+            let localizedName = bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String 
+                ?? bundle.localizedInfoDictionary?["CFBundleName"] as? String
+            
+            // Fallback to non-localized name if localized version not available
             let info = bundle.infoDictionary
-            let displayName = info?["CFBundleDisplayName"] as? String ?? info?["CFBundleName"] as? String ?? url.deletingPathExtension().lastPathComponent
-            let localizedName = bundle.localizedInfoDictionary?["CFBundleDisplayName"] as? String ?? bundle.localizedInfoDictionary?["CFBundleName"] as? String
+            let displayName = localizedName 
+                ?? info?["CFBundleDisplayName"] as? String 
+                ?? info?["CFBundleName"] as? String 
+                ?? url.deletingPathExtension().lastPathComponent
+            
             let version = info?["CFBundleShortVersionString"] as? String
             let icon = NSWorkspace.shared.icon(forFile: url.path)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)

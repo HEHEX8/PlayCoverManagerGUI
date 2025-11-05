@@ -12,7 +12,7 @@ struct QuickLauncherView: View {
                 HStack(alignment: .center, spacing: 12) {
                     AppIconView(icon: app.icon)
                     VStack(alignment: .leading) {
-                        Text(app.localizedName ?? app.displayName)
+                        Text(app.displayName)
                         Text(app.bundleIdentifier)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -189,7 +189,7 @@ private struct AppDetailView: View {
                 AppIconView(icon: app.icon)
                     .frame(width: 80, height: 80)
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(app.localizedName ?? app.displayName)
+                    Text(app.displayName)
                         .font(.title2)
                     if let version = app.version {
                         Text("Version \(version)")

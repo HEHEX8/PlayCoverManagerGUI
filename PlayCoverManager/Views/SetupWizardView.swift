@@ -94,17 +94,6 @@ struct SetupWizardView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                
-                Divider()
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("ディスクイメージ形式: ASIF（固定）")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("macOS Tahoe 26.0 以降が必要です。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
         case .prepareDiskImage:
             VStack(alignment: .leading, spacing: 12) {
@@ -113,9 +102,6 @@ struct SetupWizardView: View {
                 }
                 Text("io.playcover.PlayCover.asif を作成・マウントします。")
                     .font(.body)
-                Text("形式: ASIF（macOS Tahoe 26.0+）")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 if let dir = viewModel.storageURL ?? settingsStore.diskImageDirectory {
                     Text("保存先: \(dir.path)")
                         .font(.system(.caption, design: .monospaced))
