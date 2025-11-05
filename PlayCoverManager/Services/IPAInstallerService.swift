@@ -24,7 +24,7 @@ class IPAInstallerService {
     var installedApps: [String] = []
     var failedApps: [String] = []
     
-    nonisolated init(processRunner: ProcessRunner = ProcessRunner(),
+    init(processRunner: ProcessRunner = ProcessRunner(),
          diskImageService: DiskImageService,
          settingsStore: SettingsStore) {
         self.processRunner = processRunner
@@ -319,6 +319,17 @@ class IPAInstallerService {
     
     // MARK: - Installation Progress Monitoring
     
+    // Quit PlayCover.app after successful installation
+    private nonisolated func quitPlayCover() async {
+        do {
+            // Use AppleScript to quit PlayCover gracefully
+            _ = try await processRunner.run("/usr/bin/osascript", ["-e", "tell application \"PlayCover\" to quit"])
+            await MainActor.run { currentStatus = "PlayCoverを終了しました" }
+        } catch {
+            // Silently ignore errors (PlayCover might already be closed)
+        }
+    }
+    
     // Try to access PlayCover's InstallVM directly (if available in runtime)
     private func tryMonitorPlayCoverDirectly(bundleID: String) async -> Bool {
         // Attempt to get PlayCover's InstallVM class dynamically
@@ -327,8 +338,8 @@ class IPAInstallerService {
         }
         
         // Try to get the shared instance
-        guard let sharedSelector = NSSelectorFromString("shared"),
-              installVMClass.responds(to: sharedSelector),
+        let sharedSelector = NSSelectorFromString("shared")
+        guard installVMClass.responds(to: sharedSelector),
               let installVM = installVMClass.perform(sharedSelector)?.takeUnretainedValue() as? NSObject else {
             return false
         }
@@ -365,6 +376,8 @@ class IPAInstallerService {
             // Verify installation actually succeeded
             try await Task.sleep(nanoseconds: 2_000_000_000)
             if try await verifyInstallationComplete(bundleID: bundleID) {
+                // Close PlayCover after successful installation
+                await quitPlayCover()
                 return
             }
             // Fall through to traditional monitoring if verification failed
