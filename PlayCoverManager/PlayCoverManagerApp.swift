@@ -6,28 +6,29 @@
 //
 
 import SwiftUI
+import Observation
 
 @main
 struct PlayCoverManagerApp: App {
-    @StateObject private var appViewModel: AppViewModel
-    @StateObject private var settingsStore: SettingsStore
+    @State private var appViewModel: AppViewModel
+    @State private var settingsStore: SettingsStore
 
     init() {
         let settings = SettingsStore()
-        _settingsStore = StateObject(wrappedValue: settings)
-        _appViewModel = StateObject(wrappedValue: AppViewModel(settings: settings))
+        _settingsStore = State(wrappedValue: settings)
+        _appViewModel = State(wrappedValue: AppViewModel(settings: settings))
     }
 
     var body: some Scene {
         WindowGroup {
             AppRootView()
-                .environmentObject(appViewModel)
-                .environmentObject(settingsStore)
+                .environment(appViewModel)
+                .environment(settingsStore)
         }
         Settings {
             SettingsRootView()
-                .environmentObject(appViewModel)
-                .environmentObject(settingsStore)
+                .environment(appViewModel)
+                .environment(settingsStore)
         }
     }
 }

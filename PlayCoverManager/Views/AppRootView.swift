@@ -1,9 +1,10 @@
 import SwiftUI
 import AppKit
+import Observation
 
 struct AppRootView: View {
-    @EnvironmentObject private var appViewModel: AppViewModel
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Environment(AppViewModel.self) private var appViewModel
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         Group {
@@ -41,7 +42,6 @@ struct AppRootView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .onAppear { appViewModel.onAppear() }
-        .environmentObject(settingsStore)
     }
 }
 
@@ -66,19 +66,50 @@ struct ErrorView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
+            Image(systemName: iconName)
                 .font(.system(size: 48, weight: .medium))
-                .foregroundStyle(.orange)
+                .foregroundStyle(iconColor)
             Text(error.title)
                 .font(.title2)
             Text(error.message)
                 .multilineTextAlignment(.center)
-            HStack {
+                .frame(maxWidth: 500)
+            HStack(spacing: 12) {
+                if error.category == .permissionDenied {
+                    Button("システム設定を開く") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .keyboardShortcut("s", modifiers: [.command])
+                } else if error.requiresAction {
+                    Button("設定を開く") {
+                        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                    }
+                }
                 Button("終了") { NSApplication.shared.terminate(nil) }
                 Button("再試行", action: retry)
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding()
+    }
+    
+    private var iconName: String {
+        switch error.category {
+        case .permissionDenied:
+            return "lock.shield"
+        default:
+            return "exclamationmark.triangle"
+        }
+    }
+    
+    private var iconColor: Color {
+        switch error.category {
+        case .permissionDenied:
+            return .red
+        default:
+            return .orange
+        }
     }
 }

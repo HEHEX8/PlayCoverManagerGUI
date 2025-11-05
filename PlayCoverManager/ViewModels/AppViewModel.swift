@@ -1,16 +1,16 @@
 import Foundation
-import Combine
+import Observation
 import AppKit
 
-@MainActor
-final class AppViewModel: ObservableObject {
-    @Published var phase: AppPhase = .checking
-    @Published var statusMessage: String = "環境を確認しています…"
-    @Published var playCoverPaths: PlayCoverPaths?
-    @Published var launcherViewModel: LauncherViewModel?
-    @Published var setupViewModel: SetupWizardViewModel?
-    @Published var isBusy: Bool = false
-    @Published var progress: Double? = nil
+@Observable
+final class AppViewModel {
+    var phase: AppPhase = .checking
+    var statusMessage: String = "環境を確認しています…"
+    var playCoverPaths: PlayCoverPaths?
+    var launcherViewModel: LauncherViewModel?
+    var setupViewModel: SetupWizardViewModel?
+    var isBusy: Bool = false
+    var progress: Double? = nil
 
     private let fileManager: FileManager
     private let settings: SettingsStore
@@ -44,6 +44,9 @@ final class AppViewModel: ObservableObject {
 
     private func runStartupChecks() async {
         do {
+            // Check macOS version first (ASIF requires Tahoe 26.0+)
+            try environmentService.checkASIFSupport()
+            
             let playCoverPaths = try environmentService.detectPlayCover()
             self.playCoverPaths = playCoverPaths
 
@@ -126,7 +129,11 @@ final class AppViewModel: ObservableObject {
     }
 
     func openSettings() {
-        NSApp.sendAction(#selector(NSApplicationDelegate.openPreferences), to: nil, from: nil)
+        // SwiftUI Settings scene can be opened via these private selectors.
+        // Try the modern name first, then fall back for older toolchains.
+        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+            _ = NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        }
     }
 
     func terminateApplication() {

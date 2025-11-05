@@ -1,9 +1,10 @@
 import SwiftUI
+import Observation
 
 struct SetupWizardView: View {
-    @ObservedObject var viewModel: SetupWizardViewModel
+    @Bindable var viewModel: SetupWizardViewModel
     let playCoverPaths: PlayCoverPaths?
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         HStack(spacing: 24) {
@@ -40,7 +41,29 @@ struct SetupWizardView: View {
             .padding()
         }
         .alert(item: $viewModel.error) { error in
-            Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
+            if error.category == .permissionDenied {
+                Alert(
+                    title: Text(error.title),
+                    message: Text(error.message),
+                    primaryButton: .default(Text("システム設定を開く")) {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    },
+                    secondaryButton: .cancel(Text("OK"))
+                )
+            } else if error.requiresAction {
+                Alert(
+                    title: Text(error.title),
+                    message: Text(error.message),
+                    primaryButton: .default(Text("設定を開く")) {
+                        viewModel.openSettings()
+                    },
+                    secondaryButton: .cancel(Text("OK"))
+                )
+            } else {
+                Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
+            }
         }
     }
 
@@ -48,25 +71,62 @@ struct SetupWizardView: View {
     private var content: some View {
         switch viewModel.currentStep {
         case .installPlayCover:
-            VStack(alignment: .leading, spacing: 12) {
-                Text("PlayCover.app が \(PlayCoverPaths.defaultApplicationURL.path) に存在する必要があります。")
-                Button("PlayCover サイトを開く", action: viewModel.openPlayCoverWebsite)
-                    .keyboardShortcut("o", modifiers: [.command])
+            VStack(alignment: .leading, spacing: 16) {
+                if let paths = playCoverPaths ?? viewModel.detectedPlayCoverPaths {
+                    // PlayCover detected
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PlayCover が見つかりました")
+                                .font(.headline)
+                            Text(paths.applicationURL.path)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding()
+                    .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                } else {
+                    // PlayCover not detected
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PlayCover が見つかりません")
+                                .font(.headline)
+                            Text("PlayCover.app を \(PlayCoverPaths.defaultApplicationURL.path) にインストールしてください。")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding()
+                    .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                    
+                    Button("PlayCover サイトを開く", action: viewModel.openPlayCoverWebsite)
+                        .keyboardShortcut("o", modifiers: [.command])
+                }
             }
         case .selectStorage:
-            VStack(alignment: .leading, spacing: 12) {
-                if let storageURL = viewModel.storageURL {
-                    LabeledContent("現在の保存先") {
-                        Text(storageURL.path)
-                            .font(.system(.body, design: .monospaced))
+            VStack(alignment: .leading, spacing: 16) {
+                Group {
+                    if let storageURL = viewModel.storageURL {
+                        LabeledContent("現在の保存先") {
+                            Text(storageURL.path)
+                                .font(.system(.body, design: .monospaced))
+                        }
+                    } else {
+                        Text("保存先が未設定です。")
+                            .foregroundStyle(.secondary)
                     }
-                } else {
-                    Text("保存先が未設定です。")
+                    Button("保存先を選択", action: viewModel.chooseStorageDirectory)
+                        .keyboardShortcut("s", modifiers: [.command])
+                    Text("外部ストレージを推奨しますが必須ではありません。")
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
-                Button("保存先を選択", action: viewModel.chooseStorageDirectory)
-                    .keyboardShortcut("s", modifiers: [.command])
-                Text("外部ストレージを推奨しますが必須ではありません。").font(.footnote)
             }
         case .prepareDiskImage:
             VStack(alignment: .leading, spacing: 12) {
@@ -74,9 +134,11 @@ struct SetupWizardView: View {
                     ProgressView(viewModel.statusMessage)
                 }
                 Text("io.playcover.PlayCover.asif を作成・マウントします。")
+                    .font(.body)
                 if let dir = viewModel.storageURL ?? settingsStore.diskImageDirectory {
                     Text("保存先: \(dir.path)")
-                        .font(.system(.body, design: .monospaced))
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
                 }
             }
         case .finished:
@@ -89,6 +151,12 @@ struct SetupWizardView: View {
 
     private var buttonTitle: String {
         switch viewModel.currentStep {
+        case .installPlayCover:
+            if playCoverPaths != nil || viewModel.detectedPlayCoverPaths != nil {
+                return "次へ"
+            } else {
+                return "確認"
+            }
         case .finished:
             return "完了"
         case .prepareDiskImage:
@@ -111,3 +179,4 @@ struct SetupWizardView: View {
         }
     }
 }
+
