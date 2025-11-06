@@ -595,6 +595,12 @@ struct AppUninstallerSheet: View {
     @State private var showResults = false
     @State private var totalSize: Int64 = 0
     
+    let preSelectedBundleID: String?
+    
+    init(preSelectedBundleID: String? = nil) {
+        self.preSelectedBundleID = preSelectedBundleID
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
             Text("アプリアンインストーラー")
@@ -776,6 +782,16 @@ struct AppUninstallerSheet: View {
         do {
             apps = try await service.getInstalledApps()
             totalSize = apps.reduce(0) { $0 + $1.appSize + $1.diskImageSize }
+            
+            // If preSelectedBundleID is provided, select it and start uninstall
+            if let bundleID = preSelectedBundleID,
+               apps.contains(where: { $0.bundleID == bundleID }) {
+                selectedApps = [bundleID]
+                isLoading = false
+                // Start uninstall immediately after loading
+                await startUninstallation()
+                return
+            }
         } catch {
             apps = []
             totalSize = 0

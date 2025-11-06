@@ -10,6 +10,7 @@ struct QuickLauncherView: View {
     @State private var showingSettings = false
     @State private var showingInstaller = false
     @State private var showingUninstaller = false
+    @State private var selectedAppForUninstall: String? = nil
     @State private var isDrawerOpen = false
     
     // iOS-style grid with fixed size icons
@@ -104,7 +105,8 @@ struct QuickLauncherView: View {
                                         // Right click - show detail/settings
                                         selectedAppForDetail = app
                                     } uninstallAction: {
-                                        // Uninstall action - open uninstaller with this app
+                                        // Uninstall action - open uninstaller with pre-selected app
+                                        selectedAppForUninstall = app.bundleIdentifier
                                         showingUninstaller = true
                                     }
                                 }
@@ -166,7 +168,8 @@ struct QuickLauncherView: View {
                                     // Right click - show detail/settings
                                     selectedAppForDetail = app
                                 } uninstallAction: {
-                                    // Uninstall action - open uninstaller with this app
+                                    // Uninstall action - open uninstaller with pre-selected app
+                                    selectedAppForUninstall = app.bundleIdentifier
                                     showingUninstaller = true
                                 }
                             }
@@ -197,7 +200,10 @@ struct QuickLauncherView: View {
         IPAInstallerSheet()
     }
     .sheet(isPresented: $showingUninstaller) {
-        AppUninstallerSheet()
+        AppUninstallerSheet(preSelectedBundleID: selectedAppForUninstall)
+            .onDisappear {
+                selectedAppForUninstall = nil
+            }
     }
     .frame(minWidth: 960, minHeight: 640)
     .overlay(alignment: .center) {
