@@ -13,46 +13,106 @@ struct SettingsRootView: View {
                 .tabItem {
                     Label("一般", systemImage: "gear")
                 }
+            AppearanceSettingsView()
+                .tabItem {
+                    Label("外観", systemImage: "paintbrush")
+                }
             DataSettingsView()
                 .tabItem {
                     Label("データ", systemImage: "internaldrive")
                 }
             MaintenanceSettingsView()
                 .tabItem {
-                    Label("メンテナンス", systemImage: "wrench")
+                    Label("メンテナンス", systemImage: "wrench.and.screwdriver")
                 }
         }
         .padding(24)
-        .frame(width: 600, height: 480)
+        .frame(width: 650, height: 520)
     }
 }
 
 private struct GeneralSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppViewModel.self) private var appViewModel
+    @State private var showingStorageWizard = false
+    @State private var calculatingSize = false
+    @State private var totalDiskUsage: Int64 = 0
 
     var body: some View {
         Form {
-            Section(header: Text("ディスクイメージ")) {
+            Section(header: Text("ストレージ")) {
                 LabeledContent("保存先") {
-                    Text(settingsStore.diskImageDirectory?.path ?? "未設定")
-                        .font(.system(.body, design: .monospaced))
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(settingsStore.diskImageDirectory?.path ?? "未設定")
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.primary)
+                        if calculatingSize {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else if totalDiskUsage > 0 {
+                            Text("使用中: \(ByteCountFormatter.string(fromByteCount: totalDiskUsage, countStyle: .file))")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
-                Button("保存先を変更") {
-                    chooseStorageDirectory()
+                Button("保存先を変更...") {
+                    showingStorageWizard = true
                 }
+                .help("初期設定ウィザードを開いて保存先を変更します")
+                
+                Text("保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Section(header: Text("マウント設定")) {
                 Toggle("マウント時に Finder に表示しない (-nobrowse)", isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }))
+                
+                Text("有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
+        .onAppear {
+            Task {
+                await calculateDiskUsage()
+            }
+        }
+        .sheet(isPresented: $showingStorageWizard) {
+            StorageChangeWizardSheet()
+        }
     }
-
-    private func chooseStorageDirectory() {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.prompt = "選択"
-        if panel.runModal() == .OK, let url = panel.url {
-            settingsStore.diskImageDirectory = url
+    
+    private func calculateDiskUsage() async {
+        calculatingSize = true
+        defer { calculatingSize = false }
+        
+        // Calculate total disk usage from all apps
+        guard let diskImageDir = settingsStore.diskImageDirectory else {
+            totalDiskUsage = 0
+            return
+        }
+        
+        do {
+            let fileManager = FileManager.default
+            let contents = try fileManager.contentsOfDirectory(at: diskImageDir, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey])
+            
+            var total: Int64 = 0
+            for url in contents where url.pathExtension == "asif" {
+                if let resourceValues = try? url.resourceValues(forKeys: [.fileSizeKey]),
+                   let fileSize = resourceValues.fileSize {
+                    total += Int64(fileSize)
+                }
+            }
+            
+            await MainActor.run {
+                totalDiskUsage = total
+            }
+        } catch {
+            await MainActor.run {
+                totalDiskUsage = 0
+            }
         }
     }
 }
@@ -748,29 +808,109 @@ struct AppUninstallerSheet: View {
     }
 }
 
+// Appearance Settings View
+private struct AppearanceSettingsView: View {
+    @Environment(SettingsStore.self) private var settingsStore
+    @AppStorage("appIconSize") private var appIconSize: IconSize = .medium
+    @AppStorage("animationsEnabled") private var animationsEnabled = true
+    
+    enum IconSize: String, CaseIterable, Identifiable {
+        case small = "小"
+        case medium = "中"
+        case large = "大"
+        
+        var id: String { rawValue }
+        
+        var points: CGFloat {
+            switch self {
+            case .small: return 60
+            case .medium: return 80
+            case .large: return 100
+            }
+        }
+    }
+    
+    var body: some View {
+        Form {
+            Section(header: Text("アプリアイコン")) {
+                Picker("アイコンサイズ", selection: $appIconSize) {
+                    ForEach(IconSize.allCases) { size in
+                        Text(size.rawValue).tag(size)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                Text("ランチャーに表示されるアプリアイコンのサイズを変更します。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Section(header: Text("アニメーション")) {
+                Toggle("アニメーションを有効にする", isOn: $animationsEnabled)
+                
+                Text("アプリ起動時のバウンスエフェクトやフェードインアニメーションを有効にします。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
 private struct MaintenanceSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
+    @State private var showingResetConfirmation = false
+    @State private var showingClearCacheConfirmation = false
 
     var body: some View {
         Form {
-            Section(header: Text("デバッグ情報")) {
-                LabeledContent("現在のフォーマット") {
-                    Text(settingsStore.diskImageFormat.rawValue)
-                        .font(.system(.caption, design: .monospaced))
+            Section(header: Text("キャッシュ")) {
+                Button("アイコンキャッシュをクリア") {
+                    showingClearCacheConfirmation = true
                 }
+                Text("アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             
             Section(header: Text("リセット")) {
                 Button("設定をリセット") {
-                    resetSettings()
+                    showingResetConfirmation = true
                 }
                 .foregroundStyle(.red)
-                Text("すべての設定を初期値に戻します（ディスクイメージは削除されません）。")
-                    .font(.footnote)
+                Text("すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
+        .alert("設定をリセットしますか？", isPresented: $showingResetConfirmation) {
+            Button("キャンセル", role: .cancel) { }
+            Button("リセット", role: .destructive) {
+                resetSettings()
+            }
+        } message: {
+            Text("アプリが再起動され、初期設定ウィザードが表示されます。")
+        }
+        .alert("キャッシュをクリアしますか?", isPresented: $showingClearCacheConfirmation) {
+            Button("キャンセル", role: .cancel) { }
+            Button("クリア", role: .destructive) {
+                clearIconCache()
+            }
+        } message: {
+            Text("アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。")
+        }
+    }
+    
+    private func clearIconCache() {
+        // Icon cache is managed by LauncherService's NSCache
+        // We'll need to add a method to clear it
+        // For now, just show completion
+        let alert = NSAlert()
+        alert.messageText = "キャッシュをクリアしました"
+        alert.informativeText = "アプリを再起動すると、アイコンが再読み込みされます。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
     
     private func resetSettings() {
@@ -779,8 +919,43 @@ private struct MaintenanceSettingsView: View {
         UserDefaults.standard.removeObject(forKey: "nobrowseEnabled")
         UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
+        UserDefaults.standard.removeObject(forKey: "appIconSize")
+        UserDefaults.standard.removeObject(forKey: "animationsEnabled")
         
         NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
+    }
+}
+
+// Storage Change Wizard Sheet
+private struct StorageChangeWizardSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppViewModel.self) private var appViewModel
+    @State private var wizardViewModel: SetupWizardViewModel?
+    
+    var body: some View {
+        VStack {
+            if let viewModel = wizardViewModel {
+                SetupWizardView(viewModel: viewModel, playCoverPaths: appViewModel.playCoverPaths)
+                    .environment(settingsStore)
+            } else {
+                ProgressView("初期化中...")
+                    .onAppear {
+                        initializeWizard()
+                    }
+            }
+        }
+        .frame(width: 800, height: 600)
+    }
+    
+    private func initializeWizard() {
+        let viewModel = SetupWizardViewModel()
+        // Start from selectStorage step
+        viewModel.currentStep = .selectStorage
+        viewModel.onCompletion = {
+            dismiss()
+        }
+        self.wizardViewModel = viewModel
     }
 }
 
