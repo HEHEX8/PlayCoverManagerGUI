@@ -305,6 +305,8 @@ private struct iOSAppIconView: View {
     @State private var isAnimating = false
     @State private var hasAppeared = false
     @State private var isPressed = false
+    @State private var isCancelled = false
+    @State private var shakeOffset: CGFloat = 0
     
     var body: some View {
         VStack(spacing: 8) {
@@ -342,9 +344,11 @@ private struct iOSAppIconView: View {
                     .offset(x: 6, y: -6)
                 }
             }
-            // Combined animations: press + bounce
+            // Combined animations: press + bounce + shake
             .scaleEffect(isPressed ? 0.92 : (isAnimating ? 0.85 : 1.0))
             .brightness(isPressed ? -0.1 : 0)
+            .offset(x: shakeOffset)
+            .rotationEffect(.degrees(isCancelled ? (shakeOffset * 0.3) : 0))
             .animation(.easeOut(duration: 0.1), value: isPressed)
             .animation(
                 isAnimating ? 
@@ -352,6 +356,13 @@ private struct iOSAppIconView: View {
                         .repeatCount(3, autoreverses: true) :
                     .easeOut(duration: 0.2),
                 value: isAnimating
+            )
+            .animation(
+                isCancelled ?
+                    Animation.interpolatingSpring(stiffness: 500, damping: 8)
+                        .repeatCount(4, autoreverses: true) :
+                    .easeOut(duration: 0.1),
+                value: shakeOffset
             )
             
             // App name below icon
@@ -393,28 +404,57 @@ private struct iOSAppIconView: View {
         }
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { _ in
+                .onChanged { gesture in
                     // Press down animation
                     if !isPressed {
                         isPressed = true
                     }
-                }
-                .onEnded { _ in
-                    // Release and trigger launch sequence
-                    isPressed = false
                     
-                    // Smooth transition from press to bounce
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        isAnimating = true
+                    // Check if cursor moved too far outside the icon bounds
+                    let iconSize: CGFloat = 80
+                    let tolerance: CGFloat = 20  // Allow some movement outside
+                    let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
+                    
+                    // If moved too far, trigger cancel animation
+                    if distance > iconSize / 2 + tolerance && !isCancelled {
+                        isPressed = false
+                        isCancelled = true
                         
-                        // Trigger launch during bounce animation
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            tapAction()
+                        // "Nani yanen!" shake animation
+                        performShakeAnimation()
+                    }
+                }
+                .onEnded { gesture in
+                    // Check if the gesture ended outside the icon
+                    let iconSize: CGFloat = 80
+                    let tolerance: CGFloat = 20
+                    let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
+                    
+                    if distance > iconSize / 2 + tolerance || isCancelled {
+                        // Cancelled - reset state
+                        isPressed = false
+                        if !isCancelled {
+                            // Quick shake if cancelled on release
+                            isCancelled = true
+                            performShakeAnimation()
                         }
+                    } else {
+                        // Normal launch - within bounds
+                        isPressed = false
                         
-                        // Stop bounce animation after completion
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                            isAnimating = false
+                        // Smooth transition from press to bounce
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            isAnimating = true
+                            
+                            // Trigger launch during bounce animation
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                tapAction()
+                            }
+                            
+                            // Stop bounce animation after completion
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                                isAnimating = false
+                            }
                         }
                     }
                 }
@@ -445,6 +485,25 @@ private struct iOSAppIconView: View {
             Button("アプリフォルダを開く") {
                 NSWorkspace.shared.open(app.appURL.deletingLastPathComponent())
             }
+        }
+    }
+    
+    // "Nani yanen!" shake animation function
+    private func performShakeAnimation() {
+        // Quick shake sequence: left → right → left → right → center
+        // Creates a "What the heck?!" feeling
+        let shakeSequence: [CGFloat] = [-6, 6, -4, 4, -2, 2, 0]
+        
+        for (index, offset) in shakeSequence.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
+                shakeOffset = offset
+            }
+        }
+        
+        // Reset cancelled state after animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double(shakeSequence.count) * 0.05 + 0.1) {
+            isCancelled = false
+            shakeOffset = 0
         }
     }
 }
