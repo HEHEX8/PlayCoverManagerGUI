@@ -342,19 +342,46 @@ class IPAInstallerService {
         let checkInterval: TimeInterval = 1.0
         
         for i in 0..<maxWait {
-            // Check if PlayCover is still running
+            // Check if PlayCover is still running using both pgrep and NSWorkspace
             let pgrepOutput = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
-            let isPlayCoverRunning = pgrepOutput != nil && !pgrepOutput!.isEmpty
+            
+            // Also check via NSWorkspace (more reliable)
+            let runningApps = await MainActor.run {
+                NSWorkspace.shared.runningApplications
+            }
+            let playCoverRunning = runningApps.contains { app in
+                app.bundleIdentifier == "io.playcover.PlayCover"
+            }
+            
+            // Debug logging
+            if i % 10 == 0 {
+                print("[IPAInstaller] pgrep output: '\(pgrepOutput ?? "nil")', NSWorkspace: \(playCoverRunning)")
+            }
+            
+            // Check both nil case and empty string case
+            let isPlayCoverRunning: Bool
+            if let output = pgrepOutput {
+                // pgrep returns process IDs (one per line), or empty if not running
+                let pgrepSaysRunning = !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                // Use NSWorkspace as primary check, pgrep as backup
+                isPlayCoverRunning = playCoverRunning || pgrepSaysRunning
+            } else {
+                // Command failed - rely on NSWorkspace
+                isPlayCoverRunning = playCoverRunning
+            }
             
             if !isPlayCoverRunning {
                 // PlayCover crashed or closed - verify installation
+                print("[IPAInstaller] PlayCover not running detected at \(i) seconds")
                 await MainActor.run { currentStatus = "PlayCover終了検知 - 検証中..." }
                 try await Task.sleep(nanoseconds: 1_000_000_000)
                 
                 if try await verifyInstallationComplete(bundleID: bundleID) {
                     await MainActor.run { currentStatus = "完了（PlayCover終了後）" }
+                    print("[IPAInstaller] Installation verified complete")
                     return
                 } else {
+                    print("[IPAInstaller] Installation incomplete - throwing error")
                     throw AppError.installation("PlayCover が終了しました", message: "インストールが完了していません")
                 }
             }
