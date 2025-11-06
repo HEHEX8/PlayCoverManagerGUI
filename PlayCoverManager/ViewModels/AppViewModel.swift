@@ -26,13 +26,13 @@ final class AppViewModel {
          perAppSettings: PerAppSettingsStore,
          environmentService: PlayCoverEnvironmentService = PlayCoverEnvironmentService(),
          launcherService: LauncherService = LauncherService(),
-         installerService: InstallerService = InstallerService()) {
+         installerService: InstallerService? = nil) {
         self.fileManager = fileManager
         self.settings = settings
         self.perAppSettings = perAppSettings
         self.environmentService = environmentService
         self.launcherService = launcherService
-        self.installerService = installerService
+        self.installerService = installerService ?? InstallerService(launcherService: launcherService)
         self.lockService = ContainerLockService(fileManager: fileManager)
         self.diskImageService = DiskImageService(fileManager: fileManager, processRunner: ProcessRunner(), settings: settings)
     }
