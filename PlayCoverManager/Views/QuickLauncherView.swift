@@ -168,79 +168,7 @@ struct QuickLauncherView: View {
                 }
             }
         }
-        .sheet(item: $selectedAppForDetail) { app in
-            AppDetailSheet(app: app, viewModel: viewModel)
-        }
-        .sheet(isPresented: $showingSettings) {
-            SettingsRootView()
-        }
-        .sheet(isPresented: $showingInstaller) {
-            IPAInstallerSheet()
-        }
-        .sheet(isPresented: $showingUninstaller) {
-            AppUninstallerSheet()
-        }
-        .frame(minWidth: 960, minHeight: 640)
-        .overlay(alignment: .center) {
-            // Unmount flow overlay (confirmation, progress, result, error)
-            if viewModel.unmountFlowState != .idle {
-                ZStack {
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                    
-                    UnmountOverlayView(viewModel: viewModel)
-                        .transition(.opacity.animation(.easeInOut(duration: 0.15)))
-                }
-                .transition(.opacity)
-            }
-            // Regular status overlay for other time-consuming operations
-            else if viewModel.isBusy && viewModel.isShowingStatus {
-                VStack(spacing: 12) {
-                    ProgressView()
-                    if !viewModel.statusMessage.isEmpty {
-                        Text(viewModel.statusMessage)
-                    }
-                }
-                .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(radius: 12)
-            }
-        }
-        .alert(item: $viewModel.error) { error in
-            Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
-        }
-        .alert(item: $viewModel.pendingImageCreation) { app in
-            Alert(title: Text("ディスクイメージが存在しません"),
-                  message: Text("\(app.displayName) 用の ASIF ディスクイメージを作成しますか？"),
-                  primaryButton: .default(Text("作成")) { viewModel.confirmImageCreation() },
-                  secondaryButton: .cancel { viewModel.cancelImageCreation() })
-        }
-        .confirmationDialog("内部データが見つかりました", isPresented: Binding(
-            get: { viewModel.pendingDataHandling != nil },
-            set: { newValue in if !newValue { viewModel.pendingDataHandling = nil } }
-        ), titleVisibility: .visible) {
-            if viewModel.pendingDataHandling != nil {
-                ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
-                    let title = strategy.localizedDescription + (strategy == settingsStore.defaultDataHandling ? "（既定）" : "")
-                    Button(title) {
-                        viewModel.applyDataHandling(strategy: strategy)
-                    }
-                }
-                Button("キャンセル", role: .cancel) {}
-            }
-        } message: {
-            if let request = viewModel.pendingDataHandling {
-                Text("\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？")
-            }
-        }
-        .task {
-            if viewModel.filteredApps.isEmpty {
-                await viewModel.refresh()
-            }
-            if viewModel.selectedApp == nil {
-                viewModel.selectedApp = viewModel.filteredApps.first
-            }
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         
         // Sidebar action panel (right side)
         SidebarActionPanel(
@@ -249,7 +177,80 @@ struct QuickLauncherView: View {
             showingUninstaller: $showingUninstaller,
             getPlayCoverIcon: getPlayCoverIcon
         )
-        }  // HStack closing
+    }
+    .sheet(item: $selectedAppForDetail) { app in
+        AppDetailSheet(app: app, viewModel: viewModel)
+    }
+    .sheet(isPresented: $showingSettings) {
+        SettingsRootView()
+    }
+    .sheet(isPresented: $showingInstaller) {
+        IPAInstallerSheet()
+    }
+    .sheet(isPresented: $showingUninstaller) {
+        AppUninstallerSheet()
+    }
+    .frame(minWidth: 960, minHeight: 640)
+    .overlay(alignment: .center) {
+        // Unmount flow overlay (confirmation, progress, result, error)
+        if viewModel.unmountFlowState != .idle {
+            ZStack {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                
+                UnmountOverlayView(viewModel: viewModel)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+            }
+            .transition(.opacity)
+        }
+        // Regular status overlay for other time-consuming operations
+        else if viewModel.isBusy && viewModel.isShowingStatus {
+            VStack(spacing: 12) {
+                ProgressView()
+                if !viewModel.statusMessage.isEmpty {
+                    Text(viewModel.statusMessage)
+                }
+            }
+            .padding()
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .shadow(radius: 12)
+        }
+    }
+    .alert(item: $viewModel.error) { error in
+        Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
+    }
+    .alert(item: $viewModel.pendingImageCreation) { app in
+        Alert(title: Text("ディスクイメージが存在しません"),
+              message: Text("\(app.displayName) 用の ASIF ディスクイメージを作成しますか？"),
+              primaryButton: .default(Text("作成")) { viewModel.confirmImageCreation() },
+              secondaryButton: .cancel { viewModel.cancelImageCreation() })
+    }
+    .confirmationDialog("内部データが見つかりました", isPresented: Binding(
+        get: { viewModel.pendingDataHandling != nil },
+        set: { newValue in if !newValue { viewModel.pendingDataHandling = nil } }
+    ), titleVisibility: .visible) {
+        if viewModel.pendingDataHandling != nil {
+            ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
+                let title = strategy.localizedDescription + (strategy == settingsStore.defaultDataHandling ? "（既定）" : "")
+                Button(title) {
+                    viewModel.applyDataHandling(strategy: strategy)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        }
+    } message: {
+        if let request = viewModel.pendingDataHandling {
+            Text("\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？")
+        }
+    }
+    .task {
+        if viewModel.filteredApps.isEmpty {
+            await viewModel.refresh()
+        }
+        if viewModel.selectedApp == nil {
+            viewModel.selectedApp = viewModel.filteredApps.first
+        }
+    }
     }
 }
 
@@ -1700,5 +1701,10 @@ private struct SidebarActionPanel: View {
         }
         .frame(width: 90)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(Color(nsColor: .separatorColor))
+                .frame(width: 1)
+        }
     }
 }
