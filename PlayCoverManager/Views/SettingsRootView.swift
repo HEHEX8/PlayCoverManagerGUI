@@ -176,7 +176,8 @@ struct IPAInstallerSheet: View {
         .frame(width: 700, height: 600)
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
-            installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore)
+            let launcherService = LauncherService()
+            installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore, launcherService: launcherService)
         }
     }
     
@@ -745,7 +746,8 @@ private struct AppUninstallerSheet: View {
     private func loadApps() async {
         guard let service = uninstallerService else {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
-            let service = AppUninstallerService(diskImageService: diskImageService, settingsStore: settingsStore, perAppSettingsStore: perAppSettingsStore)
+            let launcherService = LauncherService()
+            let service = AppUninstallerService(diskImageService: diskImageService, settingsStore: settingsStore, perAppSettingsStore: perAppSettingsStore, launcherService: launcherService)
             self.uninstallerService = service
             await loadApps()
             return

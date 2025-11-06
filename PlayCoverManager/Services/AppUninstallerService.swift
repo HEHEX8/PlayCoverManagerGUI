@@ -202,12 +202,13 @@ class AppUninstallerService {
         }
         
         // Check if app is running using NSRunningApplication
-        if launcherService.isAppRunning(bundleID: app.bundleID) {
+        let isRunning = await MainActor.run { launcherService.isAppRunning(bundleID: app.bundleID) }
+        if isRunning {
             throw AppError.installation("アプリが実行中のため、アンインストールできません", message: "アプリを終了してから再度お試しください")
         }
         
         let playCoverBundleID = "io.playcover.PlayCover"
-        let applicationsDir = PlayCoverPaths.playCoverApplicationsURL(playCoverBundleID: playCoverBundleID)
+        let applicationsDir = await MainActor.run { PlayCoverPaths.playCoverApplicationsURL(playCoverBundleID: playCoverBundleID) }
         
         // Step 1: Remove app from PlayCover Applications/
         // Find actual app by bundle ID (app name might differ from bundle ID)
@@ -228,19 +229,19 @@ class AppUninstallerService {
         
         // Step 2: Remove app settings
         await MainActor.run { currentStatus = "設定ファイルを削除中..." }
-        let settingsFile = PlayCoverPaths.appSettingsURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID)
+        let settingsFile = await MainActor.run { PlayCoverPaths.appSettingsURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID) }
         try? FileManager.default.removeItem(at: settingsFile)
         
         // Step 3: Remove entitlements
-        let entitlementsFile = PlayCoverPaths.entitlementsURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID)
+        let entitlementsFile = await MainActor.run { PlayCoverPaths.entitlementsURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID) }
         try? FileManager.default.removeItem(at: entitlementsFile)
         
         // Step 4: Remove keymapping
-        let keymappingFile = PlayCoverPaths.keymappingURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID)
+        let keymappingFile = await MainActor.run { PlayCoverPaths.keymappingURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID) }
         try? FileManager.default.removeItem(at: keymappingFile)
         
         // Step 4.5: Remove PlayChain files (if they exist)
-        let playChainDir = PlayCoverPaths.playChainURL(playCoverBundleID: playCoverBundleID)
+        let playChainDir = await MainActor.run { PlayCoverPaths.playChainURL(playCoverBundleID: playCoverBundleID) }
         let playChainFile = playChainDir.appendingPathComponent(app.bundleID)
         let playChainEncrypted = playChainDir.appendingPathComponent("\(app.bundleID).keyCover")
         
@@ -269,7 +270,7 @@ class AppUninstallerService {
         }
         
         // Step 5: Unmount and remove container (this is what we mounted during installation)
-        let internalContainer = PlayCoverPaths.containerURL(for: app.bundleID)
+        let internalContainer = await MainActor.run { PlayCoverPaths.containerURL(for: app.bundleID) }
         
         await MainActor.run { currentStatus = "コンテナ確認中..." }
         
