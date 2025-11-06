@@ -833,15 +833,18 @@ private struct RecentAppLaunchButton: View {
             alignment: .top
         )
         .keyboardShortcut(.defaultAction)
-        .onChange(of: app.icon) { oldIcon, newIcon in
-            // When icon changes, save OLD icon and trigger animation
-            if let oldIcon = oldIcon, let newIcon = newIcon, oldIcon !== newIcon {
-                // Save the OLD icon before it changes
-                self.oldIcon = oldIcon
+        .onChange(of: app.bundleIdentifier) { oldValue, newValue in
+            // Detect app change and trigger rich transition
+            if !oldValue.isEmpty && oldValue != newValue {
+                // Save CURRENT displayed icon as old icon (before it updates)
+                oldIcon = currentIcon
                 performAppSwitchAnimation()
             }
-            // Update current icon reference
-            currentIcon = newIcon
+            previousAppID = newValue
+            // Update current icon after animation starts
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                currentIcon = app.icon
+            }
         }
         .onAppear {
             previousAppID = app.bundleIdentifier
@@ -884,10 +887,8 @@ private struct RecentAppLaunchButton: View {
         iconOffsetX = 0
         iconScale = 1.2
         
-        // Fade out text immediately
-        withAnimation(.easeOut(duration: 0.15)) {
-            textOpacity = 0.0
-        }
+        // Text stays visible (shows OLD title during animation)
+        textOpacity = 1.0
         
         // Drop new icon
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -909,11 +910,6 @@ private struct RecentAppLaunchButton: View {
                     oldIconOpacity = 0.0
                 }
                 
-                // Ripple at collision
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    rippleTrigger += 1
-                }
-                
                 // New icon bounces back
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
@@ -921,14 +917,22 @@ private struct RecentAppLaunchButton: View {
                     }
                 }
                 
-                // After motion completes, fade in new text
+                // After new icon lands (0.45s), update title
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                    withAnimation(.easeIn(duration: 0.25)) {
-                        textOpacity = 1.0
+                    // Fade out old title
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        textOpacity = 0.0
+                    }
+                    
+                    // Fade in new title
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        withAnimation(.easeIn(duration: 0.25)) {
+                            textOpacity = 1.0
+                        }
                     }
                     
                     // Clean up old icon
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         oldIcon = nil
                     }
                 }
