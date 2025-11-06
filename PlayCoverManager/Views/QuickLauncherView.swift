@@ -716,8 +716,11 @@ private struct RecentAppLaunchButton: View {
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
+    @State private var ripplePosition: CGPoint = .zero
     @State private var iconOffsetY: CGFloat = 0
+    @State private var iconOffsetX: CGFloat = 0
     @State private var iconScale: CGFloat = 1.0
+    @State private var iconOpacity: Double = 1.0
     @State private var textOpacity: Double = 1.0
     @State private var previousAppID: String = ""
     
@@ -751,8 +754,17 @@ private struct RecentAppLaunchButton: View {
                                 }
                         }
                     }
-                    .offset(y: iconOffsetY)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: IconPositionKey.self,
+                                value: geo.frame(in: .named("buttonSpace")).origin
+                            )
+                        }
+                    )
+                    .offset(x: iconOffsetX, y: iconOffsetY)
                     .scaleEffect(iconScale)
+                    .opacity(iconOpacity)
                     
                     // App info with fade transition
                     VStack(alignment: .leading, spacing: 4) {
@@ -792,14 +804,18 @@ private struct RecentAppLaunchButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .coordinateSpace(name: "buttonSpace")
+        .onPreferenceChange(IconPositionKey.self) { position in
+            ripplePosition = CGPoint(x: position.x + 26, y: position.y + 26) // Center of 52x52 icon
+        }
         .background(
             ZStack {
                 // Base background
                 Color(nsColor: .controlBackgroundColor).opacity(0.5)
                 
-                // Ripple effect at icon position (left side, ~250px from center)
+                // Ripple effect at exact icon position
                 RippleEffect(trigger: rippleTrigger)
-                    .offset(x: -250, y: 0)
+                    .offset(x: ripplePosition.x, y: ripplePosition.y)
             }
         )
         .clipped() // Clip all content (icon motion + ripple) to button bounds
@@ -844,37 +860,60 @@ private struct RecentAppLaunchButton: View {
         }
     }
     
-    // App switch animation - new icon drops and pushes old one down
+    // App switch animation - new icon drops and collides with old one
     private func performAppSwitchAnimation() {
-        // Old icon gets pushed down and fades
-        withAnimation(.easeIn(duration: 0.3)) {
-            iconOffsetY = 100
-            iconScale = 0.8
+        // Fade out text immediately
+        withAnimation(.easeOut(duration: 0.15)) {
             textOpacity = 0.0
         }
         
-        // After old icon is pushed out
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            // New icon starts from above
-            iconOffsetY = -150
-            iconScale = 1.2
+        // New icon starts falling from above
+        iconOffsetY = -150
+        iconScale = 1.2
+        iconOpacity = 1.0
+        
+        // Drop down fast (falling)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(.easeIn(duration: 0.25)) {
+                iconOffsetY = 0  // Falls to normal position
+            }
             
-            // Drop down with impact (ズドン!)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                withAnimation(.interpolatingSpring(stiffness: 250, damping: 15)) {
-                    iconOffsetY = 0
-                    iconScale = 1.0
+            // COLLISION! Old icon gets hit and flies away
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                // Impact: new icon squashes slightly
+                withAnimation(.easeOut(duration: 0.1)) {
+                    iconScale = 0.95
                 }
                 
-                // Ripple on impact
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // Old icon flies off to the side
+                withAnimation(.easeOut(duration: 0.3)) {
+                    iconOffsetX = -150  // Flies left
+                    iconOffsetY = -80   // Flies up-left
+                    iconScale = 0.6
+                    iconOpacity = 0.0
+                }
+                
+                // Ripple on collision impact
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                     rippleTrigger += 1
                 }
                 
-                // Fade in text after landing
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    withAnimation(.easeIn(duration: 0.25)) {
-                        textOpacity = 1.0
+                // New icon bounces back to normal after squash
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // Reset for new icon
+                    iconOffsetX = 0
+                    iconOffsetY = 0
+                    iconOpacity = 1.0
+                    
+                    withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
+                        iconScale = 1.0
+                    }
+                    
+                    // Fade in new text
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        withAnimation(.easeIn(duration: 0.25)) {
+                            textOpacity = 1.0
+                        }
                     }
                 }
             }
@@ -1540,5 +1579,13 @@ private struct InfoView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// PreferenceKey for tracking icon position
+private struct IconPositionKey: PreferenceKey {
+    static var defaultValue: CGPoint = .zero
+    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
+        value = nextValue()
     }
 }
