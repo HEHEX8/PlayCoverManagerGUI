@@ -327,6 +327,66 @@ final class DiskImageService {
             return 0
         }
     }
+    
+    /// Parse eject error to extract user-friendly information
+    /// - Parameter stderr: Standard error output from diskutil eject command
+    /// - Returns: Tuple of (volume names, process info) or nil if parsing failed
+    func parseEjectError(_ stderr: String) async -> (volumeNames: [String], blockingProcess: String?)? {
+        var volumeNames: [String] = []
+        var blockingProcess: String? = nil
+        
+        // Extract PID from error message (e.g., "PID 43014 (/usr/libexec/diskimagesiod)")
+        if let pidRange = stderr.range(of: #"PID (\d+) \(([^)]+)\)"#, options: .regularExpression) {
+            let match = stderr[pidRange]
+            if let processRange = match.range(of: #"\(([^)]+)\)"#, options: .regularExpression) {
+                let processPath = match[processRange].dropFirst().dropLast()
+                blockingProcess = String(processPath.split(separator: "/").last ?? processPath)
+            }
+        }
+        
+        // Extract disk identifier (e.g., "disk5" from "Unmount of disk5 failed")
+        var diskIdentifier: String?
+        if let diskRange = stderr.range(of: #"Unmount of (disk\d+)"#, options: .regularExpression) {
+            let match = stderr[diskRange]
+            if let diskMatch = match.split(separator: " ").last {
+                diskIdentifier = String(diskMatch)
+            }
+        }
+        
+        // If we found a disk identifier, query diskutil to get volume names
+        if let diskID = diskIdentifier {
+            do {
+                let output = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", diskID])
+                if let data = output.data(using: .utf8),
+                   let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                   let volumeName = plist["VolumeName"] as? String {
+                    volumeNames.append(volumeName)
+                }
+                
+                // Also check for partitions on this disk
+                let listOutput = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist", diskID])
+                if let listData = listOutput.data(using: .utf8),
+                   let listPlist = try? PropertyListSerialization.propertyList(from: listData, options: [], format: nil) as? [String: Any],
+                   let allDisks = listPlist["AllDisksAndPartitions"] as? [[String: Any]] {
+                    for disk in allDisks {
+                        if let partitions = disk["Partitions"] as? [[String: Any]] {
+                            for partition in partitions {
+                                if let volName = partition["VolumeName"] as? String,
+                                   !volName.isEmpty,
+                                   !volumeNames.contains(volName) {
+                                    volumeNames.append(volName)
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch {
+                print("[DiskImageService] Failed to query disk info for \(diskID): \(error)")
+            }
+        }
+        
+        return volumeNames.isEmpty && blockingProcess == nil ? nil : (volumeNames, blockingProcess)
+    }
 }
 
 private extension URL {
