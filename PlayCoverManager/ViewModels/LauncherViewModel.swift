@@ -281,11 +281,17 @@ final class LauncherViewModel {
             .appendingPathComponent("Library/Application Support/PlayCoverManager/TemporaryMounts", isDirectory: true)
         try fileManager.createDirectory(at: tempBase, withIntermediateDirectories: true)
         let tempMount = try await diskImageService.mountTemporarily(for: bundleIdentifier, temporaryMountBase: tempBase)
+        
+        // Get device ID before unmounting (for cleanup)
+        let tempMountDeviceId = try? await diskImageService.getDeviceIdentifier(for: tempMount)
+        
         defer {
             Task {
                 try? await diskImageService.detach(volumeURL: tempMount)
-                // Detach disk image device for this specific temporary mount
-                try? await diskImageService.detachDiskImageDevice(for: tempMount)
+                // Detach disk image device using pre-acquired device ID
+                if let deviceId = tempMountDeviceId {
+                    try? await diskImageService.detachDiskImageDeviceByID(deviceId)
+                }
             }
         }
         let destination = tempMount
@@ -466,22 +472,33 @@ final class LauncherViewModel {
         }
         
         print("[LauncherVM] No locks detected, attempting unmount")
+        
+        // Get device ID before unmounting
+        let deviceId = try? await diskImageService.getDeviceIdentifier(for: containerURL)
+        if let deviceId = deviceId {
+            print("[LauncherVM] Found device ID: \(deviceId) for container \(containerURL.path)")
+        } else {
+            print("[LauncherVM] Warning: Could not get device ID before unmount")
+        }
+        
         do {
             try await diskImageService.detach(volumeURL: containerURL)
             print("[LauncherVM] Successfully unmounted container for \(bundleID)")
             
-            // Detach disk image device for this specific container
-            print("[LauncherVM] Detaching disk image device for \(containerURL.path)")
-            do {
-                let detachedCount = try await diskImageService.detachDiskImageDevice(for: containerURL)
-                if detachedCount > 0 {
-                    print("[LauncherVM] Detached \(detachedCount) disk image device(s)")
-                    // Wait briefly for diskimagesiod cleanup
-                    try? await Task.sleep(for: .seconds(1))
+            // Detach disk image device using pre-acquired device ID
+            if let deviceId = deviceId {
+                print("[LauncherVM] Detaching disk image device \(deviceId)")
+                do {
+                    let detachedCount = try await diskImageService.detachDiskImageDeviceByID(deviceId)
+                    if detachedCount > 0 {
+                        print("[LauncherVM] Detached \(detachedCount) disk image device(s)")
+                        // Wait briefly for diskimagesiod cleanup
+                        try? await Task.sleep(for: .seconds(1))
+                    }
+                } catch {
+                    print("[LauncherVM] Warning: Failed to detach disk image device: \(error)")
+                    // Continue anyway - this is not critical
                 }
-            } catch {
-                print("[LauncherVM] Warning: Failed to detach disk image device: \(error)")
-                // Continue anyway - this is not critical
             }
         } catch {
             print("[LauncherVM] Failed to unmount container for \(bundleID): \(error)")

@@ -278,19 +278,27 @@ class AppUninstallerService {
         do {
             let mountOutput = try await processRunner.run("/sbin/mount", [])
             if mountOutput.contains(internalContainer.path) {
+                // Get device ID before unmounting
+                let deviceId = try? await diskImageService.getDeviceIdentifier(for: internalContainer)
+                if let deviceId = deviceId {
+                    print("[AppUninstallerService] Found device ID: \(deviceId) for container")
+                }
+                
                 // It's mounted - unmount it
                 await MainActor.run { currentStatus = "ディスクイメージをアンマウント中..." }
                 try await diskImageService.detach(volumeURL: internalContainer)
                 
-                // Detach disk image device for this specific container
-                do {
-                    let detachedCount = try await diskImageService.detachDiskImageDevice(for: internalContainer)
-                    if detachedCount > 0 {
-                        print("[AppUninstallerService] Detached \(detachedCount) disk image device(s)")
+                // Detach disk image device using pre-acquired device ID
+                if let deviceId = deviceId {
+                    do {
+                        let detachedCount = try await diskImageService.detachDiskImageDeviceByID(deviceId)
+                        if detachedCount > 0 {
+                            print("[AppUninstallerService] Detached \(detachedCount) disk image device(s)")
+                        }
+                    } catch {
+                        print("[AppUninstallerService] Warning: Failed to detach disk image device: \(error)")
+                        // Continue anyway - this is not critical
                     }
-                } catch {
-                    print("[AppUninstallerService] Warning: Failed to detach disk image device: \(error)")
-                    // Continue anyway - this is not critical
                 }
                 
                 // After unmounting, the mount point directory should be removed automatically by the system
