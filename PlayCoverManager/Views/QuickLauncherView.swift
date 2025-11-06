@@ -836,10 +836,10 @@ private struct RippleEffect: View {
                 let ring = RippleRing(id: UUID())
                 rings.append(ring)
                 
-                // Animate the ring
+                // Animate the ring to expand to button edges
                 withAnimation(.easeOut(duration: 0.8)) {
                     if let index = rings.firstIndex(where: { $0.id == ring.id }) {
-                        rings[index].scale = 2.5
+                        rings[index].scale = 8.0  // Much larger to reach button edges
                         rings[index].opacity = 0.0
                     }
                 }
