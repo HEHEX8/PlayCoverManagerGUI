@@ -1,3 +1,4 @@
+# PlayCover本体（依存関係として含めない）
 PlayCover/
 
 # Build artifacts
@@ -7,14 +8,63 @@ build/
 *.dmg
 *.zip
 *.ipa
+*.dSYM.zip
+*.dSYM/
 
 # Xcode
 DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+xcuserdata/
+*.moved-aside
+*.swp
+*~.nib
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj
+
+# CocoaPods
+Pods/
+*.xcworkspace
+
+# Carthage
+Carthage/Build/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
 
 # macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.TemporaryItems
+.DocumentRevisions-V100
+.fseventsd
 
-# App-specific
+# Temporary files
 *.log
+*.bak
+*.tmp
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+
+# Archives
+*.tar.gz
+*.zip
+*.rar
