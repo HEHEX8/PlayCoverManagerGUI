@@ -309,6 +309,25 @@ private struct iOSAppIconView: View {
     @State private var shakeOffset: CGFloat = 0
     @State private var isDragging = false
     
+    @AppStorage("appIconSize") private var appIconSizeRaw: String = "medium"
+    @AppStorage("animationsEnabled") private var animationsEnabled = true
+    
+    private var iconSize: CGFloat {
+        switch appIconSizeRaw {
+        case "small": return 60
+        case "large": return 100
+        default: return 80  // medium
+        }
+    }
+    
+    private var containerWidth: CGFloat {
+        iconSize + 20
+    }
+    
+    private var containerHeight: CGFloat {
+        iconSize + 40
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
@@ -367,17 +386,17 @@ private struct iOSAppIconView: View {
                 .font(.system(size: 11))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .frame(width: 90, height: 28)
+                .frame(width: containerWidth, height: 28)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(width: 100, height: 120)
+        .frame(width: containerWidth, height: containerHeight)
         .contentShape(Rectangle())
-        .opacity(shouldAnimate ? (hasAppeared ? 1 : 0) : 1)
-        .scaleEffect(max(0.3, shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1))
-        .offset(y: shouldAnimate ? (hasAppeared ? 0 : 20) : 0)
+        .opacity(shouldAnimate && animationsEnabled ? (hasAppeared ? 1 : 0) : 1)
+        .scaleEffect(max(0.3, shouldAnimate && animationsEnabled ? (hasAppeared ? 1 : 0.3) : 1))
+        .offset(y: shouldAnimate && animationsEnabled ? (hasAppeared ? 0 : 20) : 0)
         .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry during initial animation
         .onAppear {
-            if shouldAnimate && !hasAppeared {
+            if shouldAnimate && animationsEnabled && !hasAppeared {
                 // Staggered fade-in animation (Mac Dock style) - only on first load
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(Double(index) * 0.05)) {
                     hasAppeared = true
@@ -389,7 +408,8 @@ private struct iOSAppIconView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerAppIconAnimation"))) { notification in
             // Trigger animation when receiving notification for this app
-            if let bundleID = notification.userInfo?["bundleID"] as? String,
+            if animationsEnabled,
+               let bundleID = notification.userInfo?["bundleID"] as? String,
                bundleID == app.bundleIdentifier {
                 // Delay animation slightly to sync with button animation
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -425,8 +445,7 @@ private struct iOSAppIconView: View {
                         return
                     }
                     
-                    // Calculate drag distance
-                    let iconSize: CGFloat = 80
+                    // Calculate drag distance using dynamic icon size
                     let tolerance: CGFloat = 20
                     let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
                     
@@ -438,37 +457,47 @@ private struct iOSAppIconView: View {
                         performShakeAnimation()
                     } else {
                         // Released within bounds - normal launch
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                            isAnimating = true
-                            
-                            // Trigger launch during bounce animation
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                tapAction()
+                        if animationsEnabled {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                isAnimating = true
+                                
+                                // Trigger launch during bounce animation
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    tapAction()
+                                }
+                                
+                                // Stop bounce animation after completion
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                                    isAnimating = false
+                                }
                             }
-                            
-                            // Stop bounce animation after completion
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                                isAnimating = false
-                            }
+                        } else {
+                            // No animation - launch immediately
+                            tapAction()
                         }
                     }
                 }
         )
         .contextMenu {
-            Button("起動") { 
-                // Smooth press + bounce animation sequence
-                isPressed = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isPressed = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        isAnimating = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            tapAction()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                                isAnimating = false
+            Button("起動") {
+                if animationsEnabled {
+                    // Smooth press + bounce animation sequence
+                    isPressed = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isPressed = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            isAnimating = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                tapAction()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                                    isAnimating = false
+                                }
                             }
                         }
                     }
+                } else {
+                    // No animation - launch immediately
+                    tapAction()
                 }
             }
             Divider()
