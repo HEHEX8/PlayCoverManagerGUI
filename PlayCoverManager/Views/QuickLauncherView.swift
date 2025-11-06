@@ -794,11 +794,12 @@ private struct RecentAppLaunchButton: View {
                 // Base background
                 Color(nsColor: .controlBackgroundColor).opacity(0.5)
                 
-                // Ripple effect
+                // Ripple effect (clipped to button bounds)
                 if isAnimating {
                     RippleEffect()
                 }
             }
+            .clipped() // Clip ripple effect to button bounds
         )
         .overlay(
             Rectangle()
@@ -810,33 +811,51 @@ private struct RecentAppLaunchButton: View {
     }
 }
 
-// Ripple effect animation
+// Water droplet ripple effect animation
 private struct RippleEffect: View {
-    @State private var scale: CGFloat = 0.5
-    @State private var opacity: Double = 0.6
+    @State private var rings: [RippleRing] = []
     
     var body: some View {
-        Circle()
-            .fill(
-                RadialGradient(
-                    colors: [
-                        Color.primary.opacity(opacity),
-                        Color.primary.opacity(opacity * 0.5),
-                        Color.clear
-                    ],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: 200
-                )
-            )
-            .scaleEffect(scale)
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(.easeOut(duration: 0.6)) {
-                    scale = 3.0
-                    opacity = 0.0
+        ZStack {
+            ForEach(rings) { ring in
+                Circle()
+                    .strokeBorder(Color.primary.opacity(ring.opacity), lineWidth: 2)
+                    .scaleEffect(ring.scale)
+                    .opacity(ring.opacity)
+            }
+        }
+        .onAppear {
+            startRippleAnimation()
+        }
+    }
+    
+    private func startRippleAnimation() {
+        // Create 3 ripple rings with staggered timing (water droplet style)
+        for i in 0..<3 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
+                let ring = RippleRing(id: UUID())
+                rings.append(ring)
+                
+                // Animate the ring
+                withAnimation(.easeOut(duration: 0.8)) {
+                    if let index = rings.firstIndex(where: { $0.id == ring.id }) {
+                        rings[index].scale = 2.5
+                        rings[index].opacity = 0.0
+                    }
+                }
+                
+                // Remove the ring after animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    rings.removeAll(where: { $0.id == ring.id })
                 }
             }
+        }
+    }
+    
+    private struct RippleRing: Identifiable {
+        let id: UUID
+        var scale: CGFloat = 0.0
+        var opacity: Double = 0.5
     }
 }
 
