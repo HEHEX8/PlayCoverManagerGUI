@@ -311,18 +311,42 @@ final class DiskImageService {
                let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                let volumeName = plist["VolumeName"] as? String {
                 
-                // Get device name (e.g., "WD_BLACK SN7100 4TB")
-                let deviceName = plist["DeviceIdentifier"] as? String
+                // Get device identifier (e.g., "disk5s2")
+                let deviceIdentifier = plist["DeviceIdentifier"] as? String
                 
-                // Get media name (e.g., "WD_BLACK SN7100 4TB Media")
-                let mediaName = plist["MediaName"] as? String
+                // Get media name from partition's plist
+                var mediaName = plist["MediaName"] as? String
+                
+                // If MediaName is not in partition info, get it from parent disk
+                if mediaName == nil || mediaName?.isEmpty == true,
+                   let devId = deviceIdentifier {
+                    // Extract parent disk (e.g., "disk5" from "disk5s2")
+                    let parentDisk: String
+                    if let sRange = devId.range(of: "s\\d+$", options: .regularExpression) {
+                        parentDisk = String(devId[..<sRange.lowerBound])
+                    } else {
+                        parentDisk = devId
+                    }
+                    
+                    // Query parent disk for media name
+                    if let parentOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", parentDisk]),
+                       let parentData = parentOutput.data(using: .utf8),
+                       let parentPlist = try? PropertyListSerialization.propertyList(from: parentData, options: [], format: nil) as? [String: Any] {
+                        mediaName = parentPlist["MediaName"] as? String
+                        
+                        // Also try IORegistryEntryName as fallback
+                        if mediaName == nil || mediaName?.isEmpty == true {
+                            mediaName = parentPlist["IORegistryEntryName"] as? String
+                        }
+                    }
+                }
                 
                 print("🔍 [DiskImageService] Found volume info:")
                 print("  Volume: \(volumeName)")
-                print("  Device: \(deviceName ?? "none")")
+                print("  Device: \(deviceIdentifier ?? "none")")
                 print("  Media: \(mediaName ?? "none")")
                 
-                return VolumeInfo(volumeName: volumeName, deviceName: deviceName, mediaName: mediaName)
+                return VolumeInfo(volumeName: volumeName, deviceName: deviceIdentifier, mediaName: mediaName)
             }
             
             // Move up one directory

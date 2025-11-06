@@ -595,6 +595,11 @@ final class LauncherViewModel {
                     statusMessage = "外部ドライブを取り外し可能な状態にしています…"
                     if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
                         print("[LauncherVM] Device path: \(devicePath)")
+                        
+                        // Wait for diskimagesiod to release resources after unmount
+                        print("[LauncherVM] Waiting for diskimagesiod to release resources...")
+                        try? await Task.sleep(for: .seconds(2))
+                        
                         do {
                             try await diskImageService.ejectDrive(devicePath: devicePath)
                             ejectedDrive = displayName
@@ -619,6 +624,12 @@ final class LauncherViewModel {
                                     
                                     if let process = parsed.blockingProcess {
                                         details.append("使用中のプロセス: \(process)")
+                                        
+                                        // Add explanation if diskimagesiod is blocking
+                                        if process.contains("diskimagesiod") {
+                                            details.append("\n⚠️ システムプロセスがディスクイメージを処理中です。")
+                                            details.append("少し待ってから、Finderで手動でイジェクトしてください。")
+                                        }
                                     }
                                     
                                     volumeInfo = details.joined(separator: "\n")
