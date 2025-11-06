@@ -28,66 +28,99 @@ struct QuickLauncherView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Minimal toolbar
-            HStack {
+            // Enhanced toolbar with logical grouping
+            HStack(spacing: 12) {
+                // Search field - left aligned
                 TextField("検索", text: $viewModel.searchText)
                     .textFieldStyle(.roundedBorder)
                     .frame(maxWidth: 200)
                 
                 Spacer()
                 
+                // === Frequent Actions Group ===
+                // Refresh button
                 Button {
                     Task { await viewModel.refresh() }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
+                    Label("更新", systemImage: "arrow.clockwise")
+                        .labelStyle(.iconOnly)
                 }
-                .help("再読み込み")
+                .buttonStyle(.borderless)
+                .help("アプリ一覧を更新 (⌘R)")
                 .keyboardShortcut("r", modifiers: [.command])
                 
+                Divider()
+                    .frame(height: 20)
+                
+                // === App Management Group ===
+                // Install button - prominent style
                 Button {
                     showingInstaller = true
                 } label: {
-                    Image(systemName: "square.and.arrow.down")
+                    Label("インストール", systemImage: "square.and.arrow.down.fill")
+                        .labelStyle(.iconOnly)
                 }
-                .help("IPA をインストール")
+                .buttonStyle(.borderedProminent)
+                .help("IPA をインストール (⌘I)")
                 .keyboardShortcut("i", modifiers: [.command])
                 
-                Button {
-                    showingUninstaller = true
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .help("アプリをアンインストール")
-                .keyboardShortcut("d", modifiers: [.command])
-                
+                // PlayCover button
                 Button {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
                 } label: {
                     if let playCoverIcon = getPlayCoverIcon() {
                         Image(nsImage: playCoverIcon)
                             .resizable()
-                            .frame(width: 20, height: 20)
+                            .frame(width: 18, height: 18)
                     } else {
                         Image(systemName: "app.badge.checkmark")
+                            .imageScale(.medium)
                     }
                 }
-                .help("PlayCover を開く")
+                .buttonStyle(.borderless)
+                .help("PlayCover を開く (⌘⇧P)")
                 .keyboardShortcut("p", modifiers: [.command, .shift])
                 
+                Divider()
+                    .frame(height: 20)
+                
+                // === Destructive Actions Group ===
+                // Uninstall button - warning style
+                Button {
+                    showingUninstaller = true
+                } label: {
+                    Label("削除", systemImage: "trash")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.red)
+                .help("アプリをアンインストール (⌘D)")
+                .keyboardShortcut("d", modifiers: [.command])
+                
+                // Unmount all button
                 Button {
                     viewModel.unmountAll(applyToPlayCoverContainer: true)
                 } label: {
-                    Image(systemName: "eject")
+                    Label("アンマウント", systemImage: "eject.fill")
+                        .labelStyle(.iconOnly)
                 }
-                .help("すべてアンマウント")
+                .buttonStyle(.borderless)
+                .help("すべてアンマウント (⌘⇧U)")
                 .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
                 
+                Divider()
+                    .frame(height: 20)
+                
+                // === Settings ===
+                // Settings button
                 Button {
                     showingSettings = true
                 } label: {
-                    Image(systemName: "gear")
+                    Label("設定", systemImage: "gear")
+                        .labelStyle(.iconOnly)
                 }
-                .help("設定")
+                .buttonStyle(.borderless)
+                .help("設定 (⌘,)")
                 .keyboardShortcut(",", modifiers: [.command])
             }
             .padding(.horizontal, 20)
