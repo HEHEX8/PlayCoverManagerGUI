@@ -299,7 +299,20 @@ final class LauncherViewModel {
     }
 
     func unmountAll(applyToPlayCoverContainer: Bool = true) {
-        // Show confirmation dialog first
+        // Check for running apps first
+        let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
+        
+        if !runningApps.isEmpty {
+            let alert = NSAlert()
+            alert.messageText = "実行中のアプリがあります"
+            alert.informativeText = "以下のアプリが実行中です。アンマウントするには先にこれらのアプリを終了してください。\n\n" + runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            return
+        }
+        
+        // Show confirmation dialog
         let alert = NSAlert()
         alert.messageText = "すべてアンマウントして終了"
         alert.informativeText = "すべてのディスクイメージをアンマウントし、アプリを終了します。\n\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。"
@@ -468,12 +481,17 @@ final class LauncherViewModel {
         // If any app container failed, show error and abort
         guard failedCount == 0 else {
             print("[LauncherVM] Aborting due to failed app containers")
-            isBusy = false
-            isShowingStatus = false
-            self.error = AppError.diskImage(
-                "アンマウントに失敗しました",
-                message: "\(failedCount) 個のコンテナをアンマウントできませんでした。\n実行中のアプリがないか確認してください。"
-            )
+            await MainActor.run {
+                isBusy = false
+                isShowingStatus = false
+                
+                let alert = NSAlert()
+                alert.messageText = "アンマウントに失敗しました"
+                alert.informativeText = "\(failedCount) 個のコンテナをアンマウントできませんでした。\n実行中のアプリがないか確認してください。"
+                alert.alertStyle = .critical
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+            }
             return
         }
         
@@ -497,12 +515,17 @@ final class LauncherViewModel {
                 } catch {
                     print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
                     // PlayCover container failed, show error and abort
-                    isBusy = false
-                    isShowingStatus = false
-                    self.error = AppError.diskImage(
-                        "PlayCover コンテナのアンマウントに失敗しました",
-                        message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
-                    )
+                    await MainActor.run {
+                        isBusy = false
+                        isShowingStatus = false
+                        
+                        let alert = NSAlert()
+                        alert.messageText = "PlayCover コンテナのアンマウントに失敗しました"
+                        alert.informativeText = "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
+                        alert.alertStyle = .critical
+                        alert.addButton(withTitle: "OK")
+                        alert.runModal()
+                    }
                     return
                 }
             } else {
