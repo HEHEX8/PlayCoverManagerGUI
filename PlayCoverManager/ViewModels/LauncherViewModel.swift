@@ -478,22 +478,9 @@ final class LauncherViewModel {
             print("[LauncherVM] PlayCover container path: \(playCoverContainer.path)")
             
             // Check if it's actually mounted by querying diskutil
-            var isMounted = false
-            do {
-                let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", playCoverContainer.path])
-                if let data = output.data(using: .utf8),
-                   let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
-                   let _ = plist["VolumeName"] as? String {
-                    isMounted = true
-                    print("[LauncherVM] PlayCover container is mounted")
-                } else {
-                    print("[LauncherVM] PlayCover container is not mounted (no volume name)")
-                }
-            } catch {
-                print("[LauncherVM] PlayCover container is not a mounted volume (diskutil info failed)")
-            }
-            
+            let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
             if isMounted {
+                print("[LauncherVM] PlayCover container is mounted")
                 // Try to unmount
                 print("[LauncherVM] Attempting to unmount PlayCover container")
                 do {
@@ -524,15 +511,15 @@ final class LauncherViewModel {
         print("[LauncherVM] Step 3: Checking for external drive")
         if let storageDir = settings.diskImageDirectory {
             print("[LauncherVM] Storage directory: \(storageDir.path)")
-            let isExternal = (try? await isExternalDrive(storageDir)) ?? false
+            let isExternal = (try? await diskImageService.isExternalDrive(storageDir)) ?? false
             print("[LauncherVM] Is external drive: \(isExternal)")
             
             if isExternal {
                 statusMessage = "外部ドライブを取り外し可能な状態にしています…"
-                if let devicePath = try? await getDevicePath(for: storageDir) {
+                if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
                     print("[LauncherVM] Device path: \(devicePath)")
                     do {
-                        try await ejectDrive(devicePath: devicePath)
+                        try await diskImageService.ejectDrive(devicePath: devicePath)
                         ejectedDrive = storageDir.lastPathComponent
                         print("[LauncherVM] Successfully ejected drive: \(ejectedDrive ?? "unknown")")
                     } catch {
@@ -597,82 +584,7 @@ final class LauncherViewModel {
         }
     }
     
-    private func isExternalDrive(_ url: URL) async throws -> Bool {
-        // Check if volume is on external/removable media
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
-        process.arguments = ["info", "-plist", url.path]
-        
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = Pipe()
-        
-        try process.run()
-        process.waitUntilExit()
-        
-        guard process.terminationStatus == 0 else {
-            return false
-        }
-        
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
-            return false
-        }
-        
-        // Check if it's removable media
-        if let isInternal = plist["Internal"] as? Bool {
-            return !isInternal
-        }
-        
-        return false
-    }
     
-    private func getDevicePath(for url: URL) async throws -> String? {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
-        process.arguments = ["info", "-plist", url.path]
-        
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = Pipe()
-        
-        try process.run()
-        process.waitUntilExit()
-        
-        guard process.terminationStatus == 0 else {
-            return nil
-        }
-        
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
-            return nil
-        }
-        
-        // Get device node (e.g., /dev/disk2)
-        if let deviceNode = plist["DeviceNode"] as? String {
-            return deviceNode
-        }
-        
-        return nil
-    }
     
-    private func ejectDrive(devicePath: String) async throws {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
-        process.arguments = ["eject", devicePath]
-        
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = pipe
-        
-        try process.run()
-        process.waitUntilExit()
-        
-        guard process.terminationStatus == 0 else {
-            let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let errorMessage = String(data: errorData, encoding: .utf8) ?? "不明なエラー"
-            throw AppError.diskImage("ドライブの取り出しに失敗", message: errorMessage)
-        }
-    }
 }
 

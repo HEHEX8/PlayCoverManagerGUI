@@ -201,6 +201,63 @@ final class DiskImageService {
     func unmountVolume(_ volumeURL: URL) async throws {
         try await detach(volumeURL: volumeURL)
     }
+    
+    // MARK: - External Drive Operations
+    
+    /// Check if a volume is mounted
+    /// - Parameter url: URL to check
+    /// - Returns: true if the volume is mounted
+    func isMounted(at url: URL) throws -> Bool {
+        do {
+            let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", url.path])
+            if let data = output.data(using: .utf8),
+               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let _ = plist["VolumeName"] as? String {
+                return true
+            }
+        } catch {
+            return false
+        }
+        return false
+    }
+    
+    /// Check if a volume is on external/removable media
+    /// - Parameter url: URL to check
+    /// - Returns: true if the volume is external
+    func isExternalDrive(_ url: URL) async throws -> Bool {
+        let output = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", url.path])
+        guard let data = output.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+            return false
+        }
+        
+        // Check if it's removable media
+        if let isInternal = plist["Internal"] as? Bool {
+            return !isInternal
+        }
+        
+        return false
+    }
+    
+    /// Get device path for a volume
+    /// - Parameter url: URL to check
+    /// - Returns: Device path (e.g., /dev/disk2) or nil
+    func getDevicePath(for url: URL) async throws -> String? {
+        let output = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", url.path])
+        guard let data = output.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+            return nil
+        }
+        
+        // Get device node (e.g., /dev/disk2)
+        return plist["DeviceNode"] as? String
+    }
+    
+    /// Eject a drive
+    /// - Parameter devicePath: Device path (e.g., /dev/disk2)
+    func ejectDrive(devicePath: String) async throws {
+        _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", devicePath])
+    }
 }
 
 private extension URL {
