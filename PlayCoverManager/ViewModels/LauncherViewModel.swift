@@ -454,14 +454,21 @@ final class LauncherViewModel {
             return
         }
         
-        print("[LauncherVM] Container is mounted, attempting to eject disk image")
+        print("[LauncherVM] Container is mounted, checking for locks")
         
-        // DISABLED: Lock check causes PlayCoverManager itself to hold file handles
-        // which blocks diskutil eject from working
-        // TODO: Implement lock check that works at device level instead of volume level
+        // Check if any other process has a lock on this container
+        // With two-step unmount (unmount then eject), the lock check won't interfere
+        // because we unmount the volume first, releasing any file handles we opened
+        if !lockService.canLockContainer(for: bundleID, at: containerURL) {
+            print("[LauncherVM] Container is locked by another process, skipping unmount")
+            // Another process (possibly PlayCover) is using this container
+            // Don't unmount
+            return
+        }
         
+        print("[LauncherVM] No locks detected, attempting to eject disk image")
         do {
-            // Eject the disk image device directly (unmounts all volumes and detaches device)
+            // Two-step eject: unmount volume, then detach device
             try await diskImageService.ejectDiskImage(for: containerURL)
             print("[LauncherVM] Successfully ejected disk image for \(bundleID)")
         } catch {
