@@ -6,28 +6,36 @@
 //
 
 import SwiftUI
+import Observation
 
 @main
 struct PlayCoverManagerApp: App {
-    @StateObject private var appViewModel: AppViewModel
-    @StateObject private var settingsStore: SettingsStore
+    @State private var appViewModel: AppViewModel
+    @State private var settingsStore: SettingsStore
+    @State private var perAppSettingsStore: PerAppSettingsStore
 
     init() {
+        print("⭐️ [APP] アプリ起動")
         let settings = SettingsStore()
-        _settingsStore = StateObject(wrappedValue: settings)
-        _appViewModel = StateObject(wrappedValue: AppViewModel(settings: settings))
+        let perAppSettings = PerAppSettingsStore()
+        _settingsStore = State(wrappedValue: settings)
+        _perAppSettingsStore = State(wrappedValue: perAppSettings)
+        _appViewModel = State(wrappedValue: AppViewModel(settings: settings, perAppSettings: perAppSettings))
+        print("⭐️ [APP] 初期化完了")
     }
 
     var body: some Scene {
         WindowGroup {
             AppRootView()
-                .environmentObject(appViewModel)
-                .environmentObject(settingsStore)
+                .environment(appViewModel)
+                .environment(settingsStore)
+                .environment(perAppSettingsStore)
         }
         Settings {
             SettingsRootView()
-                .environmentObject(appViewModel)
-                .environmentObject(settingsStore)
+                .environment(appViewModel)
+                .environment(settingsStore)
+                .environment(perAppSettingsStore)
         }
     }
 }

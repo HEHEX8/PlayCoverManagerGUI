@@ -1,10 +1,15 @@
 import Foundation
+import Observation
 
-final class SettingsStore: ObservableObject {
+@MainActor
+@Observable
+final class SettingsStore {
     private enum Keys {
         static let diskImageDirectory = "diskImageDirectory"
+        static let diskImageDirectoryBookmark = "diskImageDirectoryBookmark"
         static let nobrowseEnabled = "nobrowseEnabled"
         static let defaultDataHandling = "defaultDataHandling"
+        static let imageFormat = "diskImageFormat"
     }
 
     enum InternalDataStrategy: String, CaseIterable, Identifiable {
@@ -27,17 +32,29 @@ final class SettingsStore: ObservableObject {
         static let `default`: InternalDataStrategy = .mergeThenDelete
     }
 
-    @Published var diskImageDirectory: URL? {
+    // ASIF format only - macOS Tahoe 26.0+ required
+    // Legacy formats removed for simplicity and modern macOS compatibility
+    enum DiskImageFormat: String {
+        case asif = "asif"
+        
+        var fileExtension: String { "asif" }
+        var localizedDescription: String { "ASIF（macOS Tahoe 専用）" }
+    }
+
+    var diskImageDirectory: URL? = nil {
         didSet { saveDiskImageDirectory() }
     }
 
-    @Published var nobrowseEnabled: Bool {
+    var nobrowseEnabled: Bool = true {
         didSet { UserDefaults.standard.set(nobrowseEnabled, forKey: Keys.nobrowseEnabled) }
     }
 
-    @Published var defaultDataHandling: InternalDataStrategy {
+    var defaultDataHandling: InternalDataStrategy = .default {
         didSet { UserDefaults.standard.set(defaultDataHandling.rawValue, forKey: Keys.defaultDataHandling) }
     }
+
+    // ASIF format is hardcoded - no user selection needed
+    let diskImageFormat: DiskImageFormat = .asif
 
     init(userDefaults: UserDefaults = .standard) {
         if let path = userDefaults.string(forKey: Keys.diskImageDirectory) {

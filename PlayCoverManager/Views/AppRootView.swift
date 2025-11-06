@@ -1,9 +1,10 @@
 import SwiftUI
 import AppKit
+import Observation
 
 struct AppRootView: View {
-    @EnvironmentObject private var appViewModel: AppViewModel
-    @EnvironmentObject private var settingsStore: SettingsStore
+    @Environment(AppViewModel.self) private var appViewModel
+    @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
         Group {
@@ -25,6 +26,7 @@ struct AppRootView: View {
             case .launcher:
                 if let launcherVM = appViewModel.launcherViewModel {
                     QuickLauncherView(viewModel: launcherVM)
+                        .environment(launcherVM)
                 } else {
                     CheckingView(status: "アプリ情報を取得しています…") {
                         appViewModel.retry()
@@ -41,7 +43,6 @@ struct AppRootView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .onAppear { appViewModel.onAppear() }
-        .environmentObject(settingsStore)
     }
 }
 
@@ -66,19 +67,56 @@ struct ErrorView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
+            Image(systemName: iconName)
                 .font(.system(size: 48, weight: .medium))
-                .foregroundStyle(.orange)
+                .foregroundStyle(iconColor)
             Text(error.title)
                 .font(.title2)
             Text(error.message)
                 .multilineTextAlignment(.center)
-            HStack {
+                .frame(maxWidth: 500)
+            HStack(spacing: 12) {
+                if error.category == .permissionDenied {
+                    Button("システム設定を開く") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .keyboardShortcut("s", modifiers: [.command])
+                } else if error.category == .diskImage {
+                    // Disk image errors (e.g., drive not connected)
+                    SettingsLink {
+                        Text("設定を変更")
+                    }
+                    .keyboardShortcut("s", modifiers: [.command])
+                } else if error.requiresAction {
+                    SettingsLink {
+                        Text("設定を開く")
+                    }
+                }
                 Button("終了") { NSApplication.shared.terminate(nil) }
                 Button("再試行", action: retry)
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding()
+    }
+    
+    private var iconName: String {
+        switch error.category {
+        case .permissionDenied:
+            return "lock.shield"
+        default:
+            return "exclamationmark.triangle"
+        }
+    }
+    
+    private var iconColor: Color {
+        switch error.category {
+        case .permissionDenied:
+            return .red
+        default:
+            return .orange
+        }
     }
 }
