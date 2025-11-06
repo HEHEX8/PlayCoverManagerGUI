@@ -523,14 +523,14 @@ final class LauncherViewModel {
                 continue
             }
             
-            print("[LauncherVM] Container is mounted, attempting unmount: \(container.path)")
+            print("[LauncherVM] Container is mounted, attempting to eject disk image: \(container.path)")
             do {
-                try await diskImageService.detach(volumeURL: container)
+                try await diskImageService.ejectDiskImage(for: container)
                 successCount += 1
-                print("[LauncherVM] Successfully unmounted: \(app.bundleIdentifier)")
+                print("[LauncherVM] Successfully ejected disk image: \(app.bundleIdentifier)")
             } catch {
                 failedCount += 1
-                print("[LauncherVM] Failed to unmount \(app.bundleIdentifier): \(error)")
+                print("[LauncherVM] Failed to eject disk image \(app.bundleIdentifier): \(error)")
             }
         }
         
@@ -561,14 +561,14 @@ final class LauncherViewModel {
             let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
             if isMounted {
                 print("[LauncherVM] PlayCover container is mounted")
-                // Try to unmount
-                print("[LauncherVM] Attempting to unmount PlayCover container")
+                // Try to eject disk image
+                print("[LauncherVM] Attempting to eject PlayCover container disk image")
                 do {
-                    try await diskImageService.detach(volumeURL: playCoverContainer)
+                    try await diskImageService.ejectDiskImage(for: playCoverContainer)
                     successCount += 1
-                    print("[LauncherVM] Successfully unmounted PlayCover container")
+                    print("[LauncherVM] Successfully ejected PlayCover container disk image")
                 } catch {
-                    print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
+                    print("[LauncherVM] Failed to eject PlayCover container disk image: \(error)")
                     // PlayCover container failed, show error and abort
                     await MainActor.run {
                         unmountFlowState = .error(
