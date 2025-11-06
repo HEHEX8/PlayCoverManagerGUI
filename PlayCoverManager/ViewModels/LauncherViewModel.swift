@@ -403,18 +403,22 @@ final class LauncherViewModel {
         for app in apps {
             let container = containerURL(for: app.bundleIdentifier)
             print("[LauncherVM] Checking app: \(app.bundleIdentifier)")
-            if fileManager.fileExists(atPath: container.path) {
-                print("[LauncherVM] Container exists, attempting unmount: \(container.path)")
-                do {
-                    try await diskImageService.detach(volumeURL: container)
-                    successCount += 1
-                    print("[LauncherVM] Successfully unmounted: \(app.bundleIdentifier)")
-                } catch {
-                    failedCount += 1
-                    print("[LauncherVM] Failed to unmount \(app.bundleIdentifier): \(error)")
-                }
-            } else {
-                print("[LauncherVM] Container doesn't exist, skipping: \(container.path)")
+            
+            // Check if container is actually mounted
+            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+            guard let descriptor = descriptor, descriptor.isMounted else {
+                print("[LauncherVM] Container not mounted, skipping: \(container.path)")
+                continue
+            }
+            
+            print("[LauncherVM] Container is mounted, attempting unmount: \(container.path)")
+            do {
+                try await diskImageService.detach(volumeURL: container)
+                successCount += 1
+                print("[LauncherVM] Successfully unmounted: \(app.bundleIdentifier)")
+            } catch {
+                failedCount += 1
+                print("[LauncherVM] Failed to unmount \(app.bundleIdentifier): \(error)")
             }
         }
         
@@ -439,42 +443,42 @@ final class LauncherViewModel {
             let playCoverContainer = playCoverPaths.containerRootURL
             print("[LauncherVM] PlayCover container path: \(playCoverContainer.path)")
             
-            // Check if the container directory exists first
-            if fileManager.fileExists(atPath: playCoverContainer.path) {
-                print("[LauncherVM] PlayCover container directory exists")
-                
-                // Check if it's actually mounted by querying diskutil
+            // Check if it's actually mounted by querying diskutil
+            var isMounted = false
+            do {
+                let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", playCoverContainer.path])
+                if let data = output.data(using: .utf8),
+                   let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                   let _ = plist["VolumeName"] as? String {
+                    isMounted = true
+                    print("[LauncherVM] PlayCover container is mounted")
+                } else {
+                    print("[LauncherVM] PlayCover container is not mounted (no volume name)")
+                }
+            } catch {
+                print("[LauncherVM] PlayCover container is not a mounted volume (diskutil info failed)")
+            }
+            
+            if isMounted {
+                // Try to unmount
+                print("[LauncherVM] Attempting to unmount PlayCover container")
                 do {
-                    let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", playCoverContainer.path])
-                    if let data = output.data(using: .utf8),
-                       let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
-                       let _ = plist["VolumeName"] as? String {
-                        // It's mounted, try to unmount
-                        print("[LauncherVM] PlayCover container is mounted, attempting unmount")
-                        do {
-                            try await diskImageService.detach(volumeURL: playCoverContainer)
-                            successCount += 1
-                            print("[LauncherVM] Successfully unmounted PlayCover container")
-                        } catch {
-                            print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
-                            // PlayCover container failed, show error and abort
-                            isBusy = false
-                            isShowingStatus = false
-                            self.error = AppError.diskImage(
-                                "PlayCover コンテナのアンマウントに失敗しました",
-                                message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
-                            )
-                            return
-                        }
-                    } else {
-                        print("[LauncherVM] PlayCover container is not mounted (diskutil returned no volume name)")
-                    }
+                    try await diskImageService.detach(volumeURL: playCoverContainer)
+                    successCount += 1
+                    print("[LauncherVM] Successfully unmounted PlayCover container")
                 } catch {
-                    print("[LauncherVM] diskutil info failed for PlayCover container: \(error)")
-                    // If diskutil fails, the container is likely not mounted - this is OK
+                    print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
+                    // PlayCover container failed, show error and abort
+                    isBusy = false
+                    isShowingStatus = false
+                    self.error = AppError.diskImage(
+                        "PlayCover コンテナのアンマウントに失敗しました",
+                        message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
+                    )
+                    return
                 }
             } else {
-                print("[LauncherVM] PlayCover container directory doesn't exist, skipping")
+                print("[LauncherVM] PlayCover container is not mounted, skipping")
             }
         } else {
             print("[LauncherVM] Step 2: Skipping PlayCover container (applyToPlayCoverContainer=false)")
