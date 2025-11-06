@@ -528,68 +528,6 @@ final class DiskImageService {
         
         return volumeNames.isEmpty && blockingProcess == nil ? nil : (volumeNames, blockingProcess)
     }
-    
-    // MARK: - ASIF Trim/Compact Operations
-    
-    /// Trim (compact) an ASIF disk image to reclaim unused space
-    /// - Parameter imageURL: URL of the ASIF disk image file
-    /// - Returns: Amount of space reclaimed in bytes
-    /// - Throws: ProcessRunnerError if hdiutil command fails
-    func trimDiskImage(at imageURL: URL) async throws -> Int64 {
-        // Get size before trimming
-        let sizeBefore = try imageURL.totalAllocatedSize()
-        
-        // Run hdiutil compact
-        _ = try await processRunner.run("/usr/bin/hdiutil", ["compact", imageURL.path, "-batteryallowed"])
-        
-        // Get size after trimming
-        let sizeAfter = try imageURL.totalAllocatedSize()
-        
-        // Calculate space reclaimed
-        let reclaimed = Int64(sizeBefore) - Int64(sizeAfter)
-        print("[DiskImageService] Trimmed \(imageURL.lastPathComponent): reclaimed \(reclaimed) bytes")
-        
-        return reclaimed
-    }
-    
-    /// Trim all ASIF disk images in the storage directory
-    /// - Returns: Total amount of space reclaimed in bytes across all images
-    /// - Throws: AppError if storage directory is not configured
-    func trimAllDiskImages() async throws -> (total: Int64, processed: Int, failed: Int) {
-        guard let storageDir = settings.diskImageDirectory else {
-            throw AppError.diskImage("ストレージディレクトリが未設定", message: "設定画面から保存先を指定してください。")
-        }
-        
-        // Get all ASIF files in the storage directory
-        let contents = try fileManager.contentsOfDirectory(
-            at: storageDir,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        )
-        let asifFiles = contents.filter { $0.pathExtension == "asif" }
-        
-        print("[DiskImageService] Found \(asifFiles.count) ASIF files to trim")
-        
-        var totalReclaimed: Int64 = 0
-        var processedCount = 0
-        var failedCount = 0
-        
-        // Trim each ASIF file
-        for imageURL in asifFiles {
-            do {
-                let reclaimed = try await trimDiskImage(at: imageURL)
-                totalReclaimed += reclaimed
-                processedCount += 1
-            } catch {
-                print("[DiskImageService] Failed to trim \(imageURL.lastPathComponent): \(error)")
-                failedCount += 1
-            }
-        }
-        
-        print("[DiskImageService] Trim completed: processed \(processedCount), failed \(failedCount), total reclaimed \(totalReclaimed) bytes")
-        
-        return (totalReclaimed, processedCount, failedCount)
-    }
 }
 
 private extension URL {
