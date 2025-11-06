@@ -241,15 +241,15 @@ struct QuickLauncherView: View {
                 viewModel.selectedApp = viewModel.filteredApps.first
             }
         }
-            
-            // Sidebar action panel (right side)
-            SidebarActionPanel(
-                showingSettings: $showingSettings,
-                showingInstaller: $showingInstaller,
-                showingUninstaller: $showingUninstaller,
-                getPlayCoverIcon: getPlayCoverIcon
-            )
-        }
+        
+        // Sidebar action panel (right side)
+        SidebarActionPanel(
+            showingSettings: $showingSettings,
+            showingInstaller: $showingInstaller,
+            showingUninstaller: $showingUninstaller,
+            getPlayCoverIcon: getPlayCoverIcon
+        )
+    }
     }
 }
 
