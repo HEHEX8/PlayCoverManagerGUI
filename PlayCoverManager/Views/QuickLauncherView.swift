@@ -103,6 +103,9 @@ struct QuickLauncherView: View {
                                     } rightClickAction: {
                                         // Right click - show detail/settings
                                         selectedAppForDetail = app
+                                    } uninstallAction: {
+                                        // Uninstall action - open uninstaller with this app
+                                        showingUninstaller = true
                                     }
                                 }
                             }
@@ -162,6 +165,9 @@ struct QuickLauncherView: View {
                                 } rightClickAction: {
                                     // Right click - show detail/settings
                                     selectedAppForDetail = app
+                                } uninstallAction: {
+                                    // Uninstall action - open uninstaller with this app
+                                    showingUninstaller = true
                                 }
                             }
                         }
@@ -289,6 +295,7 @@ private struct iOSAppIconView: View {
     let shouldAnimate: Bool
     let tapAction: () -> Void
     let rightClickAction: () -> Void
+    let uninstallAction: () -> Void
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
@@ -467,6 +474,10 @@ private struct iOSAppIconView: View {
             }
             Button("アプリフォルダを開く") {
                 NSWorkspace.shared.open(app.appURL.deletingLastPathComponent())
+            }
+            Divider()
+            Button("アンインストール", role: .destructive) {
+                uninstallAction()
             }
         }
     }
