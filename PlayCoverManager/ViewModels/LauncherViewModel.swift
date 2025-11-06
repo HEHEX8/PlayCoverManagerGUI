@@ -577,12 +577,44 @@ final class LauncherViewModel {
                             ejectedDrive = storageDir.lastPathComponent
                             print("[LauncherVM] Successfully ejected drive: \(ejectedDrive ?? "unknown")")
                         } catch {
-                            print("[LauncherVM] Failed to eject drive (ignoring): \(error)")
-                            // Eject failed, but leave it to Finder/System
-                            // We already unmounted volumes successfully
+                            print("[LauncherVM] Failed to eject drive: \(error)")
+                            
+                            // Show error to user
+                            await MainActor.run {
+                                let alert = NSAlert()
+                                alert.messageText = "ドライブのイジェクトに失敗"
+                                
+                                let errorMessage: String
+                                if let processError = error as? ProcessRunnerError,
+                                   case .commandFailed(_, _, let stderr) = processError {
+                                    // Parse stderr for user-friendly message
+                                    if stderr.contains("at least one volume could not be unmounted") {
+                                        errorMessage = "ドライブ上のボリュームが使用中のため、イジェクトできませんでした。\n\n以下のファイルやアプリを閉じてから、Finderで手動でイジェクトしてください：\n\n\(stderr)"
+                                    } else {
+                                        errorMessage = stderr
+                                    }
+                                } else {
+                                    errorMessage = error.localizedDescription
+                                }
+                                
+                                alert.informativeText = "デバイス: \(devicePath)\n\n\(errorMessage)"
+                                alert.alertStyle = .warning
+                                alert.addButton(withTitle: "OK")
+                                alert.runModal()
+                            }
                         }
                     } else {
                         print("[LauncherVM] Could not get device path for external drive")
+                        
+                        // Show error to user
+                        await MainActor.run {
+                            let alert = NSAlert()
+                            alert.messageText = "デバイスパスの取得に失敗"
+                            alert.informativeText = "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。"
+                            alert.alertStyle = .warning
+                            alert.addButton(withTitle: "OK")
+                            alert.runModal()
+                        }
                     }
                 } else {
                     print("[LauncherVM] User chose not to eject external drive")
@@ -620,11 +652,17 @@ final class LauncherViewModel {
             
             if let driveName = ejectedDrive {
                 alert.messageText = "ドライブの取り外し完了"
-                alert.informativeText = "外部ドライブ「\(driveName)」を安全に取り外せる状態にしました。\n\nアンマウント成功: \(successCount) 個\n失敗: \(failedCount) 個"
+                alert.informativeText = "外部ドライブ「\(driveName)」を安全に取り外せる状態にしました。\n\nアンマウントされたボリューム: \(successCount) 個"
+                if successCount > 1 {
+                    alert.informativeText += "\n（PlayCoverコンテナと関連するアプリコンテナが含まれます）"
+                }
                 print("[LauncherVM] Alert type: external drive ejected")
             } else {
                 alert.messageText = "アンマウント完了"
-                alert.informativeText = "ディスクイメージをアンマウントしました。\n\n成功: \(successCount) 個\n失敗: \(failedCount) 個"
+                alert.informativeText = "ディスクイメージをアンマウントしました。\n\nアンマウントされたボリューム: \(successCount) 個"
+                if successCount > 1 {
+                    alert.informativeText += "\n（PlayCoverコンテナと関連するアプリコンテナが含まれます）"
+                }
                 print("[LauncherVM] Alert type: unmount complete")
             }
             
