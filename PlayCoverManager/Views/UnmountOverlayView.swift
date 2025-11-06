@@ -5,49 +5,48 @@ struct UnmountOverlayView: View {
     @Bindable var viewModel: LauncherViewModel
     
     var body: some View {
-        Group {
-            switch viewModel.unmountFlowState {
-            case .idle:
-                EmptyView()
-                
-            case .confirming(let volumeName):
-                ConfirmationView(
-                    volumeName: volumeName,
-                    onConfirm: { viewModel.confirmUnmount() },
-                    onCancel: { viewModel.cancelUnmount() }
-                )
-                
-            case .processing(let status):
-                ProcessingView(status: status)
-                
-            case .ejectConfirming(let volumeName):
-                EjectConfirmationView(
-                    volumeName: volumeName,
-                    onConfirm: { viewModel.confirmEject() },
-                    onCancel: { viewModel.cancelEject() }
-                )
-                
-            case .success(let unmountedCount, let ejectedDrive):
-                SuccessView(
-                    unmountedCount: unmountedCount,
-                    ejectedDrive: ejectedDrive,
-                    onDismiss: { viewModel.completeUnmount() }
-                )
-                
-            case .error(let title, let message):
-                ErrorView(
-                    title: title,
-                    message: message,
-                    onDismiss: { viewModel.dismissUnmountError() }
-                )
-            }
+        switch viewModel.unmountFlowState {
+        case .idle:
+            Color.clear
+                .frame(width: 0, height: 0)
+            
+        case .confirming(let volumeName):
+            UnmountConfirmationView(
+                volumeName: volumeName,
+                onConfirm: { viewModel.confirmUnmount() },
+                onCancel: { viewModel.cancelUnmount() }
+            )
+            
+        case .processing(let status):
+            UnmountProcessingView(status: status)
+            
+        case .ejectConfirming(let volumeName):
+            UnmountEjectConfirmationView(
+                volumeName: volumeName,
+                onConfirm: { viewModel.confirmEject() },
+                onCancel: { viewModel.cancelEject() }
+            )
+            
+        case .success(let unmountedCount, let ejectedDrive):
+            UnmountSuccessView(
+                unmountedCount: unmountedCount,
+                ejectedDrive: ejectedDrive,
+                onDismiss: { viewModel.completeUnmount() }
+            )
+            
+        case .error(let title, let message):
+            UnmountErrorView(
+                title: title,
+                message: message,
+                onDismiss: { viewModel.dismissUnmountError() }
+            )
         }
     }
 }
 
 // MARK: - Confirmation View
 
-private struct ConfirmationView: View {
+private struct UnmountConfirmationView: View {
     let volumeName: String
     let onConfirm: () -> Void
     let onCancel: () -> Void
@@ -85,7 +84,7 @@ private struct ConfirmationView: View {
 
 // MARK: - Processing View
 
-private struct ProcessingView: View {
+private struct UnmountProcessingView: View {
     let status: String
     
     var body: some View {
@@ -106,7 +105,7 @@ private struct ProcessingView: View {
 
 // MARK: - Eject Confirmation View
 
-private struct EjectConfirmationView: View {
+private struct UnmountEjectConfirmationView: View {
     let volumeName: String
     let onConfirm: () -> Void
     let onCancel: () -> Void
@@ -152,7 +151,7 @@ private struct EjectConfirmationView: View {
 
 // MARK: - Success View
 
-private struct SuccessView: View {
+private struct UnmountSuccessView: View {
     let unmountedCount: Int
     let ejectedDrive: String?
     let onDismiss: () -> Void
@@ -201,7 +200,7 @@ private struct SuccessView: View {
 
 // MARK: - Error View
 
-private struct ErrorView: View {
+private struct UnmountErrorView: View {
     let title: String
     let message: String
     let onDismiss: () -> Void
