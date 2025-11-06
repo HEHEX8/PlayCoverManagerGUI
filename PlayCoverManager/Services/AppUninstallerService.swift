@@ -111,8 +111,9 @@ class AppUninstallerService {
                 let imageURL = diskImageDir.appendingPathComponent(imageName)
                 let diskImageSize = fileSize(at: imageURL) ?? 0
                 
-                // Get app icon
+                // Get app icon - request larger size for better quality
                 let icon = NSWorkspace.shared.icon(forFile: appURL.path)
+                icon.size = NSSize(width: 512, height: 512)
                 
                 apps.append(InstalledAppInfo(
                     appName: appName,

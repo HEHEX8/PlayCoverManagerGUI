@@ -713,9 +713,12 @@ class IPAInstallerService {
             
             print("🟢 [getInstalledAppDetail] アプリ発見: \(appURL.lastPathComponent)")
             
-            // Found the app - get icon using NSWorkspace (same as LauncherService)
+            // Found the app - get icon using NSWorkspace
+            // Request larger size (512x512) for better quality when displaying at 48x48
             let icon = await MainActor.run {
-                NSWorkspace.shared.icon(forFile: appURL.path)
+                let baseIcon = NSWorkspace.shared.icon(forFile: appURL.path)
+                baseIcon.size = NSSize(width: 512, height: 512)
+                return baseIcon
             }
             
             print("🟢 [getInstalledAppDetail] アイコン取得完了: \(icon.size)")
