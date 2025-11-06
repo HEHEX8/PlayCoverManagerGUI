@@ -819,7 +819,7 @@ private struct RippleEffect: View {
         ZStack {
             ForEach(rings) { ring in
                 Circle()
-                    .strokeBorder(Color.primary.opacity(ring.opacity), lineWidth: 2)
+                    .strokeBorder(Color.primary.opacity(ring.opacity), lineWidth: 3)
                     .scaleEffect(ring.scale)
                     .opacity(ring.opacity)
             }
@@ -830,22 +830,22 @@ private struct RippleEffect: View {
     }
     
     private func startRippleAnimation() {
-        // Create 3 ripple rings with staggered timing (water droplet style)
-        for i in 0..<3 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
+        // Create 5 ripple rings with staggered timing (pond stone throw style)
+        for i in 0..<5 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.12) {
                 let ring = RippleRing(id: UUID())
                 rings.append(ring)
                 
-                // Animate the ring to expand to button edges
-                withAnimation(.easeOut(duration: 0.8)) {
+                // Animate the ring to expand to button edges with slower, smoother motion
+                withAnimation(.easeOut(duration: 1.2)) {
                     if let index = rings.firstIndex(where: { $0.id == ring.id }) {
-                        rings[index].scale = 8.0  // Much larger to reach button edges
+                        rings[index].scale = 10.0  // Large scale for pond-like effect
                         rings[index].opacity = 0.0
                     }
                 }
                 
                 // Remove the ring after animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                     rings.removeAll(where: { $0.id == ring.id })
                 }
             }
@@ -855,7 +855,7 @@ private struct RippleEffect: View {
     private struct RippleRing: Identifiable {
         let id: UUID
         var scale: CGFloat = 0.0
-        var opacity: Double = 0.5
+        var opacity: Double = 0.4  // Slightly lower opacity for more subtle effect
     }
 }
 
