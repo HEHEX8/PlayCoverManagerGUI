@@ -284,8 +284,8 @@ final class LauncherViewModel {
         defer {
             Task {
                 try? await diskImageService.detach(volumeURL: tempMount)
-                // Detach disk image devices after unmount
-                try? await diskImageService.detachAllDiskImages()
+                // Detach disk image device for this specific temporary mount
+                try? await diskImageService.detachDiskImageDevice(for: tempMount)
             }
         }
         let destination = tempMount
@@ -470,17 +470,17 @@ final class LauncherViewModel {
             try await diskImageService.detach(volumeURL: containerURL)
             print("[LauncherVM] Successfully unmounted container for \(bundleID)")
             
-            // Detach Apple Disk Image Media devices after unmount
-            print("[LauncherVM] Detaching disk image devices for cleanup")
+            // Detach disk image device for this specific container
+            print("[LauncherVM] Detaching disk image device for \(containerURL.path)")
             do {
-                let detachedCount = try await diskImageService.detachAllDiskImages()
+                let detachedCount = try await diskImageService.detachDiskImageDevice(for: containerURL)
                 if detachedCount > 0 {
                     print("[LauncherVM] Detached \(detachedCount) disk image device(s)")
                     // Wait briefly for diskimagesiod cleanup
                     try? await Task.sleep(for: .seconds(1))
                 }
             } catch {
-                print("[LauncherVM] Warning: Failed to detach disk images: \(error)")
+                print("[LauncherVM] Warning: Failed to detach disk image device: \(error)")
                 // Continue anyway - this is not critical
             }
         } catch {

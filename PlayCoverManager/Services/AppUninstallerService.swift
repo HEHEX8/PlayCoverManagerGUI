@@ -282,14 +282,14 @@ class AppUninstallerService {
                 await MainActor.run { currentStatus = "ディスクイメージをアンマウント中..." }
                 try await diskImageService.detach(volumeURL: internalContainer)
                 
-                // Detach Apple Disk Image Media devices for cleanup
+                // Detach disk image device for this specific container
                 do {
-                    let detachedCount = try await diskImageService.detachAllDiskImages()
+                    let detachedCount = try await diskImageService.detachDiskImageDevice(for: internalContainer)
                     if detachedCount > 0 {
                         print("[AppUninstallerService] Detached \(detachedCount) disk image device(s)")
                     }
                 } catch {
-                    print("[AppUninstallerService] Warning: Failed to detach disk images: \(error)")
+                    print("[AppUninstallerService] Warning: Failed to detach disk image device: \(error)")
                     // Continue anyway - this is not critical
                 }
                 
