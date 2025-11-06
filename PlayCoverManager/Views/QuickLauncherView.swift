@@ -811,51 +811,93 @@ private struct RecentAppLaunchButton: View {
     }
 }
 
-// Water droplet ripple effect animation
+// 3D-style ripple effect animation
 private struct RippleEffect: View {
-    @State private var rings: [RippleRing] = []
+    @State private var scale: CGFloat = 0.0
+    @State private var opacity: Double = 0.0
     
     var body: some View {
         ZStack {
-            ForEach(rings) { ring in
-                Circle()
-                    .strokeBorder(Color.primary.opacity(ring.opacity), lineWidth: 3)
-                    .scaleEffect(ring.scale)
-                    .opacity(ring.opacity)
-            }
+            // Outer glow layer (largest, most blurred)
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.accentColor.opacity(opacity * 0.3),
+                            Color.accentColor.opacity(opacity * 0.15),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 100
+                    )
+                )
+                .scaleEffect(scale * 1.05)
+                .blur(radius: 8)
+                .opacity(opacity)
+            
+            // Middle layer with stronger color
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.accentColor.opacity(opacity * 0.5),
+                            Color.accentColor.opacity(opacity * 0.25),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 80
+                    )
+                )
+                .scaleEffect(scale)
+                .blur(radius: 4)
+                .opacity(opacity)
+            
+            // Sharp ring layer (main visible ring)
+            Circle()
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.accentColor.opacity(opacity * 0.8),
+                            Color.accentColor.opacity(opacity * 0.6),
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 4
+                )
+                .scaleEffect(scale)
+                .opacity(opacity)
+                .shadow(color: Color.accentColor.opacity(opacity * 0.5), radius: 6, x: 0, y: 2)
+            
+            // Inner glow
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.accentColor.opacity(opacity * 0.6),
+                            Color.clear
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: 40
+                    )
+                )
+                .scaleEffect(scale * 0.3)
+                .blur(radius: 10)
+                .opacity(opacity)
         }
         .onAppear {
-            startRippleAnimation()
-        }
-    }
-    
-    private func startRippleAnimation() {
-        // Create 5 ripple rings with staggered timing (pond stone throw style)
-        for i in 0..<5 {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.12) {
-                let ring = RippleRing(id: UUID())
-                rings.append(ring)
-                
-                // Animate the ring to expand to button edges with slower, smoother motion
-                withAnimation(.easeOut(duration: 1.2)) {
-                    if let index = rings.firstIndex(where: { $0.id == ring.id }) {
-                        rings[index].scale = 10.0  // Large scale for pond-like effect
-                        rings[index].opacity = 0.0
-                    }
-                }
-                
-                // Remove the ring after animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                    rings.removeAll(where: { $0.id == ring.id })
-                }
+            // Animate single ripple with 3D effect
+            withAnimation(.easeOut(duration: 1.0)) {
+                scale = 10.0
+                opacity = 0.0
             }
+            
+            // Start opacity at peak
+            opacity = 1.0
         }
-    }
-    
-    private struct RippleRing: Identifiable {
-        let id: UUID
-        var scale: CGFloat = 0.0
-        var opacity: Double = 0.4  // Slightly lower opacity for more subtle effect
     }
 }
 
