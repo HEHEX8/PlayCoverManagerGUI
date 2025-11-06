@@ -2,15 +2,20 @@
 
 ## 概要 / Overview
 
-2つの重要な問題を調査するため、詳細なログを追加しました:
+~~2つの重要な問題を調査するため、詳細なログを追加しました~~
 
-1. **PlayCoverコンテナのアンマウント失敗** - 「すべてアンマウント」機能でPlayCoverコンテナがアンマウントされず、エラーも表示されない
-2. **自動アンマウントが動作しない** - iOSアプリ終了時に自動でアンマウントする機能が効いていない
+**✅ 問題1: 解決済み** - マウントされていないコンテナへのアンマウント試行が原因でした
+**✅ 問題2: 解決済み** - NSWorkspace通知が動作しないため、ポーリング方式を実装しました
 
-Added detailed logging to investigate two critical issues:
+## 解決済み問題 / Resolved Issues
 
-1. **PlayCover container unmount failure** - "Unmount All" doesn't unmount PlayCover container and shows no error
-2. **Auto-unmount not working** - Automatic unmount on iOS app termination doesn't trigger
+1. **✅ PlayCoverコンテナのアンマウント失敗** 
+   - 原因: マウントされていないコンテナにアンマウントを試行
+   - 修正: `diskImageDescriptor.isMounted` でチェックしてからアンマウント
+
+2. **✅ 自動アンマウントが動作しない**
+   - 原因: NSWorkspace通知がPlayCover起動のiOSアプリで発火しない
+   - 修正: 5秒ごとにポーリングしてアプリ終了を検知
 
 ---
 
@@ -67,20 +72,28 @@ Added detailed logging to investigate two critical issues:
 
 ---
 
-### 問題2のテスト: 自動アンマウント / Test Issue 2: Auto-Unmount
+### 問題2のテスト: 自動アンマウント (ポーリング方式) / Test Issue 2: Auto-Unmount (Polling)
 
 1. **アプリをビルドして起動** / Build and launch the app
 2. **コンソールを開く** / Open Console.app
 3. **フィルタを設定**: `process:PlayCover Manager`
 4. **起動時のログを確認** / Check startup logs:
    ```
-   [LauncherVM] Setting up app termination observer
+   [LauncherVM] Starting polling-based termination detection
    ```
-   これが表示されない場合、`startMonitoringAppTerminations()` が呼ばれていない
 
 5. **iOSアプリを起動** / Launch an iOS app
+   ```
+   [LauncherVM] 🚀 Launching app: com.example.app (App Name)
+   [LauncherVM] 📝 Tracking app for termination: com.example.app
+   ```
+
 6. **iOSアプリを終了** (⌘Q または Command+Q) / Quit the iOS app
-7. **コンソール出力を確認** / Check console output
+
+7. **5秒以内にログを確認** / Check console output within 5 seconds
+   ```
+   [LauncherVM] 🔍 Detected app termination via polling: com.example.app
+   ```
 
 #### 期待されるログ出力 / Expected Log Output
 
@@ -89,19 +102,12 @@ Added detailed logging to investigate two critical issues:
 [LauncherVM] 🔒 Lock acquired for com.example.iosapp: true
 [LauncherVM] 🚀 Launching app: com.example.iosapp (App Name)
 [LauncherVM] ✅ App launched successfully: com.example.iosapp
+[LauncherVM] 📝 Tracking app for termination: com.example.iosapp
 ```
 
-アプリ終了時:
+アプリ終了時（5秒以内に検知）:
 ```
-[LauncherVM] ===== App Termination Notification Received =====
-[LauncherVM] Terminated app info:
-[LauncherVM]   Bundle ID: com.example.iosapp
-[LauncherVM]   App Name: App Name
-[LauncherVM]   Process ID: 12345
-[LauncherVM] Checking against managed apps:
-[LauncherVM]   - com.example.iosapp (App Name)
-[LauncherVM] Is managed app: true
-[LauncherVM] ✅ Starting auto-unmount for com.example.iosapp
+[LauncherVM] 🔍 Detected app termination via polling: com.example.iosapp
 [LauncherVM] unmountContainer called for com.example.iosapp
 [LauncherVM] Container URL: /path/to/container
 [LauncherVM] Releasing lock for com.example.iosapp
@@ -112,30 +118,22 @@ Added detailed logging to investigate two critical issues:
 
 #### 確認すべきポイント / Key Points to Check
 
-**A. 通知は受信しているか?** / Is notification received?
-- `===== App Termination Notification Received =====` が表示されない
-  → 通知が発火していない (NSWorkspaceの問題、またはPlayCoverの起動方法が特殊)
-- Not shown → Notification not firing (NSWorkspace issue, or PlayCover launches apps in a special way)
-- **重要**: iOSアプリを終了したときに、**何かしらの**アプリ終了通知が出るはず
-  → 全く出ない場合は、NSWorkspaceが全く機能していない
-- **Important**: When iOS app quits, **some** termination notification should appear
-  → If nothing shows, NSWorkspace monitoring is completely broken
+**A. ポーリングは開始されているか?** / Is polling started?
+- `Starting polling-based termination detection` が表示されない
+  → ポーリングタスクが開始されていない
+- Not shown → Polling task not started
 
-**B. bundleIDは正しいか?** / Is bundle ID correct?
-- `Bundle ID: <no bundle ID>` → アプリにbundleIDがない（問題）
-- Shows `<no bundle ID>` → App has no bundle ID (problem)
-- 起動時のbundleIDと終了時のbundleIDを比較
-- Compare bundle ID between launch and termination
+**B. アプリ起動が追跡されているか?** / Is app launch tracked?
+- `📝 Tracking app for termination: ...` が表示されない
+  → 追跡セットに追加されていない
+- Not shown → Not added to tracking set
 
-**C. 管理対象アプリとして認識されているか?** / Is it recognized as managed app?
-- `Is managed app: false` → アプリリストに含まれていない、bundleIDが一致していない
-- Shows false → Not in app list, bundleID mismatch
-- `Checking against managed apps:` のリストを確認
-- Check the list shown in `Checking against managed apps:`
+**C. 終了検知は動作しているか?** / Is termination detected?
+- `🔍 Detected app termination via polling: ...` が表示されない
+  → ポーリングが終了を検知できていない（5秒待った？）
+- Not shown → Polling didn't detect termination (waited 5 seconds?)
 
 **D. アンマウント処理は実行されているか?** / Is unmount process executed?
-- `✅ Starting auto-unmount for ...` が表示されない → Task内のコードが実行されていない
-- Not shown → Task code not executing
 - `unmountContainer called` が表示されない → unmountContainer関数が呼ばれていない
 - Not shown → unmountContainer function not called
 
@@ -173,38 +171,34 @@ Added detailed logging to investigate two critical issues:
 **ログで確認**: `Step 2` に到達していない
 **対策**: Step 1のエラーを修正
 
-### 問題2: 自動アンマウントが動作しない
+### ~~問題2: 自動アンマウントが動作しない~~ ✅ 解決済み
 
-#### 原因候補1: 通知監視が設定されていない
-**ログで確認**: `Setting up app termination observer` が表示されない
-**対策**: `init()` で `startMonitoringAppTerminations()` が呼ばれているか確認
+**解決方法**: ポーリングベースの検知を実装
 
-#### 原因候補2: NSWorkspaceの通知が発火していない
-**ログで確認**: `===== App Termination Notification Received =====` が表示されない
-**対策**: 
-- PlayCoverから起動したiOSアプリの終了が、macOSのアプリ終了として認識されていない可能性
-- PlayToolsを使った特殊な起動方法が原因の可能性
-- 他のmacOSアプリを終了したときに通知が来るか確認（例: Safariを終了）
-- 通知が全く来ない場合は、observer登録に問題がある
+NSWorkspaceの通知はPlayCover起動のiOSアプリでは発火しないことが判明したため、
+5秒ごとにポーリングして実行中アプリをチェックする方式に変更しました。
 
-#### 原因候補3: bundleIDが一致していない
-**ログで確認**: 
-- `Bundle ID: ...` と `Checking against managed apps:` のリストを比較
-- `Is managed app: false` と表示される
-**対策**: 
-- 起動時と終了時のbundleIDが完全一致しているか確認
-- PlayCoverがアプリを起動するときに、bundleIDを変更している可能性
-- 大文字小文字の違い、プレフィックス/サフィックスの追加など
+#### 実装詳細
 
-#### 原因候補4: コンテナが既にアンマウントされている
-**ログで確認**: `Container not mounted or descriptor failed`
-**対策**: PlayCoverが終了時に自動でアンマウントしている可能性
+- **ポーリング間隔**: 5秒
+- **追跡対象**: 管理対象アプリのみ（メモリ効率的）
+- **検知遅延**: 最大5秒（実用上問題なし）
+- **CPU使用**: 軽微（5秒に1回のチェックのみ）
 
-#### 原因候補5: ロックが解放されていない
-**ログで確認**: `Container is locked by another process`
-**対策**: 
-- アプリ起動時に取得したロックが正しく解放されているか確認
-- PlayCoverプロセスがまだロックを保持しているか確認
+#### トラブルシューティング（もし動作しない場合）
+
+**ポーリングが開始されない**:
+- `Starting polling-based termination detection` が表示されるか確認
+- `init()` で `startPollingForTerminations()` が呼ばれているか確認
+
+**追跡されていない**:
+- アプリ起動時に `📝 Tracking app for termination` が出るか確認
+- `previouslyRunningApps` セットに追加されているか確認
+
+**終了が検知されない**:
+- アプリ終了後、5秒待つ
+- `NSWorkspace.shared.runningApplications` に該当アプリがいないか確認
+- bundleIDが正しく一致しているか確認
 
 ---
 
