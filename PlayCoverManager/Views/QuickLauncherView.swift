@@ -763,7 +763,12 @@ private struct RecentAppLaunchButton: View {
                 HStack(spacing: 16) {
                     // Icon with animations - ZStack layers old icon, ripple, and new icon
                     ZStack {
-                        // Old icon (during transition) - bottom layer
+                        // Ripple effect - bottom layer, clipped to fixed size
+                        RippleEffect(trigger: rippleTrigger)
+                            .frame(width: 52, height: 52)
+                            .clipped()  // Clip ripple to stay within bounds
+                        
+                        // Old icon (during transition) - middle layer, can overflow
                         if let oldIcon = oldIcon {
                             Image(nsImage: oldIcon)
                                 .resizable()
@@ -775,11 +780,7 @@ private struct RecentAppLaunchButton: View {
                                 .opacity(oldIconOpacity)
                         }
                         
-                        // Ripple effect - middle layer, centered on icon
-                        RippleEffect(trigger: rippleTrigger)
-                            .frame(width: 52, height: 52)
-                        
-                        // Current icon - top layer
+                        // Current icon - top layer, can overflow for bounce animation
                         if let icon = app.icon {
                             Image(nsImage: icon)
                                 .resizable()
@@ -801,7 +802,7 @@ private struct RecentAppLaunchButton: View {
                                 .scaleEffect(iconScale)
                         }
                     }
-                    .frame(width: 52, height: 52)
+                    .frame(width: 52, height: 52)  // Fixed frame for layout, but allows content overflow
                     
                     // App info with fade transition
                     VStack(alignment: .leading, spacing: 4) {
@@ -843,7 +844,8 @@ private struct RecentAppLaunchButton: View {
         }
         .buttonStyle(.plain)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .clipped() // Clip all content (icon motion + ripple) to button bounds
+        // Removed .clipped() to allow icon bounce animation to overflow button bounds
+        // Ripple effect is clipped individually inside ZStack
         .overlay(
             Rectangle()
                 .fill(Color.primary.opacity(0.08))
