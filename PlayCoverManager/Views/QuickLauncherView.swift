@@ -731,6 +731,7 @@ private struct RecentAppLaunchButton: View {
     
     @State private var textOpacity: Double = 1.0
     @State private var previousAppID: String = ""
+    @State private var currentIcon: NSImage? = nil  // Track current icon to detect changes
     
     var body: some View {
         Button {
@@ -832,15 +833,19 @@ private struct RecentAppLaunchButton: View {
             alignment: .top
         )
         .keyboardShortcut(.defaultAction)
-        .onChange(of: app.bundleIdentifier) { oldValue, newValue in
-            // Detect app change and trigger rich transition
-            if !oldValue.isEmpty && oldValue != newValue {
+        .onChange(of: app.icon) { oldIcon, newIcon in
+            // When icon changes, save OLD icon and trigger animation
+            if let oldIcon = oldIcon, let newIcon = newIcon, oldIcon !== newIcon {
+                // Save the OLD icon before it changes
+                self.oldIcon = oldIcon
                 performAppSwitchAnimation()
             }
-            previousAppID = newValue
+            // Update current icon reference
+            currentIcon = newIcon
         }
         .onAppear {
             previousAppID = app.bundleIdentifier
+            currentIcon = app.icon
         }
     }
     
@@ -868,8 +873,7 @@ private struct RecentAppLaunchButton: View {
     
     // App switch animation - new icon drops and collides with old one
     private func performAppSwitchAnimation() {
-        // Save old icon and reset its state
-        oldIcon = app.icon
+        // Reset old icon state (oldIcon already saved in onChange)
         oldIconOffsetX = 0
         oldIconOffsetY = 0
         oldIconScale = 1.0
