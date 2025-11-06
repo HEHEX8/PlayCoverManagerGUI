@@ -281,7 +281,13 @@ final class LauncherViewModel {
             .appendingPathComponent("Library/Application Support/PlayCoverManager/TemporaryMounts", isDirectory: true)
         try fileManager.createDirectory(at: tempBase, withIntermediateDirectories: true)
         let tempMount = try await diskImageService.mountTemporarily(for: bundleIdentifier, temporaryMountBase: tempBase)
-        defer { Task { try? await diskImageService.detach(volumeURL: tempMount) } }
+        defer {
+            Task {
+                try? await diskImageService.detach(volumeURL: tempMount)
+                // Detach disk image devices after unmount
+                try? await diskImageService.detachAllDiskImages()
+            }
+        }
         let destination = tempMount
         for item in internalItems {
             let destinationURL = destination.appendingPathComponent(item.lastPathComponent)
