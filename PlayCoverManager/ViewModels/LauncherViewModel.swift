@@ -555,6 +555,23 @@ final class LauncherViewModel {
             print("[LauncherVM] Total volumes unmounted: \(volumesBefore - volumesAfter)")
         }
         
+        // Step 2.5: Detach all Apple Disk Image Media devices
+        print("[LauncherVM] Step 2.5: Detaching Apple Disk Image Media devices")
+        statusMessage = "ディスクイメージデバイスをクリーンアップしています…"
+        do {
+            let detachedCount = try await diskImageService.detachAllDiskImages()
+            print("[LauncherVM] Detached \(detachedCount) disk image device(s)")
+            
+            // Wait for diskimagesiod to finish cleanup
+            if detachedCount > 0 {
+                print("[LauncherVM] Waiting for diskimagesiod cleanup...")
+                try? await Task.sleep(for: .seconds(2))
+            }
+        } catch {
+            print("[LauncherVM] Warning: Failed to detach disk images: \(error)")
+            // Continue anyway - this is not critical
+        }
+        
         // Step 3: If external drive, eject the whole drive  
         print("[LauncherVM] Step 3: Checking for external drive")
         if let storageDir = settings.diskImageDirectory {
@@ -595,10 +612,6 @@ final class LauncherViewModel {
                     statusMessage = "外部ドライブを取り外し可能な状態にしています…"
                     if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
                         print("[LauncherVM] Device path: \(devicePath)")
-                        
-                        // Wait for diskimagesiod to release resources after unmount
-                        print("[LauncherVM] Waiting for diskimagesiod to release resources...")
-                        try? await Task.sleep(for: .seconds(2))
                         
                         do {
                             try await diskImageService.ejectDrive(devicePath: devicePath)

@@ -364,6 +364,59 @@ final class DiskImageService {
         return try await getVolumeInfo(for: url)?.volumeName
     }
     
+    /// Detach all Apple Disk Image Media devices
+    /// This removes the virtual disk devices created by mounted ASIF/DMG images
+    /// - Returns: Number of disk images detached
+    func detachAllDiskImages() async throws -> Int {
+        // Get list of all disks
+        let output = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist"])
+        guard let data = output.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+              let allDisks = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
+            print("[DiskImageService] Failed to parse diskutil list")
+            return 0
+        }
+        
+        var detachedCount = 0
+        
+        // Find all Apple Disk Image Media devices
+        for disk in allDisks {
+            // Check if this is a disk image
+            if let content = disk["Content"] as? String,
+               content.contains("Apple") || content.contains("Disk Image"),
+               let deviceId = disk["DeviceIdentifier"] as? String {
+                
+                // Get detailed info to confirm it's a disk image
+                let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", deviceId])
+                if let infoData = infoOutput?.data(using: .utf8),
+                   let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any] {
+                    
+                    // Check for Virtual/DiskImage indicators
+                    let isVirtual = infoPlist["Virtual"] as? Bool ?? false
+                    let mediaName = infoPlist["MediaName"] as? String ?? ""
+                    let isDiskImage = mediaName.contains("Disk Image") || isVirtual
+                    
+                    if isDiskImage {
+                        print("[DiskImageService] Found disk image device: \(deviceId) (\(mediaName))")
+                        
+                        // Try to eject/detach the disk image
+                        do {
+                            _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", deviceId])
+                            print("[DiskImageService] ✅ Detached disk image: \(deviceId)")
+                            detachedCount += 1
+                        } catch {
+                            print("[DiskImageService] ⚠️ Failed to detach \(deviceId): \(error)")
+                            // Continue with other disk images
+                        }
+                    }
+                }
+            }
+        }
+        
+        print("[DiskImageService] Detached \(detachedCount) disk image device(s)")
+        return detachedCount
+    }
+    
     /// Eject a drive
     /// - Parameter devicePath: Device path (e.g., /dev/disk2)
     func ejectDrive(devicePath: String) async throws {
