@@ -225,15 +225,25 @@ final class DiskImageService {
     /// - Parameter url: URL to check
     /// - Returns: true if the volume is external
     func isExternalDrive(_ url: URL) async throws -> Bool {
-        let output = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", url.path])
-        guard let data = output.data(using: .utf8),
-              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
-            return false
-        }
+        // If the path is a subdirectory, find the mount point first
+        var currentPath = url
         
-        // Check if it's removable media
-        if let isInternal = plist["Internal"] as? Bool {
-            return !isInternal
+        // Walk up the directory tree to find the actual mount point
+        while currentPath.path != "/" {
+            let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
+            if let output = output,
+               let data = output.data(using: .utf8),
+               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+                
+                // Check if it's removable media
+                if let isInternal = plist["Internal"] as? Bool {
+                    print("🔍 [DiskImageService] Volume at \(currentPath.path) - Internal: \(isInternal)")
+                    return !isInternal
+                }
+            }
+            
+            // Move up one directory
+            currentPath = currentPath.deletingLastPathComponent()
         }
         
         return false
@@ -243,14 +253,27 @@ final class DiskImageService {
     /// - Parameter url: URL to check
     /// - Returns: Device path (e.g., /dev/disk2) or nil
     func getDevicePath(for url: URL) async throws -> String? {
-        let output = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", url.path])
-        guard let data = output.data(using: .utf8),
-              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
-            return nil
+        // If the path is a subdirectory, find the mount point first
+        var currentPath = url
+        var deviceNode: String?
+        
+        // Walk up the directory tree to find the actual mount point
+        while currentPath.path != "/" {
+            let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
+            if let output = output,
+               let data = output.data(using: .utf8),
+               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let node = plist["DeviceNode"] as? String {
+                deviceNode = node
+                print("🔍 [DiskImageService] Found device node: \(node) for path: \(currentPath.path)")
+                break
+            }
+            
+            // Move up one directory
+            currentPath = currentPath.deletingLastPathComponent()
         }
         
-        // Get device node (e.g., /dev/disk2)
-        return plist["DeviceNode"] as? String
+        return deviceNode
     }
     
     /// Eject a drive
