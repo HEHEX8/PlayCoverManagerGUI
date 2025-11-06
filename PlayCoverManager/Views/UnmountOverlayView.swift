@@ -5,42 +5,50 @@ struct UnmountOverlayView: View {
     @Bindable var viewModel: LauncherViewModel
     
     var body: some View {
-        switch viewModel.unmountFlowState {
-        case .idle:
-            Color.clear
-                .frame(width: 0, height: 0)
-            
-        case .confirming(let volumeName):
-            UnmountConfirmationView(
-                volumeName: volumeName,
-                onConfirm: { viewModel.confirmUnmount() },
-                onCancel: { viewModel.cancelUnmount() }
-            )
-            
-        case .processing(let status):
-            UnmountProcessingView(status: status)
-            
-        case .ejectConfirming(let volumeName):
-            UnmountEjectConfirmationView(
-                volumeName: volumeName,
-                onConfirm: { viewModel.confirmEject() },
-                onCancel: { viewModel.cancelEject() }
-            )
-            
-        case .success(let unmountedCount, let ejectedDrive):
-            UnmountSuccessView(
-                unmountedCount: unmountedCount,
-                ejectedDrive: ejectedDrive,
-                onDismiss: { viewModel.completeUnmount() }
-            )
-            
-        case .error(let title, let message):
-            UnmountErrorView(
-                title: title,
-                message: message,
-                onDismiss: { viewModel.dismissUnmountError() }
-            )
+        Group {
+            switch viewModel.unmountFlowState {
+            case .idle:
+                Color.clear
+                    .frame(width: 0, height: 0)
+                
+            case .confirming(let volumeName):
+                UnmountConfirmationView(
+                    volumeName: volumeName,
+                    onConfirm: { viewModel.confirmUnmount() },
+                    onCancel: { viewModel.cancelUnmount() }
+                )
+                .id("confirming")
+                
+            case .processing(let status):
+                UnmountProcessingView(status: status)
+                    .id("processing-\(status)")  // Use status as part of id to prevent animation on status change
+                
+            case .ejectConfirming(let volumeName):
+                UnmountEjectConfirmationView(
+                    volumeName: volumeName,
+                    onConfirm: { viewModel.confirmEject() },
+                    onCancel: { viewModel.cancelEject() }
+                )
+                .id("ejectConfirming")
+                
+            case .success(let unmountedCount, let ejectedDrive):
+                UnmountSuccessView(
+                    unmountedCount: unmountedCount,
+                    ejectedDrive: ejectedDrive,
+                    onDismiss: { viewModel.completeUnmount() }
+                )
+                .id("success")
+                
+            case .error(let title, let message):
+                UnmountErrorView(
+                    title: title,
+                    message: message,
+                    onDismiss: { viewModel.dismissUnmountError() }
+                )
+                .id("error")
+            }
         }
+        .animation(.none, value: viewModel.unmountFlowState)  // Disable implicit animations
     }
 }
 

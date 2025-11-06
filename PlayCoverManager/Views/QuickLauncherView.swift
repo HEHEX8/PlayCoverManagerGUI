@@ -245,12 +245,14 @@ struct QuickLauncherView: View {
         .overlay(alignment: .center) {
             // Unmount flow overlay (confirmation, progress, result, error)
             if viewModel.unmountFlowState != .idle {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-                
-                UnmountOverlayView(viewModel: viewModel)
-                    .transition(.scale.combined(with: .opacity))
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    UnmountOverlayView(viewModel: viewModel)
+                        .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+                }
+                .transition(.opacity)
             }
             // Regular status overlay for other time-consuming operations
             else if viewModel.isBusy && viewModel.isShowingStatus {
@@ -265,7 +267,6 @@ struct QuickLauncherView: View {
                 .shadow(radius: 12)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: viewModel.unmountFlowState)
         .alert(item: $viewModel.error) { error in
             Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
         }
