@@ -716,7 +716,6 @@ private struct RecentAppLaunchButton: View {
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
-    @State private var rippleOffset: CGSize = .zero
     @State private var iconOffsetY: CGFloat = 0
     @State private var iconScale: CGFloat = 1.0
     @State private var textOpacity: Double = 1.0
@@ -798,11 +797,12 @@ private struct RecentAppLaunchButton: View {
                 // Base background
                 Color(nsColor: .controlBackgroundColor).opacity(0.5)
                 
-                // Ripple effect (clipped to button bounds, offset to icon position)
-                RippleEffect(trigger: rippleTrigger, offset: rippleOffset)
+                // Ripple effect at icon position (left side, ~250px from center)
+                RippleEffect(trigger: rippleTrigger)
+                    .offset(x: -250, y: 0)
             }
-            .clipped() // Clip ripple effect to button bounds
         )
+        .clipped() // Clip all content (icon motion + ripple) to button bounds
         .overlay(
             Rectangle()
                 .fill(Color.primary.opacity(0.08))
@@ -824,9 +824,6 @@ private struct RecentAppLaunchButton: View {
     
     // Bounce up and drop animation for button press
     private func performIconBounce() {
-        // Set ripple offset to icon position (left side of button)
-        rippleOffset = CGSize(width: -350, height: 0)  // Icon is on left side
-        
         // Jump up
         withAnimation(.easeOut(duration: 0.15)) {
             iconOffsetY = -60
@@ -849,9 +846,6 @@ private struct RecentAppLaunchButton: View {
     
     // App switch animation - new icon drops and pushes old one down
     private func performAppSwitchAnimation() {
-        // Set ripple offset to icon position for landing
-        rippleOffset = CGSize(width: -350, height: 0)
-        
         // Old icon gets pushed down and fades
         withAnimation(.easeIn(duration: 0.3)) {
             iconOffsetY = 100
@@ -891,7 +885,6 @@ private struct RecentAppLaunchButton: View {
 // 3D-style ripple effect animation
 private struct RippleEffect: View {
     let trigger: Int
-    let offset: CGSize
     @State private var ripples: [Ripple] = []
     @Environment(\.colorScheme) private var colorScheme
     
@@ -901,7 +894,6 @@ private struct RippleEffect: View {
                 RippleLayer(ripple: ripple, colorScheme: colorScheme)
             }
         }
-        .offset(offset)
         .onChange(of: trigger) { _, _ in
             createNewRipple()
         }
