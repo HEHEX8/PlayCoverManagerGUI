@@ -377,10 +377,12 @@ final class DiskImageService {
     /// Detach all Apple Disk Image Media devices
     /// This removes the virtual disk devices created by mounted ASIF/DMG images
     /// - Returns: Number of disk images detached
-    /// Eject disk image for a specific volume (unmounts volume then detaches device)
-    /// - Parameter volumePath: The path of the volume on the disk image
-    func ejectDiskImage(for volumePath: URL) async throws {
-        // Get device identifier for the volume BEFORE unmounting
+    /// Eject disk image for a specific volume (unmounts all volumes and detaches device)
+    /// - Parameters:
+    ///   - volumePath: The path of the volume on the disk image
+    ///   - force: If true, force unmount even if files are in use (dangerous, use with caution)
+    func ejectDiskImage(for volumePath: URL, force: Bool = false) async throws {
+        // Get device identifier for the volume
         let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", volumePath.path])
         guard let infoData = infoOutput?.data(using: .utf8),
               let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any],
@@ -395,21 +397,17 @@ final class DiskImageService {
         let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: [.regularExpression])
         print("[DiskImageService] Parent device: \(parentDevice)")
         
-        // Step 1: Unmount the volume first (without force)
+        // Eject the parent device (unmounts all volumes and detaches device)
         do {
-            _ = try await processRunner.run("/usr/sbin/diskutil", ["unmount", volumePath.path])
-            print("[DiskImageService] ✅ Unmounted volume: \(volumePath.path)")
+            var args = ["eject", parentDevice]
+            if force {
+                args.append("-force")
+                print("[DiskImageService] ⚠️ Using FORCE eject for \(parentDevice)")
+            }
+            _ = try await processRunner.run("/usr/sbin/diskutil", args)
+            print("[DiskImageService] ✅ Ejected disk image: \(parentDevice)")
         } catch {
-            print("[DiskImageService] ⚠️ Failed to unmount \(volumePath.path): \(error)")
-            // If unmount fails, still try to eject (might work if volume is already unmounted)
-        }
-        
-        // Step 2: Detach the disk image device
-        do {
-            _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", parentDevice])
-            print("[DiskImageService] ✅ Detached disk image device: \(parentDevice)")
-        } catch {
-            print("[DiskImageService] ⚠️ Failed to detach \(parentDevice): \(error)")
+            print("[DiskImageService] ⚠️ Failed to eject \(parentDevice): \(error)")
             throw error
         }
     }

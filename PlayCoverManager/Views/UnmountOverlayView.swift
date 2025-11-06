@@ -46,6 +46,14 @@ struct UnmountOverlayView: View {
                     onDismiss: { viewModel.dismissUnmountError() }
                 )
                 .id("error")
+                
+            case .forceUnmountOffering(let failedCount, let applyToPlayCoverContainer):
+                ForceUnmountOfferingView(
+                    failedCount: failedCount,
+                    onForce: { viewModel.performForceUnmountAll(applyToPlayCoverContainer: applyToPlayCoverContainer) },
+                    onCancel: { viewModel.dismissUnmountError() }
+                )
+                .id("forceOffering")
             }
         }
         .animation(.none, value: viewModel.unmountFlowState)  // Disable implicit animations
@@ -198,6 +206,63 @@ private struct UnmountSuccessView: View {
             Button("終了", action: onDismiss)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
+        }
+        .padding(32)
+        .frame(minWidth: 500)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.3), radius: 20)
+    }
+}
+
+// MARK: - Force Unmount Offering View
+
+private struct ForceUnmountOfferingView: View {
+    let failedCount: Int
+    let onForce: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.orange)
+            
+            Text("アンマウントに失敗しました")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                Text("\(failedCount) 個のコンテナをアンマウントできませんでした。")
+                    .multilineTextAlignment(.center)
+                
+                Text("システムプロセス（cfprefsdなど）がファイルを使用している可能性があります。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Text("強制的にアンマウントを試行しますか？")
+                    .font(.callout)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.orange)
+                    .padding(.top, 8)
+                
+                Text("⚠️ 強制アンマウントはデータ損失のリスクがあります")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+            .frame(maxWidth: 450)
+            
+            HStack(spacing: 12) {
+                Button("キャンセル", action: onCancel)
+                    .keyboardShortcut(.cancelAction)
+                
+                Button("強制アンマウント") {
+                    onForce()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+                .keyboardShortcut(.defaultAction)
+            }
         }
         .padding(32)
         .frame(minWidth: 500)

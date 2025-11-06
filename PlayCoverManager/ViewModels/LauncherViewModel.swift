@@ -37,6 +37,7 @@ final class LauncherViewModel {
         case ejectConfirming(volumeDisplayName: String)
         case success(unmountedCount: Int, ejectedDrive: String?)
         case error(title: String, message: String)
+        case forceUnmountOffering(failedCount: Int, applyToPlayCoverContainer: Bool)
     }
     var unmountFlowState: UnmountFlowState = .idle
 
@@ -535,14 +536,11 @@ final class LauncherViewModel {
         
         print("[LauncherVM] Step 1 complete. Success: \(successCount), Failed: \(failedCount)")
         
-        // If any app container failed, show error and abort
+        // If any app container failed, offer force unmount option
         guard failedCount == 0 else {
-            print("[LauncherVM] Aborting due to failed app containers")
+            print("[LauncherVM] Some containers failed, offering force unmount option")
             await MainActor.run {
-                unmountFlowState = .error(
-                    title: "アンマウントに失敗しました",
-                    message: "\(failedCount) 個のコンテナをアンマウントできませんでした。\n実行中のアプリがないか確認してください。"
-                )
+                unmountFlowState = .forceUnmountOffering(failedCount: failedCount, applyToPlayCoverContainer: applyToPlayCoverContainer)
             }
             return
         }
@@ -730,7 +728,79 @@ final class LauncherViewModel {
         }
     }
     
-
+    func performForceUnmountAll(applyToPlayCoverContainer: Bool) {
+        Task {
+            await performForceUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer)
+        }
+    }
+    
+    private func performForceUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
+        print("[LauncherVM] ===== Starting FORCE unmount =====")
+        print("[LauncherVM] applyToPlayCoverContainer: \(applyToPlayCoverContainer)")
+        
+        await MainActor.run {
+            unmountFlowState = .processing(status: "強制アンマウント中…")
+        }
+        
+        var successCount = 0
+        var failedCount = 0
+        
+        // Force unmount all app containers
+        print("[LauncherVM] Force unmounting app containers")
+        for app in apps {
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            
+            // Check if container is actually mounted
+            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+            guard let descriptor = descriptor, descriptor.isMounted else {
+                print("[LauncherVM] Container not mounted, skipping: \(container.path)")
+                continue
+            }
+            
+            print("[LauncherVM] Force ejecting: \(app.bundleIdentifier)")
+            do {
+                try await diskImageService.ejectDiskImage(for: container, force: true)
+                successCount += 1
+                print("[LauncherVM] Successfully force-ejected: \(app.bundleIdentifier)")
+            } catch {
+                failedCount += 1
+                print("[LauncherVM] Failed to force-eject \(app.bundleIdentifier): \(error)")
+            }
+        }
+        
+        // Force unmount PlayCover container if requested
+        if applyToPlayCoverContainer {
+            let playCoverContainer = playCoverPaths.containerRootURL
+            let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
+            if isMounted {
+                print("[LauncherVM] Force ejecting PlayCover container")
+                do {
+                    try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
+                    successCount += 1
+                    print("[LauncherVM] Successfully force-ejected PlayCover container")
+                } catch {
+                    failedCount += 1
+                    print("[LauncherVM] Failed to force-eject PlayCover container: \(error)")
+                }
+            }
+        }
+        
+        print("[LauncherVM] Force unmount complete. Success: \(successCount), Failed: \(failedCount)")
+        
+        // Show result
+        if failedCount == 0 {
+            await MainActor.run {
+                unmountFlowState = .success(unmountedCount: successCount, ejectedDrive: nil)
+            }
+        } else {
+            await MainActor.run {
+                unmountFlowState = .error(
+                    title: "強制アンマウントに失敗",
+                    message: "\(failedCount) 個のコンテナを強制アンマウントできませんでした。\n\n手動でFinderからイジェクトしてください。"
+                )
+            }
+        }
+    }
     
     
     
