@@ -300,59 +300,54 @@ private struct iOSAppIconView: View {
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
-            // Wrap in ZStack to allow scale effect to overflow the icon frame
-            ZStack {
-                Group {
-                    if let icon = app.icon {
-                        Image(nsImage: icon)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } else {
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(Color.gray.opacity(0.3))
-                            .overlay {
-                                Image(systemName: "app.dashed")
-                                    .font(.system(size: 32))
-                                    .foregroundStyle(.secondary)
-                            }
-                    }
-                }
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 18))
-                .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
-                .overlay(alignment: .topTrailing) {
-                    if app.isRunning {
-                        // Running indicator - adaptive for light/dark mode
-                        ZStack {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 14, height: 14)
-                            Circle()
-                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
-                                .frame(width: 14, height: 14)
+            Group {
+                if let icon = app.icon {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            Image(systemName: "app.dashed")
+                                .font(.system(size: 32))
+                                .foregroundStyle(.secondary)
                         }
-                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                        .offset(x: 6, y: -6)
-                    }
                 }
-                // Press and bounce animations - applied INSIDE ZStack to allow overflow
-                // Use max() to ensure scale never goes below minimum threshold
-                .scaleEffect(max(0.1, isPressed ? 0.92 : (isAnimating ? 0.85 : 1.0)))
-                .brightness(isPressed ? -0.1 : 0)
-                .animation(.easeOut(duration: 0.1), value: isPressed)
-                .animation(
-                    isAnimating ? 
-                        Animation.interpolatingSpring(stiffness: 300, damping: 10)
-                            .repeatCount(3, autoreverses: true) :
-                        .easeOut(duration: 0.2),
-                    value: isAnimating
-                )
             }
-            .frame(width: 80, height: 80)  // Fixed frame for ZStack container
-            // Shake and rotation applied OUTSIDE ZStack (respects bounds)
+            .frame(width: 80, height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .overlay(alignment: .topTrailing) {
+                if app.isRunning {
+                    // Running indicator - adaptive for light/dark mode
+                    ZStack {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 14, height: 14)
+                        Circle()
+                            .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                            .frame(width: 14, height: 14)
+                    }
+                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                    .offset(x: 6, y: -6)
+                }
+            }
+            // Combined animations: press + bounce + shake
+            // Use max() to ensure scale never goes below minimum threshold
+            .scaleEffect(max(0.1, isPressed ? 0.92 : (isAnimating ? 0.85 : 1.0)))
+            .brightness(isPressed ? -0.1 : 0)
             .offset(x: shakeOffset)
             .rotationEffect(.degrees(isCancelled ? (shakeOffset * 0.3) : 0))
             .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry
+            .animation(.easeOut(duration: 0.1), value: isPressed)
+            .animation(
+                isAnimating ? 
+                    Animation.interpolatingSpring(stiffness: 300, damping: 10)
+                        .repeatCount(3, autoreverses: true) :
+                    .easeOut(duration: 0.2),
+                value: isAnimating
+            )
             .animation(.linear(duration: 0.05), value: shakeOffset)
             
             // App name below icon
