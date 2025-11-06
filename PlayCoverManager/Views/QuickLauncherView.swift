@@ -11,18 +11,10 @@ struct QuickLauncherView: View {
     @State private var showingInstaller = false
     @State private var showingUninstaller = false
     
-    @AppStorage("appIconSize") private var appIconSizeRaw: String = "medium"
-    
-    // Dynamic grid based on icon size setting
-    private var gridColumns: [GridItem] {
-        let cellSize: CGFloat
-        switch appIconSizeRaw {
-        case "small": cellSize = 80   // 60pt icon + 20pt padding
-        case "large": cellSize = 120  // 100pt icon + 20pt padding
-        default: cellSize = 100       // 80pt icon + 20pt padding (medium)
-        }
-        return [GridItem(.adaptive(minimum: cellSize, maximum: cellSize), spacing: 24)]
-    }
+    // iOS-style grid with fixed size icons
+    private let gridColumns = [
+        GridItem(.adaptive(minimum: 100, maximum: 100), spacing: 24)
+    ]
     
     // Get PlayCover.app icon (macOS app)
     private func getPlayCoverIcon() -> NSImage? {
@@ -317,34 +309,6 @@ private struct iOSAppIconView: View {
     @State private var shakeOffset: CGFloat = 0
     @State private var isDragging = false
     
-    @AppStorage("appIconSize") private var appIconSizeRaw: String = "medium"
-    @AppStorage("appTextSize") private var appTextSizeRaw: String = "medium"
-    @AppStorage("animationsEnabled") private var animationsEnabled = true
-    
-    private var iconSize: CGFloat {
-        switch appIconSizeRaw {
-        case "small": return 60
-        case "large": return 100
-        default: return 80  // medium
-        }
-    }
-    
-    private var textSize: CGFloat {
-        switch appTextSizeRaw {
-        case "small": return 10
-        case "large": return 12
-        default: return 11  // medium
-        }
-    }
-    
-    private var containerWidth: CGFloat {
-        iconSize + 20
-    }
-    
-    private var containerHeight: CGFloat {
-        iconSize + 40
-    }
-    
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
@@ -400,20 +364,20 @@ private struct iOSAppIconView: View {
             
             // App name below icon
             Text(app.displayName)
-                .font(.system(size: textSize))
+                .font(.system(size: 11))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .frame(width: containerWidth, height: 28)
+                .frame(width: 90, height: 28)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(width: containerWidth, height: containerHeight)
+        .frame(width: 100, height: 120)
         .contentShape(Rectangle())
-        .opacity(shouldAnimate && animationsEnabled ? (hasAppeared ? 1 : 0) : 1)
-        .scaleEffect(max(0.3, shouldAnimate && animationsEnabled ? (hasAppeared ? 1 : 0.3) : 1))
-        .offset(y: shouldAnimate && animationsEnabled ? (hasAppeared ? 0 : 20) : 0)
+        .opacity(shouldAnimate ? (hasAppeared ? 1 : 0) : 1)
+        .scaleEffect(max(0.3, shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1))
+        .offset(y: shouldAnimate ? (hasAppeared ? 0 : 20) : 0)
         .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry during initial animation
         .onAppear {
-            if shouldAnimate && animationsEnabled && !hasAppeared {
+            if shouldAnimate && !hasAppeared {
                 // Staggered fade-in animation (Mac Dock style) - only on first load
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(Double(index) * 0.05)) {
                     hasAppeared = true
@@ -425,8 +389,7 @@ private struct iOSAppIconView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerAppIconAnimation"))) { notification in
             // Trigger animation when receiving notification for this app
-            if animationsEnabled,
-               let bundleID = notification.userInfo?["bundleID"] as? String,
+            if let bundleID = notification.userInfo?["bundleID"] as? String,
                bundleID == app.bundleIdentifier {
                 // Delay animation slightly to sync with button animation
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -462,7 +425,8 @@ private struct iOSAppIconView: View {
                         return
                     }
                     
-                    // Calculate drag distance using dynamic icon size
+                    // Calculate drag distance
+                    let iconSize: CGFloat = 80
                     let tolerance: CGFloat = 20
                     let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
                     
@@ -474,47 +438,37 @@ private struct iOSAppIconView: View {
                         performShakeAnimation()
                     } else {
                         // Released within bounds - normal launch
-                        if animationsEnabled {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                isAnimating = true
-                                
-                                // Trigger launch during bounce animation
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    tapAction()
-                                }
-                                
-                                // Stop bounce animation after completion
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                                    isAnimating = false
-                                }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            isAnimating = true
+                            
+                            // Trigger launch during bounce animation
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                tapAction()
                             }
-                        } else {
-                            // No animation - launch immediately
-                            tapAction()
+                            
+                            // Stop bounce animation after completion
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                                isAnimating = false
+                            }
                         }
                     }
                 }
         )
         .contextMenu {
-            Button("起動") {
-                if animationsEnabled {
-                    // Smooth press + bounce animation sequence
-                    isPressed = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        isPressed = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                            isAnimating = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                tapAction()
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                                    isAnimating = false
-                                }
+            Button("起動") { 
+                // Smooth press + bounce animation sequence
+                isPressed = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isPressed = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        isAnimating = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            tapAction()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                                isAnimating = false
                             }
                         }
                     }
-                } else {
-                    // No animation - launch immediately
-                    tapAction()
                 }
             }
             Divider()
