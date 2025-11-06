@@ -307,6 +307,7 @@ private struct iOSAppIconView: View {
     @State private var isPressed = false
     @State private var isCancelled = false
     @State private var shakeOffset: CGFloat = 0
+    @State private var isDragging = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -359,13 +360,7 @@ private struct iOSAppIconView: View {
                     .easeOut(duration: 0.2),
                 value: isAnimating
             )
-            .animation(
-                isCancelled ?
-                    Animation.interpolatingSpring(stiffness: 500, damping: 8)
-                        .repeatCount(4, autoreverses: true) :
-                    .easeOut(duration: 0.1),
-                value: shakeOffset
-            )
+            .animation(.linear(duration: 0.05), value: shakeOffset)
             
             // App name below icon
             Text(app.displayName)
@@ -405,11 +400,14 @@ private struct iOSAppIconView: View {
                 }
             }
         }
-        .simultaneousGesture(
+        .gesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    // Ignore if currently animating or cancelled
-                    guard !isAnimating && !isCancelled else { return }
+                .onChanged { value in
+                    // Completely ignore all gestures during any animation
+                    guard !isAnimating && !isCancelled && !isDragging else { return }
+                    
+                    // Mark as dragging to prevent retriggering
+                    isDragging = true
                     
                     // Press down animation
                     if !isPressed {
@@ -417,8 +415,14 @@ private struct iOSAppIconView: View {
                     }
                 }
                 .onEnded { gesture in
+                    // If already animating/cancelled, just reset states and ignore
+                    guard isDragging else { return }
+                    
+                    // Mark drag as complete
+                    isDragging = false
+                    
                     // Ignore if currently animating or already cancelled
-                    guard !isAnimating && !isCancelled else {
+                    if isAnimating || isCancelled {
                         isPressed = false
                         return
                     }
@@ -485,20 +489,29 @@ private struct iOSAppIconView: View {
     
     // "Nani yanen!" shake animation function
     private func performShakeAnimation() {
+        // Ensure we're not already shaking
+        guard !isCancelled else { return }
+        
         // Quick shake sequence: left → right → left → right → center
         // Creates a "What the heck?!" feeling
         let shakeSequence: [CGFloat] = [-6, 6, -4, 4, -2, 2, 0]
         
+        // Apply shake offsets sequentially
         for (index, offset) in shakeSequence.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
-                shakeOffset = offset
+                // Only update if still in cancelled state (prevents interruption)
+                guard self.isCancelled else { return }
+                self.shakeOffset = offset
             }
         }
         
-        // Reset cancelled state after animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(shakeSequence.count) * 0.05 + 0.1) {
-            isCancelled = false
-            shakeOffset = 0
+        // Reset cancelled state after animation completes
+        let totalDuration = Double(shakeSequence.count) * 0.05 + 0.1
+        DispatchQueue.main.asyncAfter(deadline: .now() + totalDuration) {
+            // Final cleanup
+            self.isCancelled = false
+            self.shakeOffset = 0
+            self.isDragging = false
         }
     }
 }
