@@ -715,18 +715,13 @@ private struct RecentAppLaunchButton: View {
     let app: PlayCoverApp
     let onLaunch: () -> Void
     
-    @State private var isAnimating = false
+    @State private var rippleTrigger = 0
     
     var body: some View {
         Button {
-            // Start animation and launch immediately in parallel
-            isAnimating = true
+            // Trigger new ripple on each press
+            rippleTrigger += 1
             onLaunch()
-            
-            // Stop animation after completion
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                isAnimating = false
-            }
         } label: {
             HStack(spacing: 0) {
                 Spacer()
@@ -795,9 +790,7 @@ private struct RecentAppLaunchButton: View {
                 Color(nsColor: .controlBackgroundColor).opacity(0.5)
                 
                 // Ripple effect (clipped to button bounds)
-                if isAnimating {
-                    RippleEffect()
-                }
+                RippleEffect(trigger: rippleTrigger)
             }
             .clipped() // Clip ripple effect to button bounds
         )
@@ -813,8 +806,55 @@ private struct RecentAppLaunchButton: View {
 
 // 3D-style ripple effect animation
 private struct RippleEffect: View {
-    @State private var scale: CGFloat = 0.0
-    @State private var opacity: Double = 0.0
+    let trigger: Int
+    @State private var ripples: [Ripple] = []
+    @Environment(\.colorScheme) private var colorScheme
+    
+    var body: some View {
+        ZStack {
+            ForEach(ripples) { ripple in
+                RippleLayer(ripple: ripple, colorScheme: colorScheme)
+            }
+        }
+        .onChange(of: trigger) { _, _ in
+            createNewRipple()
+        }
+    }
+    
+    private func createNewRipple() {
+        let newRipple = Ripple(id: UUID())
+        ripples.append(newRipple)
+        
+        // Animate the ripple
+        withAnimation(.easeOut(duration: 1.0)) {
+            if let index = ripples.firstIndex(where: { $0.id == newRipple.id }) {
+                ripples[index].scale = 10.0
+                ripples[index].opacity = 0.0
+            }
+        }
+        
+        // Remove after animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            ripples.removeAll(where: { $0.id == newRipple.id })
+        }
+    }
+    
+    private struct Ripple: Identifiable {
+        let id: UUID
+        var scale: CGFloat = 0.0
+        var opacity: Double = 1.0
+    }
+}
+
+// Individual ripple layer view
+private struct RippleLayer: View {
+    let ripple: RippleEffect.Ripple
+    let colorScheme: ColorScheme
+    
+    // Color based on theme: white for dark, blue for light
+    private var rippleColor: Color {
+        colorScheme == .dark ? .white : .blue
+    }
     
     var body: some View {
         ZStack {
@@ -823,8 +863,8 @@ private struct RippleEffect: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.accentColor.opacity(opacity * 0.3),
-                            Color.accentColor.opacity(opacity * 0.15),
+                            rippleColor.opacity(ripple.opacity * 0.3),
+                            rippleColor.opacity(ripple.opacity * 0.15),
                             Color.clear
                         ],
                         center: .center,
@@ -832,17 +872,17 @@ private struct RippleEffect: View {
                         endRadius: 100
                     )
                 )
-                .scaleEffect(scale * 1.05)
+                .scaleEffect(ripple.scale * 1.05)
                 .blur(radius: 8)
-                .opacity(opacity)
+                .opacity(ripple.opacity)
             
             // Middle layer with stronger color
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.accentColor.opacity(opacity * 0.5),
-                            Color.accentColor.opacity(opacity * 0.25),
+                            rippleColor.opacity(ripple.opacity * 0.5),
+                            rippleColor.opacity(ripple.opacity * 0.25),
                             Color.clear
                         ],
                         center: .center,
@@ -850,33 +890,33 @@ private struct RippleEffect: View {
                         endRadius: 80
                     )
                 )
-                .scaleEffect(scale)
+                .scaleEffect(ripple.scale)
                 .blur(radius: 4)
-                .opacity(opacity)
+                .opacity(ripple.opacity)
             
             // Sharp ring layer (main visible ring)
             Circle()
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            Color.accentColor.opacity(opacity * 0.8),
-                            Color.accentColor.opacity(opacity * 0.6),
+                            rippleColor.opacity(ripple.opacity * 0.8),
+                            rippleColor.opacity(ripple.opacity * 0.6),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
                     lineWidth: 4
                 )
-                .scaleEffect(scale)
-                .opacity(opacity)
-                .shadow(color: Color.accentColor.opacity(opacity * 0.5), radius: 6, x: 0, y: 2)
+                .scaleEffect(ripple.scale)
+                .opacity(ripple.opacity)
+                .shadow(color: rippleColor.opacity(ripple.opacity * 0.5), radius: 6, x: 0, y: 2)
             
             // Inner glow
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.accentColor.opacity(opacity * 0.6),
+                            rippleColor.opacity(ripple.opacity * 0.6),
                             Color.clear
                         ],
                         center: .center,
@@ -884,19 +924,9 @@ private struct RippleEffect: View {
                         endRadius: 40
                     )
                 )
-                .scaleEffect(scale * 0.3)
+                .scaleEffect(ripple.scale * 0.3)
                 .blur(radius: 10)
-                .opacity(opacity)
-        }
-        .onAppear {
-            // Animate single ripple with 3D effect
-            withAnimation(.easeOut(duration: 1.0)) {
-                scale = 10.0
-                opacity = 0.0
-            }
-            
-            // Start opacity at peak
-            opacity = 1.0
+                .opacity(ripple.opacity)
         }
     }
 }
