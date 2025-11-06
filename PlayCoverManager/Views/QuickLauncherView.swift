@@ -756,11 +756,13 @@ private struct RecentAppLaunchButton: View {
                 Spacer()
                 
                 HStack(spacing: 16) {
-                    // Icon with animations - use overlay to separate bounce (overflow) from transition (clipped)
+                    // Icon with animations
+                    // Strategy: Only bounce animation (iconOffsetY < 0) can overflow
+                    //           Everything else (ripple, app switch with iconOffsetY from above) stays clipped
                     ZStack {
-                        // Base container with clipped animations (app switch transition)
+                        // Clipped container for most animations
                         ZStack {
-                            // Old icon (during transition) - stays within bounds
+                            // Old icon (during transition) - falls down and out
                             if let oldIcon = oldIcon {
                                 Image(nsImage: oldIcon)
                                     .resizable()
@@ -772,37 +774,43 @@ private struct RecentAppLaunchButton: View {
                                     .opacity(oldIconOpacity)
                             }
                             
-                            // Current icon placeholder (for layout only, actual icon is in overlay)
-                            Color.clear
+                            // Ripple effect - centered
+                            RippleEffect(trigger: rippleTrigger)
                                 .frame(width: 52, height: 52)
+                            
+                            // Current icon - for app switch animation (drops from above) and bounce
+                            // Only show here when NOT bouncing (iconOffsetY >= 0 or == -150 for drop)
+                            if let icon = app.icon, iconOffsetY >= 0 || iconOffsetY <= -100 {
+                                Image(nsImage: icon)
+                                    .resizable()
+                                    .frame(width: 52, height: 52)
+                                    .clipShape(RoundedRectangle(cornerRadius: 11))
+                                    .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                                    .offset(x: iconOffsetX, y: iconOffsetY)
+                                    .scaleEffect(iconScale)
+                            } else if app.icon == nil {
+                                RoundedRectangle(cornerRadius: 11)
+                                    .fill(Color(nsColor: .controlBackgroundColor))
+                                    .frame(width: 52, height: 52)
+                                    .overlay {
+                                        Image(systemName: "app.fill")
+                                            .font(.system(size: 26))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .offset(x: iconOffsetX, y: iconOffsetY)
+                                    .scaleEffect(iconScale)
+                            }
                         }
                         .frame(width: 52, height: 52)
-                        .clipped()  // Clip transition animations to stay within bounds
+                        .clipped()  // Clip ripple and drop animation
                         
-                        // Ripple effect overlay (appears above clipped content but below bouncing icon)
-                        RippleEffect(trigger: rippleTrigger)
-                            .frame(width: 52, height: 52)
-                            .allowsHitTesting(false)
-                        
-                        // Bouncing icon overlay (can overflow for bounce animation)
-                        if let icon = app.icon {
+                        // Bounce overlay - only for upward bounce (iconOffsetY in range -100 to 0)
+                        if let icon = app.icon, iconOffsetY < 0 && iconOffsetY > -100 {
                             Image(nsImage: icon)
                                 .resizable()
                                 .frame(width: 52, height: 52)
                                 .clipShape(RoundedRectangle(cornerRadius: 11))
                                 .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
-                                .offset(x: iconOffsetX, y: iconOffsetY)
-                                .scaleEffect(iconScale)
-                                .allowsHitTesting(false)
-                        } else {
-                            RoundedRectangle(cornerRadius: 11)
-                                .fill(Color(nsColor: .controlBackgroundColor))
-                                .frame(width: 52, height: 52)
-                                .overlay {
-                                    Image(systemName: "app.fill")
-                                        .font(.system(size: 26))
-                                        .foregroundStyle(.tertiary)
-                                }
                                 .offset(x: iconOffsetX, y: iconOffsetY)
                                 .scaleEffect(iconScale)
                                 .allowsHitTesting(false)
