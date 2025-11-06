@@ -302,7 +302,6 @@ private struct iOSAppIconView: View {
     let tapAction: () -> Void
     let rightClickAction: () -> Void
     let uninstallAction: () -> Void
-    let uninstallAction: () -> Void
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
