@@ -17,6 +17,7 @@ class AppUninstallerService {
     let diskImageService: DiskImageService
     let settingsStore: SettingsStore
     let perAppSettingsStore: PerAppSettingsStore
+    let launcherService: LauncherService
     
     // Uninstallation state
     var isUninstalling = false
@@ -28,11 +29,13 @@ class AppUninstallerService {
     init(processRunner: ProcessRunner? = nil,
          diskImageService: DiskImageService,
          settingsStore: SettingsStore,
-         perAppSettingsStore: PerAppSettingsStore) {
+         perAppSettingsStore: PerAppSettingsStore,
+         launcherService: LauncherService) {
         self.processRunner = processRunner ?? ProcessRunner()
         self.diskImageService = diskImageService
         self.settingsStore = settingsStore
         self.perAppSettingsStore = perAppSettingsStore
+        self.launcherService = launcherService
     }
     
     // MARK: - Installed App Detection
@@ -193,18 +196,6 @@ class AppUninstallerService {
         return nil
     }
     
-    // MARK: - App Running Check
-    
-    nonisolated func isAppRunning(bundleID: String) async -> Bool {
-        // Use NSRunningApplication (safer than Process and not affected by MainActor)
-        let runningApps = NSWorkspace.shared.runningApplications
-        let isRunning = runningApps.contains { app in
-            app.bundleIdentifier == bundleID && !app.isTerminated
-        }
-        
-        return isRunning
-    }
-    
     // MARK: - Uninstallation
     
     nonisolated func uninstallApp(_ app: InstalledAppInfo) async throws {
@@ -213,7 +204,7 @@ class AppUninstallerService {
         }
         
         // Check if app is running using NSRunningApplication
-        if await isAppRunning(bundleID: app.bundleID) {
+        if launcherService.isAppRunning(bundleID: app.bundleID) {
             throw AppError.installation("アプリが実行中のため、アンインストールできません", message: "アプリを終了してから再度お試しください")
         }
         

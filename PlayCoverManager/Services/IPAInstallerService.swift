@@ -17,6 +17,7 @@ class IPAInstallerService {
     let processRunner: ProcessRunner
     let diskImageService: DiskImageService
     let settingsStore: SettingsStore
+    let launcherService: LauncherService
     
     // Installation state
     var isInstalling = false
@@ -27,10 +28,12 @@ class IPAInstallerService {
     
     init(processRunner: ProcessRunner? = nil,
          diskImageService: DiskImageService,
-         settingsStore: SettingsStore) {
+         settingsStore: SettingsStore,
+         launcherService: LauncherService) {
         self.processRunner = processRunner ?? ProcessRunner()
         self.diskImageService = diskImageService
         self.settingsStore = settingsStore
+        self.launcherService = launcherService
     }
     
     // MARK: - IPA Information Extraction
@@ -488,16 +491,6 @@ class IPAInstallerService {
         return false
     }
     
-    // MARK: - App Running Check
-    
-    nonisolated func isAppRunning(bundleID: String) async -> Bool {
-        // NSRunningApplication を使用（Process よりも安全で MainActor の影響を受けない）
-        let runningApps = NSWorkspace.shared.runningApplications
-        let isRunning = runningApps.contains { app in
-            app.bundleIdentifier == bundleID && !app.isTerminated
-        }
-        return isRunning
-    }
     
     // MARK: - Batch IPA Analysis
     
@@ -549,7 +542,7 @@ class IPAInstallerService {
             await MainActor.run {
                 currentStatus = "アプリの実行状態を確認中"
             }
-            if await isAppRunning(bundleID: info.bundleID) {
+            if launcherService.isAppRunning(bundleID: info.bundleID) {
                 throw AppError.installation("アプリが実行中のため、インストールできません", message: "アプリを終了してから再度お試しください")
             }
         }

@@ -58,7 +58,7 @@ final class LauncherService {
             let version = info?["CFBundleShortVersionString"] as? String
             let icon = NSWorkspace.shared.icon(forFile: url.path)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
-            let isRunning = checkIfAppRunning(bundleID: bundleID)
+            let isRunning = isAppRunning(bundleID: bundleID)
             let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning)
             apps.append(app)
         }
@@ -141,7 +141,12 @@ final class LauncherService {
         return supportURL?.appendingPathComponent("PlayCoverManager", isDirectory: true).appendingPathComponent("map.dat") ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/PlayCoverManager/map.dat")
     }
 
-    private func checkIfAppRunning(bundleID: String) -> Bool {
+    // MARK: - App Runtime State
+    
+    /// Check if an app is currently running
+    /// - Parameter bundleID: The bundle identifier of the app to check
+    /// - Returns: true if the app is running and not terminated
+    public func isAppRunning(bundleID: String) -> Bool {
         let runningApps = NSWorkspace.shared.runningApplications
         return runningApps.contains { app in
             app.bundleIdentifier == bundleID && !app.isTerminated

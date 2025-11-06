@@ -19,10 +19,14 @@ final class InstallerService {
 
     private let processRunner: ProcessRunner
     private let fileManager: FileManager
+    private let launcherService: LauncherService
 
-    init(processRunner: ProcessRunner = ProcessRunner(), fileManager: FileManager = .default) {
+    init(processRunner: ProcessRunner = ProcessRunner(), 
+         fileManager: FileManager = .default,
+         launcherService: LauncherService) {
         self.processRunner = processRunner
         self.fileManager = fileManager
+        self.launcherService = launcherService
     }
 
     func parseIPA(at url: URL) throws -> IPAInfo {
@@ -68,17 +72,9 @@ final class InstallerService {
         return plist[key]
     }
 
-    // Check if an app with the given bundle ID is currently running
-    func isAppRunning(bundleID: String) -> Bool {
-        let runningApps = NSWorkspace.shared.runningApplications
-        return runningApps.contains { app in
-            app.bundleIdentifier == bundleID && !app.isTerminated
-        }
-    }
-    
     func installIPA(_ ipa: IPAInfo, via playCoverApp: URL) async throws {
         // Check if app is already running
-        if isAppRunning(bundleID: ipa.bundleIdentifier) {
+        if launcherService.isAppRunning(bundleID: ipa.bundleIdentifier) {
             throw AppError.installation(
                 "アプリが実行中のため、インストールできません",
                 message: "\(ipa.displayName) を終了してから再度お試しください"
