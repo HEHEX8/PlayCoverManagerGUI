@@ -994,13 +994,18 @@ private struct MaintenanceSettingsView: View {
             let isExternal = try await diskImageService.isExternalDrive(diskImageDir)
             
             if isExternal {
+                print("🔍 外部ドライブを検出しました")
                 // Get device path for ejection
                 if let devicePath = try await diskImageService.getDevicePath(for: diskImageDir) {
+                    print("🔍 デバイスパス取得: \(devicePath)")
                     await MainActor.run {
                         externalDrivePath = devicePath
                         isUnmounting = false
+                        print("🔍 アラート表示フラグをONにしました")
                         showingExternalDriveEjectConfirmation = true
                     }
+                    print("🔍 performUnmountAllをreturnします（アラート待機中）")
+                    // Don't quit here - let the dialog buttons handle it
                     return
                 }
             }
@@ -1011,7 +1016,12 @@ private struct MaintenanceSettingsView: View {
                 isUnmounting = false
             }
             
-            quitApp()
+            // Small delay to ensure UI updates are visible
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second
+            
+            await MainActor.run {
+                quitApp()
+            }
             
         } catch {
             await showErrorAndQuit("アンマウント処理中にエラーが発生しました:\n\(error.localizedDescription)")
