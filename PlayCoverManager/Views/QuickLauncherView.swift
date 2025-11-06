@@ -1771,7 +1771,8 @@ private struct DrawerPanel: View {
                 Spacer()
             }
         }
-        .frame(width: 260, maxHeight: .infinity)
+        .frame(width: 260)
+        .frame(maxHeight: .infinity)
         .background(.ultraThinMaterial)
         .overlay(alignment: .trailing) {
             Rectangle()
