@@ -281,6 +281,52 @@ final class DiskImageService {
     func ejectDrive(devicePath: String) async throws {
         _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", devicePath])
     }
+    
+    /// Count mounted volumes under a specific path
+    /// - Parameter basePath: Base path to search for mounted volumes (e.g., /Volumes/DATA/PlayCover)
+    /// - Returns: Number of mounted volumes found under the base path
+    func countMountedVolumes(under basePath: URL) async -> Int {
+        do {
+            // Get list of all mounted volumes using diskutil
+            let output = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist"])
+            guard let data = output.data(using: .utf8),
+                  let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                  let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
+                print("[DiskImageService] Failed to parse diskutil list output")
+                return 0
+            }
+            
+            var count = 0
+            let basePathString = basePath.path
+            
+            // Iterate through all disks and their partitions
+            for disk in allDisksAndPartitions {
+                if let partitions = disk["Partitions"] as? [[String: Any]] {
+                    for partition in partitions {
+                        if let mountPoint = partition["MountPoint"] as? String,
+                           !mountPoint.isEmpty,
+                           mountPoint.hasPrefix(basePathString) {
+                            count += 1
+                            print("[DiskImageService] Found mounted volume: \(mountPoint)")
+                        }
+                    }
+                }
+                // Some disks might have direct mount points without partitions array
+                if let mountPoint = disk["MountPoint"] as? String,
+                   !mountPoint.isEmpty,
+                   mountPoint.hasPrefix(basePathString) {
+                    count += 1
+                    print("[DiskImageService] Found mounted volume: \(mountPoint)")
+                }
+            }
+            
+            print("[DiskImageService] Total mounted volumes under \(basePathString): \(count)")
+            return count
+        } catch {
+            print("[DiskImageService] Error counting mounted volumes: \(error)")
+            return 0
+        }
+    }
 }
 
 private extension URL {

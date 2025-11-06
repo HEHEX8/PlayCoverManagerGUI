@@ -445,6 +445,14 @@ final class LauncherViewModel {
         var failedCount = 0
         var ejectedDrive: String?
         
+        // Count mounted volumes before unmounting (if storage directory is set)
+        var volumesBefore = 0
+        var volumesAfter = 0
+        if let storageDir = settings.diskImageDirectory {
+            volumesBefore = await diskImageService.countMountedVolumes(under: storageDir)
+            print("[LauncherVM] Mounted volumes before unmount: \(volumesBefore)")
+        }
+        
         // Step 1: Unmount all app containers
         print("[LauncherVM] Step 1: Unmounting app containers (\(apps.count) apps)")
         statusMessage = "アプリコンテナをアンマウントしています…"
@@ -538,6 +546,13 @@ final class LauncherViewModel {
         
         print("[LauncherVM] Step 2 complete. Total success: \(successCount)")
         
+        // Count mounted volumes after unmounting
+        if let storageDir = settings.diskImageDirectory {
+            volumesAfter = await diskImageService.countMountedVolumes(under: storageDir)
+            print("[LauncherVM] Mounted volumes after unmount: \(volumesAfter)")
+            print("[LauncherVM] Total volumes unmounted: \(volumesBefore - volumesAfter)")
+        }
+        
         // Step 3: If external drive, eject the whole drive  
         print("[LauncherVM] Step 3: Checking for external drive")
         if let storageDir = settings.diskImageDirectory {
@@ -628,8 +643,9 @@ final class LauncherViewModel {
         
         // Step 4: Show result and quit
         print("[LauncherVM] Step 4: Showing results and quitting")
-        print("[LauncherVM] Final stats - Success: \(successCount), Failed: 0, Ejected: \(ejectedDrive ?? "none")")
-        await showUnmountResultAndQuit(successCount: successCount, failedCount: 0, ejectedDrive: ejectedDrive)
+        let totalUnmounted = volumesBefore - volumesAfter
+        print("[LauncherVM] Final stats - Explicitly unmounted: \(successCount), Total volumes unmounted: \(totalUnmounted), Failed: 0, Ejected: \(ejectedDrive ?? "none")")
+        await showUnmountResultAndQuit(successCount: totalUnmounted > 0 ? totalUnmounted : successCount, failedCount: 0, ejectedDrive: ejectedDrive)
     }
     
     private func showUnmountResultAndQuit(successCount: Int, failedCount: Int, ejectedDrive: String?) async {
