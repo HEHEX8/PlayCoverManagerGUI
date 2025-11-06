@@ -367,9 +367,10 @@ final class LauncherViewModel {
         var successCount = 0
         var failedCount = 0
         var ejectedDrive: String?
+        var playCoverContainerEjected = false
         
         do {
-            // Collect all container URLs except PlayCover's
+            // Collect all container URLs
             var containerURLs: [URL] = []
             for app in apps {
                 let container = containerURL(for: app.bundleIdentifier)
@@ -377,6 +378,8 @@ final class LauncherViewModel {
                     containerURLs.append(container)
                 }
             }
+            
+            let playCoverContainer = playCoverPaths.containerRootURL
             
             // Check if storage is on external drive
             if let storageDir = settings.diskImageDirectory {
@@ -386,6 +389,16 @@ final class LauncherViewModel {
                     // External drive - eject the whole drive
                     statusMessage = "外部ドライブを取り外し可能な状態にしています…"
                     if let devicePath = try await getDevicePath(for: storageDir) {
+                        // Check if PlayCover container is on the same drive
+                        if applyToPlayCoverContainer {
+                            let playCoverDevicePath = try? await getDevicePath(for: playCoverContainer)
+                            if playCoverDevicePath == devicePath {
+                                // PlayCover container is on the same drive, will be ejected together
+                                playCoverContainerEjected = true
+                                containerURLs.append(playCoverContainer)
+                            }
+                        }
+                        
                         do {
                             try await ejectDrive(devicePath: devicePath)
                             ejectedDrive = storageDir.lastPathComponent
@@ -408,10 +421,9 @@ final class LauncherViewModel {
                 }
             }
             
-            // Finally, unmount PlayCover container
-            if applyToPlayCoverContainer {
+            // If PlayCover container wasn't ejected yet, unmount it now
+            if applyToPlayCoverContainer && !playCoverContainerEjected {
                 statusMessage = "PlayCover コンテナをアンマウントしています…"
-                let playCoverContainer = playCoverPaths.containerRootURL
                 do {
                     try await diskImageService.detach(volumeURL: playCoverContainer)
                     successCount += 1
