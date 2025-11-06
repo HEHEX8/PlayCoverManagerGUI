@@ -44,6 +44,10 @@ final class ProcessRunner: Sendable {
                 let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
                 let stdoutString = String(data: stdoutData, encoding: .utf8) ?? ""
                 let stderrString = String(data: stderrData, encoding: .utf8) ?? ""
+                
+                // Explicitly close file handles to prevent resource leaks
+                try? stdoutPipe.fileHandleForReading.close()
+                try? stderrPipe.fileHandleForReading.close()
 
                 if process.terminationStatus == 0 {
                     continuation.resume(returning: stdoutString)
@@ -77,6 +81,10 @@ final class ProcessRunner: Sendable {
         let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
         let stdoutString = String(data: stdoutData, encoding: .utf8) ?? ""
         let stderrString = String(data: stderrData, encoding: .utf8) ?? ""
+        
+        // Explicitly close file handles to prevent resource leaks
+        try? stdoutPipe.fileHandleForReading.close()
+        try? stderrPipe.fileHandleForReading.close()
 
         if process.terminationStatus == 0 {
             return stdoutString

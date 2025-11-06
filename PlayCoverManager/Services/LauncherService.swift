@@ -33,9 +33,14 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
 
 final class LauncherService {
     private let fileManager: FileManager
+    private let iconCache = NSCache<NSString, NSImage>()
 
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
+        
+        // Configure icon cache
+        iconCache.countLimit = 100  // Maximum 100 icons
+        iconCache.totalCostLimit = 50 * 1024 * 1024  // 50MB limit
     }
 
     func fetchInstalledApps(at applicationsRoot: URL) throws -> [PlayCoverApp] {
@@ -56,7 +61,7 @@ final class LauncherService {
             
             let info = bundle.infoDictionary
             let version = info?["CFBundleShortVersionString"] as? String
-            let icon = NSWorkspace.shared.icon(forFile: url.path)
+            let icon = getCachedIcon(for: bundleID, appURL: url)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
             let isRunning = isAppRunning(bundleID: bundleID)
             let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning)
@@ -120,6 +125,25 @@ final class LauncherService {
         }
         
         return nil
+    }
+    
+    /// Get cached icon for an app, loading it only if not already cached
+    /// - Parameters:
+    ///   - bundleID: The bundle identifier to use as cache key
+    ///   - appURL: The app URL to load the icon from if not cached
+    /// - Returns: The cached or newly loaded icon
+    private func getCachedIcon(for bundleID: String, appURL: URL) -> NSImage? {
+        let cacheKey = bundleID as NSString
+        
+        // Return cached icon if available
+        if let cachedIcon = iconCache.object(forKey: cacheKey) {
+            return cachedIcon
+        }
+        
+        // Load icon and cache it
+        let icon = NSWorkspace.shared.icon(forFile: appURL.path)
+        iconCache.setObject(icon, forKey: cacheKey)
+        return icon
     }
     
     func openApp(_ app: PlayCoverApp) async throws {
