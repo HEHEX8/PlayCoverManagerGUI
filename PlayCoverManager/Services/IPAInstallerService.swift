@@ -26,7 +26,16 @@ class IPAInstallerService {
     var currentAppName: String = ""  // Currently installing app name
     var currentAppIcon: NSImage? = nil  // Currently installing app icon
     var installedApps: [String] = []
+    var installedAppDetails: [InstalledAppDetail] = []  // Detailed info for results screen
     var failedApps: [String] = []
+    
+    // Result detail for installed apps (with icon from .app bundle)
+    struct InstalledAppDetail: Identifiable {
+        let id = UUID()
+        let appName: String
+        let bundleID: String
+        let icon: NSImage?
+    }
     
     init(processRunner: ProcessRunner? = nil,
          diskImageService: DiskImageService,
@@ -616,6 +625,7 @@ class IPAInstallerService {
         await MainActor.run {
             isInstalling = true
             installedApps.removeAll()
+            installedAppDetails.removeAll()
             failedApps.removeAll()
             currentProgress = 0.0
             currentAppName = ""
@@ -641,6 +651,13 @@ class IPAInstallerService {
                 await MainActor.run {
                     installedApps.append(info.appName)
                 }
+                
+                // Get installed app details (with icon from .app bundle)
+                if let detail = await getInstalledAppDetail(bundleID: info.bundleID, appName: info.appName) {
+                    await MainActor.run {
+                        installedAppDetails.append(detail)
+                    }
+                }
             } catch {
                 await MainActor.run {
                     failedApps.append("\(info.appName): \(error.localizedDescription)")
@@ -654,5 +671,45 @@ class IPAInstallerService {
             currentAppName = ""  // Clear current app name after all installations complete
             currentAppIcon = nil  // Clear current app icon
         }
+    }
+    
+    // MARK: - Get Installed App Details
+    
+    // Get app details from installed .app bundle (with icon cache)
+    private nonisolated func getInstalledAppDetail(bundleID: String, appName: String) async -> InstalledAppDetail? {
+        let playCoverBundleID = "io.playcover.PlayCover"
+        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        
+        guard let appDirs = try? FileManager.default.contentsOfDirectory(
+            at: applicationsDir,
+            includingPropertiesForKeys: nil
+        ) else {
+            return nil
+        }
+        
+        for appURL in appDirs where appURL.pathExtension == "app" {
+            let infoPlist = appURL.appendingPathComponent("Info.plist")
+            guard FileManager.default.fileExists(atPath: infoPlist.path),
+                  let plistData = try? Data(contentsOf: infoPlist),
+                  let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                  let installedBundleID = plist["CFBundleIdentifier"] as? String,
+                  installedBundleID == bundleID else {
+                continue
+            }
+            
+            // Found the app - get icon using NSWorkspace (same as LauncherService)
+            let icon = await MainActor.run {
+                NSWorkspace.shared.icon(forFile: appURL.path)
+            }
+            
+            return InstalledAppDetail(
+                appName: appName,
+                bundleID: bundleID,
+                icon: icon
+            )
+        }
+        
+        return nil
     }
 }

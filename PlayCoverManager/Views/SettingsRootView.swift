@@ -498,15 +498,36 @@ struct IPAInstallerSheet: View {
                 VStack(spacing: 12) {
                     if let service = installerService {
                         // Success list
-                        ForEach(service.installedApps, id: \.self) { appName in
+                        ForEach(service.installedAppDetails) { detail in
                             HStack(spacing: 12) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(.green)
-                                    .frame(width: 48)
+                                // App icon with checkmark overlay
+                                ZStack(alignment: .bottomTrailing) {
+                                    if let icon = detail.icon {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .frame(width: 48, height: 48)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 48, height: 48)
+                                    }
+                                    
+                                    // Checkmark badge
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(.white)
+                                        .background(
+                                            Circle()
+                                                .fill(.green)
+                                                .frame(width: 22, height: 22)
+                                        )
+                                        .offset(x: 4, y: 4)
+                                }
+                                .frame(width: 48, height: 48)
                                 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(appName)
+                                    Text(detail.appName)
                                         .font(.body)
                                         .fontWeight(.medium)
                                     Text("インストール完了")
