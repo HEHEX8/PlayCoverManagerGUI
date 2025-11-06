@@ -336,50 +336,128 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Installing View
     private var installingView: some View {
-        VStack(spacing: 16) {
-            Text("インストール中")
-                .font(.headline)
-            
-            ScrollView {
+        VStack(spacing: 20) {
+            // Header with progress indicator
+            VStack(spacing: 12) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.blue)
+                
+                Text("インストール中")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                if let service = installerService, !service.currentStatus.isEmpty {
+                    Text(service.currentStatus)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                // Overall progress bar
                 if let service = installerService {
-                    VStack(alignment: .leading, spacing: 4) {
+                    let totalItems = analyzedIPAs.count
+                    let completed = service.installedApps.count + service.failedApps.count
+                    let progressValue = totalItems > 0 ? Double(completed) / Double(totalItems) : 0
+                    
+                    VStack(spacing: 8) {
+                        ProgressView(value: progressValue)
+                            .frame(width: 400)
+                        
+                        Text("\(completed) / \(totalItems) 完了")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            
+            Divider()
+                .padding(.horizontal, 40)
+            
+            // Installation log
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let service = installerService {
+                        // Completed installations
                         ForEach(service.installedApps, id: \.self) { app in
-                            HStack(spacing: 8) {
+                            HStack(spacing: 12) {
                                 Image(systemName: "checkmark.circle.fill")
+                                    .font(.title3)
                                     .foregroundStyle(.green)
-                                Text(app)
-                                    .font(.system(.body, design: .monospaced))
+                                    .frame(width: 32)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(app)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text("インストール完了")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.green.opacity(0.1))
+                            .cornerRadius(8)
                         }
                         
-                        if !service.currentStatus.isEmpty {
-                            HStack(spacing: 8) {
+                        // Currently installing (if any)
+                        if !service.currentStatus.isEmpty && service.currentStatus != "完了" {
+                            HStack(spacing: 12) {
                                 ProgressView()
-                                    .controlSize(.small)
-                                Text(service.currentStatus)
-                                    .font(.system(.body, design: .monospaced))
-                                    .foregroundStyle(.secondary)
+                                    .controlSize(.regular)
+                                    .frame(width: 32)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(service.currentStatus)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text("処理中...")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
                         }
                         
+                        // Failed installations
                         ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 8) {
+                            HStack(spacing: 12) {
                                 Image(systemName: "xmark.circle.fill")
+                                    .font(.title3)
                                     .foregroundStyle(.red)
-                                Text(error)
-                                    .font(.system(.body, design: .monospaced))
+                                    .frame(width: 32)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(error.components(separatedBy: ":").first ?? error)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                }
+                                
+                                Spacer()
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(8)
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(nsColor: .textBackgroundColor))
-                    .cornerRadius(8)
                 }
+                .padding(.horizontal)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
         .onAppear {
             startStatusUpdater()
         }

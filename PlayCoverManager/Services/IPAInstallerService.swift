@@ -390,8 +390,8 @@ class IPAInstallerService {
                             if try await verifyInstallationComplete(bundleID: bundleID) {
                                 await MainActor.run { currentStatus = "完了" }
                                 
-                                // Quit PlayCover after successful installation
-                                await quitPlayCover()
+                                // Don't quit PlayCover - let user close it manually
+                                // Automatically quitting can cause incomplete installations
                                 return
                             }
                         }
@@ -437,15 +437,6 @@ class IPAInstallerService {
         return mtimes
     }
     
-    // Quit PlayCover.app after successful installation
-    private nonisolated func quitPlayCover() async {
-        do {
-            _ = try await processRunner.run("/usr/bin/osascript", ["-e", "tell application \"PlayCover\" to quit"])
-            await MainActor.run { currentStatus = "PlayCoverを終了しました" }
-        } catch {
-            // Silently ignore errors
-        }
-    }
     
     // MARK: - Installation Verification
     
