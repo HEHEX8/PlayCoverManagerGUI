@@ -813,8 +813,7 @@ private struct RecentAppLaunchButton: View {
                     
                     // Ripple effect at exact icon position
                     RippleEffect(trigger: rippleTrigger)
-                        .offset(x: ripplePosition.x - buttonGeo.size.width / 2, 
-                                y: ripplePosition.y - buttonGeo.size.height / 2)
+                        .position(ripplePosition)
                 }
                 .onPreferenceChange(IconPositionKey.self) { position in
                     // Icon center in button coordinate space
@@ -866,56 +865,51 @@ private struct RecentAppLaunchButton: View {
     
     // App switch animation - new icon drops and pushes old one down
     private func performAppSwitchAnimation() {
-        // Fade out text immediately
-        withAnimation(.easeOut(duration: 0.15)) {
+        // Phase 1: Hide old icon (push down)
+        withAnimation(.easeOut(duration: 0.2)) {
+            iconOffsetY = 100
+            iconScale = 0.7
+            iconOpacity = 0.0
             textOpacity = 0.0
         }
         
-        // New icon starts falling from above
-        iconOffsetY = -150
-        iconScale = 1.2
-        iconOpacity = 1.0
-        iconOffsetX = 0
-        
-        // Drop down fast (falling)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            withAnimation(.easeIn(duration: 0.25)) {
-                iconOffsetY = 0  // Falls to normal position
-            }
+        // Phase 2: After old icon is gone, prepare new icon
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            // Reset to starting position for NEW icon (no animation)
+            iconOffsetY = -150
+            iconOffsetX = 0
+            iconScale = 1.2
+            iconOpacity = 1.0
             
-            // COLLISION! Old icon gets pushed down
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                // Impact: new icon squashes slightly
-                withAnimation(.easeOut(duration: 0.1)) {
-                    iconScale = 0.95
+            // Phase 3: Drop new icon from above
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.easeIn(duration: 0.3)) {
+                    iconOffsetY = 0  // Falls to normal position
                 }
                 
-                // Old icon gets pushed DOWN (not up-left)
-                withAnimation(.easeOut(duration: 0.35)) {
-                    iconOffsetY = 120   // Pushed down
-                    iconScale = 0.7
-                    iconOpacity = 0.0
-                }
-                
-                // Ripple on collision impact
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                    rippleTrigger += 1
-                }
-                
-                // New icon bounces back to normal after squash
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    // Reset for new icon
-                    iconOffsetY = 0
-                    iconOpacity = 1.0
-                    
-                    withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
-                        iconScale = 1.0
+                // Phase 4: Landing impact
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    // Squash on landing
+                    withAnimation(.easeOut(duration: 0.1)) {
+                        iconScale = 0.95
                     }
                     
-                    // Fade in new text
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                        withAnimation(.easeIn(duration: 0.25)) {
-                            textOpacity = 1.0
+                    // Ripple on landing impact
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        rippleTrigger += 1
+                    }
+                    
+                    // Bounce back to normal
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
+                            iconScale = 1.0
+                        }
+                        
+                        // Fade in new text
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            withAnimation(.easeIn(duration: 0.25)) {
+                                textOpacity = 1.0
+                            }
                         }
                     }
                 }
