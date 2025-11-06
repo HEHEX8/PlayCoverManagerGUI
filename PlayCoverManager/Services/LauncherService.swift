@@ -8,12 +8,17 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
     
     let bundleIdentifier: String
     let displayName: String
-    let localizedName: String?
+    let standardName: String?  // English/standard name from Info.plist
     let version: String?
     let appURL: URL
     let icon: NSImage?
     let lastLaunchedFlag: Bool
     let isRunning: Bool
+    
+    // Helper computed property to get the last component of bundle ID
+    var bundleShortName: String {
+        bundleIdentifier.split(separator: ".").last.map(String.init) ?? bundleIdentifier
+    }
 
     // Include all properties in equality check so SwiftUI detects changes
     static func == (lhs: PlayCoverApp, rhs: PlayCoverApp) -> Bool {
@@ -59,12 +64,15 @@ final class LauncherService {
             // Try multiple methods to get the best localized name
             let displayName = getLocalizedAppName(for: bundle, url: url)
             
+            // Get standard (English) name from Info.plist
+            let standardName = getStandardAppName(for: bundle)
+            
             let info = bundle.infoDictionary
             let version = info?["CFBundleShortVersionString"] as? String
             let icon = getCachedIcon(for: bundleID, appURL: url)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
             let isRunning = isAppRunning(bundleID: bundleID)
-            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, localizedName: nil, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning)
+            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, standardName: standardName, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning)
             apps.append(app)
         }
         return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
@@ -106,6 +114,23 @@ final class LauncherService {
         
         // Fallback: Use filename
         return url.deletingPathExtension().lastPathComponent
+    }
+    
+    private func getStandardAppName(for bundle: Bundle) -> String? {
+        // Get English/standard name from Info.plist (not localized)
+        guard let info = bundle.infoDictionary else { return nil }
+        
+        // Try CFBundleDisplayName first (most common)
+        if let displayName = info["CFBundleDisplayName"] as? String, !displayName.isEmpty {
+            return displayName
+        }
+        
+        // Try CFBundleName
+        if let name = info["CFBundleName"] as? String, !name.isEmpty {
+            return name
+        }
+        
+        return nil
     }
     
     private func getLocalizedName(from appURL: URL, languageCode: String) -> String? {

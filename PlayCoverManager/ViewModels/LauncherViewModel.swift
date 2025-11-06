@@ -121,9 +121,10 @@ final class LauncherViewModel {
         }
         let query = searchText.lowercased()
         filteredApps = apps.filter { app in
+            // Search in: 1) System language name, 2) Standard (English) name, 3) Bundle ID short name
             app.displayName.lowercased().contains(query) ||
-            app.localizedName?.lowercased().contains(query) == true ||
-            app.bundleIdentifier.lowercased().contains(query)
+            app.standardName?.lowercased().contains(query) == true ||
+            app.bundleShortName.lowercased().contains(query)
         }
     }
 
