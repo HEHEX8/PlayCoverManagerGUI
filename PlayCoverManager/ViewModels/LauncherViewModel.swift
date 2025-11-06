@@ -464,31 +464,15 @@ final class LauncherViewModel {
             return
         }
         
-        print("[LauncherVM] No locks detected, waiting for system processes to release files...")
-        
-        // Wait for system processes (cfprefsd, etc.) to release file handles
-        try? await Task.sleep(for: .seconds(2))
-        
-        print("[LauncherVM] Attempting to eject disk image")
+        print("[LauncherVM] No locks detected, attempting to eject disk image")
         do {
             // Eject the disk image device directly (unmounts all volumes and detaches device)
             try await diskImageService.ejectDiskImage(for: containerURL)
             print("[LauncherVM] Successfully ejected disk image for \(bundleID)")
         } catch {
             print("[LauncherVM] Failed to eject disk image for \(bundleID): \(error)")
-            
-            // Retry once after additional wait
-            print("[LauncherVM] Retrying after additional wait...")
-            try? await Task.sleep(for: .seconds(2))
-            
-            do {
-                try await diskImageService.ejectDiskImage(for: containerURL)
-                print("[LauncherVM] Successfully ejected disk image on retry for \(bundleID)")
-            } catch {
-                print("[LauncherVM] Failed to eject disk image on retry for \(bundleID): \(error)")
-                // Silently fail - don't show error for auto-unmount
-                // The user might have manually unmounted it already
-            }
+            // Silently fail - will retry on next refresh
+            // System processes (cfprefsd, etc.) may still be holding file handles
         }
     }
 
