@@ -103,11 +103,21 @@ final class DiskImageService {
         
         let volName = volumeName ?? bundleIdentifier
         
+        // Determine size based on container type
+        // PlayCover container needs large capacity as it stores all IPAs (grows indefinitely)
+        // Other app containers use standard 50GB size
+        let imageSize: String
+        if bundleIdentifier == "io.playcover.PlayCover" {
+            imageSize = "10T"  // 10 TB for PlayCover container
+        } else {
+            imageSize = "50G"  // 50 GB for other app containers
+        }
+        
         // Create ASIF disk image using diskutil (macOS Tahoe 26.0+ only)
         let args = [
             "image", "create", "blank",
             "--format", "ASIF",
-            "--size", "50G",
+            "--size", imageSize,
             "--volumeName", volName,
             imageURL.path
         ]
