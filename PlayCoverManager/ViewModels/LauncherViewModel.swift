@@ -307,22 +307,36 @@ final class LauncherViewModel {
     // MARK: - App Termination Monitoring
     
     private func startMonitoringAppTerminations() {
+        print("[LauncherVM] Setting up app termination observer")
         appTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didTerminateApplicationNotification,
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
-            guard let bundleID = app.bundleIdentifier else { return }
+            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
+                print("[LauncherVM] Termination notification received but no app info")
+                return
+            }
+            guard let bundleID = app.bundleIdentifier else {
+                print("[LauncherVM] Terminated app has no bundle ID")
+                return
+            }
+            
+            print("[LauncherVM] App terminated: \(bundleID)")
             
             // Handle app termination on MainActor
             Task { @MainActor [weak self] in
-                guard let self = self else { return }
+                guard let self = self else {
+                    print("[LauncherVM] Self is nil in termination handler")
+                    return
+                }
                 
                 // Check if this is one of our managed apps
                 let isManagedApp = self.apps.contains { $0.bundleIdentifier == bundleID }
+                print("[LauncherVM] Is managed app: \(isManagedApp)")
                 guard isManagedApp else { return }
                 
+                print("[LauncherVM] Starting auto-unmount for \(bundleID)")
                 // Unmount the container for this app
                 await self.unmountContainer(for: bundleID)
                 
@@ -333,33 +347,45 @@ final class LauncherViewModel {
     }
     
     private func unmountContainer(for bundleID: String) async {
+        print("[LauncherVM] unmountContainer called for \(bundleID)")
         let containerURL = containerURL(for: bundleID)
+        print("[LauncherVM] Container URL: \(containerURL.path)")
         
         // Release lock first
+        print("[LauncherVM] Releasing lock for \(bundleID)")
         lockService.unlockContainer(for: bundleID)
         
         // Check if container is mounted
         let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
         guard let descriptor = descriptor, descriptor.isMounted else {
+            print("[LauncherVM] Container not mounted or descriptor failed for \(bundleID)")
             return
         }
         
+        print("[LauncherVM] Container is mounted, checking for locks")
+        
         // Check if any other process has a lock on this container
         if !lockService.canLockContainer(for: bundleID, at: containerURL) {
+            print("[LauncherVM] Container is locked by another process, skipping unmount")
             // Another process (possibly PlayCover) is using this container
             // Don't unmount
             return
         }
         
+        print("[LauncherVM] No locks detected, attempting unmount")
         do {
             try await diskImageService.detach(volumeURL: containerURL)
+            print("[LauncherVM] Successfully unmounted container for \(bundleID)")
         } catch {
+            print("[LauncherVM] Failed to unmount container for \(bundleID): \(error)")
             // Silently fail - don't show error for auto-unmount
             // The user might have manually unmounted it already
         }
     }
 
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
+        print("[LauncherVM] ===== Starting performUnmountAllAndQuit =====")
+        print("[LauncherVM] applyToPlayCoverContainer: \(applyToPlayCoverContainer)")
         isBusy = true
         isShowingStatus = true
         statusMessage = "ディスクイメージをアンマウントしています…"
@@ -369,21 +395,31 @@ final class LauncherViewModel {
         var ejectedDrive: String?
         
         // Step 1: Unmount all app containers
+        print("[LauncherVM] Step 1: Unmounting app containers (\(apps.count) apps)")
         statusMessage = "アプリコンテナをアンマウントしています…"
         for app in apps {
             let container = containerURL(for: app.bundleIdentifier)
+            print("[LauncherVM] Checking app: \(app.bundleIdentifier)")
             if fileManager.fileExists(atPath: container.path) {
+                print("[LauncherVM] Container exists, attempting unmount: \(container.path)")
                 do {
                     try await diskImageService.detach(volumeURL: container)
                     successCount += 1
+                    print("[LauncherVM] Successfully unmounted: \(app.bundleIdentifier)")
                 } catch {
                     failedCount += 1
+                    print("[LauncherVM] Failed to unmount \(app.bundleIdentifier): \(error)")
                 }
+            } else {
+                print("[LauncherVM] Container doesn't exist, skipping: \(container.path)")
             }
         }
         
+        print("[LauncherVM] Step 1 complete. Success: \(successCount), Failed: \(failedCount)")
+        
         // If any app container failed, show error and abort
         guard failedCount == 0 else {
+            print("[LauncherVM] Aborting due to failed app containers")
             isBusy = false
             isShowingStatus = false
             self.error = AppError.diskImage(
@@ -395,42 +431,71 @@ final class LauncherViewModel {
         
         // Step 2: Unmount PlayCover container
         if applyToPlayCoverContainer {
+            print("[LauncherVM] Step 2: Unmounting PlayCover container")
             statusMessage = "PlayCover コンテナをアンマウントしています…"
             let playCoverContainer = playCoverPaths.containerRootURL
-            do {
-                try await diskImageService.detach(volumeURL: playCoverContainer)
-                successCount += 1
-            } catch {
-                // PlayCover container failed, show error and abort
-                isBusy = false
-                isShowingStatus = false
-                self.error = AppError.diskImage(
-                    "PlayCover コンテナのアンマウントに失敗しました",
-                    message: "PlayCover が実行中の可能性があります。"
-                )
-                return
+            print("[LauncherVM] PlayCover container path: \(playCoverContainer.path)")
+            
+            // Check if it exists and is mounted
+            if fileManager.fileExists(atPath: playCoverContainer.path) {
+                print("[LauncherVM] PlayCover container exists")
+                do {
+                    try await diskImageService.detach(volumeURL: playCoverContainer)
+                    successCount += 1
+                    print("[LauncherVM] Successfully unmounted PlayCover container")
+                } catch {
+                    print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
+                    // PlayCover container failed, show error and abort
+                    isBusy = false
+                    isShowingStatus = false
+                    self.error = AppError.diskImage(
+                        "PlayCover コンテナのアンマウントに失敗しました",
+                        message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
+                    )
+                    return
+                }
+            } else {
+                print("[LauncherVM] PlayCover container doesn't exist or not mounted, skipping")
             }
+        } else {
+            print("[LauncherVM] Step 2: Skipping PlayCover container (applyToPlayCoverContainer=false)")
         }
         
+        print("[LauncherVM] Step 2 complete. Total success: \(successCount)")
+        
         // Step 3: If external drive, eject the whole drive
+        print("[LauncherVM] Step 3: Checking for external drive")
         if let storageDir = settings.diskImageDirectory {
+            print("[LauncherVM] Storage directory: \(storageDir.path)")
             let isExternal = (try? await isExternalDrive(storageDir)) ?? false
+            print("[LauncherVM] Is external drive: \(isExternal)")
             
             if isExternal {
                 statusMessage = "外部ドライブを取り外し可能な状態にしています…"
                 if let devicePath = try? await getDevicePath(for: storageDir) {
+                    print("[LauncherVM] Device path: \(devicePath)")
                     do {
                         try await ejectDrive(devicePath: devicePath)
                         ejectedDrive = storageDir.lastPathComponent
+                        print("[LauncherVM] Successfully ejected drive: \(ejectedDrive ?? "unknown")")
                     } catch {
+                        print("[LauncherVM] Failed to eject drive (ignoring): \(error)")
                         // Eject failed, but leave it to Finder/System
                         // We already unmounted volumes successfully
                     }
+                } else {
+                    print("[LauncherVM] Could not get device path for external drive")
                 }
             }
+        } else {
+            print("[LauncherVM] No storage directory configured")
         }
         
+        print("[LauncherVM] Step 3 complete")
+        
         // Step 4: Show result and quit
+        print("[LauncherVM] Step 4: Showing results and quitting")
+        print("[LauncherVM] Final stats - Success: \(successCount), Failed: 0, Ejected: \(ejectedDrive ?? "none")")
         await showUnmountResultAndQuit(successCount: successCount, failedCount: 0, ejectedDrive: ejectedDrive)
     }
     
