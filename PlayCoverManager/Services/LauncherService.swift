@@ -117,15 +117,26 @@ final class LauncherService {
     }
     
     private func getStandardAppName(for bundle: Bundle) -> String? {
-        // Get English/standard name from Info.plist (not localized)
+        // Get English/standard name from en.lproj (iOS apps typically have English as base language)
+        // Note: bundle.infoDictionary may return localized values based on system language
+        
+        // Try English localization first (most iOS apps have this)
+        if let englishName = getLocalizedName(from: bundle.bundleURL, languageCode: "en") {
+            return englishName
+        }
+        
+        // Fallback: Try base.lproj
+        if let baseName = getLocalizedName(from: bundle.bundleURL, languageCode: "Base") {
+            return baseName
+        }
+        
+        // Last resort: Use infoDictionary (may be localized but better than nothing)
         guard let info = bundle.infoDictionary else { return nil }
         
-        // Try CFBundleDisplayName first (most common)
         if let displayName = info["CFBundleDisplayName"] as? String, !displayName.isEmpty {
             return displayName
         }
         
-        // Try CFBundleName
         if let name = info["CFBundleName"] as? String, !name.isEmpty {
             return name
         }
