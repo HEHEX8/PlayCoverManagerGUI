@@ -10,6 +10,7 @@ struct QuickLauncherView: View {
     @State private var showingSettings = false
     @State private var showingInstaller = false
     @State private var showingUninstaller = false
+    @State private var isDrawerOpen = false
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -27,10 +28,21 @@ struct QuickLauncherView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
                 // Simplified toolbar with only search and main actions
                 HStack(spacing: 16) {
+                    // Hamburger menu button to toggle drawer
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            isDrawerOpen.toggle()
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
+                            .font(.system(size: 16, weight: .medium))
+                    }
+                    .buttonStyle(.bordered)
+                    .help("メニュー")
+                    
                     // Search field - left aligned
                     TextField("検索", text: $viewModel.searchText)
                         .textFieldStyle(.roundedBorder)
@@ -168,17 +180,7 @@ struct QuickLauncherView: View {
                 }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        
-        // Sidebar action panel (right side)
-        SidebarActionPanel(
-            showingSettings: $showingSettings,
-            showingInstaller: $showingInstaller,
-            showingUninstaller: $showingUninstaller,
-            getPlayCoverIcon: getPlayCoverIcon
-        )
-    }
-    .sheet(item: $selectedAppForDetail) { app in
+        .sheet(item: $selectedAppForDetail) { app in
         AppDetailSheet(app: app, viewModel: viewModel)
     }
     .sheet(isPresented: $showingSettings) {
@@ -249,6 +251,31 @@ struct QuickLauncherView: View {
         }
         if viewModel.selectedApp == nil {
             viewModel.selectedApp = viewModel.filteredApps.first
+        }
+    }
+    .overlay(alignment: .leading) {
+        // Left drawer overlay
+        if isDrawerOpen {
+            ZStack(alignment: .leading) {
+                // Background overlay - tap to close
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            isDrawerOpen = false
+                        }
+                    }
+                
+                // Drawer content
+                DrawerPanel(
+                    showingSettings: $showingSettings,
+                    showingInstaller: $showingInstaller,
+                    showingUninstaller: $showingUninstaller,
+                    getPlayCoverIcon: getPlayCoverIcon,
+                    isOpen: $isDrawerOpen
+                )
+                .transition(.move(edge: .leading))
+            }
         }
     }
     }
@@ -1595,116 +1622,162 @@ private struct InfoView: View {
     }
 }
 
-// MARK: - Sidebar Action Panel
+// MARK: - Drawer Panel
 
-private struct SidebarActionPanel: View {
+private struct DrawerPanel: View {
     @Binding var showingSettings: Bool
     @Binding var showingInstaller: Bool
     @Binding var showingUninstaller: Bool
     let getPlayCoverIcon: () -> NSImage?
+    @Binding var isOpen: Bool
     
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-                .frame(height: 20)
-            
-            // PlayCover.app button
-            Button {
-                NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
-            } label: {
-                VStack(spacing: 6) {
-                    if let playCoverIcon = getPlayCoverIcon() {
-                        Image(nsImage: playCoverIcon)
-                            .resizable()
-                            .frame(width: 36, height: 36)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                    } else {
-                        Image(systemName: "app.badge.checkmark")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 36, height: 36)
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
+            HStack {
+                Text("メニュー")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        isOpen = false
                     }
-                    Text("PlayCover")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14))
                 }
-                .frame(width: 70, height: 70)
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-            .help("PlayCover を開く (⌘⇧P)")
-            .keyboardShortcut("p", modifiers: [.command, .shift])
+            .padding()
             
             Divider()
-                .padding(.vertical, 12)
             
-            // Install button
-            Button {
-                showingInstaller = true
-            } label: {
-                VStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 36, height: 36)
-                    Text("インストール")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                Spacer()
+                    .frame(height: 20)
+            
+                // PlayCover.app button
+                Button {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        isOpen = false
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        if let playCoverIcon = getPlayCoverIcon() {
+                            Image(nsImage: playCoverIcon)
+                                .resizable()
+                                .frame(width: 32, height: 32)
+                                .clipShape(RoundedRectangle(cornerRadius: 7))
+                        } else {
+                            Image(systemName: "app.badge.checkmark")
+                                .font(.system(size: 20))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 32, height: 32)
+                        }
+                        Text("PlayCover.app")
+                            .font(.body)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
                 }
-                .frame(width: 70, height: 70)
-            }
-            .buttonStyle(.plain)
-            .help("IPA をインストール (⌘I)")
-            .keyboardShortcut("i", modifiers: [.command])
-            
-            // Uninstall button
-            Button {
-                showingUninstaller = true
-            } label: {
-                VStack(spacing: 6) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 36, height: 36)
-                    Text("削除")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
+                .help("PlayCover を開く (⌘⇧P)")
+                .keyboardShortcut("p", modifiers: [.command, .shift])
+                
+                Divider()
+                    .padding(.leading, 16)
+                
+                // Install button
+                Button {
+                    showingInstaller = true
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        isOpen = false
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.blue)
+                            .frame(width: 32, height: 32)
+                        Text("IPA をインストール")
+                            .font(.body)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
                 }
-                .frame(width: 70, height: 70)
-            }
-            .buttonStyle(.plain)
-            .help("アプリをアンインストール (⌘D)")
-            .keyboardShortcut("d", modifiers: [.command])
-            
-            Divider()
-                .padding(.vertical, 12)
-            
-            // Settings button
-            Button {
-                showingSettings = true
-            } label: {
-                VStack(spacing: 6) {
-                    Image(systemName: "gear")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 36, height: 36)
-                    Text("設定")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
+                .help("IPA をインストール (⌘I)")
+                .keyboardShortcut("i", modifiers: [.command])
+                
+                // Uninstall button
+                Button {
+                    showingUninstaller = true
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        isOpen = false
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.red)
+                            .frame(width: 32, height: 32)
+                        Text("アプリを削除")
+                            .font(.body)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
                 }
-                .frame(width: 70, height: 70)
-            }
-            .buttonStyle(.plain)
-            .help("設定 (⌘,)")
-            .keyboardShortcut(",", modifiers: [.command])
+                .buttonStyle(.plain)
+                .help("アプリをアンインストール (⌘D)")
+                .keyboardShortcut("d", modifiers: [.command])
+                
+                Divider()
+                    .padding(.leading, 16)
+                
+                // Settings button
+                Button {
+                    showingSettings = true
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        isOpen = false
+                    }
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "gear")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 32, height: 32)
+                        Text("設定")
+                            .font(.body)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("設定 (⌘,)")
+                .keyboardShortcut(",", modifiers: [.command])
             
-            Spacer()
+                Spacer()
+            }
         }
-        .frame(width: 90)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .overlay(alignment: .leading) {
+        .frame(width: 260, maxHeight: .infinity)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .trailing) {
             Rectangle()
                 .fill(Color(nsColor: .separatorColor))
                 .frame(width: 1)
         }
+        .shadow(color: .black.opacity(0.3), radius: 10, x: 2, y: 0)
     }
 }
