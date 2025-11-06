@@ -23,6 +23,7 @@ class IPAInstallerService {
     var isInstalling = false
     var currentProgress: Double = 0.0
     var currentStatus: String = ""
+    var currentAppName: String = ""  // Currently installing app name
     var installedApps: [String] = []
     var failedApps: [String] = []
     
@@ -325,7 +326,7 @@ class IPAInstallerService {
     
     // Monitor installation completion by watching Applications directory
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        await MainActor.run { currentStatus = "インストール監視開始..." }
+        await MainActor.run { currentStatus = "PlayCoverでIPAをインストール中" }
         
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
@@ -335,7 +336,7 @@ class IPAInstallerService {
         let initialAppURLs = getAppURLs(in: applicationsDir)
         let initialAppMTimes = getAppModificationTimes(initialAppURLs)
         
-        await MainActor.run { currentStatus = "アプリディレクトリ監視中..." }
+        await MainActor.run { currentStatus = "PlayCoverでIPAをインストール中" }
         
         let maxWait = 300 // 5 minutes
         let checkInterval: TimeInterval = 1.0
@@ -401,7 +402,7 @@ class IPAInstallerService {
             
             // Update status every 5 seconds
             if i % 5 == 0 {
-                await MainActor.run { currentStatus = "監視中... (\(i)秒経過)" }
+                await MainActor.run { currentStatus = "PlayCoverでIPAをインストール中 (\(i)秒経過)" }
             }
             
             try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
@@ -525,6 +526,7 @@ class IPAInstallerService {
     
     nonisolated func installSingleIPA(_ info: IPAInfo) async throws {
         await MainActor.run {
+            currentAppName = info.appName
             currentStatus = "\(info.appName) をインストール中"
         }
         
@@ -587,6 +589,7 @@ class IPAInstallerService {
             installedApps.removeAll()
             failedApps.removeAll()
             currentProgress = 0.0
+            currentAppName = ""
         }
         
         defer {
@@ -618,6 +621,7 @@ class IPAInstallerService {
         await MainActor.run {
             currentProgress = 1.0
             currentStatus = "完了"
+            currentAppName = ""  // Clear current app name after all installations complete
         }
     }
 }

@@ -404,17 +404,17 @@ struct IPAInstallerSheet: View {
                         }
                         
                         // Currently installing (if any)
-                        if !service.currentStatus.isEmpty && service.currentStatus != "完了" {
+                        if !service.currentAppName.isEmpty && !service.installedApps.contains(service.currentAppName) {
                             HStack(spacing: 12) {
                                 ProgressView()
                                     .controlSize(.regular)
                                     .frame(width: 32)
                                 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(service.currentStatus)
+                                    Text(service.currentAppName)
                                         .font(.body)
                                         .fontWeight(.medium)
-                                    Text("処理中...")
+                                    Text(service.currentStatus)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
