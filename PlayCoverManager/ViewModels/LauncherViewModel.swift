@@ -39,7 +39,6 @@ final class LauncherViewModel {
     private let processRunner: ProcessRunner
 
     private var pendingLaunchContext: LaunchContext?
-    private nonisolated(unsafe) var appTerminationObserver: NSObjectProtocol?
     
     // Polling-based termination detection
     private var previouslyRunningApps: Set<String> = []
@@ -75,10 +74,6 @@ final class LauncherViewModel {
     }
     
     nonisolated deinit {
-        // Stop monitoring - need to do this synchronously in deinit
-        if let observer = appTerminationObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(observer)
-        }
         // Cancel polling task
         pollingTask?.cancel()
     }
@@ -328,8 +323,10 @@ final class LauncherViewModel {
         return perAppSettings
     }
     
-    // MARK: - App Termination Monitoring
-    
+    // MARK: - App Termination Monitoring (Legacy - NSWorkspace notifications)
+    // NOTE: NSWorkspace notifications don't work for PlayCover-launched iOS apps
+    // This code is kept for reference but not used. Use polling-based detection instead.
+    /*
     private func startMonitoringAppTerminations() {
         print("[LauncherVM] Setting up app termination observer")
         appTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
@@ -388,6 +385,7 @@ final class LauncherViewModel {
         }
         print("[LauncherVM] App termination observer registered successfully")
     }
+    */"}
     
     // MARK: - Polling-based Termination Detection
     
