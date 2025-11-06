@@ -276,6 +276,30 @@ final class DiskImageService {
         return deviceNode
     }
     
+    /// Get volume name for a path (walks up directory tree to find actual mount point)
+    /// - Parameter url: Path to check (can be subdirectory)
+    /// - Returns: Volume name or nil if not found
+    func getVolumeName(for url: URL) async throws -> String? {
+        var currentPath = url
+        
+        // Walk up the directory tree to find the actual mount point
+        while currentPath.path != "/" {
+            let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
+            if let output = output,
+               let data = output.data(using: .utf8),
+               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let volumeName = plist["VolumeName"] as? String {
+                print("🔍 [DiskImageService] Found volume name: \(volumeName) for path: \(currentPath.path)")
+                return volumeName
+            }
+            
+            // Move up one directory
+            currentPath = currentPath.deletingLastPathComponent()
+        }
+        
+        return nil
+    }
+    
     /// Eject a drive
     /// - Parameter devicePath: Device path (e.g., /dev/disk2)
     func ejectDrive(devicePath: String) async throws {
