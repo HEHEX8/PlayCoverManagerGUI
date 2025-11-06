@@ -609,6 +609,20 @@ struct AppUninstallerSheet: View {
             
             if isLoading {
                 ProgressView("アプリ一覧を読み込み中...")
+            } else if isUninstalling {
+                // Show uninstall progress view
+                VStack(spacing: 16) {
+                    if let service = uninstallerService {
+                        ProgressView(value: service.currentProgress)
+                            .frame(width: 300)
+                        Text(service.currentStatus)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ProgressView("アンインストール中...")
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if showResults {
                 // Results view - larger and centered
                 VStack(spacing: 24) {
@@ -725,15 +739,6 @@ struct AppUninstallerSheet: View {
                             }
                         }
                     }
-                    
-                    if isUninstalling, let service = uninstallerService {
-                        VStack(spacing: 8) {
-                            ProgressView(value: service.currentProgress)
-                            Text(service.currentStatus)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
                 }
             }
             
@@ -771,6 +776,7 @@ struct AppUninstallerSheet: View {
     
     private func loadApps() async {
         guard let service = uninstallerService else {
+            print("🟢 [loadApps] サービス初期化中")
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
             let service = AppUninstallerService(diskImageService: diskImageService, settingsStore: settingsStore, perAppSettingsStore: perAppSettingsStore, launcherService: launcherService)
@@ -779,24 +785,35 @@ struct AppUninstallerSheet: View {
             return
         }
         
+        print("🟢 [loadApps] アプリ一覧取得開始")
         do {
             apps = try await service.getInstalledApps()
             totalSize = apps.reduce(0) { $0 + $1.appSize + $1.diskImageSize }
+            print("🟢 [loadApps] アプリ数: \(apps.count)")
             
             // If preSelectedBundleID is provided, select it and start uninstall
-            if let bundleID = preSelectedBundleID,
-               apps.contains(where: { $0.bundleID == bundleID }) {
-                selectedApps = [bundleID]
-                isLoading = false
-                // Start uninstall immediately after loading
-                await startUninstallation()
-                return
+            if let bundleID = preSelectedBundleID {
+                print("🟢 [loadApps] 事前選択されたアプリ: \(bundleID)")
+                if apps.contains(where: { $0.bundleID == bundleID }) {
+                    print("🟢 [loadApps] アプリが見つかりました - 自動アンインストール開始")
+                    selectedApps = [bundleID]
+                    isLoading = false
+                    // Start uninstall immediately after loading
+                    await startUninstallation()
+                    return
+                } else {
+                    print("🔴 [loadApps] アプリが見つかりません")
+                }
+            } else {
+                print("🟢 [loadApps] 事前選択なし - 通常モード")
             }
         } catch {
+            print("🔴 [loadApps] エラー: \(error)")
             apps = []
             totalSize = 0
         }
         
+        print("🟢 [loadApps] 読み込み完了 - isLoading を false に設定")
         isLoading = false
     }
     
