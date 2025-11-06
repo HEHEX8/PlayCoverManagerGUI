@@ -28,6 +28,17 @@ final class LauncherViewModel {
     var pendingDataHandling: DataHandlingRequest?
     var pendingImageCreation: PlayCoverApp?
     var statusMessage: String = ""
+    
+    // Unmount flow state
+    enum UnmountFlowState: Equatable {
+        case idle
+        case confirming(volumeDisplayName: String)
+        case processing(status: String)
+        case ejectConfirming(volumeDisplayName: String)
+        case success(unmountedCount: Int, ejectedDrive: String?)
+        case error(title: String, message: String)
+    }
+    var unmountFlowState: UnmountFlowState = .idle
 
     private let playCoverPaths: PlayCoverPaths
     private let diskImageService: DiskImageService
@@ -299,35 +310,60 @@ final class LauncherViewModel {
         return filtered
     }
 
+    private var pendingUnmountTask: Bool?
+    
     func unmountAll(applyToPlayCoverContainer: Bool = true) {
         // Check for running apps first
         let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
         
         if !runningApps.isEmpty {
-            let alert = NSAlert()
-            alert.messageText = "実行中のアプリがあります"
-            alert.informativeText = "以下のアプリが実行中です。アンマウントするには先にこれらのアプリを終了してください。\n\n" + runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
+            let appsList = runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
+            unmountFlowState = .error(
+                title: "実行中のアプリがあります",
+                message: "以下のアプリが実行中です。アンマウントするには先にこれらのアプリを終了してください。\n\n\(appsList)"
+            )
             return
         }
         
-        // Show confirmation dialog
-        let alert = NSAlert()
-        alert.messageText = "すべてアンマウントして終了"
-        alert.informativeText = "すべてのディスクイメージをアンマウントし、アプリを終了します。\n\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。"
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "アンマウントして終了")
-        alert.addButton(withTitle: "キャンセル")
+        // Show confirmation overlay
+        unmountFlowState = .confirming(volumeDisplayName: "")
         
-        let response = alert.runModal()
-        guard response == .alertFirstButtonReturn else {
-            return
-        }
+        // Store for later use when user confirms
+        pendingUnmountTask = applyToPlayCoverContainer
+    }
+    
+    func confirmUnmount() {
+        guard case .confirming = unmountFlowState else { return }
+        guard let applyToPlayCoverContainer = pendingUnmountTask else { return }
         
         Task { await performUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer) }
     }
+    
+    func cancelUnmount() {
+        unmountFlowState = .idle
+        pendingUnmountTask = nil
+    }
+    
+    func confirmEject() {
+        // Will be set by performUnmountAllAndQuit when needed
+        pendingEjectConfirmed = true
+    }
+    
+    func cancelEject() {
+        // Skip eject and go straight to completion
+        pendingEjectConfirmed = false
+    }
+    
+    func completeUnmount() {
+        unmountFlowState = .idle
+        NSApplication.shared.terminate(nil)
+    }
+    
+    func dismissUnmountError() {
+        unmountFlowState = .idle
+    }
+    
+    private var pendingEjectConfirmed: Bool?
     
     func getPerAppSettings() -> PerAppSettingsStore {
         return perAppSettings

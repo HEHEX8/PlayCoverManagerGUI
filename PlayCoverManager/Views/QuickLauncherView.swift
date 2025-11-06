@@ -243,8 +243,17 @@ struct QuickLauncherView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .overlay(alignment: .center) {
-            // Only show status overlay for time-consuming operations (disk image creation, data handling, unmount)
-            if viewModel.isBusy && viewModel.isShowingStatus {
+            // Unmount flow overlay (confirmation, progress, result, error)
+            if viewModel.unmountFlowState != .idle {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                
+                UnmountOverlayView(viewModel: viewModel)
+                    .transition(.scale.combined(with: .opacity))
+            }
+            // Regular status overlay for other time-consuming operations
+            else if viewModel.isBusy && viewModel.isShowingStatus {
                 VStack(spacing: 12) {
                     ProgressView()
                     if !viewModel.statusMessage.isEmpty {
@@ -256,6 +265,7 @@ struct QuickLauncherView: View {
                 .shadow(radius: 12)
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.unmountFlowState)
         .alert(item: $viewModel.error) { error in
             Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
         }
