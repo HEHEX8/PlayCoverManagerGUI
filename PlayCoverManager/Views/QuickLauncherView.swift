@@ -11,10 +11,18 @@ struct QuickLauncherView: View {
     @State private var showingInstaller = false
     @State private var showingUninstaller = false
     
-    // iOS-style grid with fixed size icons
-    private let gridColumns = [
-        GridItem(.adaptive(minimum: 100, maximum: 100), spacing: 24)
-    ]
+    @AppStorage("appIconSize") private var appIconSizeRaw: String = "medium"
+    
+    // Dynamic grid based on icon size setting
+    private var gridColumns: [GridItem] {
+        let cellSize: CGFloat
+        switch appIconSizeRaw {
+        case "small": cellSize = 80   // 60pt icon + 20pt padding
+        case "large": cellSize = 120  // 100pt icon + 20pt padding
+        default: cellSize = 100       // 80pt icon + 20pt padding (medium)
+        }
+        return [GridItem(.adaptive(minimum: cellSize, maximum: cellSize), spacing: 24)]
+    }
     
     // Get PlayCover.app icon (macOS app)
     private func getPlayCoverIcon() -> NSImage? {
@@ -310,6 +318,7 @@ private struct iOSAppIconView: View {
     @State private var isDragging = false
     
     @AppStorage("appIconSize") private var appIconSizeRaw: String = "medium"
+    @AppStorage("appTextSize") private var appTextSizeRaw: String = "medium"
     @AppStorage("animationsEnabled") private var animationsEnabled = true
     
     private var iconSize: CGFloat {
@@ -317,6 +326,14 @@ private struct iOSAppIconView: View {
         case "small": return 60
         case "large": return 100
         default: return 80  // medium
+        }
+    }
+    
+    private var textSize: CGFloat {
+        switch appTextSizeRaw {
+        case "small": return 10
+        case "large": return 12
+        default: return 11  // medium
         }
     }
     
@@ -383,7 +400,7 @@ private struct iOSAppIconView: View {
             
             // App name below icon
             Text(app.displayName)
-                .font(.system(size: 11))
+                .font(.system(size: textSize))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .frame(width: containerWidth, height: 28)

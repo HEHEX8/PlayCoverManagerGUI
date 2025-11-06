@@ -812,6 +812,7 @@ struct AppUninstallerSheet: View {
 private struct AppearanceSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @AppStorage("appIconSize") private var appIconSize: IconSize = .medium
+    @AppStorage("appTextSize") private var appTextSize: TextSize = .medium
     @AppStorage("animationsEnabled") private var animationsEnabled = true
     
     enum IconSize: String, CaseIterable, Identifiable {
@@ -830,6 +831,22 @@ private struct AppearanceSettingsView: View {
         }
     }
     
+    enum TextSize: String, CaseIterable, Identifiable {
+        case small = "小"
+        case medium = "中"
+        case large = "大"
+        
+        var id: String { rawValue }
+        
+        var points: CGFloat {
+            switch self {
+            case .small: return 10
+            case .medium: return 11
+            case .large: return 12
+            }
+        }
+    }
+    
     var body: some View {
         Form {
             Section(header: Text("アプリアイコン")) {
@@ -841,6 +858,19 @@ private struct AppearanceSettingsView: View {
                 .pickerStyle(.segmented)
                 
                 Text("ランチャーに表示されるアプリアイコンのサイズを変更します。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Section(header: Text("テキスト")) {
+                Picker("文字サイズ", selection: $appTextSize) {
+                    ForEach(TextSize.allCases) { size in
+                        Text(size.rawValue).tag(size)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                Text("アプリ名の文字サイズを変更します。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -920,6 +950,7 @@ private struct MaintenanceSettingsView: View {
         UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
         UserDefaults.standard.removeObject(forKey: "appIconSize")
+        UserDefaults.standard.removeObject(forKey: "appTextSize")
         UserDefaults.standard.removeObject(forKey: "animationsEnabled")
         
         NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
