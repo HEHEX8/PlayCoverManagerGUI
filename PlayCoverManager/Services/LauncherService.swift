@@ -177,8 +177,7 @@ final class LauncherService {
         }
         
         // Load icon and cache it - request larger size for better quality
-        let icon = NSWorkspace.shared.icon(forFile: appURL.path)
-        icon.size = NSSize(width: 512, height: 512)
+        let icon = AppIconHelper.loadAppIcon(from: appURL)
         iconCache.setObject(icon, forKey: cacheKey)
         return icon
     }
