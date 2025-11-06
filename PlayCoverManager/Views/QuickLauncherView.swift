@@ -134,7 +134,7 @@ struct QuickLauncherView: View {
                 VStack(spacing: 0) {
                     // Main app grid
                     if viewModel.filteredApps.isEmpty {
-                        EmptyAppListView {
+                        EmptyAppListView(searchText: viewModel.searchText) {
                             Task { await viewModel.refresh() }
                         }
                     } else {
@@ -193,7 +193,7 @@ struct QuickLauncherView: View {
             } else {
                 // No recent app - show regular grid
                 if viewModel.filteredApps.isEmpty {
-                    EmptyAppListView {
+                    EmptyAppListView(searchText: viewModel.searchText) {
                         Task { await viewModel.refresh() }
                     }
                 } else {
@@ -647,47 +647,70 @@ private struct AppIconView: View {
 }
 
 private struct EmptyAppListView: View {
+    let searchText: String
     let refreshAction: () -> Void
     @State private var showingInstaller = false
     
+    // Check if this is a search result empty state or truly no apps
+    private var isSearchEmpty: Bool {
+        !searchText.isEmpty
+    }
+    
     var body: some View {
         VStack(spacing: 20) {
-            Image(systemName: "tray")
+            Image(systemName: isSearchEmpty ? "magnifyingglass" : "tray")
                 .font(.system(size: 64))
                 .foregroundStyle(.secondary)
             
-            Text("インストール済みアプリがありません")
+            Text(isSearchEmpty ? "検索結果が見つかりません" : "インストール済みアプリがありません")
                 .font(.title2)
                 .foregroundStyle(.primary)
             
-            VStack(spacing: 8) {
-                Text("IPA ファイルをインストールすると、ここに表示されます。")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Text("下のボタンから IPA をインストールしてください。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: 400)
-            
-            HStack(spacing: 12) {
-                Button {
-                    showingInstaller = true
-                } label: {
-                    Label("IPA をインストール", systemImage: "square.and.arrow.down")
+            if isSearchEmpty {
+                // Search empty state
+                VStack(spacing: 8) {
+                    Text("\"\(searchText)\" に一致するアプリが見つかりませんでした。")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("別のキーワードで検索してみてください。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
-                
-                Button {
-                    refreshAction()
-                } label: {
-                    Label("再読み込み", systemImage: "arrow.clockwise")
+                .frame(maxWidth: 400)
+            } else {
+                // No apps installed state
+                VStack(spacing: 8) {
+                    Text("IPA ファイルをインストールすると、ここに表示されます。")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("下のボタンから IPA をインストールしてください。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .keyboardShortcut("r", modifiers: [.command])
+                .frame(maxWidth: 400)
+                
+                HStack(spacing: 12) {
+                    Button {
+                        showingInstaller = true
+                    } label: {
+                        Label("IPA をインストール", systemImage: "square.and.arrow.down")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                    
+                    Button {
+                        refreshAction()
+                    } label: {
+                        Label("再読み込み", systemImage: "arrow.clockwise")
+                    }
+                    .keyboardShortcut("r", modifiers: [.command])
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
