@@ -27,7 +27,7 @@ struct QuickLauncherView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .trailing) {
+        HStack(spacing: 0) {
             VStack(spacing: 0) {
                 // Simplified toolbar with only search and main actions
                 HStack(spacing: 16) {
@@ -38,26 +38,26 @@ struct QuickLauncherView: View {
                     
                     Spacer()
                     
-                    // Large refresh button
+                    // Large refresh button - subtle style
                     Button {
                         Task { await viewModel.refresh() }
                     } label: {
                         Label("再読み込み", systemImage: "arrow.clockwise")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 15, weight: .medium))
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.bordered)
                     .controlSize(.large)
                     .help("アプリ一覧を更新 (⌘R)")
                     .keyboardShortcut("r", modifiers: [.command])
                     
-                    // Large unmount button
+                    // Large unmount button - subtle style
                     Button {
                         viewModel.unmountAll(applyToPlayCoverContainer: true)
                     } label: {
                         Label("すべてアンマウント", systemImage: "eject.fill")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 15, weight: .medium))
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.bordered)
                     .controlSize(.large)
                     .help("すべてアンマウント (⌘⇧U)")
                     .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
@@ -242,8 +242,8 @@ struct QuickLauncherView: View {
             }
         }
             
-            // Floating action panel (right side)
-            FloatingActionPanel(
+            // Sidebar action panel (right side)
+            SidebarActionPanel(
                 showingSettings: $showingSettings,
                 showingInstaller: $showingInstaller,
                 showingUninstaller: $showingUninstaller,
@@ -1594,9 +1594,9 @@ private struct InfoView: View {
     }
 }
 
-// MARK: - Floating Action Panel
+// MARK: - Sidebar Action Panel
 
-private struct FloatingActionPanel: View {
+private struct SidebarActionPanel: View {
     @Binding var showingSettings: Bool
     @Binding var showingInstaller: Bool
     @Binding var showingUninstaller: Bool
@@ -1604,49 +1604,52 @@ private struct FloatingActionPanel: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            Spacer()
+                .frame(height: 20)
+            
             // PlayCover.app button
             Button {
                 NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
             } label: {
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     if let playCoverIcon = getPlayCoverIcon() {
                         Image(nsImage: playCoverIcon)
                             .resizable()
-                            .frame(width: 40, height: 40)
+                            .frame(width: 36, height: 36)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                     } else {
                         Image(systemName: "app.badge.checkmark")
-                            .font(.system(size: 32))
+                            .font(.system(size: 28))
                             .foregroundStyle(.secondary)
-                            .frame(width: 40, height: 40)
+                            .frame(width: 36, height: 36)
                     }
                     Text("PlayCover")
-                        .font(.caption)
-                        .foregroundStyle(.primary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(width: 80, height: 80)
+                .frame(width: 70, height: 70)
             }
             .buttonStyle(.plain)
             .help("PlayCover を開く (⌘⇧P)")
             .keyboardShortcut("p", modifiers: [.command, .shift])
             
             Divider()
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
             
             // Install button
             Button {
                 showingInstaller = true
             } label: {
-                VStack(spacing: 8) {
-                    Image(systemName: "square.and.arrow.down.fill")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.blue)
-                        .frame(width: 40, height: 40)
+                VStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.down")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 36, height: 36)
                     Text("インストール")
-                        .font(.caption)
-                        .foregroundStyle(.primary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(width: 80, height: 80)
+                .frame(width: 70, height: 70)
             }
             .buttonStyle(.plain)
             .help("IPA をインストール (⌘I)")
@@ -1656,38 +1659,38 @@ private struct FloatingActionPanel: View {
             Button {
                 showingUninstaller = true
             } label: {
-                VStack(spacing: 8) {
-                    Image(systemName: "trash.fill")
-                        .font(.system(size: 32))
-                        .foregroundStyle(.red)
-                        .frame(width: 40, height: 40)
+                VStack(spacing: 6) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 36, height: 36)
                     Text("削除")
-                        .font(.caption)
-                        .foregroundStyle(.primary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(width: 80, height: 80)
+                .frame(width: 70, height: 70)
             }
             .buttonStyle(.plain)
             .help("アプリをアンインストール (⌘D)")
             .keyboardShortcut("d", modifiers: [.command])
             
             Divider()
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
             
             // Settings button
             Button {
                 showingSettings = true
             } label: {
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     Image(systemName: "gear")
-                        .font(.system(size: 32))
+                        .font(.system(size: 28))
                         .foregroundStyle(.secondary)
-                        .frame(width: 40, height: 40)
+                        .frame(width: 36, height: 36)
                     Text("設定")
-                        .font(.caption)
-                        .foregroundStyle(.primary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(width: 80, height: 80)
+                .frame(width: 70, height: 70)
             }
             .buttonStyle(.plain)
             .help("設定 (⌘,)")
@@ -1695,12 +1698,7 @@ private struct FloatingActionPanel: View {
             
             Spacer()
         }
-        .padding(.vertical, 16)
-        .frame(width: 100)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(0.15), radius: 8, x: -2, y: 0)
-        .padding(.trailing, 16)
-        .padding(.top, 60)
-        .padding(.bottom, 16)
+        .frame(width: 90)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
     }
 }
