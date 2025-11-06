@@ -516,7 +516,7 @@ struct IPAInstallerSheet: View {
 }
 
 // App Uninstaller Sheet
-private struct AppUninstallerSheet: View {
+struct AppUninstallerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(PerAppSettingsStore.self) private var perAppSettingsStore
