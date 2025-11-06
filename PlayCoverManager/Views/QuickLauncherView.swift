@@ -345,10 +345,12 @@ private struct iOSAppIconView: View {
                 }
             }
             // Combined animations: press + bounce + shake
-            .scaleEffect(isPressed ? 0.92 : (isAnimating ? 0.85 : 1.0))
+            // Use max() to ensure scale never goes below minimum threshold
+            .scaleEffect(max(0.1, isPressed ? 0.92 : (isAnimating ? 0.85 : 1.0)))
             .brightness(isPressed ? -0.1 : 0)
             .offset(x: shakeOffset)
             .rotationEffect(.degrees(isCancelled ? (shakeOffset * 0.3) : 0))
+            .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry
             .animation(.easeOut(duration: 0.1), value: isPressed)
             .animation(
                 isAnimating ? 
@@ -376,8 +378,9 @@ private struct iOSAppIconView: View {
         .frame(width: 100, height: 120)
         .contentShape(Rectangle())
         .opacity(shouldAnimate ? (hasAppeared ? 1 : 0) : 1)
-        .scaleEffect(shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1)
+        .scaleEffect(max(0.3, shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1))
         .offset(y: shouldAnimate ? (hasAppeared ? 0 : 20) : 0)
+        .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry during initial animation
         .onAppear {
             if shouldAnimate && !hasAppeared {
                 // Staggered fade-in animation (Mac Dock style) - only on first load
