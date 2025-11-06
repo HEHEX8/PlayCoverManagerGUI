@@ -891,7 +891,7 @@ private struct MaintenanceSettingsView: View {
                 // アプリ終了のみ
                 quitApp()
             }
-            Button("イジェクト", role: .default) {
+            Button("イジェクト") {
                 Task {
                     await performDriveEject()
                 }
@@ -961,7 +961,8 @@ private struct MaintenanceSettingsView: View {
             
             for asifFile in asifFiles {
                 let bundleID = asifFile.deletingPathExtension().lastPathComponent
-                if let containerURL = appViewModel.playCoverPaths.containerURL(for: bundleID) {
+                if let playCoverPaths = appViewModel.playCoverPaths,
+                   let containerURL = playCoverPaths.containerURL(for: bundleID) {
                     // Check if mounted
                     if try diskImageService.isMounted(at: containerURL) {
                         volumesToUnmount.append(containerURL)
