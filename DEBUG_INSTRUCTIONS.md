@@ -84,10 +84,24 @@ Added detailed logging to investigate two critical issues:
 
 #### 期待されるログ出力 / Expected Log Output
 
+アプリ起動時:
 ```
-[LauncherVM] App terminated: com.example.iosapp
+[LauncherVM] 🔒 Lock acquired for com.example.iosapp: true
+[LauncherVM] 🚀 Launching app: com.example.iosapp (App Name)
+[LauncherVM] ✅ App launched successfully: com.example.iosapp
+```
+
+アプリ終了時:
+```
+[LauncherVM] ===== App Termination Notification Received =====
+[LauncherVM] Terminated app info:
+[LauncherVM]   Bundle ID: com.example.iosapp
+[LauncherVM]   App Name: App Name
+[LauncherVM]   Process ID: 12345
+[LauncherVM] Checking against managed apps:
+[LauncherVM]   - com.example.iosapp (App Name)
 [LauncherVM] Is managed app: true
-[LauncherVM] Starting auto-unmount for com.example.iosapp
+[LauncherVM] ✅ Starting auto-unmount for com.example.iosapp
 [LauncherVM] unmountContainer called for com.example.iosapp
 [LauncherVM] Container URL: /path/to/container
 [LauncherVM] Releasing lock for com.example.iosapp
@@ -99,26 +113,41 @@ Added detailed logging to investigate two critical issues:
 #### 確認すべきポイント / Key Points to Check
 
 **A. 通知は受信しているか?** / Is notification received?
-- `App terminated: ...` が表示されない → 通知が発火していない (NSWorkspaceの問題)
-- Not shown → Notification not firing (NSWorkspace issue)
+- `===== App Termination Notification Received =====` が表示されない
+  → 通知が発火していない (NSWorkspaceの問題、またはPlayCoverの起動方法が特殊)
+- Not shown → Notification not firing (NSWorkspace issue, or PlayCover launches apps in a special way)
+- **重要**: iOSアプリを終了したときに、**何かしらの**アプリ終了通知が出るはず
+  → 全く出ない場合は、NSWorkspaceが全く機能していない
+- **Important**: When iOS app quits, **some** termination notification should appear
+  → If nothing shows, NSWorkspace monitoring is completely broken
 
-**B. 管理対象アプリとして認識されているか?** / Is it recognized as managed app?
+**B. bundleIDは正しいか?** / Is bundle ID correct?
+- `Bundle ID: <no bundle ID>` → アプリにbundleIDがない（問題）
+- Shows `<no bundle ID>` → App has no bundle ID (problem)
+- 起動時のbundleIDと終了時のbundleIDを比較
+- Compare bundle ID between launch and termination
+
+**C. 管理対象アプリとして認識されているか?** / Is it recognized as managed app?
 - `Is managed app: false` → アプリリストに含まれていない、bundleIDが一致していない
 - Shows false → Not in app list, bundleID mismatch
+- `Checking against managed apps:` のリストを確認
+- Check the list shown in `Checking against managed apps:`
 
-**C. アンマウント処理は実行されているか?** / Is unmount process executed?
-- `unmountContainer called` が表示されない → Task内のコードが実行されていない
+**D. アンマウント処理は実行されているか?** / Is unmount process executed?
+- `✅ Starting auto-unmount for ...` が表示されない → Task内のコードが実行されていない
 - Not shown → Task code not executing
+- `unmountContainer called` が表示されない → unmountContainer関数が呼ばれていない
+- Not shown → unmountContainer function not called
 
-**D. コンテナはマウントされているか?** / Is container mounted?
+**E. コンテナはマウントされているか?** / Is container mounted?
 - `Container not mounted or descriptor failed` → 既にアンマウントされているか、descriptorの取得失敗
 - Shown → Already unmounted or descriptor fetch failed
 
-**E. ロックがかかっているか?** / Is container locked?
+**F. ロックがかかっているか?** / Is container locked?
 - `Container is locked by another process` → PlayCoverがまだ実行中
 - Shown → PlayCover still running
 
-**F. アンマウント結果は?** / Unmount result?
+**G. アンマウント結果は?** / Unmount result?
 - `Successfully unmounted container` → 成功 / Success
 - `Failed to unmount container: <error>` → エラー詳細を確認 / Check error details
 
@@ -151,16 +180,21 @@ Added detailed logging to investigate two critical issues:
 **対策**: `init()` で `startMonitoringAppTerminations()` が呼ばれているか確認
 
 #### 原因候補2: NSWorkspaceの通知が発火していない
-**ログで確認**: `App terminated: ...` が表示されない
+**ログで確認**: `===== App Termination Notification Received =====` が表示されない
 **対策**: 
-- PlayCoverアプリから起動したiOSアプリの終了通知が正しく配信されているか確認
-- `queue: .main` の指定が適切か確認
+- PlayCoverから起動したiOSアプリの終了が、macOSのアプリ終了として認識されていない可能性
+- PlayToolsを使った特殊な起動方法が原因の可能性
+- 他のmacOSアプリを終了したときに通知が来るか確認（例: Safariを終了）
+- 通知が全く来ない場合は、observer登録に問題がある
 
 #### 原因候補3: bundleIDが一致していない
-**ログで確認**: `Is managed app: false`
+**ログで確認**: 
+- `Bundle ID: ...` と `Checking against managed apps:` のリストを比較
+- `Is managed app: false` と表示される
 **対策**: 
-- 終了したアプリのbundleIDと、`apps` 配列のbundleIDが完全一致しているか確認
-- 大文字小文字の違いなど
+- 起動時と終了時のbundleIDが完全一致しているか確認
+- PlayCoverがアプリを起動するときに、bundleIDを変更している可能性
+- 大文字小文字の違い、プレフィックス/サフィックスの追加など
 
 #### 原因候補4: コンテナが既にアンマウントされている
 **ログで確認**: `Container not mounted or descriptor failed`
