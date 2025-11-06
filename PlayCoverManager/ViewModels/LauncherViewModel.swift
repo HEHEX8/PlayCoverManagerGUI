@@ -284,7 +284,20 @@ final class LauncherViewModel {
     }
 
     func unmountAll(applyToPlayCoverContainer: Bool = true) {
-        Task { await performUnmountAll(applyToPlayCoverContainer: applyToPlayCoverContainer) }
+        // Show confirmation dialog first
+        let alert = NSAlert()
+        alert.messageText = "すべてアンマウントして終了"
+        alert.informativeText = "すべてのディスクイメージをアンマウントし、アプリを終了します。\n\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "アンマウントして終了")
+        alert.addButton(withTitle: "キャンセル")
+        
+        let response = alert.runModal()
+        guard response == .alertFirstButtonReturn else {
+            return
+        }
+        
+        Task { await performUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer) }
     }
     
     func getPerAppSettings() -> PerAppSettingsStore {
@@ -346,33 +359,173 @@ final class LauncherViewModel {
         }
     }
 
-    private func performUnmountAll(applyToPlayCoverContainer: Bool) async {
+    private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
         isBusy = true
-        isShowingStatus = true  // Show status for unmount operation
+        isShowingStatus = true
         statusMessage = "ディスクイメージをアンマウントしています…"
-        defer { 
-            isBusy = false
-            isShowingStatus = false
-        }
+        
+        var successCount = 0
+        var failedCount = 0
+        var ejectedDrive: String?
+        
         do {
-            var volumeURLs: [URL] = []
+            // Collect all container URLs except PlayCover's
+            var containerURLs: [URL] = []
             for app in apps {
                 let container = containerURL(for: app.bundleIdentifier)
-                if fileManager.fileExists(atPath: container.path) && !volumeURLs.contains(container) {
-                    volumeURLs.append(container)
+                if fileManager.fileExists(atPath: container.path) {
+                    containerURLs.append(container)
                 }
             }
+            
+            // Check if storage is on external drive
+            if let storageDir = settings.diskImageDirectory {
+                let isExternal = try await isExternalDrive(storageDir)
+                
+                if isExternal {
+                    // External drive - eject the whole drive
+                    statusMessage = "外部ドライブを取り外し可能な状態にしています…"
+                    if let devicePath = try await getDevicePath(for: storageDir) {
+                        do {
+                            try await ejectDrive(devicePath: devicePath)
+                            ejectedDrive = storageDir.lastPathComponent
+                            successCount = containerURLs.count
+                        } catch {
+                            failedCount = containerURLs.count
+                            throw error
+                        }
+                    }
+                } else {
+                    // Internal storage - unmount each container
+                    for containerURL in containerURLs {
+                        do {
+                            try await diskImageService.detach(volumeURL: containerURL)
+                            successCount += 1
+                        } catch {
+                            failedCount += 1
+                        }
+                    }
+                }
+            }
+            
+            // Finally, unmount PlayCover container
             if applyToPlayCoverContainer {
+                statusMessage = "PlayCover コンテナをアンマウントしています…"
                 let playCoverContainer = playCoverPaths.containerRootURL
-                if !volumeURLs.contains(playCoverContainer) {
-                    volumeURLs.append(playCoverContainer)
+                do {
+                    try await diskImageService.detach(volumeURL: playCoverContainer)
+                    successCount += 1
+                } catch {
+                    failedCount += 1
                 }
             }
-            try await diskImageService.detachAll(volumeURLs: volumeURLs)
-        } catch let error as AppError {
-            self.error = error
+            
+            // Show result and quit
+            await showUnmountResultAndQuit(successCount: successCount, failedCount: failedCount, ejectedDrive: ejectedDrive)
+            
         } catch {
+            isBusy = false
+            isShowingStatus = false
             self.error = AppError.diskImage("アンマウントに失敗", message: error.localizedDescription, underlying: error)
+        }
+    }
+    
+    private func showUnmountResultAndQuit(successCount: Int, failedCount: Int, ejectedDrive: String?) async {
+        await MainActor.run {
+            let alert = NSAlert()
+            
+            if let driveName = ejectedDrive {
+                alert.messageText = "ドライブの取り外し完了"
+                alert.informativeText = "外部ドライブ「\(driveName)」を安全に取り外せる状態にしました。\n\nアンマウント成功: \(successCount) 個\n失敗: \(failedCount) 個"
+            } else {
+                alert.messageText = "アンマウント完了"
+                alert.informativeText = "ディスクイメージをアンマウントしました。\n\n成功: \(successCount) 個\n失敗: \(failedCount) 個"
+            }
+            
+            alert.alertStyle = failedCount > 0 ? .warning : .informational
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            
+            // Quit app
+            NSApplication.shared.terminate(nil)
+        }
+    }
+    
+    private func isExternalDrive(_ url: URL) async throws -> Bool {
+        // Check if volume is on external/removable media
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        process.arguments = ["info", "-plist", url.path]
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        
+        try process.run()
+        process.waitUntilExit()
+        
+        guard process.terminationStatus == 0 else {
+            return false
+        }
+        
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+            return false
+        }
+        
+        // Check if it's removable media
+        if let isInternal = plist["Internal"] as? Bool {
+            return !isInternal
+        }
+        
+        return false
+    }
+    
+    private func getDevicePath(for url: URL) async throws -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        process.arguments = ["info", "-plist", url.path]
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        
+        try process.run()
+        process.waitUntilExit()
+        
+        guard process.terminationStatus == 0 else {
+            return nil
+        }
+        
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+            return nil
+        }
+        
+        // Get device node (e.g., /dev/disk2)
+        if let deviceNode = plist["DeviceNode"] as? String {
+            return deviceNode
+        }
+        
+        return nil
+    }
+    
+    private func ejectDrive(devicePath: String) async throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        process.arguments = ["eject", devicePath]
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        
+        try process.run()
+        process.waitUntilExit()
+        
+        guard process.terminationStatus == 0 else {
+            let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
+            let errorMessage = String(data: errorData, encoding: .utf8) ?? "不明なエラー"
+            throw AppError.diskImage("ドライブの取り出しに失敗", message: errorMessage)
         }
     }
 }
