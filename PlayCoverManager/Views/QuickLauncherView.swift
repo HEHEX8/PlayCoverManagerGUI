@@ -716,18 +716,25 @@ private struct RecentAppLaunchButton: View {
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
+    @State private var dropTrigger = 0
     
     var body: some View {
         Button {
-            // Trigger new ripple on each press
-            rippleTrigger += 1
+            // Trigger icon drop and ripple on each press
+            dropTrigger += 1
+            
+            // Trigger ripple after icon lands (0.4s drop animation)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                rippleTrigger += 1
+            }
+            
             onLaunch()
         } label: {
             HStack(spacing: 0) {
                 Spacer()
                 
                 HStack(spacing: 16) {
-                    // Icon (no animation here)
+                    // Icon with drop animation
                     ZStack {
                         if let icon = app.icon {
                             Image(nsImage: icon)
@@ -795,12 +802,93 @@ private struct RecentAppLaunchButton: View {
             .clipped() // Clip ripple effect to button bounds
         )
         .overlay(
+            // Dropping icon animation layer
+            DroppingIcon(app: app, trigger: dropTrigger)
+        )
+        .overlay(
             Rectangle()
                 .fill(Color.primary.opacity(0.08))
                 .frame(height: 1),
             alignment: .top
         )
         .keyboardShortcut(.defaultAction)
+    }
+}
+
+// Dropping icon animation
+private struct DroppingIcon: View {
+    let app: PlayCoverApp
+    let trigger: Int
+    
+    @State private var drops: [IconDrop] = []
+    
+    var body: some View {
+        ZStack {
+            ForEach(drops) { drop in
+                Group {
+                    if let icon = app.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: 52, height: 52)
+                            .clipShape(RoundedRectangle(cornerRadius: 11))
+                            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    } else {
+                        RoundedRectangle(cornerRadius: 11)
+                            .fill(Color(nsColor: .controlBackgroundColor))
+                            .frame(width: 52, height: 52)
+                    }
+                }
+                .offset(y: drop.offsetY)
+                .scaleEffect(drop.scale)
+                .opacity(drop.opacity)
+            }
+        }
+        .allowsHitTesting(false) // Don't interfere with button taps
+        .onChange(of: trigger) { _, _ in
+            createNewDrop()
+        }
+    }
+    
+    private func createNewDrop() {
+        let newDrop = IconDrop(id: UUID())
+        drops.append(newDrop)
+        
+        // Drop animation with bounce
+        withAnimation(.interpolatingSpring(stiffness: 200, damping: 15, initialVelocity: 10)) {
+            if let index = drops.firstIndex(where: { $0.id == newDrop.id }) {
+                drops[index].offsetY = 0
+            }
+        }
+        
+        // Scale down on impact
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            withAnimation(.easeOut(duration: 0.1)) {
+                if let index = drops.firstIndex(where: { $0.id == newDrop.id }) {
+                    drops[index].scale = 0.9
+                }
+            }
+        }
+        
+        // Fade out after landing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                if let index = drops.firstIndex(where: { $0.id == newDrop.id }) {
+                    drops[index].opacity = 0.0
+                }
+            }
+        }
+        
+        // Remove after animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            drops.removeAll(where: { $0.id == newDrop.id })
+        }
+    }
+    
+    private struct IconDrop: Identifiable {
+        let id: UUID
+        var offsetY: CGFloat = -100  // Start above button
+        var scale: CGFloat = 1.0
+        var opacity: Double = 1.0
     }
 }
 
