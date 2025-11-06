@@ -147,6 +147,35 @@ final class AppViewModel {
         }
     }
 
+    func changeStorageSettings() {
+        // Create context for storage change (PlayCover exists, no disk image check, no mount required)
+        let context = AppPhase.SetupContext(
+            missingPlayCover: false,
+            missingDiskImage: false,
+            diskImageMountRequired: false
+        )
+        
+        // Create setup wizard for storage selection
+        let setupVM = SetupWizardViewModel(
+            settings: settings,
+            environmentService: environmentService,
+            diskImageService: diskImageService,
+            context: context,
+            initialPlayCoverPaths: playCoverPaths
+        )
+        
+        // Start from selectStorage step
+        setupVM.currentStep = .selectStorage
+        setupVM.onCompletion = { [weak self] in
+            self?.setupViewModel = nil
+            self?.phase = .checking
+            self?.retry()
+        }
+        
+        setupViewModel = setupVM
+        phase = .setup(context)
+    }
+    
     func terminateApplication() {
         phase = .terminating
         NSApplication.shared.terminate(nil)

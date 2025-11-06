@@ -33,9 +33,9 @@ struct AppRootView: View {
                     }
                 }
             case .error(let error):
-                ErrorView(error: error) {
-                    appViewModel.retry()
-                }
+                ErrorView(error: error,
+                          onRetry: { appViewModel.retry() },
+                          onChangeSettings: { appViewModel.changeStorageSettings() })
             case .terminating:
                 ProgressView("終了しています…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -63,7 +63,8 @@ struct CheckingView: View {
 
 struct ErrorView: View {
     let error: AppError
-    let retry: () -> Void
+    let onRetry: () -> Void
+    let onChangeSettings: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -85,8 +86,8 @@ struct ErrorView: View {
                     .keyboardShortcut("s", modifiers: [.command])
                 } else if error.category == .diskImage {
                     // Disk image errors (e.g., drive not connected)
-                    SettingsLink {
-                        Text("設定を変更")
+                    Button("設定を変更") {
+                        onChangeSettings()
                     }
                     .keyboardShortcut("s", modifiers: [.command])
                 } else if error.requiresAction {
@@ -95,7 +96,7 @@ struct ErrorView: View {
                     }
                 }
                 Button("終了") { NSApplication.shared.terminate(nil) }
-                Button("再試行", action: retry)
+                Button("再試行", action: onRetry)
                     .keyboardShortcut(.defaultAction)
             }
         }
