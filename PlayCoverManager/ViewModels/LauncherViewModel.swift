@@ -572,16 +572,17 @@ final class LauncherViewModel {
             print("[LauncherVM] Should offer eject: \(shouldOfferEject)")
             
             if shouldOfferEject {
-                // Get actual volume name (not subdirectory name)
-                let volumeName = (try? await diskImageService.getVolumeName(for: storageDir)) ?? storageDir.lastPathComponent
-                print("[LauncherVM] Volume name: \(volumeName)")
+                // Get volume info (includes device/media name)
+                let volumeInfo = try? await diskImageService.getVolumeInfo(for: storageDir)
+                let displayName = volumeInfo?.displayName ?? storageDir.lastPathComponent
+                print("[LauncherVM] Volume display name: \(displayName)")
                 
                 // Show confirmation dialog for external drive eject
                 // Create alert on MainActor but show modal outside to avoid priority inversion
                 let alert = await MainActor.run { () -> NSAlert in
                     let alert = NSAlert()
                     alert.messageText = "外部ドライブをイジェクトしますか？"
-                    alert.informativeText = "データの保存先が外部ドライブまたはネットワークドライブ（\(volumeName)）にあります。\n\nドライブをイジェクトしますか？\n\n（「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します）"
+                    alert.informativeText = "データの保存先が外部ドライブまたはネットワークドライブ（\(displayName)）にあります。\n\nドライブをイジェクトしますか？\n\n（「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します）"
                     alert.alertStyle = .informational
                     alert.addButton(withTitle: "イジェクト")
                     alert.addButton(withTitle: "イジェクトしない")
@@ -596,7 +597,7 @@ final class LauncherViewModel {
                         print("[LauncherVM] Device path: \(devicePath)")
                         do {
                             try await diskImageService.ejectDrive(devicePath: devicePath)
-                            ejectedDrive = volumeName
+                            ejectedDrive = displayName
                             print("[LauncherVM] Successfully ejected drive: \(ejectedDrive ?? "unknown")")
                         } catch {
                             print("[LauncherVM] Failed to eject drive: \(error)")

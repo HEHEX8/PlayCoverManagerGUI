@@ -276,10 +276,31 @@ final class DiskImageService {
         return deviceNode
     }
     
-    /// Get volume name for a path (walks up directory tree to find actual mount point)
+    /// Information about a volume and its parent device
+    struct VolumeInfo {
+        let volumeName: String
+        let deviceName: String?
+        let mediaName: String?
+        
+        /// Display name prioritizing device/media name over volume name
+        var displayName: String {
+            // Prefer media name (e.g., "WD_BLACK SN7100 4TB Media")
+            if let media = mediaName, !media.isEmpty {
+                return media
+            }
+            // Fall back to device name
+            if let device = deviceName, !device.isEmpty {
+                return device
+            }
+            // Last resort: volume name
+            return volumeName
+        }
+    }
+    
+    /// Get volume info for a path (walks up directory tree to find actual mount point)
     /// - Parameter url: Path to check (can be subdirectory)
-    /// - Returns: Volume name or nil if not found
-    func getVolumeName(for url: URL) async throws -> String? {
+    /// - Returns: VolumeInfo with volume name and device name, or nil if not found
+    func getVolumeInfo(for url: URL) async throws -> VolumeInfo? {
         var currentPath = url
         
         // Walk up the directory tree to find the actual mount point
@@ -289,8 +310,19 @@ final class DiskImageService {
                let data = output.data(using: .utf8),
                let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                let volumeName = plist["VolumeName"] as? String {
-                print("🔍 [DiskImageService] Found volume name: \(volumeName) for path: \(currentPath.path)")
-                return volumeName
+                
+                // Get device name (e.g., "WD_BLACK SN7100 4TB")
+                let deviceName = plist["DeviceIdentifier"] as? String
+                
+                // Get media name (e.g., "WD_BLACK SN7100 4TB Media")
+                let mediaName = plist["MediaName"] as? String
+                
+                print("🔍 [DiskImageService] Found volume info:")
+                print("  Volume: \(volumeName)")
+                print("  Device: \(deviceName ?? "none")")
+                print("  Media: \(mediaName ?? "none")")
+                
+                return VolumeInfo(volumeName: volumeName, deviceName: deviceName, mediaName: mediaName)
             }
             
             // Move up one directory
@@ -298,6 +330,14 @@ final class DiskImageService {
         }
         
         return nil
+    }
+    
+    /// Get volume name for a path (walks up directory tree to find actual mount point)
+    /// - Parameter url: Path to check (can be subdirectory)
+    /// - Returns: Volume name or nil if not found
+    @available(*, deprecated, message: "Use getVolumeInfo(for:) instead")
+    func getVolumeName(for url: URL) async throws -> String? {
+        return try await getVolumeInfo(for: url)?.volumeName
     }
     
     /// Eject a drive
