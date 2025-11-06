@@ -8,6 +8,8 @@ struct QuickLauncherView: View {
     @State private var selectedAppForDetail: PlayCoverApp?
     @State private var hasPerformedInitialAnimation = false
     @State private var showingSettings = false
+    @State private var showingInstaller = false
+    @State private var showingUninstaller = false
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -41,6 +43,22 @@ struct QuickLauncherView: View {
                 }
                 .help("再読み込み")
                 .keyboardShortcut("r", modifiers: [.command])
+                
+                Button {
+                    showingInstaller = true
+                } label: {
+                    Image(systemName: "square.and.arrow.down")
+                }
+                .help("IPA をインストール")
+                .keyboardShortcut("i", modifiers: [.command])
+                
+                Button {
+                    showingUninstaller = true
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .help("アプリをアンインストール")
+                .keyboardShortcut("d", modifiers: [.command])
                 
                 Button {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
@@ -183,6 +201,12 @@ struct QuickLauncherView: View {
         }
         .sheet(isPresented: $showingSettings) {
             SettingsRootView()
+        }
+        .sheet(isPresented: $showingInstaller) {
+            IPAInstallerSheet()
+        }
+        .sheet(isPresented: $showingUninstaller) {
+            AppUninstallerSheet()
         }
         .frame(minWidth: 960, minHeight: 640)
         .overlay(alignment: .center) {

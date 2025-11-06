@@ -13,10 +13,6 @@ struct SettingsRootView: View {
                 .tabItem {
                     Label("一般", systemImage: "gear")
                 }
-            AppManagementSettingsView()
-                .tabItem {
-                    Label("アプリ管理", systemImage: "square.and.arrow.down")
-                }
             DataSettingsView()
                 .tabItem {
                     Label("データ", systemImage: "internaldrive")
@@ -61,48 +57,7 @@ private struct GeneralSettingsView: View {
     }
 }
 
-private struct AppManagementSettingsView: View {
-    @Environment(SettingsStore.self) private var settingsStore
-    @Environment(AppViewModel.self) private var appViewModel
-    @State private var showingInstaller = false
-    @State private var showingUninstaller = false
-    
-    var body: some View {
-        Form {
-            Section(header: Text("インストール")) {
-                Button {
-                    showingInstaller = true
-                } label: {
-                    Label("IPA をインストール", systemImage: "square.and.arrow.down")
-                }
-                .buttonStyle(.borderedProminent)
-                
-                Text("IPA ファイルを選択して PlayCover 経由でインストールします。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Section(header: Text("アンインストール")) {
-                Button {
-                    showingUninstaller = true
-                } label: {
-                    Label("アプリをアンインストール", systemImage: "trash")
-                }
-                .tint(.red)
-                
-                Text("インストール済みアプリとディスクイメージを削除します。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .sheet(isPresented: $showingInstaller) {
-            IPAInstallerSheet()
-        }
-        .sheet(isPresented: $showingUninstaller) {
-            AppUninstallerSheet()
-        }
-    }
-}
+
 
 private struct DataSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
@@ -799,19 +754,6 @@ private struct MaintenanceSettingsView: View {
 
     var body: some View {
         Form {
-            Section(header: Text("アンマウント")) {
-                Button("すべてのディスクイメージをアンマウントして終了") {
-                    appViewModel.launcherViewModel?.unmountAll(applyToPlayCoverContainer: true)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        appViewModel.terminateApplication()
-                    }
-                }
-                .disabled(appViewModel.launcherViewModel == nil)
-                Text("ランチャーが初期化されている場合のみ実行できます。")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-            
             Section(header: Text("デバッグ情報")) {
                 LabeledContent("現在のフォーマット") {
                     Text(settingsStore.diskImageFormat.rawValue)
