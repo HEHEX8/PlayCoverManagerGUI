@@ -805,17 +805,21 @@ private struct RecentAppLaunchButton: View {
         }
         .buttonStyle(.plain)
         .coordinateSpace(name: "buttonSpace")
-        .onPreferenceChange(IconPositionKey.self) { position in
-            ripplePosition = CGPoint(x: position.x + 26, y: position.y + 26) // Center of 52x52 icon
-        }
         .background(
-            ZStack {
-                // Base background
-                Color(nsColor: .controlBackgroundColor).opacity(0.5)
-                
-                // Ripple effect at exact icon position
-                RippleEffect(trigger: rippleTrigger)
-                    .offset(x: ripplePosition.x, y: ripplePosition.y)
+            GeometryReader { buttonGeo in
+                ZStack {
+                    // Base background
+                    Color(nsColor: .controlBackgroundColor).opacity(0.5)
+                    
+                    // Ripple effect at exact icon position
+                    RippleEffect(trigger: rippleTrigger)
+                        .offset(x: ripplePosition.x - buttonGeo.size.width / 2, 
+                                y: ripplePosition.y - buttonGeo.size.height / 2)
+                }
+                .onPreferenceChange(IconPositionKey.self) { position in
+                    // Icon center in button coordinate space
+                    ripplePosition = CGPoint(x: position.x + 26, y: position.y + 26)
+                }
             }
         )
         .clipped() // Clip all content (icon motion + ripple) to button bounds
@@ -860,7 +864,7 @@ private struct RecentAppLaunchButton: View {
         }
     }
     
-    // App switch animation - new icon drops and collides with old one
+    // App switch animation - new icon drops and pushes old one down
     private func performAppSwitchAnimation() {
         // Fade out text immediately
         withAnimation(.easeOut(duration: 0.15)) {
@@ -871,6 +875,7 @@ private struct RecentAppLaunchButton: View {
         iconOffsetY = -150
         iconScale = 1.2
         iconOpacity = 1.0
+        iconOffsetX = 0
         
         // Drop down fast (falling)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
@@ -878,18 +883,17 @@ private struct RecentAppLaunchButton: View {
                 iconOffsetY = 0  // Falls to normal position
             }
             
-            // COLLISION! Old icon gets hit and flies away
+            // COLLISION! Old icon gets pushed down
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                 // Impact: new icon squashes slightly
                 withAnimation(.easeOut(duration: 0.1)) {
                     iconScale = 0.95
                 }
                 
-                // Old icon flies off to the side
-                withAnimation(.easeOut(duration: 0.3)) {
-                    iconOffsetX = -150  // Flies left
-                    iconOffsetY = -80   // Flies up-left
-                    iconScale = 0.6
+                // Old icon gets pushed DOWN (not up-left)
+                withAnimation(.easeOut(duration: 0.35)) {
+                    iconOffsetY = 120   // Pushed down
+                    iconScale = 0.7
                     iconOpacity = 0.0
                 }
                 
@@ -901,7 +905,6 @@ private struct RecentAppLaunchButton: View {
                 // New icon bounces back to normal after squash
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     // Reset for new icon
-                    iconOffsetX = 0
                     iconOffsetY = 0
                     iconOpacity = 1.0
                     
