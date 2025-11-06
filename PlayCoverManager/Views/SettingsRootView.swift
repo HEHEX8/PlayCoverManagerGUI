@@ -160,6 +160,7 @@ struct IPAInstallerSheet: View {
     @State private var showResults = false
     @State private var currentPhase: InstallPhase = .selection
     @State private var statusUpdateTask: Task<Void, Never>?
+    @State private var showInstallConfirmation = false
     
     enum InstallPhase {
         case selection      // IPA選択
@@ -198,6 +199,16 @@ struct IPAInstallerSheet: View {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
             installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore, launcherService: launcherService)
+        }
+        .alert("インストール確認", isPresented: $showInstallConfirmation) {
+            Button("キャンセル", role: .cancel) { }
+            Button("インストール", role: .destructive) {
+                Task {
+                    await startInstallation()
+                }
+            }
+        } message: {
+            Text("\(analyzedIPAs.count) 個のアプリをインストールします。よろしいですか？")
         }
     }
     
@@ -612,9 +623,7 @@ struct IPAInstallerSheet: View {
                 }
                 
                 Button("インストール開始") {
-                    Task {
-                        await startInstallation()
-                    }
+                    showInstallConfirmation = true
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(analyzedIPAs.isEmpty)
@@ -736,6 +745,7 @@ struct AppUninstallerSheet: View {
     @State private var currentPhase: UninstallPhase = .loading
     @State private var totalSize: Int64 = 0
     @State private var statusUpdateTask: Task<Void, Never>?
+    @State private var showUninstallConfirmation = false
     
     let preSelectedBundleID: String?
     
@@ -775,6 +785,21 @@ struct AppUninstallerSheet: View {
         .frame(width: 700, height: 600)
         .task {
             await loadApps()
+        }
+        .alert("アンインストール確認", isPresented: $showUninstallConfirmation) {
+            Button("キャンセル", role: .cancel) { }
+            Button("削除", role: .destructive) {
+                Task {
+                    await startUninstallation()
+                }
+            }
+        } message: {
+            let appNames = apps.filter { selectedApps.contains($0.bundleID) }.map { $0.appName }
+            if appNames.count <= 3 {
+                Text("\(appNames.joined(separator: "、")) を削除します。\n\nこの操作は取り消せません。よろしいですか？")
+            } else {
+                Text("\(selectedApps.count) 個のアプリを削除します。\n\nこの操作は取り消せません。よろしいですか？")
+            }
         }
     }
     
@@ -1070,9 +1095,7 @@ struct AppUninstallerSheet: View {
             
             if currentPhase == .selection && !selectedApps.isEmpty {
                 Button("削除 (\(selectedApps.count) 個)") {
-                    Task {
-                        await startUninstallation()
-                    }
+                    showUninstallConfirmation = true
                 }
                 .tint(.red)
                 .buttonStyle(.borderedProminent)
@@ -1114,14 +1137,18 @@ struct AppUninstallerSheet: View {
             totalSize = apps.reduce(0) { $0 + $1.appSize + $1.diskImageSize }
             print("🟢 [loadApps] アプリ数: \(apps.count)")
             
-            // If preSelectedBundleID is provided, select it and start uninstall
+            // If preSelectedBundleID is provided, select it and show confirmation
             if let bundleID = preSelectedBundleID {
                 print("🟢 [loadApps] 事前選択されたアプリ: \(bundleID)")
                 if apps.contains(where: { $0.bundleID == bundleID }) {
-                    print("🟢 [loadApps] アプリが見つかりました - 自動アンインストール開始")
+                    print("🟢 [loadApps] アプリが見つかりました - 確認プロンプトを表示")
                     selectedApps = [bundleID]
-                    // Start uninstall immediately after loading (phase will be set in startUninstallation)
-                    await startUninstallation()
+                    currentPhase = .selection
+                    // Show confirmation dialog after a brief delay to ensure UI is ready
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                        showUninstallConfirmation = true
+                    }
                     return
                 } else {
                     print("🔴 [loadApps] アプリが見つかりません")
