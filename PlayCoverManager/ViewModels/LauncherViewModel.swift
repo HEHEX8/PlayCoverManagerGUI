@@ -367,79 +367,71 @@ final class LauncherViewModel {
         var successCount = 0
         var failedCount = 0
         var ejectedDrive: String?
-        var playCoverContainerEjected = false
         
-        do {
-            // Collect all container URLs
-            var containerURLs: [URL] = []
-            for app in apps {
-                let container = containerURL(for: app.bundleIdentifier)
-                if fileManager.fileExists(atPath: container.path) {
-                    containerURLs.append(container)
-                }
-            }
-            
-            let playCoverContainer = playCoverPaths.containerRootURL
-            
-            // Check if storage is on external drive
-            if let storageDir = settings.diskImageDirectory {
-                let isExternal = try await isExternalDrive(storageDir)
-                
-                if isExternal {
-                    // External drive - eject the whole drive
-                    statusMessage = "外部ドライブを取り外し可能な状態にしています…"
-                    if let devicePath = try await getDevicePath(for: storageDir) {
-                        // Check if PlayCover container is on the same drive
-                        if applyToPlayCoverContainer {
-                            let playCoverDevicePath = try? await getDevicePath(for: playCoverContainer)
-                            if playCoverDevicePath == devicePath {
-                                // PlayCover container is on the same drive, will be ejected together
-                                playCoverContainerEjected = true
-                                containerURLs.append(playCoverContainer)
-                            }
-                        }
-                        
-                        do {
-                            try await ejectDrive(devicePath: devicePath)
-                            ejectedDrive = storageDir.lastPathComponent
-                            successCount = containerURLs.count
-                        } catch {
-                            failedCount = containerURLs.count
-                            throw error
-                        }
-                    }
-                } else {
-                    // Internal storage - unmount each container
-                    for containerURL in containerURLs {
-                        do {
-                            try await diskImageService.detach(volumeURL: containerURL)
-                            successCount += 1
-                        } catch {
-                            failedCount += 1
-                        }
-                    }
-                }
-            }
-            
-            // If PlayCover container wasn't ejected yet, unmount it now
-            if applyToPlayCoverContainer && !playCoverContainerEjected {
-                statusMessage = "PlayCover コンテナをアンマウントしています…"
+        // Step 1: Unmount all app containers
+        statusMessage = "アプリコンテナをアンマウントしています…"
+        for app in apps {
+            let container = containerURL(for: app.bundleIdentifier)
+            if fileManager.fileExists(atPath: container.path) {
                 do {
-                    try await diskImageService.detach(volumeURL: playCoverContainer)
+                    try await diskImageService.detach(volumeURL: container)
                     successCount += 1
                 } catch {
                     failedCount += 1
                 }
             }
-            
-            // Show result and quit
-            await showUnmountResultAndQuit(successCount: successCount, failedCount: failedCount, ejectedDrive: ejectedDrive)
-            
-        } catch {
+        }
+        
+        // If any app container failed, show error and abort
+        guard failedCount == 0 else {
             isBusy = false
             isShowingStatus = false
-            self.error = AppError.diskImage("アンマウントに失敗", message: error.localizedDescription, underlying: error)
+            self.error = AppError.diskImage(
+                "アンマウントに失敗しました",
+                message: "\(failedCount) 個のコンテナをアンマウントできませんでした。\n実行中のアプリがないか確認してください。"
+            )
+            return
         }
+        
+        // Step 2: Unmount PlayCover container
+        if applyToPlayCoverContainer {
+            statusMessage = "PlayCover コンテナをアンマウントしています…"
+            let playCoverContainer = playCoverPaths.containerRootURL
+            do {
+                try await diskImageService.detach(volumeURL: playCoverContainer)
+                successCount += 1
+            } catch {
+                // PlayCover container failed, show error and abort
+                isBusy = false
+                isShowingStatus = false
+                self.error = AppError.diskImage(
+                    "PlayCover コンテナのアンマウントに失敗しました",
+                    message: "PlayCover が実行中の可能性があります。"
+                )
+                return
+            }
+        }
+        
+        // Step 3: If external drive, eject the whole drive
+        if let storageDir = settings.diskImageDirectory {
+            let isExternal = (try? await isExternalDrive(storageDir)) ?? false
+            
+            if isExternal {
+                statusMessage = "外部ドライブを取り外し可能な状態にしています…"
+                if let devicePath = try? await getDevicePath(for: storageDir) {
+                    do {
+                        try await ejectDrive(devicePath: devicePath)
+                        ejectedDrive = storageDir.lastPathComponent
+                    } catch {
+                        // Eject failed, but leave it to Finder/System
+                        // We already unmounted volumes successfully
+                    }
+                }
+            }
+        }
+        
+        // Step 4: Show result and quit
+        await showUnmountResultAndQuit(successCount: successCount, failedCount: 0, ejectedDrive: ejectedDrive)
     }
     
     private func showUnmountResultAndQuit(successCount: Int, failedCount: Int, ejectedDrive: String?) async {
