@@ -819,6 +819,7 @@ private struct RecentAppLaunchButton: View {
                 
                 Spacer()
             }
+            .animation(.easeInOut(duration: 0.3), value: app.displayName)  // Animate layout changes when title changes
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
