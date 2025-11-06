@@ -249,7 +249,7 @@ struct QuickLauncherView: View {
             showingUninstaller: $showingUninstaller,
             getPlayCoverIcon: getPlayCoverIcon
         )
-    }
+        }  // HStack closing
     }
 }
 
