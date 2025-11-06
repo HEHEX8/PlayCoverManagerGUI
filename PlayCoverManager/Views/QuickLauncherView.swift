@@ -732,6 +732,7 @@ private struct RecentAppLaunchButton: View {
     @State private var textOpacity: Double = 1.0
     @State private var previousAppID: String = ""
     @State private var currentIcon: NSImage? = nil  // Track current icon to detect changes
+    @State private var displayedTitle: String = ""  // Title being displayed (may differ from app.displayName during transition)
     
     var body: some View {
         Button {
@@ -788,7 +789,7 @@ private struct RecentAppLaunchButton: View {
                     
                     // App info with fade transition
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(app.displayName)
+                        Text(displayedTitle)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.primary)
                         Text("前回起動したアプリ")
@@ -796,6 +797,7 @@ private struct RecentAppLaunchButton: View {
                             .foregroundStyle(.secondary)
                     }
                     .opacity(textOpacity)
+                    .animation(.easeInOut(duration: 0.3), value: displayedTitle)  // Animate layout when title length changes
                     
                     // Enter key hint
                     HStack(spacing: 5) {
@@ -819,7 +821,6 @@ private struct RecentAppLaunchButton: View {
                 
                 Spacer()
             }
-            .animation(.easeInOut(duration: 0.3), value: app.displayName)  // Animate layout changes when title changes
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
@@ -850,6 +851,7 @@ private struct RecentAppLaunchButton: View {
         .onAppear {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
+            displayedTitle = app.displayName
         }
     }
     
@@ -925,10 +927,17 @@ private struct RecentAppLaunchButton: View {
                         textOpacity = 0.0
                     }
                     
-                    // Fade in new title
+                    // Update displayed title while faded out (triggers layout animation)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        withAnimation(.easeIn(duration: 0.25)) {
-                            textOpacity = 1.0
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            displayedTitle = app.displayName
+                        }
+                        
+                        // Fade in new title after layout settles
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation(.easeIn(duration: 0.25)) {
+                                textOpacity = 1.0
+                            }
                         }
                     }
                     
