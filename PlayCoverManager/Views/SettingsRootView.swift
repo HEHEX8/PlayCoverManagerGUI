@@ -949,7 +949,27 @@ private struct StorageChangeWizardSheet: View {
     }
     
     private func initializeWizard() {
-        let viewModel = SetupWizardViewModel()
+        // Create necessary services
+        let processRunner = ProcessRunner()
+        let diskImageService = DiskImageService(processRunner: processRunner, settings: settingsStore)
+        let environmentService = PlayCoverEnvironmentService(
+            processRunner: processRunner,
+            diskImageService: diskImageService,
+            settings: settingsStore
+        )
+        
+        // Create context for storage change (not missing PlayCover)
+        let context = AppPhase.SetupContext(missingPlayCover: false)
+        
+        // Initialize view model
+        let viewModel = SetupWizardViewModel(
+            settings: settingsStore,
+            environmentService: environmentService,
+            diskImageService: diskImageService,
+            context: context,
+            initialPlayCoverPaths: appViewModel.playCoverPaths
+        )
+        
         // Start from selectStorage step
         viewModel.currentStep = .selectStorage
         viewModel.onCompletion = {
