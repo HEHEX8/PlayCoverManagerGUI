@@ -404,44 +404,40 @@ private struct iOSAppIconView: View {
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
                     // Completely ignore all gestures during any animation
-                    guard !isAnimating && !isCancelled && !isDragging else { return }
+                    guard !isAnimating && !isCancelled else { return }
                     
-                    // Mark as dragging to prevent retriggering
-                    isDragging = true
-                    
-                    // Press down animation
-                    if !isPressed {
+                    // Press down animation (only once per drag)
+                    if !isPressed && !isDragging {
                         isPressed = true
+                        isDragging = true
                     }
                 }
                 .onEnded { gesture in
-                    // If already animating/cancelled, just reset states and ignore
+                    // Must have started a drag to process end
                     guard isDragging else { return }
                     
-                    // Mark drag as complete
+                    // Reset drag state immediately
                     isDragging = false
                     
                     // Ignore if currently animating or already cancelled
-                    if isAnimating || isCancelled {
+                    guard !isAnimating && !isCancelled else {
                         isPressed = false
                         return
                     }
                     
-                    // Only check on release
+                    // Calculate drag distance
                     let iconSize: CGFloat = 80
                     let tolerance: CGFloat = 20
                     let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
                     
-                    // Reset press state first
+                    // Reset press state
                     isPressed = false
                     
                     if distance > iconSize / 2 + tolerance {
-                        // Released outside bounds - "Nani yanen!" shake once
-                        isCancelled = true
+                        // Released outside bounds - perform shake animation
                         performShakeAnimation()
                     } else {
                         // Released within bounds - normal launch
-                        // Smooth transition from press to bounce
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                             isAnimating = true
                             
@@ -489,29 +485,27 @@ private struct iOSAppIconView: View {
     
     // "Nani yanen!" shake animation function
     private func performShakeAnimation() {
-        // Ensure we're not already shaking
+        // Prevent re-entry if already shaking
         guard !isCancelled else { return }
         
+        // Set cancelled state to block new gestures
+        isCancelled = true
+        
         // Quick shake sequence: left → right → left → right → center
-        // Creates a "What the heck?!" feeling
         let shakeSequence: [CGFloat] = [-6, 6, -4, 4, -2, 2, 0]
         
         // Apply shake offsets sequentially
         for (index, offset) in shakeSequence.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
-                // Only update if still in cancelled state (prevents interruption)
-                guard self.isCancelled else { return }
                 self.shakeOffset = offset
             }
         }
         
-        // Reset cancelled state after animation completes
+        // Reset all states after animation completes
         let totalDuration = Double(shakeSequence.count) * 0.05 + 0.1
         DispatchQueue.main.asyncAfter(deadline: .now() + totalDuration) {
-            // Final cleanup
             self.isCancelled = false
             self.shakeOffset = 0
-            self.isDragging = false
         }
     }
 }
