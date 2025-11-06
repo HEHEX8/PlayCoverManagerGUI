@@ -13,10 +13,6 @@ struct SettingsRootView: View {
                 .tabItem {
                     Label("一般", systemImage: "gear")
                 }
-            AppearanceSettingsView()
-                .tabItem {
-                    Label("外観", systemImage: "paintbrush")
-                }
             DataSettingsView()
                 .tabItem {
                     Label("データ", systemImage: "internaldrive")
@@ -27,7 +23,7 @@ struct SettingsRootView: View {
                 }
         }
         .padding(24)
-        .frame(width: 650, height: 520)
+        .frame(width: 600, height: 500)
     }
 }
 
@@ -809,53 +805,6 @@ struct AppUninstallerSheet: View {
 }
 
 // Appearance Settings View
-private struct AppearanceSettingsView: View {
-    @Environment(SettingsStore.self) private var settingsStore
-    @AppStorage("appIconSize") private var appIconSize: IconSize = .medium
-    @AppStorage("animationsEnabled") private var animationsEnabled = true
-    
-    enum IconSize: String, CaseIterable, Identifiable {
-        case small = "小"
-        case medium = "中"
-        case large = "大"
-        
-        var id: String { rawValue }
-        
-        var points: CGFloat {
-            switch self {
-            case .small: return 60
-            case .medium: return 80
-            case .large: return 100
-            }
-        }
-    }
-    
-    var body: some View {
-        Form {
-            Section(header: Text("アプリアイコン")) {
-                Picker("アイコンサイズ", selection: $appIconSize) {
-                    ForEach(IconSize.allCases) { size in
-                        Text(size.rawValue).tag(size)
-                    }
-                }
-                .pickerStyle(.segmented)
-                
-                Text("ランチャーに表示されるアプリアイコンのサイズを変更します。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Section(header: Text("アニメーション")) {
-                Toggle("アニメーションを有効にする", isOn: $animationsEnabled)
-                
-                Text("アプリ起動時のバウンスエフェクトやフェードインアニメーションを有効にします。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
 private struct MaintenanceSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
@@ -919,8 +868,6 @@ private struct MaintenanceSettingsView: View {
         UserDefaults.standard.removeObject(forKey: "nobrowseEnabled")
         UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
-        UserDefaults.standard.removeObject(forKey: "appIconSize")
-        UserDefaults.standard.removeObject(forKey: "animationsEnabled")
         
         NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
     }
