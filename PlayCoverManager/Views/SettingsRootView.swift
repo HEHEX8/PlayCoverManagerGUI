@@ -39,7 +39,7 @@ struct SettingsRootView: View {
 private struct GeneralSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
-    @State private var showingStorageWizard = false
+    @Environment(\.dismiss) private var dismiss
     @State private var calculatingSize = false
     @State private var totalDiskUsage: Int64 = 0
 
@@ -62,7 +62,9 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 Button("保存先を変更...") {
-                    showingStorageWizard = true
+                    // Close settings sheet and show overlay wizard
+                    dismiss()
+                    appViewModel.changeStorageSettings()
                 }
                 .help("初期設定ウィザードを開いて保存先を変更します")
                 
@@ -83,9 +85,6 @@ private struct GeneralSettingsView: View {
             Task {
                 await calculateDiskUsage()
             }
-        }
-        .sheet(isPresented: $showingStorageWizard) {
-            StorageChangeWizardSheet()
         }
     }
     
@@ -1261,60 +1260,6 @@ private struct MaintenanceSettingsView: View {
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
         
         NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
-    }
-}
-
-// Storage Change Wizard Sheet
-private struct StorageChangeWizardSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(SettingsStore.self) private var settingsStore
-    @Environment(AppViewModel.self) private var appViewModel
-    @State private var wizardViewModel: SetupWizardViewModel?
-    
-    var body: some View {
-        VStack {
-            if let viewModel = wizardViewModel {
-                SetupWizardView(viewModel: viewModel, playCoverPaths: appViewModel.playCoverPaths)
-                    .environment(settingsStore)
-            } else {
-                ProgressView("初期化中...")
-                    .onAppear {
-                        initializeWizard()
-                    }
-            }
-        }
-        .frame(width: 800, height: 600)
-    }
-    
-    private func initializeWizard() {
-        // Create necessary services
-        let processRunner = ProcessRunner()
-        let diskImageService = DiskImageService(processRunner: processRunner, settings: settingsStore)
-        let environmentService = PlayCoverEnvironmentService(processRunner: processRunner)
-        
-        // Create context for storage change
-        // PlayCover already detected, disk image exists, mount not required (will be handled by wizard)
-        let context = AppPhase.SetupContext(
-            missingPlayCover: false,
-            missingDiskImage: false,
-            diskImageMountRequired: false
-        )
-        
-        // Initialize view model
-        let viewModel = SetupWizardViewModel(
-            settings: settingsStore,
-            environmentService: environmentService,
-            diskImageService: diskImageService,
-            context: context,
-            initialPlayCoverPaths: appViewModel.playCoverPaths
-        )
-        
-        // Start from selectStorage step
-        viewModel.currentStep = SetupWizardViewModel.Step.selectStorage
-        viewModel.onCompletion = {
-            dismiss()
-        }
-        self.wizardViewModel = viewModel
     }
 }
 
