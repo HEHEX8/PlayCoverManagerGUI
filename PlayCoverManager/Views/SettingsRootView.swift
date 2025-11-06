@@ -952,14 +952,15 @@ private struct StorageChangeWizardSheet: View {
         // Create necessary services
         let processRunner = ProcessRunner()
         let diskImageService = DiskImageService(processRunner: processRunner, settings: settingsStore)
-        let environmentService = PlayCoverEnvironmentService(
-            processRunner: processRunner,
-            diskImageService: diskImageService,
-            settings: settingsStore
-        )
+        let environmentService = PlayCoverEnvironmentService(processRunner: processRunner)
         
-        // Create context for storage change (not missing PlayCover)
-        let context = AppPhase.SetupContext(missingPlayCover: false)
+        // Create context for storage change
+        // PlayCover already detected, disk image exists, mount not required (will be handled by wizard)
+        let context = AppPhase.SetupContext(
+            missingPlayCover: false,
+            missingDiskImage: false,
+            diskImageMountRequired: false
+        )
         
         // Initialize view model
         let viewModel = SetupWizardViewModel(
@@ -971,7 +972,7 @@ private struct StorageChangeWizardSheet: View {
         )
         
         // Start from selectStorage step
-        viewModel.currentStep = .selectStorage
+        viewModel.currentStep = SetupWizardViewModel.Step.selectStorage
         viewModel.onCompletion = {
             dismiss()
         }
