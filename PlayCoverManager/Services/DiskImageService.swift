@@ -377,10 +377,10 @@ final class DiskImageService {
     /// Detach all Apple Disk Image Media devices
     /// This removes the virtual disk devices created by mounted ASIF/DMG images
     /// - Returns: Number of disk images detached
-    /// Eject disk image for a specific volume (unmounts all volumes and detaches device)
+    /// Eject disk image for a specific volume (unmounts volume and detaches device)
     /// - Parameter volumePath: The path of the volume on the disk image
     func ejectDiskImage(for volumePath: URL) async throws {
-        // Get device identifier for the volume
+        // Get device identifier for the volume BEFORE unmounting
         let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", volumePath.path])
         guard let infoData = infoOutput?.data(using: .utf8),
               let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any],
@@ -395,12 +395,21 @@ final class DiskImageService {
         let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: [.regularExpression])
         print("[DiskImageService] Parent device: \(parentDevice)")
         
-        // Eject the parent device (this unmounts all volumes and detaches the disk image)
+        // Step 1: Force unmount the volume first
+        do {
+            _ = try await processRunner.run("/usr/sbin/diskutil", ["unmount", "force", volumePath.path])
+            print("[DiskImageService] ✅ Force unmounted volume: \(volumePath.path)")
+        } catch {
+            print("[DiskImageService] ⚠️ Failed to unmount \(volumePath.path): \(error)")
+            // Continue anyway - detach might still work
+        }
+        
+        // Step 2: Detach the disk image device
         do {
             _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", parentDevice])
-            print("[DiskImageService] ✅ Ejected disk image: \(parentDevice)")
+            print("[DiskImageService] ✅ Detached disk image device: \(parentDevice)")
         } catch {
-            print("[DiskImageService] ⚠️ Failed to eject \(parentDevice): \(error)")
+            print("[DiskImageService] ⚠️ Failed to detach \(parentDevice): \(error)")
             throw error
         }
     }
