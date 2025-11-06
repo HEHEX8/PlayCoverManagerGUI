@@ -716,9 +716,9 @@ private struct RecentAppLaunchButton: View {
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
+    @State private var rippleOffset: CGSize = .zero
     @State private var iconOffsetY: CGFloat = 0
     @State private var iconScale: CGFloat = 1.0
-    @State private var iconRotation: Double = 0
     @State private var textOpacity: Double = 1.0
     @State private var previousAppID: String = ""
     
@@ -754,7 +754,6 @@ private struct RecentAppLaunchButton: View {
                     }
                     .offset(y: iconOffsetY)
                     .scaleEffect(iconScale)
-                    .rotationEffect(.degrees(iconRotation))
                     
                     // App info with fade transition
                     VStack(alignment: .leading, spacing: 4) {
@@ -799,8 +798,8 @@ private struct RecentAppLaunchButton: View {
                 // Base background
                 Color(nsColor: .controlBackgroundColor).opacity(0.5)
                 
-                // Ripple effect (clipped to button bounds)
-                RippleEffect(trigger: rippleTrigger)
+                // Ripple effect (clipped to button bounds, offset to icon position)
+                RippleEffect(trigger: rippleTrigger, offset: rippleOffset)
             }
             .clipped() // Clip ripple effect to button bounds
         )
@@ -825,11 +824,13 @@ private struct RecentAppLaunchButton: View {
     
     // Bounce up and drop animation for button press
     private func performIconBounce() {
+        // Set ripple offset to icon position (left side of button)
+        rippleOffset = CGSize(width: -350, height: 0)  // Icon is on left side
+        
         // Jump up
         withAnimation(.easeOut(duration: 0.15)) {
             iconOffsetY = -60
             iconScale = 1.1
-            iconRotation = -5
         }
         
         // Fall down with bounce
@@ -837,55 +838,50 @@ private struct RecentAppLaunchButton: View {
             withAnimation(.interpolatingSpring(stiffness: 200, damping: 12)) {
                 iconOffsetY = 0
                 iconScale = 1.0
-                iconRotation = 0
             }
         }
         
-        // Trigger ripple on landing
+        // Trigger ripple on landing at icon position
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             rippleTrigger += 1
         }
     }
     
-    // Rich app switch animation
+    // App switch animation - new icon drops and pushes old one down
     private func performAppSwitchAnimation() {
-        // Fade out text
-        withAnimation(.easeOut(duration: 0.2)) {
+        // Set ripple offset to icon position for landing
+        rippleOffset = CGSize(width: -350, height: 0)
+        
+        // Old icon gets pushed down and fades
+        withAnimation(.easeIn(duration: 0.3)) {
+            iconOffsetY = 100
+            iconScale = 0.8
             textOpacity = 0.0
         }
         
-        // Icon flies up and spins out
-        withAnimation(.easeIn(duration: 0.3)) {
-            iconOffsetY = -80
-            iconScale = 0.5
-            iconRotation = 180
-        }
-        
-        // New icon flies in from above after old one disappears
+        // After old icon is pushed out
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            // Reset position above for new icon
-            iconOffsetY = -100
-            iconScale = 0.8
-            iconRotation = -180
+            // New icon starts from above
+            iconOffsetY = -150
+            iconScale = 1.2
             
-            // Animate new icon landing
+            // Drop down with impact (ズドン!)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                withAnimation(.interpolatingSpring(stiffness: 180, damping: 14)) {
+                withAnimation(.interpolatingSpring(stiffness: 250, damping: 15)) {
                     iconOffsetY = 0
                     iconScale = 1.0
-                    iconRotation = 0
                 }
                 
-                // Trigger ripple on landing
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                // Ripple on impact
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     rippleTrigger += 1
                 }
-            }
-            
-            // Fade in new text after icon lands
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                withAnimation(.easeIn(duration: 0.3)) {
-                    textOpacity = 1.0
+                
+                // Fade in text after landing
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    withAnimation(.easeIn(duration: 0.25)) {
+                        textOpacity = 1.0
+                    }
                 }
             }
         }
@@ -895,6 +891,7 @@ private struct RecentAppLaunchButton: View {
 // 3D-style ripple effect animation
 private struct RippleEffect: View {
     let trigger: Int
+    let offset: CGSize
     @State private var ripples: [Ripple] = []
     @Environment(\.colorScheme) private var colorScheme
     
@@ -904,6 +901,7 @@ private struct RippleEffect: View {
                 RippleLayer(ripple: ripple, colorScheme: colorScheme)
             }
         }
+        .offset(offset)
         .onChange(of: trigger) { _, _ in
             createNewRipple()
         }
