@@ -185,6 +185,7 @@ struct QuickLauncherView: View {
     }
     .sheet(isPresented: $showingSettings) {
         SettingsRootView()
+            .interactiveDismissDisabled(false)
     }
     .sheet(isPresented: $showingInstaller) {
         IPAInstallerSheet()

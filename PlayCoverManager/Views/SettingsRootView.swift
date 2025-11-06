@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 struct SettingsRootView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         TabView {
@@ -24,6 +25,14 @@ struct SettingsRootView: View {
         }
         .padding(24)
         .frame(width: 600, height: 500)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("閉じる") {
+                    dismiss()
+                }
+                .keyboardShortcut(.escape, modifiers: [])
+            }
+        }
     }
 }
 
