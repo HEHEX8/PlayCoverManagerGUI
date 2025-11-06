@@ -60,8 +60,7 @@ class AppUninstallerService {
     
     func getInstalledApps() async throws -> [InstalledAppInfo] {
         let playCoverBundleID = "io.playcover.PlayCover"
-        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        let applicationsDir = PlayCoverPaths.playCoverApplicationsURL(playCoverBundleID: playCoverBundleID)
         
         guard FileManager.default.fileExists(atPath: applicationsDir.path) else {
             return []
@@ -127,8 +126,7 @@ class AppUninstallerService {
     }
     
     private func findDiskImageName(for bundleID: String) -> String {
-        let containerPath = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(bundleID)", isDirectory: true)
+        let containerPath = PlayCoverPaths.containerURL(for: bundleID)
         
         // Check if it's currently mounted and get mount device
         do {
@@ -209,8 +207,7 @@ class AppUninstallerService {
         }
         
         let playCoverBundleID = "io.playcover.PlayCover"
-        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        let applicationsDir = PlayCoverPaths.playCoverApplicationsURL(playCoverBundleID: playCoverBundleID)
         
         // Step 1: Remove app from PlayCover Applications/
         // Find actual app by bundle ID (app name might differ from bundle ID)
@@ -231,26 +228,19 @@ class AppUninstallerService {
         
         // Step 2: Remove app settings
         await MainActor.run { currentStatus = "設定ファイルを削除中..." }
-        let settingsFile = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings/\(app.bundleID).plist")
-        
+        let settingsFile = PlayCoverPaths.appSettingsURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID)
         try? FileManager.default.removeItem(at: settingsFile)
         
         // Step 3: Remove entitlements
-        let entitlementsFile = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Entitlements/\(app.bundleID).plist")
-        
+        let entitlementsFile = PlayCoverPaths.entitlementsURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID)
         try? FileManager.default.removeItem(at: entitlementsFile)
         
         // Step 4: Remove keymapping
-        let keymappingFile = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Keymapping/\(app.bundleID).plist")
-        
+        let keymappingFile = PlayCoverPaths.keymappingURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID)
         try? FileManager.default.removeItem(at: keymappingFile)
         
         // Step 4.5: Remove PlayChain files (if they exist)
-        let playChainDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/PlayChain")
+        let playChainDir = PlayCoverPaths.playChainURL(playCoverBundleID: playCoverBundleID)
         let playChainFile = playChainDir.appendingPathComponent(app.bundleID)
         let playChainEncrypted = playChainDir.appendingPathComponent("\(app.bundleID).keyCover")
         
@@ -279,8 +269,7 @@ class AppUninstallerService {
         }
         
         // Step 5: Unmount and remove container (this is what we mounted during installation)
-        let internalContainer = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(app.bundleID)", isDirectory: true)
+        let internalContainer = PlayCoverPaths.containerURL(for: app.bundleID)
         
         await MainActor.run { currentStatus = "コンテナ確認中..." }
         

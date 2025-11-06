@@ -75,7 +75,7 @@ final class LauncherViewModel {
         // Get all container URLs for installed apps
         var containerURLs: [URL] = []
         for app in apps {
-            let container = containerURL(for: app.bundleIdentifier)
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             containerURLs.append(container)
         }
         
@@ -140,7 +140,7 @@ final class LauncherViewModel {
             isShowingStatus = false
         }
         do {
-            let containerURL = containerURL(for: app.bundleIdentifier)
+            let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             let descriptor = try diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: containerURL)
             guard fileManager.fileExists(atPath: descriptor.imageURL.path) else {
                 pendingLaunchContext = LaunchContext(app: app, containerURL: containerURL)
@@ -281,11 +281,6 @@ final class LauncherViewModel {
         try removeItems(internalItems)
     }
 
-    private func containerURL(for bundleIdentifier: String) -> URL {
-        let containersRoot = PlayCoverPaths.defaultContainerRoot()
-        return containersRoot.appendingPathComponent(bundleIdentifier, isDirectory: true)
-    }
-
     private func detectInternalData(at url: URL) throws -> [URL] {
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue else {
@@ -390,7 +385,7 @@ final class LauncherViewModel {
     
     private func unmountContainer(for bundleID: String) async {
         print("[LauncherVM] unmountContainer called for \(bundleID)")
-        let containerURL = containerURL(for: bundleID)
+        let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         print("[LauncherVM] Container URL: \(containerURL.path)")
         
         // Release lock first
@@ -440,7 +435,7 @@ final class LauncherViewModel {
         print("[LauncherVM] Step 1: Unmounting app containers (\(apps.count) apps)")
         statusMessage = "アプリコンテナをアンマウントしています…"
         for app in apps {
-            let container = containerURL(for: app.bundleIdentifier)
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             print("[LauncherVM] Checking app: \(app.bundleIdentifier)")
             
             // Check if container is actually mounted
