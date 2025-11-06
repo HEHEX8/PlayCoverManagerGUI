@@ -716,11 +716,19 @@ private struct RecentAppLaunchButton: View {
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
-    @State private var ripplePosition: CGPoint = .zero
+    
+    // Current icon states
     @State private var iconOffsetY: CGFloat = 0
     @State private var iconOffsetX: CGFloat = 0
     @State private var iconScale: CGFloat = 1.0
-    @State private var iconOpacity: Double = 1.0
+    
+    // Old icon states (for transition)
+    @State private var oldIcon: NSImage? = nil
+    @State private var oldIconOffsetY: CGFloat = 0
+    @State private var oldIconOffsetX: CGFloat = 0
+    @State private var oldIconScale: CGFloat = 1.0
+    @State private var oldIconOpacity: Double = 0.0
+    
     @State private var textOpacity: Double = 1.0
     @State private var previousAppID: String = ""
     
@@ -735,14 +743,33 @@ private struct RecentAppLaunchButton: View {
                 Spacer()
                 
                 HStack(spacing: 16) {
-                    // Icon with animations
+                    // Icon with animations - ZStack layers old icon, ripple, and new icon
                     ZStack {
+                        // Old icon (during transition) - bottom layer
+                        if let oldIcon = oldIcon {
+                            Image(nsImage: oldIcon)
+                                .resizable()
+                                .frame(width: 52, height: 52)
+                                .clipShape(RoundedRectangle(cornerRadius: 11))
+                                .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                                .offset(x: oldIconOffsetX, y: oldIconOffsetY)
+                                .scaleEffect(oldIconScale)
+                                .opacity(oldIconOpacity)
+                        }
+                        
+                        // Ripple effect - middle layer, centered on icon
+                        RippleEffect(trigger: rippleTrigger)
+                            .frame(width: 52, height: 52)
+                        
+                        // Current icon - top layer
                         if let icon = app.icon {
                             Image(nsImage: icon)
                                 .resizable()
                                 .frame(width: 52, height: 52)
                                 .clipShape(RoundedRectangle(cornerRadius: 11))
                                 .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                                .offset(x: iconOffsetX, y: iconOffsetY)
+                                .scaleEffect(iconScale)
                         } else {
                             RoundedRectangle(cornerRadius: 11)
                                 .fill(Color(nsColor: .controlBackgroundColor))
@@ -752,19 +779,11 @@ private struct RecentAppLaunchButton: View {
                                         .font(.system(size: 26))
                                         .foregroundStyle(.tertiary)
                                 }
+                                .offset(x: iconOffsetX, y: iconOffsetY)
+                                .scaleEffect(iconScale)
                         }
                     }
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(
-                                key: IconPositionKey.self,
-                                value: geo.frame(in: .named("buttonSpace")).origin
-                            )
-                        }
-                    )
-                    .offset(x: iconOffsetX, y: iconOffsetY)
-                    .scaleEffect(iconScale)
-                    .opacity(iconOpacity)
+                    .frame(width: 52, height: 52)
                     
                     // App info with fade transition
                     VStack(alignment: .leading, spacing: 4) {
@@ -804,23 +823,7 @@ private struct RecentAppLaunchButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .coordinateSpace(name: "buttonSpace")
-        .background(
-            GeometryReader { buttonGeo in
-                ZStack {
-                    // Base background
-                    Color(nsColor: .controlBackgroundColor).opacity(0.5)
-                    
-                    // Ripple effect at exact icon position
-                    RippleEffect(trigger: rippleTrigger)
-                        .position(ripplePosition)
-                }
-                .onPreferenceChange(IconPositionKey.self) { position in
-                    // Icon center in button coordinate space
-                    ripplePosition = CGPoint(x: position.x + 26, y: position.y + 26)
-                }
-            }
-        )
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
         .clipped() // Clip all content (icon motion + ripple) to button bounds
         .overlay(
             Rectangle()
@@ -863,54 +866,66 @@ private struct RecentAppLaunchButton: View {
         }
     }
     
-    // App switch animation - new icon drops and pushes old one down
+    // App switch animation - new icon drops and collides with old one
     private func performAppSwitchAnimation() {
-        // Phase 1: Hide old icon (push down)
-        withAnimation(.easeOut(duration: 0.2)) {
-            iconOffsetY = 100
-            iconScale = 0.7
-            iconOpacity = 0.0
+        // Save old icon and reset its state
+        oldIcon = app.icon
+        oldIconOffsetX = 0
+        oldIconOffsetY = 0
+        oldIconScale = 1.0
+        oldIconOpacity = 1.0  // Old icon is visible and stays in place
+        
+        // New icon starts from above
+        iconOffsetY = -150
+        iconOffsetX = 0
+        iconScale = 1.2
+        
+        // Fade out text immediately
+        withAnimation(.easeOut(duration: 0.15)) {
             textOpacity = 0.0
         }
         
-        // Phase 2: After old icon is gone, prepare new icon
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            // Reset to starting position for NEW icon (no animation)
-            iconOffsetY = -150
-            iconOffsetX = 0
-            iconScale = 1.2
-            iconOpacity = 1.0
+        // Drop new icon
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeIn(duration: 0.3)) {
+                iconOffsetY = 0  // Falls to collision point
+            }
             
-            // Phase 3: Drop new icon from above
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                withAnimation(.easeIn(duration: 0.3)) {
-                    iconOffsetY = 0  // Falls to normal position
+            // COLLISION! Both icons react
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                // New icon squashes
+                withAnimation(.easeOut(duration: 0.1)) {
+                    iconScale = 0.95
                 }
                 
-                // Phase 4: Landing impact
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    // Squash on landing
-                    withAnimation(.easeOut(duration: 0.1)) {
-                        iconScale = 0.95
+                // Old icon gets pushed down and flies away
+                withAnimation(.easeOut(duration: 0.35)) {
+                    oldIconOffsetY = 120  // Pushed down
+                    oldIconScale = 0.6
+                    oldIconOpacity = 0.0
+                }
+                
+                // Ripple at collision
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                    rippleTrigger += 1
+                }
+                
+                // New icon bounces back
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
+                        iconScale = 1.0
+                    }
+                }
+                
+                // After motion completes, fade in new text
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                    withAnimation(.easeIn(duration: 0.25)) {
+                        textOpacity = 1.0
                     }
                     
-                    // Ripple on landing impact
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        rippleTrigger += 1
-                    }
-                    
-                    // Bounce back to normal
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
-                            iconScale = 1.0
-                        }
-                        
-                        // Fade in new text
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                            withAnimation(.easeIn(duration: 0.25)) {
-                                textOpacity = 1.0
-                            }
-                        }
+                    // Clean up old icon
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        oldIcon = nil
                     }
                 }
             }
@@ -1576,13 +1591,5 @@ private struct InfoView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-// PreferenceKey for tracking icon position
-private struct IconPositionKey: PreferenceKey {
-    static var defaultValue: CGPoint = .zero
-    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
-        value = nextValue()
     }
 }
