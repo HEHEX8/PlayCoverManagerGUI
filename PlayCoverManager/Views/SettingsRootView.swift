@@ -378,16 +378,37 @@ struct IPAInstallerSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     if let service = installerService {
-                        // Completed installations
-                        ForEach(service.installedApps, id: \.self) { app in
+                        // Completed installations (with icons)
+                        ForEach(service.installedAppDetails) { detail in
                             HStack(spacing: 12) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.title3)
-                                    .foregroundStyle(.green)
-                                    .frame(width: 32)
+                                // App icon with checkmark badge
+                                ZStack(alignment: .bottomTrailing) {
+                                    if let icon = detail.icon {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .frame(width: 48, height: 48)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 48, height: 48)
+                                    }
+                                    
+                                    // Checkmark badge
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(.white)
+                                        .background(
+                                            Circle()
+                                                .fill(.green)
+                                                .frame(width: 18, height: 18)
+                                        )
+                                        .offset(x: 2, y: 2)
+                                }
+                                .frame(width: 48, height: 48)
                                 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(app)
+                                    Text(detail.appName)
                                         .font(.body)
                                         .fontWeight(.medium)
                                     Text("インストール完了")
@@ -404,7 +425,7 @@ struct IPAInstallerSheet: View {
                         }
                         
                         // Currently installing (if any)
-                        if !service.currentAppName.isEmpty && !service.installedApps.contains(service.currentAppName) {
+                        if !service.currentAppName.isEmpty && !service.installedAppDetails.contains(where: { $0.appName == service.currentAppName }) {
                             HStack(spacing: 12) {
                                 // App icon or progress spinner
                                 ZStack {
@@ -681,17 +702,25 @@ struct IPAInstallerSheet: View {
             }
         }
         
-        // Refresh launcher to show newly installed apps
-        await launcherViewModel.refresh()
+        // Give a moment for icon retrieval to complete
+        try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+        
+        // Refresh launcher to show newly installed apps (in background)
+        Task {
+            await launcherViewModel.refresh()
+        }
         
         // Update UI with service state on main thread
         await MainActor.run {
+            print("🟢 [Installer] インストール完了 - 結果画面に遷移")
+            print("🟢 [Installer] 完了: \(service.installedAppDetails.count) 個")
+            print("🟢 [Installer] 失敗: \(service.failedApps.count) 個")
+            
+            stopStatusUpdater()
             isInstalling = false
             currentPhase = .results
             showResults = true
         }
-        
-        stopStatusUpdater()
     }
 }
 

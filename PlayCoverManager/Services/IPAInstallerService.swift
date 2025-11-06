@@ -653,10 +653,14 @@ class IPAInstallerService {
                 }
                 
                 // Get installed app details (with icon from .app bundle)
+                print("🔵 [Installer] アイコン取得開始: \(info.appName)")
                 if let detail = await getInstalledAppDetail(bundleID: info.bundleID, appName: info.appName) {
+                    print("🟢 [Installer] アイコン取得成功: \(detail.appName), icon: \(detail.icon != nil)")
                     await MainActor.run {
                         installedAppDetails.append(detail)
                     }
+                } else {
+                    print("🔴 [Installer] アイコン取得失敗: \(info.appName)")
                 }
             } catch {
                 await MainActor.run {
@@ -670,6 +674,10 @@ class IPAInstallerService {
             currentStatus = "完了"
             currentAppName = ""  // Clear current app name after all installations complete
             currentAppIcon = nil  // Clear current app icon
+            
+            print("🟢 [installIPAs] すべてのインストール完了")
+            print("🟢 [installIPAs] 成功: \(installedAppDetails.count) 個")
+            print("🟢 [installIPAs] 失敗: \(failedApps.count) 個")
         }
     }
     
@@ -681,12 +689,17 @@ class IPAInstallerService {
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
         
+        print("🔵 [getInstalledAppDetail] アプリディレクトリ検索: \(applicationsDir.path)")
+        
         guard let appDirs = try? FileManager.default.contentsOfDirectory(
             at: applicationsDir,
             includingPropertiesForKeys: nil
         ) else {
+            print("🔴 [getInstalledAppDetail] アプリディレクトリの読み込み失敗")
             return nil
         }
+        
+        print("🔵 [getInstalledAppDetail] 見つかった.appファイル: \(appDirs.filter { $0.pathExtension == "app" }.count) 個")
         
         for appURL in appDirs where appURL.pathExtension == "app" {
             let infoPlist = appURL.appendingPathComponent("Info.plist")
@@ -698,10 +711,14 @@ class IPAInstallerService {
                 continue
             }
             
+            print("🟢 [getInstalledAppDetail] アプリ発見: \(appURL.lastPathComponent)")
+            
             // Found the app - get icon using NSWorkspace (same as LauncherService)
             let icon = await MainActor.run {
                 NSWorkspace.shared.icon(forFile: appURL.path)
             }
+            
+            print("🟢 [getInstalledAppDetail] アイコン取得完了: \(icon.size)")
             
             return InstalledAppDetail(
                 appName: appName,
@@ -710,6 +727,7 @@ class IPAInstallerService {
             )
         }
         
+        print("🔴 [getInstalledAppDetail] Bundle ID \(bundleID) のアプリが見つかりません")
         return nil
     }
 }
