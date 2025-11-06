@@ -756,48 +756,54 @@ private struct RecentAppLaunchButton: View {
                 Spacer()
                 
                 HStack(spacing: 16) {
-                    // Icon with animations - ZStack layers old icon, ripple, and new icon
+                    // Icon with animations - separate ZStacks for ripple (clipped) and icons (overflow)
                     ZStack {
-                        // Ripple effect - bottom layer, clipped to fixed size
-                        RippleEffect(trigger: rippleTrigger)
-                            .frame(width: 52, height: 52)
-                            .clipped()  // Clip ripple to stay within bounds
-                        
-                        // Old icon (during transition) - middle layer, can overflow
-                        if let oldIcon = oldIcon {
-                            Image(nsImage: oldIcon)
-                                .resizable()
+                        // Ripple layer - stays within bounds
+                        ZStack {
+                            RippleEffect(trigger: rippleTrigger)
                                 .frame(width: 52, height: 52)
-                                .clipShape(RoundedRectangle(cornerRadius: 11))
-                                .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
-                                .offset(x: oldIconOffsetX, y: oldIconOffsetY)
-                                .scaleEffect(oldIconScale)
-                                .opacity(oldIconOpacity)
                         }
+                        .frame(width: 52, height: 52)
+                        .clipped()  // Clip only the ripple effect
                         
-                        // Current icon - top layer, can overflow for bounce animation
-                        if let icon = app.icon {
-                            Image(nsImage: icon)
-                                .resizable()
-                                .frame(width: 52, height: 52)
-                                .clipShape(RoundedRectangle(cornerRadius: 11))
-                                .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
-                                .offset(x: iconOffsetX, y: iconOffsetY)
-                                .scaleEffect(iconScale)
-                        } else {
-                            RoundedRectangle(cornerRadius: 11)
-                                .fill(Color(nsColor: .controlBackgroundColor))
-                                .frame(width: 52, height: 52)
-                                .overlay {
-                                    Image(systemName: "app.fill")
-                                        .font(.system(size: 26))
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .offset(x: iconOffsetX, y: iconOffsetY)
-                                .scaleEffect(iconScale)
+                        // Icon layers - can overflow for bounce animation
+                        ZStack {
+                            // Old icon (during transition) - bottom layer
+                            if let oldIcon = oldIcon {
+                                Image(nsImage: oldIcon)
+                                    .resizable()
+                                    .frame(width: 52, height: 52)
+                                    .clipShape(RoundedRectangle(cornerRadius: 11))
+                                    .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                                    .offset(x: oldIconOffsetX, y: oldIconOffsetY)
+                                    .scaleEffect(oldIconScale)
+                                    .opacity(oldIconOpacity)
+                            }
+                            
+                            // Current icon - top layer
+                            if let icon = app.icon {
+                                Image(nsImage: icon)
+                                    .resizable()
+                                    .frame(width: 52, height: 52)
+                                    .clipShape(RoundedRectangle(cornerRadius: 11))
+                                    .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
+                                    .offset(x: iconOffsetX, y: iconOffsetY)
+                                    .scaleEffect(iconScale)
+                            } else {
+                                RoundedRectangle(cornerRadius: 11)
+                                    .fill(Color(nsColor: .controlBackgroundColor))
+                                    .frame(width: 52, height: 52)
+                                    .overlay {
+                                        Image(systemName: "app.fill")
+                                            .font(.system(size: 26))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .offset(x: iconOffsetX, y: iconOffsetY)
+                                    .scaleEffect(iconScale)
+                            }
                         }
                     }
-                    .frame(width: 52, height: 52)  // Fixed frame for layout, but allows content overflow
+                    .frame(width: 52, height: 52)  // Fixed frame for layout
                     
                     // App info with fade transition
                     VStack(alignment: .leading, spacing: 4) {
