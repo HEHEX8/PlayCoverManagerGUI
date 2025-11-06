@@ -129,7 +129,8 @@ final class AppViewModel {
                                        launcherService: launcherService,
                                        settings: settings,
                                        perAppSettings: perAppSettings,
-                                       lockService: lockService)
+                                       lockService: lockService,
+                                       processRunner: ProcessRunner())
             launcherViewModel = vm
             phase = .launcher
         } catch {

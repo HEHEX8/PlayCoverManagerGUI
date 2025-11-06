@@ -36,6 +36,7 @@ final class LauncherViewModel {
     private let perAppSettings: PerAppSettingsStore
     private let fileManager: FileManager
     private let lockService: ContainerLockService
+    private let processRunner: ProcessRunner
 
     private var pendingLaunchContext: LaunchContext?
     private nonisolated(unsafe) var appTerminationObserver: NSObjectProtocol?
@@ -47,6 +48,7 @@ final class LauncherViewModel {
          settings: SettingsStore,
          perAppSettings: PerAppSettingsStore,
          lockService: ContainerLockService,
+         processRunner: ProcessRunner = ProcessRunner(),
          fileManager: FileManager = .default) {
         self.apps = apps
         self.filteredApps = apps
@@ -56,6 +58,7 @@ final class LauncherViewModel {
         self.settings = settings
         self.perAppSettings = perAppSettings
         self.lockService = lockService
+        self.processRunner = processRunner
         self.fileManager = fileManager
         
         // Cleanup stale lock files on startup
@@ -436,26 +439,42 @@ final class LauncherViewModel {
             let playCoverContainer = playCoverPaths.containerRootURL
             print("[LauncherVM] PlayCover container path: \(playCoverContainer.path)")
             
-            // Check if it exists and is mounted
+            // Check if the container directory exists first
             if fileManager.fileExists(atPath: playCoverContainer.path) {
-                print("[LauncherVM] PlayCover container exists")
+                print("[LauncherVM] PlayCover container directory exists")
+                
+                // Check if it's actually mounted by querying diskutil
                 do {
-                    try await diskImageService.detach(volumeURL: playCoverContainer)
-                    successCount += 1
-                    print("[LauncherVM] Successfully unmounted PlayCover container")
+                    let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", playCoverContainer.path])
+                    if let data = output.data(using: .utf8),
+                       let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                       let _ = plist["VolumeName"] as? String {
+                        // It's mounted, try to unmount
+                        print("[LauncherVM] PlayCover container is mounted, attempting unmount")
+                        do {
+                            try await diskImageService.detach(volumeURL: playCoverContainer)
+                            successCount += 1
+                            print("[LauncherVM] Successfully unmounted PlayCover container")
+                        } catch {
+                            print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
+                            // PlayCover container failed, show error and abort
+                            isBusy = false
+                            isShowingStatus = false
+                            self.error = AppError.diskImage(
+                                "PlayCover コンテナのアンマウントに失敗しました",
+                                message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
+                            )
+                            return
+                        }
+                    } else {
+                        print("[LauncherVM] PlayCover container is not mounted (diskutil returned no volume name)")
+                    }
                 } catch {
-                    print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
-                    // PlayCover container failed, show error and abort
-                    isBusy = false
-                    isShowingStatus = false
-                    self.error = AppError.diskImage(
-                        "PlayCover コンテナのアンマウントに失敗しました",
-                        message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
-                    )
-                    return
+                    print("[LauncherVM] diskutil info failed for PlayCover container: \(error)")
+                    // If diskutil fails, the container is likely not mounted - this is OK
                 }
             } else {
-                print("[LauncherVM] PlayCover container doesn't exist or not mounted, skipping")
+                print("[LauncherVM] PlayCover container directory doesn't exist, skipping")
             }
         } else {
             print("[LauncherVM] Step 2: Skipping PlayCover container (applyToPlayCoverContainer=false)")
@@ -500,21 +519,41 @@ final class LauncherViewModel {
     }
     
     private func showUnmountResultAndQuit(successCount: Int, failedCount: Int, ejectedDrive: String?) async {
+        print("[LauncherVM] Entering showUnmountResultAndQuit")
+        print("[LauncherVM] Success: \(successCount), Failed: \(failedCount), Ejected: \(ejectedDrive ?? "none")")
+        
         await MainActor.run {
+            print("[LauncherVM] On MainActor, hiding status overlay")
+            // Hide the status overlay before showing the alert
+            self.isBusy = false
+            self.isShowingStatus = false
+        }
+        
+        // Give UI a moment to update
+        try? await Task.sleep(for: .milliseconds(100))
+        
+        await MainActor.run {
+            print("[LauncherVM] Creating alert")
             let alert = NSAlert()
             
             if let driveName = ejectedDrive {
                 alert.messageText = "ドライブの取り外し完了"
                 alert.informativeText = "外部ドライブ「\(driveName)」を安全に取り外せる状態にしました。\n\nアンマウント成功: \(successCount) 個\n失敗: \(failedCount) 個"
+                print("[LauncherVM] Alert type: external drive ejected")
             } else {
                 alert.messageText = "アンマウント完了"
                 alert.informativeText = "ディスクイメージをアンマウントしました。\n\n成功: \(successCount) 個\n失敗: \(failedCount) 個"
+                print("[LauncherVM] Alert type: unmount complete")
             }
             
             alert.alertStyle = failedCount > 0 ? .warning : .informational
             alert.addButton(withTitle: "OK")
-            alert.runModal()
             
+            print("[LauncherVM] About to show modal alert")
+            let response = alert.runModal()
+            print("[LauncherVM] Alert dismissed with response: \(response.rawValue)")
+            
+            print("[LauncherVM] About to terminate application")
             // Quit app
             NSApplication.shared.terminate(nil)
         }
