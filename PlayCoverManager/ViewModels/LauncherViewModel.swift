@@ -473,9 +473,11 @@ final class LauncherViewModel {
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
         print("[LauncherVM] ===== Starting performUnmountAllAndQuit =====")
         print("[LauncherVM] applyToPlayCoverContainer: \(applyToPlayCoverContainer)")
-        isBusy = true
-        isShowingStatus = true
-        statusMessage = "ディスクイメージをアンマウントしています…"
+        
+        // Set initial processing state
+        await MainActor.run {
+            unmountFlowState = .processing(status: "ディスクイメージをアンマウントしています…")
+        }
         
         var successCount = 0
         var failedCount = 0
@@ -491,7 +493,9 @@ final class LauncherViewModel {
         
         // Step 1: Unmount all app containers
         print("[LauncherVM] Step 1: Unmounting app containers (\(apps.count) apps)")
-        statusMessage = "アプリコンテナをアンマウントしています…"
+        await MainActor.run {
+            unmountFlowState = .processing(status: "アプリコンテナをアンマウントしています…")
+        }
         for app in apps {
             let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             print("[LauncherVM] Checking app: \(app.bundleIdentifier)")
@@ -526,25 +530,21 @@ final class LauncherViewModel {
         // If any app container failed, show error and abort
         guard failedCount == 0 else {
             print("[LauncherVM] Aborting due to failed app containers")
-            let alert = await MainActor.run { () -> NSAlert in
-                isBusy = false
-                isShowingStatus = false
-                
-                let alert = NSAlert()
-                alert.messageText = "アンマウントに失敗しました"
-                alert.informativeText = "\(failedCount) 個のコンテナをアンマウントできませんでした。\n実行中のアプリがないか確認してください。"
-                alert.alertStyle = .critical
-                alert.addButton(withTitle: "OK")
-                return alert
+            await MainActor.run {
+                unmountFlowState = .error(
+                    title: "アンマウントに失敗しました",
+                    message: "\(failedCount) 個のコンテナをアンマウントできませんでした。\n実行中のアプリがないか確認してください。"
+                )
             }
-            alert.runModal()
             return
         }
         
         // Step 2: Unmount PlayCover container
         if applyToPlayCoverContainer {
             print("[LauncherVM] Step 2: Unmounting PlayCover container")
-            statusMessage = "PlayCover コンテナをアンマウントしています…"
+            await MainActor.run {
+                unmountFlowState = .processing(status: "PlayCover コンテナをアンマウントしています…")
+            }
             let playCoverContainer = playCoverPaths.containerRootURL
             print("[LauncherVM] PlayCover container path: \(playCoverContainer.path)")
             
@@ -561,18 +561,12 @@ final class LauncherViewModel {
                 } catch {
                     print("[LauncherVM] Failed to unmount PlayCover container: \(error)")
                     // PlayCover container failed, show error and abort
-                    let alert = await MainActor.run { () -> NSAlert in
-                        isBusy = false
-                        isShowingStatus = false
-                        
-                        let alert = NSAlert()
-                        alert.messageText = "PlayCover コンテナのアンマウントに失敗しました"
-                        alert.informativeText = "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
-                        alert.alertStyle = .critical
-                        alert.addButton(withTitle: "OK")
-                        return alert
+                    await MainActor.run {
+                        unmountFlowState = .error(
+                            title: "PlayCover コンテナのアンマウントに失敗しました",
+                            message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
+                        )
                     }
-                    alert.runModal()
                     return
                 }
             } else {
@@ -593,7 +587,9 @@ final class LauncherViewModel {
         
         // Step 2.5: Detach all Apple Disk Image Media devices
         print("[LauncherVM] Step 2.5: Detaching Apple Disk Image Media devices")
-        statusMessage = "ディスクイメージデバイスをクリーンアップしています…"
+        await MainActor.run {
+            unmountFlowState = .processing(status: "ディスクイメージデバイスをクリーンアップしています…")
+        }
         do {
             let detachedCount = try await diskImageService.detachAllDiskImages()
             print("[LauncherVM] Detached \(detachedCount) disk image device(s)")
@@ -630,21 +626,23 @@ final class LauncherViewModel {
                 let displayName = volumeInfo?.displayName ?? storageDir.lastPathComponent
                 print("[LauncherVM] Volume display name: \(displayName)")
                 
-                // Show confirmation dialog for external drive eject
-                // Create alert on MainActor but show modal outside to avoid priority inversion
-                let alert = await MainActor.run { () -> NSAlert in
-                    let alert = NSAlert()
-                    alert.messageText = "外部ドライブをイジェクトしますか？"
-                    alert.informativeText = "データの保存先が外部ドライブまたはネットワークドライブ（\(displayName)）にあります。\n\nドライブをイジェクトしますか？\n\n（「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します）"
-                    alert.alertStyle = .informational
-                    alert.addButton(withTitle: "イジェクト")
-                    alert.addButton(withTitle: "イジェクトしない")
-                    return alert
+                // Show eject confirmation in overlay
+                await MainActor.run {
+                    unmountFlowState = .ejectConfirming(volumeDisplayName: displayName)
+                    pendingEjectConfirmed = nil  // Reset confirmation state
                 }
                 
-                let shouldEject = alert.runModal() == .alertFirstButtonReturn
+                // Wait for user decision
+                while await MainActor.run(body: { pendingEjectConfirmed }) == nil {
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+                
+                let shouldEject = await MainActor.run { pendingEjectConfirmed == true }
                 
                 if shouldEject {
+                    await MainActor.run {
+                        unmountFlowState = .processing(status: "外部ドライブを取り外し可能な状態にしています…")
+                    }
                     statusMessage = "外部ドライブを取り外し可能な状態にしています…"
                     if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
                         print("[LauncherVM] Device path: \(devicePath)")
@@ -658,7 +656,7 @@ final class LauncherViewModel {
                             
                             // Parse error for user-friendly information
                             var errorMessage: String
-                            var volumeInfo: String? = nil
+                            var volumeInfoText: String? = nil
                             
                             if let processError = error as? ProcessRunnerError,
                                case .commandFailed(_, _, let stderr) = processError {
@@ -681,7 +679,7 @@ final class LauncherViewModel {
                                         }
                                     }
                                     
-                                    volumeInfo = details.joined(separator: "\n")
+                                    volumeInfoText = details.joined(separator: "\n")
                                 }
                                 
                                 if stderr.contains("at least one volume could not be unmounted") {
@@ -693,39 +691,32 @@ final class LauncherViewModel {
                                 errorMessage = error.localizedDescription
                             }
                             
-                            // Create alert on MainActor but show it outside to avoid priority inversion
-                            let alert = await MainActor.run { () -> NSAlert in
-                                let alert = NSAlert()
-                                alert.messageText = "ドライブのイジェクトに失敗"
-                                
-                                var info = errorMessage
-                                if let volInfo = volumeInfo {
-                                    info += "\n\n\(volInfo)"
-                                }
-                                info += "\n\nFinderから手動でイジェクトしてください。"
-                                
-                                alert.informativeText = info
-                                alert.alertStyle = .warning
-                                alert.addButton(withTitle: "OK")
-                                return alert
+                            // Show error in overlay
+                            var fullMessage = errorMessage
+                            if let volInfo = volumeInfoText {
+                                fullMessage += "\n\n\(volInfo)"
                             }
+                            fullMessage += "\n\nFinderから手動でイジェクトしてください。"
                             
-                            // Show modal dialog outside MainActor.run to avoid priority inversion
-                            alert.runModal()
+                            await MainActor.run {
+                                unmountFlowState = .error(
+                                    title: "ドライブのイジェクトに失敗",
+                                    message: fullMessage
+                                )
+                            }
+                            return  // Exit early, don't continue to success
                         }
                     } else {
                         print("[LauncherVM] Could not get device path for external drive")
                         
                         // Show error to user
-                        let alert = await MainActor.run { () -> NSAlert in
-                            let alert = NSAlert()
-                            alert.messageText = "デバイスパスの取得に失敗"
-                            alert.informativeText = "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。"
-                            alert.alertStyle = .warning
-                            alert.addButton(withTitle: "OK")
-                            return alert
+                        await MainActor.run {
+                            unmountFlowState = .error(
+                                title: "デバイスパスの取得に失敗",
+                                message: "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。"
+                            )
                         }
-                        alert.runModal()
+                        return  // Exit early
                     }
                 } else {
                     print("[LauncherVM] User chose not to eject external drive")
@@ -737,63 +728,20 @@ final class LauncherViewModel {
         
         print("[LauncherVM] Step 3 complete")
         
-        // Step 4: Show result and quit
-        print("[LauncherVM] Step 4: Showing results and quitting")
+        // Step 4: Show result
+        print("[LauncherVM] Step 4: Showing results")
         let totalUnmounted = volumesBefore - volumesAfter
         print("[LauncherVM] Final stats - Explicitly unmounted: \(successCount), Total volumes unmounted: \(totalUnmounted), Failed: 0, Ejected: \(ejectedDrive ?? "none")")
-        await showUnmountResultAndQuit(successCount: totalUnmounted > 0 ? totalUnmounted : successCount, failedCount: 0, ejectedDrive: ejectedDrive)
+        
+        await MainActor.run {
+            unmountFlowState = .success(
+                unmountedCount: totalUnmounted > 0 ? totalUnmounted : successCount,
+                ejectedDrive: ejectedDrive
+            )
+        }
     }
     
-    private func showUnmountResultAndQuit(successCount: Int, failedCount: Int, ejectedDrive: String?) async {
-        print("[LauncherVM] Entering showUnmountResultAndQuit")
-        print("[LauncherVM] Success: \(successCount), Failed: \(failedCount), Ejected: \(ejectedDrive ?? "none")")
-        
-        await MainActor.run {
-            print("[LauncherVM] On MainActor, hiding status overlay")
-            // Hide the status overlay before showing the alert
-            self.isBusy = false
-            self.isShowingStatus = false
-        }
-        
-        // Give UI a moment to update
-        try? await Task.sleep(for: .milliseconds(100))
-        
-        let alert = await MainActor.run { () -> NSAlert in
-            print("[LauncherVM] Creating alert")
-            let alert = NSAlert()
-            
-            if let driveName = ejectedDrive {
-                alert.messageText = "ドライブの取り外し完了"
-                alert.informativeText = "外部ドライブ「\(driveName)」を安全に取り外せる状態にしました。\n\nアンマウントされたボリューム: \(successCount) 個"
-                if successCount > 1 {
-                    alert.informativeText += "\n（PlayCoverコンテナと関連するアプリコンテナが含まれます）"
-                }
-                print("[LauncherVM] Alert type: external drive ejected")
-            } else {
-                alert.messageText = "アンマウント完了"
-                alert.informativeText = "ディスクイメージをアンマウントしました。\n\nアンマウントされたボリューム: \(successCount) 個"
-                if successCount > 1 {
-                    alert.informativeText += "\n（PlayCoverコンテナと関連するアプリコンテナが含まれます）"
-                }
-                print("[LauncherVM] Alert type: unmount complete")
-            }
-            
-            alert.alertStyle = failedCount > 0 ? .warning : .informational
-            alert.addButton(withTitle: "OK")
-            
-            return alert
-        }
-        
-        print("[LauncherVM] About to show modal alert")
-        let response = alert.runModal()
-        print("[LauncherVM] Alert dismissed with response: \(response.rawValue)")
-        
-        await MainActor.run {
-            print("[LauncherVM] About to terminate application")
-            // Quit app
-            NSApplication.shared.terminate(nil)
-        }
-    }
+
     
     
     
