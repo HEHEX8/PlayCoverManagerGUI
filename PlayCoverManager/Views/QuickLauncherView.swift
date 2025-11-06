@@ -169,11 +169,8 @@ struct QuickLauncherView: View {
                                     selectedAppForDetail = app
                                 } uninstallAction: {
                                     // Uninstall action - open uninstaller with pre-selected app
-                                    print("🔵 [uninstallAction] アンインストールボタンがクリックされました")
-                                    print("🔵 [uninstallAction] Bundle ID: \(app.bundleIdentifier)")
                                     selectedAppForUninstall = app.bundleIdentifier
                                     showingUninstaller = true
-                                    print("🔵 [uninstallAction] showingUninstaller = true に設定")
                                 }
                             }
                         }

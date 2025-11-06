@@ -247,7 +247,6 @@ final class DiskImageService {
                 
                 // Check if it's removable media
                 if let isInternal = plist["Internal"] as? Bool {
-                    print("🔍 [DiskImageService] Volume at \(currentPath.path) - Internal: \(isInternal)")
                     return !isInternal
                 }
             }
@@ -275,7 +274,6 @@ final class DiskImageService {
                let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                let node = plist["DeviceNode"] as? String {
                 deviceNode = node
-                print("🔍 [DiskImageService] Found device node: \(node) for path: \(currentPath.path)")
                 break
             }
             
@@ -351,10 +349,6 @@ final class DiskImageService {
                     }
                 }
                 
-                print("🔍 [DiskImageService] Found volume info:")
-                print("  Volume: \(volumeName)")
-                print("  Device: \(deviceIdentifier ?? "none")")
-                print("  Media: \(mediaName ?? "none")")
                 
                 return VolumeInfo(volumeName: volumeName, deviceName: deviceIdentifier, mediaName: mediaName)
             }
@@ -387,27 +381,21 @@ final class DiskImageService {
         guard let infoData = infoOutput?.data(using: .utf8),
               let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any],
               let deviceId = infoPlist["DeviceIdentifier"] as? String else {
-            print("[DiskImageService] Could not get device ID for \(volumePath.path)")
             throw AppError.diskImage("デバイスIDの取得に失敗", message: volumePath.path, underlying: nil)
         }
         
-        print("[DiskImageService] Found device \(deviceId) for volume \(volumePath.path)")
         
         // Get the parent disk image device (e.g., disk4 from disk4s1)
         let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: [.regularExpression])
-        print("[DiskImageService] Parent device: \(parentDevice)")
         
         // Eject the parent device (unmounts all volumes and detaches device)
         do {
             var args = ["eject", parentDevice]
             if force {
                 args.append("-force")
-                print("[DiskImageService] ⚠️ Using FORCE eject for \(parentDevice)")
             }
             _ = try await processRunner.run("/usr/sbin/diskutil", args)
-            print("[DiskImageService] ✅ Ejected disk image: \(parentDevice)")
         } catch {
-            print("[DiskImageService] ⚠️ Failed to eject \(parentDevice): \(error)")
             throw error
         }
     }
@@ -418,7 +406,6 @@ final class DiskImageService {
         guard let data = output.data(using: .utf8),
               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
               let allDisks = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
-            print("[DiskImageService] Failed to parse diskutil list")
             return 0
         }
         
@@ -442,15 +429,12 @@ final class DiskImageService {
                     let isDiskImage = mediaName.contains("Disk Image") || isVirtual
                     
                     if isDiskImage {
-                        print("[DiskImageService] Found disk image device: \(deviceId) (\(mediaName))")
                         
                         // Try to eject/detach the disk image
                         do {
                             _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", deviceId])
-                            print("[DiskImageService] ✅ Detached disk image: \(deviceId)")
                             detachedCount += 1
                         } catch {
-                            print("[DiskImageService] ⚠️ Failed to detach \(deviceId): \(error)")
                             // Continue with other disk images
                         }
                     }
@@ -458,7 +442,6 @@ final class DiskImageService {
             }
         }
         
-        print("[DiskImageService] Detached \(detachedCount) disk image device(s)")
         return detachedCount
     }
     
@@ -478,7 +461,6 @@ final class DiskImageService {
             guard let data = output.data(using: .utf8),
                   let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
                   let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
-                print("[DiskImageService] Failed to parse diskutil list output")
                 return 0
             }
             
@@ -493,7 +475,6 @@ final class DiskImageService {
                            !mountPoint.isEmpty,
                            mountPoint.hasPrefix(basePathString) {
                             count += 1
-                            print("[DiskImageService] Found mounted volume: \(mountPoint)")
                         }
                     }
                 }
@@ -502,14 +483,11 @@ final class DiskImageService {
                    !mountPoint.isEmpty,
                    mountPoint.hasPrefix(basePathString) {
                     count += 1
-                    print("[DiskImageService] Found mounted volume: \(mountPoint)")
                 }
             }
             
-            print("[DiskImageService] Total mounted volumes under \(basePathString): \(count)")
             return count
         } catch {
-            print("[DiskImageService] Error counting mounted volumes: \(error)")
             return 0
         }
     }
@@ -567,7 +545,6 @@ final class DiskImageService {
                     }
                 }
             } catch {
-                print("[DiskImageService] Failed to query disk info for \(diskID): \(error)")
             }
         }
         

@@ -710,9 +710,6 @@ struct IPAInstallerSheet: View {
             }
         }
         
-        // Give a moment for icon retrieval to complete
-        try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
-        
         // Refresh launcher to show newly installed apps (in background)
         Task {
             await launcherViewModel.refresh()
@@ -720,9 +717,6 @@ struct IPAInstallerSheet: View {
         
         // Update UI with service state on main thread
         await MainActor.run {
-            print("🟢 [Installer] インストール完了 - 結果画面に遷移")
-            print("🟢 [Installer] 完了: \(service.installedAppDetails.count) 個")
-            print("🟢 [Installer] 失敗: \(service.failedApps.count) 個")
             
             stopStatusUpdater()
             isInstalling = false
@@ -1121,7 +1115,6 @@ struct AppUninstallerSheet: View {
     
     private func loadApps() async {
         guard let service = uninstallerService else {
-            print("🟢 [loadApps] サービス初期化中")
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
             let service = AppUninstallerService(diskImageService: diskImageService, settingsStore: settingsStore, perAppSettingsStore: perAppSettingsStore, launcherService: launcherService)
@@ -1130,17 +1123,13 @@ struct AppUninstallerSheet: View {
             return
         }
         
-        print("🟢 [loadApps] アプリ一覧取得開始")
         do {
             apps = try await service.getInstalledApps()
             totalSize = apps.reduce(0) { $0 + $1.appSize + $1.diskImageSize }
-            print("🟢 [loadApps] アプリ数: \(apps.count)")
             
             // If preSelectedBundleID is provided, select it and show confirmation
             if let bundleID = preSelectedBundleID {
-                print("🟢 [loadApps] 事前選択されたアプリ: \(bundleID)")
                 if apps.contains(where: { $0.bundleID == bundleID }) {
-                    print("🟢 [loadApps] アプリが見つかりました - 確認プロンプトを表示")
                     selectedApps = [bundleID]
                     currentPhase = .selection
                     // Show confirmation dialog after a brief delay to ensure UI is ready
@@ -1150,18 +1139,14 @@ struct AppUninstallerSheet: View {
                     }
                     return
                 } else {
-                    print("🔴 [loadApps] アプリが見つかりません")
                 }
             } else {
-                print("🟢 [loadApps] 事前選択なし - 通常モード")
             }
         } catch {
-            print("🔴 [loadApps] エラー: \(error)")
             apps = []
             totalSize = 0
         }
         
-        print("🟢 [loadApps] 読み込み完了 - currentPhase を selection に設定")
         currentPhase = .selection
     }
     
@@ -1171,22 +1156,16 @@ struct AppUninstallerSheet: View {
         let appsToUninstall = apps.filter { selectedApps.contains($0.bundleID) }
         guard !appsToUninstall.isEmpty else { return }
         
-        print("🔵 [UI] startUninstallation 開始: \(appsToUninstall.count) 個")
         currentPhase = .uninstalling
         
         do {
-            print("🔵 [UI] service.uninstallApps 呼び出し")
             try await service.uninstallApps(appsToUninstall)
-            print("🔵 [UI] service.uninstallApps 完了")
         } catch {
-            print("🔵 [UI] エラー: \(error)")
         }
         
-        print("🔵 [UI] 結果表示")
         currentPhase = .results
         
         // Update quick launcher
-        print("🔵 [UI] クイックランチャーを更新")
         if let launcher = appViewModel.launcherViewModel {
             await launcher.refresh()
         }
