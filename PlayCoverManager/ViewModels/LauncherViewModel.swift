@@ -438,6 +438,13 @@ final class LauncherViewModel {
             let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             print("[LauncherVM] Checking app: \(app.bundleIdentifier)")
             
+            // Check if app is currently running
+            if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
+                print("[LauncherVM] App is running, skipping: \(app.bundleIdentifier)")
+                failedCount += 1
+                continue
+            }
+            
             // Check if container is actually mounted
             let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
             guard let descriptor = descriptor, descriptor.isMounted else {
