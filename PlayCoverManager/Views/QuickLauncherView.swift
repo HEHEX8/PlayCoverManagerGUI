@@ -404,44 +404,29 @@ private struct iOSAppIconView: View {
         }
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { gesture in
+                .onChanged { _ in
                     // Press down animation
                     if !isPressed {
                         isPressed = true
                     }
-                    
-                    // Check if cursor moved too far outside the icon bounds
-                    let iconSize: CGFloat = 80
-                    let tolerance: CGFloat = 20  // Allow some movement outside
-                    let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
-                    
-                    // If moved too far, trigger cancel animation
-                    if distance > iconSize / 2 + tolerance && !isCancelled {
-                        isPressed = false
-                        isCancelled = true
-                        
-                        // "Nani yanen!" shake animation
-                        performShakeAnimation()
-                    }
                 }
                 .onEnded { gesture in
-                    // Check if the gesture ended outside the icon
+                    // Only check on release
                     let iconSize: CGFloat = 80
                     let tolerance: CGFloat = 20
                     let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
                     
-                    if distance > iconSize / 2 + tolerance || isCancelled {
-                        // Cancelled - reset state
-                        isPressed = false
+                    // Reset press state first
+                    isPressed = false
+                    
+                    if distance > iconSize / 2 + tolerance {
+                        // Released outside bounds - "Nani yanen!" shake once
                         if !isCancelled {
-                            // Quick shake if cancelled on release
                             isCancelled = true
                             performShakeAnimation()
                         }
                     } else {
-                        // Normal launch - within bounds
-                        isPressed = false
-                        
+                        // Released within bounds - normal launch
                         // Smooth transition from press to bounce
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                             isAnimating = true
