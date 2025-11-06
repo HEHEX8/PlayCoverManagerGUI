@@ -278,28 +278,9 @@ class AppUninstallerService {
         do {
             let mountOutput = try await processRunner.run("/sbin/mount", [])
             if mountOutput.contains(internalContainer.path) {
-                // Get device ID before unmounting
-                let deviceId = try? await diskImageService.getDeviceIdentifier(for: internalContainer)
-                if let deviceId = deviceId {
-                    print("[AppUninstallerService] Found device ID: \(deviceId) for container")
-                }
-                
-                // It's mounted - unmount it
+                // It's mounted - eject the disk image (unmounts and detaches in one operation)
                 await MainActor.run { currentStatus = "ディスクイメージをアンマウント中..." }
-                try await diskImageService.detach(volumeURL: internalContainer)
-                
-                // Detach disk image device using pre-acquired device ID
-                if let deviceId = deviceId {
-                    do {
-                        let detachedCount = try await diskImageService.detachDiskImageDeviceByID(deviceId)
-                        if detachedCount > 0 {
-                            print("[AppUninstallerService] Detached \(detachedCount) disk image device(s)")
-                        }
-                    } catch {
-                        print("[AppUninstallerService] Warning: Failed to detach disk image device: \(error)")
-                        // Continue anyway - this is not critical
-                    }
-                }
+                try await diskImageService.ejectDiskImage(for: internalContainer)
                 
                 // After unmounting, the mount point directory should be removed automatically by the system
                 // But sometimes it remains as an empty directory - clean it up
