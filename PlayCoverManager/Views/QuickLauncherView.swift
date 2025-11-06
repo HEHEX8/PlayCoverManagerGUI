@@ -405,12 +405,21 @@ private struct iOSAppIconView: View {
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
+                    // Ignore if currently animating or cancelled
+                    guard !isAnimating && !isCancelled else { return }
+                    
                     // Press down animation
                     if !isPressed {
                         isPressed = true
                     }
                 }
                 .onEnded { gesture in
+                    // Ignore if currently animating or already cancelled
+                    guard !isAnimating && !isCancelled else {
+                        isPressed = false
+                        return
+                    }
+                    
                     // Only check on release
                     let iconSize: CGFloat = 80
                     let tolerance: CGFloat = 20
@@ -421,10 +430,8 @@ private struct iOSAppIconView: View {
                     
                     if distance > iconSize / 2 + tolerance {
                         // Released outside bounds - "Nani yanen!" shake once
-                        if !isCancelled {
-                            isCancelled = true
-                            performShakeAnimation()
-                        }
+                        isCancelled = true
+                        performShakeAnimation()
                     } else {
                         // Released within bounds - normal launch
                         // Smooth transition from press to bounce
