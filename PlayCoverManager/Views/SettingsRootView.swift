@@ -810,9 +810,37 @@ private struct MaintenanceSettingsView: View {
     @Environment(AppViewModel.self) private var appViewModel
     @State private var showingResetConfirmation = false
     @State private var showingClearCacheConfirmation = false
+    @State private var showingUnmountAllConfirmation = false
+    @State private var showingExternalDriveEjectConfirmation = false
+    @State private var isUnmounting = false
+    @State private var unmountStatusMessage = ""
+    @State private var externalDrivePath: String?
 
     var body: some View {
         Form {
+            Section(header: Text("マウント管理")) {
+                Button("すべてアンマウント") {
+                    Task {
+                        await checkAndUnmountAll()
+                    }
+                }
+                .disabled(isUnmounting)
+                
+                if isUnmounting {
+                    HStack {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(unmountStatusMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                Text("PlayCoverコンテナのディスクイメージをすべてアンマウントし、アプリを終了します。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
             Section(header: Text("キャッシュ")) {
                 Button("アイコンキャッシュをクリア") {
                     showingClearCacheConfirmation = true
@@ -848,6 +876,33 @@ private struct MaintenanceSettingsView: View {
         } message: {
             Text("アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。")
         }
+        .alert("すべてアンマウントしますか？", isPresented: $showingUnmountAllConfirmation) {
+            Button("キャンセル", role: .cancel) { }
+            Button("アンマウント", role: .destructive) {
+                Task {
+                    await performUnmountAll()
+                }
+            }
+        } message: {
+            Text("PlayCoverコンテナのディスクイメージをすべてアンマウントし、アプリを終了します。")
+        }
+        .alert("外部ドライブをイジェクトしますか？", isPresented: $showingExternalDriveEjectConfirmation) {
+            Button("キャンセル", role: .cancel) {
+                // アプリ終了のみ
+                quitApp()
+            }
+            Button("イジェクト", role: .default) {
+                Task {
+                    await performDriveEject()
+                }
+            }
+        } message: {
+            if let path = externalDrivePath {
+                Text("データの保存先が外部ドライブ（\(path)）にあります。\n\nイジェクトしますか？\n\n（キャンセルを選択すると、イジェクトせずにアプリを終了します）")
+            } else {
+                Text("外部ドライブをイジェクトしますか？")
+            }
+        }
     }
     
     private func clearIconCache() {
@@ -869,6 +924,145 @@ private struct MaintenanceSettingsView: View {
         UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
         
+        NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
+    }
+    
+    // MARK: - Unmount All
+    
+    private func checkAndUnmountAll() async {
+        showingUnmountAllConfirmation = true
+    }
+    
+    private func performUnmountAll() async {
+        await MainActor.run {
+            isUnmounting = true
+            unmountStatusMessage = "アンマウント中..."
+        }
+        
+        let processRunner = ProcessRunner()
+        let diskImageService = DiskImageService(processRunner: processRunner, settings: settingsStore)
+        
+        do {
+            // 1. Collect all mounted PlayCover volumes
+            await MainActor.run {
+                unmountStatusMessage = "マウントされたボリュームを検出中..."
+            }
+            
+            guard let diskImageDir = settingsStore.diskImageDirectory else {
+                await showErrorAndQuit("保存先が未設定のため、アンマウント処理をスキップします。")
+                return
+            }
+            
+            let fileManager = FileManager.default
+            let contents = try fileManager.contentsOfDirectory(at: diskImageDir, includingPropertiesForKeys: nil)
+            let asifFiles = contents.filter { $0.pathExtension == "asif" }
+            
+            var volumesToUnmount: [URL] = []
+            
+            for asifFile in asifFiles {
+                let bundleID = asifFile.deletingPathExtension().lastPathComponent
+                if let containerURL = appViewModel.playCoverPaths.containerURL(for: bundleID) {
+                    // Check if mounted
+                    if try diskImageService.isMounted(at: containerURL) {
+                        volumesToUnmount.append(containerURL)
+                    }
+                }
+            }
+            
+            // 2. Unmount all PlayCover volumes
+            await MainActor.run {
+                unmountStatusMessage = "\(volumesToUnmount.count)個のボリュームをアンマウント中..."
+            }
+            
+            for (index, volume) in volumesToUnmount.enumerated() {
+                await MainActor.run {
+                    unmountStatusMessage = "アンマウント中... (\(index + 1)/\(volumesToUnmount.count))"
+                }
+                
+                do {
+                    try await diskImageService.detach(volumeURL: volume)
+                } catch {
+                    // Continue unmounting others even if one fails
+                    print("⚠️ アンマウント失敗: \(volume.path) - \(error.localizedDescription)")
+                }
+            }
+            
+            // 3. Check if storage location is on external drive
+            await MainActor.run {
+                unmountStatusMessage = "外部ドライブを確認中..."
+            }
+            
+            let isExternal = try await diskImageService.isExternalDrive(diskImageDir)
+            
+            if isExternal {
+                // Get device path for ejection
+                if let devicePath = try await diskImageService.getDevicePath(for: diskImageDir) {
+                    await MainActor.run {
+                        externalDrivePath = devicePath
+                        isUnmounting = false
+                        showingExternalDriveEjectConfirmation = true
+                    }
+                    return
+                }
+            }
+            
+            // 4. Quit app (no external drive or failed to get device path)
+            await MainActor.run {
+                unmountStatusMessage = "完了"
+                isUnmounting = false
+            }
+            
+            quitApp()
+            
+        } catch {
+            await showErrorAndQuit("アンマウント処理中にエラーが発生しました:\n\(error.localizedDescription)")
+        }
+    }
+    
+    private func performDriveEject() async {
+        guard let devicePath = externalDrivePath else {
+            quitApp()
+            return
+        }
+        
+        await MainActor.run {
+            isUnmounting = true
+            unmountStatusMessage = "外部ドライブをイジェクト中..."
+        }
+        
+        let processRunner = ProcessRunner()
+        let diskImageService = DiskImageService(processRunner: processRunner, settings: settingsStore)
+        
+        do {
+            try await diskImageService.ejectDrive(devicePath: devicePath)
+            
+            await MainActor.run {
+                unmountStatusMessage = "イジェクト完了"
+                isUnmounting = false
+            }
+            
+            quitApp()
+        } catch {
+            await showErrorAndQuit("外部ドライブのイジェクトに失敗しました:\n\(devicePath)\n\nエラー: \(error.localizedDescription)\n\nアプリを終了します。")
+        }
+    }
+    
+    private func showErrorAndQuit(_ message: String) async {
+        await MainActor.run {
+            isUnmounting = false
+            
+            let alert = NSAlert()
+            alert.messageText = "エラー"
+            alert.informativeText = message
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            
+            quitApp()
+        }
+    }
+    
+    private func quitApp() {
         NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
     }
 }
