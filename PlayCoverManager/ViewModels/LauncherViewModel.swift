@@ -538,28 +538,54 @@ final class LauncherViewModel {
         
         print("[LauncherVM] Step 2 complete. Total success: \(successCount)")
         
-        // Step 3: If external drive, eject the whole drive
+        // Step 3: If external drive, eject the whole drive  
         print("[LauncherVM] Step 3: Checking for external drive")
         if let storageDir = settings.diskImageDirectory {
             print("[LauncherVM] Storage directory: \(storageDir.path)")
-            let isExternal = (try? await diskImageService.isExternalDrive(storageDir)) ?? false
-            print("[LauncherVM] Is external drive: \(isExternal)")
             
-            if isExternal {
-                statusMessage = "外部ドライブを取り外し可能な状態にしています…"
-                if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
-                    print("[LauncherVM] Device path: \(devicePath)")
-                    do {
-                        try await diskImageService.ejectDrive(devicePath: devicePath)
-                        ejectedDrive = storageDir.lastPathComponent
-                        print("[LauncherVM] Successfully ejected drive: \(ejectedDrive ?? "unknown")")
-                    } catch {
-                        print("[LauncherVM] Failed to eject drive (ignoring): \(error)")
-                        // Eject failed, but leave it to Finder/System
-                        // We already unmounted volumes successfully
+            // Check if path is under /Volumes/ (typical external mount point)
+            let isUnderVolumes = storageDir.path.hasPrefix("/Volumes/")
+            print("[LauncherVM] Is under /Volumes/: \(isUnderVolumes)")
+            
+            let isExternal = (try? await diskImageService.isExternalDrive(storageDir)) ?? false
+            print("[LauncherVM] Is external drive (diskutil): \(isExternal)")
+            
+            // Use /Volumes/ check as fallback since diskutil might not detect all cases
+            let shouldOfferEject = isExternal || isUnderVolumes
+            print("[LauncherVM] Should offer eject: \(shouldOfferEject)")
+            
+            if shouldOfferEject {
+                // Show confirmation dialog for external drive eject
+                let shouldEject = await MainActor.run { () -> Bool in
+                    let alert = NSAlert()
+                    alert.messageText = "外部ドライブをイジェクトしますか？"
+                    alert.informativeText = "データの保存先が外部ドライブまたはネットワークドライブ（\(storageDir.lastPathComponent)）にあります。\n\nドライブをイジェクトしますか？\n\n（「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します）"
+                    alert.alertStyle = .informational
+                    alert.addButton(withTitle: "イジェクト")
+                    alert.addButton(withTitle: "イジェクトしない")
+                    
+                    let response = alert.runModal()
+                    return response == .alertFirstButtonReturn
+                }
+                
+                if shouldEject {
+                    statusMessage = "外部ドライブを取り外し可能な状態にしています…"
+                    if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
+                        print("[LauncherVM] Device path: \(devicePath)")
+                        do {
+                            try await diskImageService.ejectDrive(devicePath: devicePath)
+                            ejectedDrive = storageDir.lastPathComponent
+                            print("[LauncherVM] Successfully ejected drive: \(ejectedDrive ?? "unknown")")
+                        } catch {
+                            print("[LauncherVM] Failed to eject drive (ignoring): \(error)")
+                            // Eject failed, but leave it to Finder/System
+                            // We already unmounted volumes successfully
+                        }
+                    } else {
+                        print("[LauncherVM] Could not get device path for external drive")
                     }
                 } else {
-                    print("[LauncherVM] Could not get device path for external drive")
+                    print("[LauncherVM] User chose not to eject external drive")
                 }
             }
         } else {
