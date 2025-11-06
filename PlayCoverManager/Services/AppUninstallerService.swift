@@ -47,14 +47,16 @@ class AppUninstallerService {
         let diskImageURL: URL
         let appSize: Int64
         let diskImageSize: Int64
+        let icon: NSImage?
         
-        nonisolated init(appName: String, bundleID: String, version: String, diskImageURL: URL, appSize: Int64, diskImageSize: Int64) {
+        nonisolated init(appName: String, bundleID: String, version: String, diskImageURL: URL, appSize: Int64, diskImageSize: Int64, icon: NSImage?) {
             self.appName = appName
             self.bundleID = bundleID
             self.version = version
             self.diskImageURL = diskImageURL
             self.appSize = appSize
             self.diskImageSize = diskImageSize
+            self.icon = icon
         }
     }
     
@@ -109,13 +111,17 @@ class AppUninstallerService {
                 let imageURL = diskImageDir.appendingPathComponent(imageName)
                 let diskImageSize = fileSize(at: imageURL) ?? 0
                 
+                // Get app icon
+                let icon = NSWorkspace.shared.icon(forFile: appURL.path)
+                
                 apps.append(InstalledAppInfo(
                     appName: appName,
                     bundleID: bundleID,
                     version: version,
                     diskImageURL: imageURL,
                     appSize: appSize,
-                    diskImageSize: diskImageSize
+                    diskImageSize: diskImageSize,
+                    icon: icon
                 ))
             } catch {
                 continue
