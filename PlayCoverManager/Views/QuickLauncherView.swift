@@ -304,6 +304,7 @@ private struct iOSAppIconView: View {
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
+    @State private var isPressed = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -341,7 +342,10 @@ private struct iOSAppIconView: View {
                     .offset(x: 6, y: -6)
                 }
             }
-            .scaleEffect(isAnimating ? 0.85 : 1.0)
+            // Combined animations: press + bounce
+            .scaleEffect(isPressed ? 0.92 : (isAnimating ? 0.85 : 1.0))
+            .brightness(isPressed ? -0.1 : 0)
+            .animation(.easeOut(duration: 0.1), value: isPressed)
             .animation(
                 isAnimating ? 
                     Animation.interpolatingSpring(stiffness: 300, damping: 10)
@@ -387,27 +391,48 @@ private struct iOSAppIconView: View {
                 }
             }
         }
-        .onTapGesture {
-            // Mac-style bounce animation on launch
-            isAnimating = true
-            
-            // Trigger launch after brief animation
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                tapAction()
-                
-                // Stop animation after launch
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    isAnimating = false
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    // Press down animation
+                    if !isPressed {
+                        isPressed = true
+                    }
                 }
-            }
-        }
+                .onEnded { _ in
+                    // Release and trigger launch sequence
+                    isPressed = false
+                    
+                    // Smooth transition from press to bounce
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        isAnimating = true
+                        
+                        // Trigger launch during bounce animation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            tapAction()
+                        }
+                        
+                        // Stop bounce animation after completion
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                            isAnimating = false
+                        }
+                    }
+                }
+        )
         .contextMenu {
             Button("起動") { 
-                isAnimating = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                    tapAction()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                        isAnimating = false
+                // Smooth press + bounce animation sequence
+                isPressed = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    isPressed = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        isAnimating = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            tapAction()
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
+                                isAnimating = false
+                            }
+                        }
                     }
                 }
             }
