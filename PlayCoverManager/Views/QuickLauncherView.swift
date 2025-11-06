@@ -839,7 +839,7 @@ private struct RippleEffect: View {
         }
     }
     
-    private struct Ripple: Identifiable {
+    fileprivate struct Ripple: Identifiable {
         let id: UUID
         var scale: CGFloat = 0.0
         var opacity: Double = 1.0
