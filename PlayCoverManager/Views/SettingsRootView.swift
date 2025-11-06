@@ -809,9 +809,43 @@ private struct MaintenanceSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @State private var showingResetConfirmation = false
     @State private var showingClearCacheConfirmation = false
+    @State private var isTrimming = false
+    @State private var trimResult: String?
 
     var body: some View {
         Form {
+            Section(header: Text("ディスクイメージ最適化")) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Button(action: {
+                        Task {
+                            await trimAllDiskImages()
+                        }
+                    }) {
+                        HStack {
+                            Text("すべてのASIFイメージをトリミング")
+                            if isTrimming {
+                                Spacer()
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .scaleEffect(0.7)
+                            }
+                        }
+                    }
+                    .disabled(isTrimming)
+                    
+                    Text("ASIFディスクイメージの未使用領域を解放します。容量の拡張は自動ですが、縮小は手動でトリミングが必要です。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    if let result = trimResult {
+                        Text(result)
+                            .font(.caption)
+                            .foregroundStyle(result.contains("失敗") ? .red : .green)
+                            .padding(.top, 4)
+                    }
+                }
+            }
+            
             Section(header: Text("キャッシュ")) {
                 Button("アイコンキャッシュをクリア") {
                     showingClearCacheConfirmation = true
@@ -869,6 +903,41 @@ private struct MaintenanceSettingsView: View {
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
         
         NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
+    }
+    
+    private func trimAllDiskImages() async {
+        await MainActor.run {
+            isTrimming = true
+            trimResult = nil
+        }
+        
+        do {
+            let processRunner = ProcessRunner()
+            let diskImageService = DiskImageService(processRunner: processRunner, settings: settingsStore)
+            
+            let result = try await diskImageService.trimAllDiskImages()
+            
+            await MainActor.run {
+                isTrimming = false
+                
+                // Format the reclaimed space in a human-readable way
+                let formatter = ByteCountFormatter()
+                formatter.allowedUnits = [.useGB, .useMB]
+                formatter.countStyle = .file
+                let reclaimedStr = formatter.string(fromByteCount: result.total)
+                
+                if result.failed > 0 {
+                    trimResult = "✅ \(result.processed)個完了、❌ \(result.failed)個失敗、\(reclaimedStr) 解放"
+                } else {
+                    trimResult = "✅ \(result.processed)個のイメージをトリミングしました（\(reclaimedStr) 解放）"
+                }
+            }
+        } catch {
+            await MainActor.run {
+                isTrimming = false
+                trimResult = "❌ トリミングに失敗しました: \(error.localizedDescription)"
+            }
+        }
     }
 }
 
