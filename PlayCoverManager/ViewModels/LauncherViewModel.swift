@@ -463,6 +463,20 @@ final class LauncherViewModel {
         do {
             try await diskImageService.detach(volumeURL: containerURL)
             print("[LauncherVM] Successfully unmounted container for \(bundleID)")
+            
+            // Detach Apple Disk Image Media devices after unmount
+            print("[LauncherVM] Detaching disk image devices for cleanup")
+            do {
+                let detachedCount = try await diskImageService.detachAllDiskImages()
+                if detachedCount > 0 {
+                    print("[LauncherVM] Detached \(detachedCount) disk image device(s)")
+                    // Wait briefly for diskimagesiod cleanup
+                    try? await Task.sleep(for: .seconds(1))
+                }
+            } catch {
+                print("[LauncherVM] Warning: Failed to detach disk images: \(error)")
+                // Continue anyway - this is not critical
+            }
         } catch {
             print("[LauncherVM] Failed to unmount container for \(bundleID): \(error)")
             // Silently fail - don't show error for auto-unmount

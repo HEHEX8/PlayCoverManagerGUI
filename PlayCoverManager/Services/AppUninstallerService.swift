@@ -282,6 +282,17 @@ class AppUninstallerService {
                 await MainActor.run { currentStatus = "ディスクイメージをアンマウント中..." }
                 try await diskImageService.detach(volumeURL: internalContainer)
                 
+                // Detach Apple Disk Image Media devices for cleanup
+                do {
+                    let detachedCount = try await diskImageService.detachAllDiskImages()
+                    if detachedCount > 0 {
+                        print("[AppUninstallerService] Detached \(detachedCount) disk image device(s)")
+                    }
+                } catch {
+                    print("[AppUninstallerService] Warning: Failed to detach disk images: \(error)")
+                    // Continue anyway - this is not critical
+                }
+                
                 // After unmounting, the mount point directory should be removed automatically by the system
                 // But sometimes it remains as an empty directory - clean it up
                 try await Task.sleep(nanoseconds: 500_000_000) // Wait 0.5 sec for system to clean up
