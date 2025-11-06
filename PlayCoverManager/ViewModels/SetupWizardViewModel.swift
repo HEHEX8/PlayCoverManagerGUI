@@ -1,8 +1,10 @@
 import Foundation
 import AppKit
+import Observation
 
 @MainActor
-final class SetupWizardViewModel: ObservableObject {
+@Observable
+final class SetupWizardViewModel {
     enum Step: Int, CaseIterable, Identifiable {
         case installPlayCover
         case selectStorage
@@ -38,12 +40,12 @@ final class SetupWizardViewModel: ObservableObject {
         }
     }
 
-    @Published var currentStep: Step
-    @Published var isBusy = false
-    @Published var statusMessage: String = ""
-    @Published var error: AppError?
-    @Published var storageURL: URL?
-    @Published var completionMessage: String = "セットアップが完了しました。"
+    var currentStep: Step
+    var isBusy = false
+    var statusMessage: String = ""
+    var error: AppError?
+    var storageURL: URL?
+    var completionMessage: String = "セットアップが完了しました。"
 
     var onCompletion: (() -> Void)?
 
@@ -51,7 +53,7 @@ final class SetupWizardViewModel: ObservableObject {
     private let environmentService: PlayCoverEnvironmentService
     private let diskImageService: DiskImageService
     private let context: AppPhase.SetupContext
-    private var detectedPlayCoverPaths: PlayCoverPaths?
+    var detectedPlayCoverPaths: PlayCoverPaths?
 
     init(settings: SettingsStore,
          environmentService: PlayCoverEnvironmentService,
@@ -65,6 +67,12 @@ final class SetupWizardViewModel: ObservableObject {
         self.detectedPlayCoverPaths = initialPlayCoverPaths
         if context.missingPlayCover {
             currentStep = .installPlayCover
+            // Try to detect PlayCover immediately on init
+            Task { @MainActor in
+                if let paths = try? environmentService.detectPlayCover() {
+                    self.detectedPlayCoverPaths = paths
+                }
+            }
         } else if settings.diskImageDirectory == nil {
             currentStep = .selectStorage
         } else {
@@ -77,6 +85,10 @@ final class SetupWizardViewModel: ObservableObject {
         if let url = URL(string: "https://playcover.io") {
             NSWorkspace.shared.open(url)
         }
+    }
+    
+    func openSettings() {
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
     func chooseStorageDirectory() {
@@ -133,9 +145,14 @@ final class SetupWizardViewModel: ObservableObject {
         statusMessage = "ディスクイメージを作成しています…"
         defer { isBusy = false }
         do {
-            try await diskImageService.ensureDiskImageExists(for: bundleID, volumeName: bundleID)
+            _ = try await diskImageService.ensureDiskImageExists(for: bundleID, volumeName: bundleID)
             let nobrowse = settings.nobrowseEnabled
             try await diskImageService.mountDiskImage(for: bundleID, at: mountPoint, nobrowse: nobrowse)
+            
+            // Create Applications directory structure in the mounted volume
+            let applicationsDir = mountPoint.appendingPathComponent("Applications", isDirectory: true)
+            try FileManager.default.createDirectory(at: applicationsDir, withIntermediateDirectories: true)
+            
             advance()
         } catch let error as AppError {
             self.error = error

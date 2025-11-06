@@ -1,0 +1,30 @@
+{
+  "title": "PlayCover Manager",
+  "icon": "AppIcon.icns",
+  "background": "dmg-background.png",
+  "icon-size": 128,
+  "window": {
+    "size": {
+      "width": 600,
+      "height": 400
+    },
+    "position": {
+      "x": 200,
+      "y": 120
+    }
+  },
+  "contents": [
+    {
+      "x": 150,
+      "y": 200,
+      "type": "file",
+      "path": "build/PlayCover Manager.app"
+    },
+    {
+      "x": 450,
+      "y": 200,
+      "type": "link",
+      "path": "/Applications"
+    }
+  ]
+}
