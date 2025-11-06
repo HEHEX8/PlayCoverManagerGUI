@@ -406,9 +406,25 @@ struct IPAInstallerSheet: View {
                         // Currently installing (if any)
                         if !service.currentAppName.isEmpty && !service.installedApps.contains(service.currentAppName) {
                             HStack(spacing: 12) {
-                                ProgressView()
-                                    .controlSize(.regular)
-                                    .frame(width: 32)
+                                // App icon or progress spinner
+                                ZStack {
+                                    if let icon = service.currentAppIcon {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .frame(width: 48, height: 48)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .opacity(0.7)  // Slightly faded during install
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 48, height: 48)
+                                    }
+                                    
+                                    // Overlay progress spinner on icon
+                                    ProgressView()
+                                        .controlSize(.regular)
+                                }
+                                .frame(width: 48, height: 48)
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(service.currentAppName)

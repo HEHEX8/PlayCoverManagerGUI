@@ -24,6 +24,7 @@ class IPAInstallerService {
     var currentProgress: Double = 0.0
     var currentStatus: String = ""
     var currentAppName: String = ""  // Currently installing app name
+    var currentAppIcon: NSImage? = nil  // Currently installing app icon
     var installedApps: [String] = []
     var failedApps: [String] = []
     
@@ -554,6 +555,7 @@ class IPAInstallerService {
     nonisolated func installSingleIPA(_ info: IPAInfo) async throws {
         await MainActor.run {
             currentAppName = info.appName
+            currentAppIcon = info.icon
             currentStatus = "\(info.appName) をインストール中"
         }
         
@@ -617,6 +619,7 @@ class IPAInstallerService {
             failedApps.removeAll()
             currentProgress = 0.0
             currentAppName = ""
+            currentAppIcon = nil
         }
         
         defer {
@@ -649,6 +652,7 @@ class IPAInstallerService {
             currentProgress = 1.0
             currentStatus = "完了"
             currentAppName = ""  // Clear current app name after all installations complete
+            currentAppIcon = nil  // Clear current app icon
         }
     }
 }
