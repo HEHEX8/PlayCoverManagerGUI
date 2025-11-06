@@ -704,13 +704,18 @@ struct AppUninstallerSheet: View {
     @State private var uninstallerService: AppUninstallerService?
     @State private var apps: [AppUninstallerService.InstalledAppInfo] = []
     @State private var selectedApps: Set<String> = []
-    @State private var isLoading = true
-    @State private var isUninstalling = false
-    @State private var statusMessage = ""
-    @State private var showResults = false
+    @State private var currentPhase: UninstallPhase = .loading
     @State private var totalSize: Int64 = 0
+    @State private var statusUpdateTask: Task<Void, Never>?
     
     let preSelectedBundleID: String?
+    
+    enum UninstallPhase {
+        case loading        // アプリ一覧読み込み中
+        case selection      // アプリ選択
+        case uninstalling   // アンインストール中
+        case results        // 結果表示
+    }
     
     init(preSelectedBundleID: String? = nil) {
         self.preSelectedBundleID = preSelectedBundleID
@@ -722,99 +727,42 @@ struct AppUninstallerSheet: View {
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            if isLoading {
-                ProgressView("アプリ一覧を読み込み中...")
-            } else if isUninstalling {
-                // Show uninstall progress view
-                VStack(spacing: 16) {
-                    if let service = uninstallerService {
-                        ProgressView(value: service.currentProgress)
-                            .frame(width: 300)
-                        Text(service.currentStatus)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ProgressView("アンインストール中...")
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if showResults {
-                // Results view - larger and centered
-                VStack(spacing: 24) {
-                    // Success icon
-                    if let service = uninstallerService, !service.failedApps.isEmpty {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 64))
-                            .foregroundStyle(.orange)
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 64))
-                            .foregroundStyle(.green)
-                    }
-                    
-                    // Summary
-                    if let service = uninstallerService {
-                        VStack(spacing: 8) {
-                            if !service.failedApps.isEmpty {
-                                Text("一部のアプリをアンインストールできませんでした")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                            } else {
-                                Text("アンインストール完了")
-                                    .font(.title2)
-                                    .fontWeight(.semibold)
-                            }
-                            
-                            HStack(spacing: 16) {
-                                if !service.uninstalledApps.isEmpty {
-                                    Label("\(service.uninstalledApps.count) 個成功", systemImage: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
-                                }
-                                if !service.failedApps.isEmpty {
-                                    Label("\(service.failedApps.count) 個失敗", systemImage: "xmark.circle.fill")
-                                        .foregroundStyle(.red)
-                                }
-                            }
-                            .font(.headline)
-                        }
-                    }
-                    
-                    Divider()
-                        .padding(.horizontal, 40)
-                    
-                    // Detailed results
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
-                            if let service = uninstallerService, !service.uninstalledApps.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("✅ 削除されたアプリ")
-                                        .font(.headline)
-                                        .foregroundStyle(.green)
-                                    ForEach(service.uninstalledApps, id: \.self) { appName in
-                                        Text("  • \(appName)")
-                                            .font(.body)
-                                    }
-                                }
-                            }
-                            
-                            if let service = uninstallerService, !service.failedApps.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("❌ 失敗したアプリ")
-                                        .font(.headline)
-                                        .foregroundStyle(.red)
-                                    ForEach(service.failedApps, id: \.self) { error in
-                                        Text("  • \(error)")
-                                            .font(.body)
-                                    }
-                                }
-                            }
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal)
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if apps.isEmpty {
+            switch currentPhase {
+            case .loading:
+                loadingView
+            case .selection:
+                selectionView
+            case .uninstalling:
+                uninstallingView
+            case .results:
+                resultsView
+            }
+            
+            Spacer()
+            
+            bottomButtons
+        }
+        .padding(24)
+        .frame(width: 700, height: 600)
+        .task {
+            await loadApps()
+        }
+    }
+    
+    // MARK: - Loading View
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+            Text("アプリ一覧を読み込み中...")
+                .font(.headline)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Selection View
+    private var selectionView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if apps.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "tray")
                         .font(.system(size: 48))
@@ -824,69 +772,300 @@ struct AppUninstallerSheet: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("インストール済みアプリ (\(apps.count) 個)")
-                            .font(.headline)
+                HStack {
+                    Text("インストール済みアプリ (\(apps.count) 個)")
+                        .font(.headline)
+                    Spacer()
+                    Text("合計: \(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                List(apps, id: \.bundleID, selection: $selectedApps) { app in
+                    HStack(spacing: 12) {
+                        if let icon = app.icon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 48, height: 48)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 48, height: 48)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(app.appName)
+                                .font(.body)
+                            Text(app.bundleID)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
                         Spacer()
-                        Text("合計: \(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))")
+                        
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(ByteCountFormatter.string(fromByteCount: app.appSize + app.diskImageSize, countStyle: .file))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("App: \(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Uninstalling View
+    private var uninstallingView: some View {
+        VStack(spacing: 20) {
+            // Header with progress
+            VStack(spacing: 12) {
+                Image(systemName: "trash.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.red)
+                
+                Text("アンインストール中")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                if let service = uninstallerService, !service.currentStatus.isEmpty {
+                    Text(service.currentStatus)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                
+                // Overall progress bar
+                if let service = uninstallerService {
+                    let totalItems = selectedApps.count
+                    let completed = service.uninstalledApps.count + service.failedApps.count
+                    let progressValue = totalItems > 0 ? Double(completed) / Double(totalItems) : 0
+                    
+                    VStack(spacing: 8) {
+                        ProgressView(value: progressValue)
+                            .frame(width: 400)
+                        
+                        Text("\(completed) / \(totalItems) 完了")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    
-                    List(apps, id: \.bundleID, selection: $selectedApps) { app in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(app.appName)
-                                    .font(.body)
-                                Text(app.bundleID)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                }
+            }
+            
+            Divider()
+                .padding(.horizontal, 40)
+            
+            // Uninstall log
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let service = uninstallerService {
+                        // Completed uninstalls
+                        ForEach(service.uninstalledApps, id: \.self) { appName in
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.green)
+                                    .frame(width: 48)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(appName)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text("アンインストール完了")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
                             }
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text(ByteCountFormatter.string(fromByteCount: app.appSize + app.diskImageSize, countStyle: .file))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text("App: \(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.green.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                        
+                        // Currently uninstalling (if any)
+                        if !service.currentStatus.isEmpty && service.currentStatus != "完了" && 
+                           !service.uninstalledApps.contains(where: { service.currentStatus.contains($0) }) {
+                            HStack(spacing: 12) {
+                                ProgressView()
+                                    .controlSize(.regular)
+                                    .frame(width: 48)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(service.currentStatus)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text("処理中...")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                        
+                        // Failed uninstalls
+                        ForEach(service.failedApps, id: \.self) { error in
+                            HStack(spacing: 12) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.red)
+                                    .frame(width: 48)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(error.components(separatedBy: ":").first ?? error)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            startStatusUpdater()
+        }
+        .onDisappear {
+            stopStatusUpdater()
+        }
+    }
+    
+    // MARK: - Results View  
+    private var resultsView: some View {
+        VStack(spacing: 16) {
+            HStack {
+                if let service = uninstallerService, !service.failedApps.isEmpty {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.orange)
+                } else {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.title2)
+                        .foregroundStyle(.green)
+                }
+                Text("アンインストール結果")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+            }
+            
+            ScrollView {
+                VStack(spacing: 12) {
+                    if let service = uninstallerService {
+                        // Success list
+                        ForEach(service.uninstalledApps, id: \.self) { appName in
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.green)
+                                    .frame(width: 48)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(appName)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text("アンインストール完了")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color(nsColor: .controlBackgroundColor))
+                            .cornerRadius(8)
+                        }
+                        
+                        // Failure list
+                        ForEach(service.failedApps, id: \.self) { error in
+                            HStack(spacing: 12) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.red)
+                                    .frame(width: 48)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(error.components(separatedBy: ":").first ?? error)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                    Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(2)
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color(nsColor: .controlBackgroundColor))
+                            .cornerRadius(8)
                         }
                     }
                 }
             }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+    
+    // MARK: - Bottom Buttons
+    private var bottomButtons: some View {
+        HStack {
+            Button(currentPhase == .results ? "閉じる" : "キャンセル") {
+                dismiss()
+            }
+            .keyboardShortcut(.cancelAction)
             
             Spacer()
             
-            HStack {
-                Button(showResults ? "閉じる" : "キャンセル") {
-                    dismiss()
-                }
-                .keyboardShortcut(.cancelAction)
-                
-                Spacer()
-                
-                if !apps.isEmpty && !selectedApps.isEmpty && !showResults {
-                    Button("削除 (\(selectedApps.count) 個)") {
-                        print("🟡 [UI] ボタンがクリックされました")
-                        Task {
-                            print("🟡 [UI] Task 開始")
-                            await startUninstallation()
-                            print("🟡 [UI] Task 完了")
-                        }
+            if currentPhase == .selection && !selectedApps.isEmpty {
+                Button("削除 (\(selectedApps.count) 個)") {
+                    Task {
+                        await startUninstallation()
                     }
-                    .tint(.red)
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isUninstalling)
                 }
+                .tint(.red)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
             }
         }
-        .padding(24)
-        .frame(width: 600, height: 500)
-        .task {
-            await loadApps()
+    }
+    
+    private func startStatusUpdater() {
+        statusUpdateTask = Task {
+            while !Task.isCancelled && currentPhase == .uninstalling {
+                await MainActor.run {
+                    _ = Date()
+                }
+                try? await Task.sleep(nanoseconds: 500_000_000)
+            }
         }
+    }
+    
+    private func stopStatusUpdater() {
+        statusUpdateTask?.cancel()
+        statusUpdateTask = nil
     }
     
     private func loadApps() async {
@@ -912,8 +1091,7 @@ struct AppUninstallerSheet: View {
                 if apps.contains(where: { $0.bundleID == bundleID }) {
                     print("🟢 [loadApps] アプリが見つかりました - 自動アンインストール開始")
                     selectedApps = [bundleID]
-                    isLoading = false
-                    // Start uninstall immediately after loading
+                    // Start uninstall immediately after loading (phase will be set in startUninstallation)
                     await startUninstallation()
                     return
                 } else {
@@ -928,8 +1106,8 @@ struct AppUninstallerSheet: View {
             totalSize = 0
         }
         
-        print("🟢 [loadApps] 読み込み完了 - isLoading を false に設定")
-        isLoading = false
+        print("🟢 [loadApps] 読み込み完了 - currentPhase を selection に設定")
+        currentPhase = .selection
     }
     
     private func startUninstallation() async {
@@ -939,7 +1117,7 @@ struct AppUninstallerSheet: View {
         guard !appsToUninstall.isEmpty else { return }
         
         print("🔵 [UI] startUninstallation 開始: \(appsToUninstall.count) 個")
-        isUninstalling = true
+        currentPhase = .uninstalling
         
         do {
             print("🔵 [UI] service.uninstallApps 呼び出し")
@@ -950,14 +1128,15 @@ struct AppUninstallerSheet: View {
         }
         
         print("🔵 [UI] 結果表示")
-        isUninstalling = false
-        showResults = true
+        currentPhase = .results
         
         // Update quick launcher
         print("🔵 [UI] クイックランチャーを更新")
         if let launcher = appViewModel.launcherViewModel {
             await launcher.refresh()
         }
+        
+        stopStatusUpdater()
     }
 }
 
