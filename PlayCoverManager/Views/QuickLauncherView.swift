@@ -710,23 +710,22 @@ private struct IPAInstallerSheetWrapper: View {
     }
 }
 
-// Recent app launch button with ripple effect
+// Recent app launch button with rich animations
 private struct RecentAppLaunchButton: View {
     let app: PlayCoverApp
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
-    @State private var dropTrigger = 0
+    @State private var iconOffsetY: CGFloat = 0
+    @State private var iconScale: CGFloat = 1.0
+    @State private var iconRotation: Double = 0
+    @State private var textOpacity: Double = 1.0
+    @State private var previousAppID: String = ""
     
     var body: some View {
         Button {
-            // Trigger icon drop and ripple on each press
-            dropTrigger += 1
-            
-            // Trigger ripple after icon lands (0.4s drop animation)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                rippleTrigger += 1
-            }
+            // Bounce up and drop animation for existing icon
+            performIconBounce()
             
             onLaunch()
         } label: {
@@ -734,7 +733,7 @@ private struct RecentAppLaunchButton: View {
                 Spacer()
                 
                 HStack(spacing: 16) {
-                    // Icon with drop animation
+                    // Icon with animations
                     ZStack {
                         if let icon = app.icon {
                             Image(nsImage: icon)
@@ -753,8 +752,11 @@ private struct RecentAppLaunchButton: View {
                                 }
                         }
                     }
+                    .offset(y: iconOffsetY)
+                    .scaleEffect(iconScale)
+                    .rotationEffect(.degrees(iconRotation))
                     
-                    // App info
+                    // App info with fade transition
                     VStack(alignment: .leading, spacing: 4) {
                         Text(app.displayName)
                             .font(.system(size: 16, weight: .semibold))
@@ -763,6 +765,7 @@ private struct RecentAppLaunchButton: View {
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                     }
+                    .opacity(textOpacity)
                     
                     // Enter key hint
                     HStack(spacing: 5) {
@@ -802,93 +805,90 @@ private struct RecentAppLaunchButton: View {
             .clipped() // Clip ripple effect to button bounds
         )
         .overlay(
-            // Dropping icon animation layer
-            DroppingIcon(app: app, trigger: dropTrigger)
-        )
-        .overlay(
             Rectangle()
                 .fill(Color.primary.opacity(0.08))
                 .frame(height: 1),
             alignment: .top
         )
         .keyboardShortcut(.defaultAction)
-    }
-}
-
-// Dropping icon animation
-private struct DroppingIcon: View {
-    let app: PlayCoverApp
-    let trigger: Int
-    
-    @State private var drops: [IconDrop] = []
-    
-    var body: some View {
-        ZStack {
-            ForEach(drops) { drop in
-                Group {
-                    if let icon = app.icon {
-                        Image(nsImage: icon)
-                            .resizable()
-                            .frame(width: 52, height: 52)
-                            .clipShape(RoundedRectangle(cornerRadius: 11))
-                            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
-                    } else {
-                        RoundedRectangle(cornerRadius: 11)
-                            .fill(Color(nsColor: .controlBackgroundColor))
-                            .frame(width: 52, height: 52)
-                    }
-                }
-                .offset(y: drop.offsetY)
-                .scaleEffect(drop.scale)
-                .opacity(drop.opacity)
+        .onChange(of: app.bundleIdentifier) { oldValue, newValue in
+            // Detect app change and trigger rich transition
+            if !oldValue.isEmpty && oldValue != newValue {
+                performAppSwitchAnimation()
             }
+            previousAppID = newValue
         }
-        .allowsHitTesting(false) // Don't interfere with button taps
-        .onChange(of: trigger) { _, _ in
-            createNewDrop()
+        .onAppear {
+            previousAppID = app.bundleIdentifier
         }
     }
     
-    private func createNewDrop() {
-        let newDrop = IconDrop(id: UUID())
-        drops.append(newDrop)
+    // Bounce up and drop animation for button press
+    private func performIconBounce() {
+        // Jump up
+        withAnimation(.easeOut(duration: 0.15)) {
+            iconOffsetY = -60
+            iconScale = 1.1
+            iconRotation = -5
+        }
         
-        // Drop animation with bounce
-        withAnimation(.interpolatingSpring(stiffness: 200, damping: 15, initialVelocity: 10)) {
-            if let index = drops.firstIndex(where: { $0.id == newDrop.id }) {
-                drops[index].offsetY = 0
+        // Fall down with bounce
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(.interpolatingSpring(stiffness: 200, damping: 12)) {
+                iconOffsetY = 0
+                iconScale = 1.0
+                iconRotation = 0
             }
         }
         
-        // Scale down on impact
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            withAnimation(.easeOut(duration: 0.1)) {
-                if let index = drops.firstIndex(where: { $0.id == newDrop.id }) {
-                    drops[index].scale = 0.9
-                }
-            }
-        }
-        
-        // Fade out after landing
+        // Trigger ripple on landing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            withAnimation(.easeOut(duration: 0.2)) {
-                if let index = drops.firstIndex(where: { $0.id == newDrop.id }) {
-                    drops[index].opacity = 0.0
-                }
-            }
-        }
-        
-        // Remove after animation completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            drops.removeAll(where: { $0.id == newDrop.id })
+            rippleTrigger += 1
         }
     }
     
-    private struct IconDrop: Identifiable {
-        let id: UUID
-        var offsetY: CGFloat = -100  // Start above button
-        var scale: CGFloat = 1.0
-        var opacity: Double = 1.0
+    // Rich app switch animation
+    private func performAppSwitchAnimation() {
+        // Fade out text
+        withAnimation(.easeOut(duration: 0.2)) {
+            textOpacity = 0.0
+        }
+        
+        // Icon flies up and spins out
+        withAnimation(.easeIn(duration: 0.3)) {
+            iconOffsetY = -80
+            iconScale = 0.5
+            iconRotation = 180
+        }
+        
+        // New icon flies in from above after old one disappears
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            // Reset position above for new icon
+            iconOffsetY = -100
+            iconScale = 0.8
+            iconRotation = -180
+            
+            // Animate new icon landing
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.interpolatingSpring(stiffness: 180, damping: 14)) {
+                    iconOffsetY = 0
+                    iconScale = 1.0
+                    iconRotation = 0
+                }
+                
+                // Trigger ripple on landing
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    rippleTrigger += 1
+                }
+            }
+            
+            // Fade in new text after icon lands
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                withAnimation(.easeIn(duration: 0.3)) {
+                    textOpacity = 1.0
+                }
+            }
+        }
     }
 }
 
