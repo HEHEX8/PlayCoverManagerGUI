@@ -150,10 +150,13 @@ final class LauncherViewModel {
             }
 
             // Acquire lock on container before launching
-            _ = lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
+            let lockAcquired = lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
+            print("[LauncherVM] 🔒 Lock acquired for \(app.bundleIdentifier): \(lockAcquired)")
             
+            print("[LauncherVM] 🚀 Launching app: \(app.bundleIdentifier) (\(app.displayName))")
             try await launcherService.openApp(app)
             pendingLaunchContext = nil
+            print("[LauncherVM] ✅ App launched successfully: \(app.bundleIdentifier)")
             
             // Refresh after a short delay to allow the app to start
             // This updates the "running" indicator
@@ -316,30 +319,48 @@ final class LauncherViewModel {
             object: nil,
             queue: .main
         ) { [weak self] notification in
+            print("[LauncherVM] ===== App Termination Notification Received =====")
+            
             guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
-                print("[LauncherVM] Termination notification received but no app info")
-                return
-            }
-            guard let bundleID = app.bundleIdentifier else {
-                print("[LauncherVM] Terminated app has no bundle ID")
+                print("[LauncherVM] ERROR: Termination notification received but no app info")
+                print("[LauncherVM] Notification userInfo keys: \(notification.userInfo?.keys.map { String(describing: $0) }.joined(separator: ", ") ?? "none")")
                 return
             }
             
-            print("[LauncherVM] App terminated: \(bundleID)")
+            let bundleID = app.bundleIdentifier ?? "<no bundle ID>"
+            let appName = app.localizedName ?? "<no name>"
+            print("[LauncherVM] Terminated app info:")
+            print("[LauncherVM]   Bundle ID: \(bundleID)")
+            print("[LauncherVM]   App Name: \(appName)")
+            print("[LauncherVM]   Process ID: \(app.processIdentifier)")
+            
+            guard app.bundleIdentifier != nil else {
+                print("[LauncherVM] Skipping - app has no bundle ID")
+                return
+            }
             
             // Handle app termination on MainActor
             Task { @MainActor [weak self] in
                 guard let self = self else {
-                    print("[LauncherVM] Self is nil in termination handler")
+                    print("[LauncherVM] ERROR: Self is nil in termination handler")
                     return
+                }
+                
+                print("[LauncherVM] Checking against managed apps:")
+                for managedApp in self.apps {
+                    print("[LauncherVM]   - \(managedApp.bundleIdentifier) (\(managedApp.displayName))")
                 }
                 
                 // Check if this is one of our managed apps
                 let isManagedApp = self.apps.contains { $0.bundleIdentifier == bundleID }
                 print("[LauncherVM] Is managed app: \(isManagedApp)")
-                guard isManagedApp else { return }
                 
-                print("[LauncherVM] Starting auto-unmount for \(bundleID)")
+                guard isManagedApp else {
+                    print("[LauncherVM] Not a managed app, ignoring")
+                    return
+                }
+                
+                print("[LauncherVM] ✅ Starting auto-unmount for \(bundleID)")
                 // Unmount the container for this app
                 await self.unmountContainer(for: bundleID)
                 
@@ -347,6 +368,7 @@ final class LauncherViewModel {
                 await self.refresh()
             }
         }
+        print("[LauncherVM] App termination observer registered successfully")
     }
     
     private func unmountContainer(for bundleID: String) async {
