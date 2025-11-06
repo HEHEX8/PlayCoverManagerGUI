@@ -40,6 +40,10 @@ final class LauncherViewModel {
 
     private var pendingLaunchContext: LaunchContext?
     private nonisolated(unsafe) var appTerminationObserver: NSObjectProtocol?
+    
+    // Polling-based termination detection
+    private var previouslyRunningApps: Set<String> = []
+    private var pollingTask: Task<Void, Never>?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -65,7 +69,9 @@ final class LauncherViewModel {
         cleanupStaleLockFiles()
         
         // Start monitoring app terminations
-        startMonitoringAppTerminations()
+        // NSWorkspace notifications don't work for PlayCover-launched iOS apps
+        // Use polling instead
+        startPollingForTerminations()
     }
     
     nonisolated deinit {
@@ -73,6 +79,8 @@ final class LauncherViewModel {
         if let observer = appTerminationObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
+        // Cancel polling task
+        pollingTask?.cancel()
     }
     
     private func cleanupStaleLockFiles() {
@@ -95,6 +103,12 @@ final class LauncherViewModel {
             let refreshed = try launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
             apps = refreshed
             applySearch()
+            
+            // Update tracked running apps after refresh
+            let runningApps = NSWorkspace.shared.runningApplications
+            let currentlyRunning = Set(runningApps.compactMap { $0.bundleIdentifier })
+            let managedBundleIDs = Set(apps.map { $0.bundleIdentifier })
+            previouslyRunningApps = currentlyRunning.intersection(managedBundleIDs)
         } catch {
             self.error = AppError.environment("アプリ一覧の更新に失敗", message: error.localizedDescription, underlying: error)
         }
@@ -157,6 +171,10 @@ final class LauncherViewModel {
             try await launcherService.openApp(app)
             pendingLaunchContext = nil
             print("[LauncherVM] ✅ App launched successfully: \(app.bundleIdentifier)")
+            
+            // Add to tracked running apps for polling-based termination detection
+            previouslyRunningApps.insert(app.bundleIdentifier)
+            print("[LauncherVM] 📝 Tracking app for termination: \(app.bundleIdentifier)")
             
             // Refresh after a short delay to allow the app to start
             // This updates the "running" indicator
@@ -369,6 +387,50 @@ final class LauncherViewModel {
             }
         }
         print("[LauncherVM] App termination observer registered successfully")
+    }
+    
+    // MARK: - Polling-based Termination Detection
+    
+    private func startPollingForTerminations() {
+        print("[LauncherVM] Starting polling-based termination detection")
+        
+        pollingTask = Task { @MainActor in
+            while !Task.isCancelled {
+                // Wait 5 seconds between checks
+                try? await Task.sleep(for: .seconds(5))
+                
+                guard !Task.isCancelled else { break }
+                
+                await checkForTerminatedApps()
+            }
+            print("[LauncherVM] Polling task cancelled")
+        }
+    }
+    
+    private func checkForTerminatedApps() async {
+        // Get currently running apps
+        let runningApps = NSWorkspace.shared.runningApplications
+        let currentlyRunning = Set(runningApps.compactMap { $0.bundleIdentifier })
+        
+        // Find managed apps that were running but are no longer
+        let terminatedApps = previouslyRunningApps.subtracting(currentlyRunning)
+        
+        for bundleID in terminatedApps {
+            // Check if this is one of our managed apps
+            guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else {
+                continue
+            }
+            
+            print("[LauncherVM] 🔍 Detected app termination via polling: \(bundleID)")
+            
+            // Unmount the container for this app
+            await unmountContainer(for: bundleID)
+        }
+        
+        // Update the set of running apps for next check
+        // Only track our managed apps to reduce memory usage
+        let managedBundleIDs = Set(apps.map { $0.bundleIdentifier })
+        previouslyRunningApps = currentlyRunning.intersection(managedBundleIDs)
     }
     
     private func unmountContainer(for bundleID: String) async {
