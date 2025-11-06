@@ -1,1 +1,20 @@
 PlayCover/
+
+# Build artifacts
+build/
+*.xcarchive
+*.app
+*.dmg
+*.zip
+*.ipa
+
+# Xcode
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# macOS
+.DS_Store
+
+# App-specific
+*.log
