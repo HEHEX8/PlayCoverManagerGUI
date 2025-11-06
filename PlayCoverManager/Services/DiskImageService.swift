@@ -377,51 +377,6 @@ final class DiskImageService {
     /// Detach all Apple Disk Image Media devices
     /// This removes the virtual disk devices created by mounted ASIF/DMG images
     /// - Returns: Number of disk images detached
-    /// Detach disk image device for a specific volume path
-    /// - Parameter volumePath: The path of the volume that was unmounted
-    /// - Returns: Number of devices detached
-    func detachDiskImageDevice(for volumePath: URL) async throws -> Int {
-        // Get device identifier for the volume path
-        guard let deviceId = try? await getDeviceIdentifier(for: volumePath) else {
-            print("[DiskImageService] Could not get device ID for \(volumePath.path)")
-            return 0
-        }
-        
-        print("[DiskImageService] Found device \(deviceId) for volume \(volumePath.path)")
-        
-        // Get the parent disk image device (e.g., disk4 from disk4s1)
-        let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
-        
-        // Get detailed info to confirm it's a disk image
-        let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", parentDevice])
-        if let infoData = infoOutput?.data(using: .utf8),
-           let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any] {
-            
-            // Check for Virtual/DiskImage indicators
-            let isVirtual = infoPlist["Virtual"] as? Bool ?? false
-            let mediaName = infoPlist["MediaName"] as? String ?? ""
-            let isDiskImage = mediaName.contains("Disk Image") || isVirtual
-            
-            if isDiskImage {
-                print("[DiskImageService] Detaching disk image device: \(parentDevice) (\(mediaName))")
-                
-                // Try to eject/detach the disk image
-                do {
-                    _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", parentDevice])
-                    print("[DiskImageService] ✅ Detached disk image: \(parentDevice)")
-                    return 1
-                } catch {
-                    print("[DiskImageService] ⚠️ Failed to detach \(parentDevice): \(error)")
-                    throw error
-                }
-            } else {
-                print("[DiskImageService] Device \(parentDevice) is not a disk image, skipping")
-            }
-        }
-        
-        return 0
-    }
-    
     /// Eject disk image for a specific volume (unmounts all volumes and detaches device)
     /// - Parameter volumePath: The path of the volume on the disk image
     func ejectDiskImage(for volumePath: URL) async throws {
@@ -437,7 +392,7 @@ final class DiskImageService {
         print("[DiskImageService] Found device \(deviceId) for volume \(volumePath.path)")
         
         // Get the parent disk image device (e.g., disk4 from disk4s1)
-        let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
+        let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: [.regularExpression])
         print("[DiskImageService] Parent device: \(parentDevice)")
         
         // Eject the parent device (this unmounts all volumes and detaches the disk image)
