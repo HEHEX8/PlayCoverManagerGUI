@@ -50,7 +50,7 @@ final class LauncherViewModel {
          settings: SettingsStore,
          perAppSettings: PerAppSettingsStore,
          lockService: ContainerLockService,
-         processRunner: ProcessRunner = ProcessRunner(),
+         processRunner: ProcessRunner,
          fileManager: FileManager = .default) {
         self.apps = apps
         self.filteredApps = apps
@@ -386,8 +386,7 @@ final class LauncherViewModel {
         }
         print("[LauncherVM] App termination observer registered successfully")
     }
-    */"}
-    
+    */
     
     private func unmountContainer(for bundleID: String) async {
         print("[LauncherVM] unmountContainer called for \(bundleID)")
