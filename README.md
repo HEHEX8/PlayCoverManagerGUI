@@ -39,9 +39,11 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 
 | 項目 | オリジナル版 (ZSH CLI) | GUI 版 (このプロジェクト) |
 |------|----------------------|------------------------|
-| **ディスクイメージ形式** | APFS ボリューム (`diskutil` マウント) | **ASIF** (`.asif` 拡張子) |
+| **ストレージ形式** | APFS ボリューム（ディスク/パーティション上） | **ASIF ディスクイメージ** (`.asif` ファイル) |
+| **ボリューム作成** | `diskutil apfs addVolume` | `diskutil image create --format ASIF` |
 | **対応 macOS** | macOS Sequoia 15.1+ | **macOS Tahoe 26.0+** のみ |
-| **マッピングファイル** | `.playcover-volume-mapping.tsv` | 不要（ASIF が情報を保持） |
+| **マッピングファイル** | `.playcover-volume-mapping.tsv` | 不要（各 `.asif` ファイルで管理） |
+| **マウント方法** | `mount -t apfs -o nobrowse` | `diskutil image attach` |
 | **ボリューム管理** | 手動マウント/アンマウント必須 | 自動マウント・自動管理 |
 | **IPA インストール** | PlayCover.app に依存 | **ビルトイン IPA インストーラー** |
 | **設定保存** | スクリプト内部 + TSV ファイル | UserDefaults + plist |
@@ -52,20 +54,43 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 
 #### 技術的な非互換性
 
-1. **ディスクイメージフォーマットの違い**
-   - オリジナル版: APFS ボリュームを `diskutil` + `mount -t apfs -o nobrowse` でマウント
-   - GUI 版: ASIF 形式 (`.asif` 拡張子) を `diskutil image create --format ASIF` で作成し、`diskutil image attach` でマウント
-   - **移行不可**: 既存の APFS ボリュームは ASIF に変換できません
+1. **ストレージ形式の根本的な違い**
+   - **オリジナル版**: 実際のディスク/パーティション上に **APFS ボリューム** を作成
+     - 外部ドライブや内蔵ストレージ上に `diskutil apfs addVolume` でボリュームを作成
+     - ボリューム名（例: `io.playcover.PlayCover`）でディスク上に直接存在
+     - `mount -t apfs -o nobrowse /dev/diskXsY ~/Library/Containers/[BundleID]` でマウント
+   - **GUI 版**: ファイルシステム上に **ASIF ディスクイメージファイル** (`.asif`) を作成
+     - 各アプリごとに `[BundleID].asif` ファイルを作成（例: 50GB の単一ファイル）
+     - `diskutil image create --format ASIF` で作成
+     - `diskutil image attach [BundleID].asif --mountPoint ~/Library/Containers/[BundleID]` でマウント
+   - **移行不可**: 既存の APFS ボリュームを ASIF ファイルに変換する方法はありません
 
-2. **マウントポイントの違い**
-   - オリジナル版: `~/Library/Containers/[BundleID]` に直接マウント
-   - GUI 版: `~/Library/Containers/[BundleID]` に直接マウント（`--mountPoint` オプション指定）
-   - **コマンドの違い**: `mount -t apfs` vs `diskutil image attach`
+2. **ストレージ柔軟性の違い**
+   - **オリジナル版**: 
+     - APFS の動的容量割り当て活用（コンテナ内で容量共有）
+     - 複数ボリュームが同じ物理領域を効率的に共有
+     - スナップショット・クローン機能が使える
+   - **GUI 版**:
+     - 各 `.asif` ファイルは固定最大サイズ（アプリ: 50GB、PlayCover コンテナ: 10TB）
+     - ファイルごとに独立した容量を消費
+     - ファイル移動が容易（外部ドライブ間のコピーが可能）
+   - **トレードオフ**: オリジナル版は容量効率が良いが、GUI 版はファイル管理が直感的
 
-3. **設定・状態管理の違い**
-   - オリジナル版: TSV ファイルでマッピング管理、zsh 変数で設定保持
-   - GUI 版: UserDefaults + plist + ASIF メタデータで管理
-   - **データ移行不可**: 設定ファイルの形式が全く異なります
+3. **マッピング・管理の違い**
+   - **オリジナル版**: 
+     - `.playcover-volume-mapping.tsv` で `VolumeName|BundleID|DisplayName` を管理
+     - `diskutil list` で実際のボリュームの存在を確認
+     - ボリューム名とマウント状態を手動追跡
+   - **GUI 版**:
+     - マッピングファイル不要（`.asif` ファイル名が BundleID）
+     - ファイルシステムで `.asif` ファイルの存在を確認するだけ
+     - マウント状態は `diskutil info` で確認
+   - **互換性なし**: TSV ファイルから `.asif` ファイルへの自動変換は不可能
+
+4. **設定・状態管理の違い**
+   - オリジナル版: zsh 変数 + TSV ファイル + 環境変数
+   - GUI 版: UserDefaults (plist) + `.asif` ファイルのメタデータ
+   - **データ移行不可**: 設定形式が全く異なる
 
 #### オリジナル版からの移行について
 
