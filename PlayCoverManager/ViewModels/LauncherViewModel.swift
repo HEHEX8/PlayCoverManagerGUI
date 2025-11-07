@@ -33,6 +33,7 @@ final class LauncherViewModel {
     enum UnmountFlowState: Equatable {
         case idle
         case confirming(volumeDisplayName: String)
+        case storageChangeConfirming(mountedCount: Int)  // New: for storage location change
         case processing(status: String)
         case ejectConfirming(volumeDisplayName: String)
         case success(unmountedCount: Int, ejectedDrive: String?)
@@ -40,6 +41,9 @@ final class LauncherViewModel {
         case forceUnmountOffering(failedCount: Int, applyToPlayCoverContainer: Bool)
     }
     var unmountFlowState: UnmountFlowState = .idle
+    
+    // Track if current unmount is for storage change (vs quit)
+    private var isStorageChangeFlow: Bool = false
 
     private let playCoverPaths: PlayCoverPaths
     private let diskImageService: DiskImageService
@@ -363,6 +367,7 @@ final class LauncherViewModel {
     
     func dismissUnmountError() {
         unmountFlowState = .idle
+        isStorageChangeFlow = false
     }
     
     private var pendingEjectConfirmed: Bool?
@@ -663,7 +668,75 @@ final class LauncherViewModel {
     
     func performForceUnmountAll(applyToPlayCoverContainer: Bool) {
         Task {
-            await performForceUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer)
+            if isStorageChangeFlow {
+                await performForceUnmountForStorageChange()
+            } else {
+                await performForceUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer)
+            }
+        }
+    }
+    
+    /// Perform force unmount for storage change (does not quit)
+    private func performForceUnmountForStorageChange() async {
+        print("[StorageChange] Performing force unmount")
+        
+        await MainActor.run {
+            unmountFlowState = .processing(status: "強制アンマウント中…")
+        }
+        
+        var successCount = 0
+        var failedCount = 0
+        
+        // Force unmount all app containers
+        for app in apps {
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            
+            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+            guard let descriptor = descriptor, descriptor.isMounted else {
+                continue
+            }
+            
+            do {
+                try await diskImageService.ejectDiskImage(for: container, force: true)
+                successCount += 1
+                print("[StorageChange] Force unmounted \(app.displayName)")
+            } catch {
+                failedCount += 1
+                print("[StorageChange] Failed to force unmount \(app.displayName): \(error)")
+            }
+        }
+        
+        // Force unmount PlayCover container
+        let playCoverContainer = playCoverPaths.containerRootURL
+        let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
+        if isMounted {
+            do {
+                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
+                successCount += 1
+                print("[StorageChange] Force unmounted PlayCover container")
+            } catch {
+                failedCount += 1
+                print("[StorageChange] Failed to force unmount PlayCover container: \(error)")
+            }
+        }
+        
+        await MainActor.run {
+            if failedCount > 0 {
+                // Still failed after force - show error
+                unmountFlowState = .error(
+                    title: "強制アンマウントに失敗",
+                    message: "\(failedCount) 個のコンテナを強制アンマウントできませんでした。\n\nFinderから手動でイジェクトしてから、再度保存先の変更を試してください。"
+                )
+                isStorageChangeFlow = false
+            } else {
+                // All succeeded - proceed to storage selection
+                print("[StorageChange] Force unmount completed (\(successCount) containers)")
+                unmountFlowState = .idle
+                isStorageChangeFlow = false
+                
+                // Notify AppViewModel to show storage selection
+                onStorageChangeCompleted?()
+            }
         }
     }
     
@@ -724,7 +797,128 @@ final class LauncherViewModel {
         }
     }
     
+    // MARK: - Storage Location Change Flow
     
+    /// Callback to notify AppViewModel of storage change completion
+    var onStorageChangeCompleted: (() -> Void)?
+    
+    /// Initiate storage location change flow
+    /// 1. Check for running apps
+    /// 2. Show confirmation dialog
+    /// 3. Unmount all containers
+    /// 4. Notify AppViewModel to show storage selection
+    func initiateStorageLocationChange() {
+        print("[StorageChange] Initiating storage location change")
+        
+        // Check for running apps first
+        let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
+        
+        if !runningApps.isEmpty {
+            let appsList = runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
+            unmountFlowState = .error(
+                title: "実行中のアプリがあります",
+                message: "保存先を変更するには、先にこれらのアプリを終了してください。\n\n\(appsList)"
+            )
+            return
+        }
+        
+        // Count currently mounted containers
+        var mountedCount = 0
+        
+        // Check app containers
+        for app in apps {
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            let isMounted = (try? diskImageService.isMounted(at: container)) ?? false
+            if isMounted {
+                mountedCount += 1
+            }
+        }
+        
+        // Check PlayCover container
+        let isMounted = (try? diskImageService.isMounted(at: playCoverPaths.containerRootURL)) ?? false
+        if isMounted {
+            mountedCount += 1
+        }
+        
+        // Show storage change confirmation
+        unmountFlowState = .storageChangeConfirming(mountedCount: mountedCount)
+    }
+    
+    /// Confirm storage location change and proceed with unmounting
+    func confirmStorageLocationChange() {
+        guard case .storageChangeConfirming = unmountFlowState else { return }
+        
+        print("[StorageChange] User confirmed storage location change")
+        isStorageChangeFlow = true  // Mark as storage change flow
+        Task { await performUnmountForStorageChange() }
+    }
+    
+    /// Cancel storage location change
+    func cancelStorageLocationChange() {
+        print("[StorageChange] User cancelled storage location change")
+        unmountFlowState = .idle
+        isStorageChangeFlow = false
+    }
+    
+    /// Perform unmount all for storage location change (does not quit)
+    private func performUnmountForStorageChange() async {
+        print("[StorageChange] Starting unmount process")
+        
+        await MainActor.run {
+            unmountFlowState = .processing(status: "すべてのディスクイメージをアンマウント中…")
+        }
+        
+        var successCount = 0
+        var failedCount = 0
+        
+        // Unmount all app containers
+        for app in apps {
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            
+            // Check if container is actually mounted
+            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+            guard let descriptor = descriptor, descriptor.isMounted else {
+                continue
+            }
+            
+            do {
+                try await diskImageService.ejectDiskImage(for: container, force: false)
+                successCount += 1
+                print("[StorageChange] Unmounted \(app.displayName)")
+            } catch {
+                failedCount += 1
+                print("[StorageChange] Failed to unmount \(app.displayName): \(error)")
+            }
+        }
+        
+        // Unmount PlayCover container
+        let playCoverContainer = playCoverPaths.containerRootURL
+        let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
+        if isMounted {
+            do {
+                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
+                successCount += 1
+                print("[StorageChange] Unmounted PlayCover container")
+            } catch {
+                failedCount += 1
+                print("[StorageChange] Failed to unmount PlayCover container: \(error)")
+            }
+        }
+        
+        await MainActor.run {
+            if failedCount > 0 {
+                // Some failed - offer force unmount
+                unmountFlowState = .forceUnmountOffering(failedCount: failedCount, applyToPlayCoverContainer: true)
+            } else {
+                // All succeeded - proceed to storage selection
+                print("[StorageChange] All containers unmounted successfully (\(successCount) containers)")
+                unmountFlowState = .idle
+                
+                // Notify AppViewModel to show storage selection
+                onStorageChangeCompleted?()
+            }
+        }
+    }
     
 }
 

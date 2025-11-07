@@ -19,6 +19,14 @@ struct UnmountOverlayView: View {
                 )
                 .id("confirming")
                 
+            case .storageChangeConfirming(let mountedCount):
+                StorageChangeConfirmationView(
+                    mountedCount: mountedCount,
+                    onConfirm: { viewModel.confirmStorageLocationChange() },
+                    onCancel: { viewModel.cancelStorageLocationChange() }
+                )
+                .id("storageChangeConfirming")
+                
             case .processing(let status):
                 UnmountProcessingView(status: status)
                     .id("processing-\(status)")  // Use status as part of id to prevent animation on status change
@@ -57,6 +65,62 @@ struct UnmountOverlayView: View {
             }
         }
         .animation(.none, value: viewModel.unmountFlowState)  // Disable implicit animations
+    }
+}
+
+// MARK: - Storage Change Confirmation View
+
+private struct StorageChangeConfirmationView: View {
+    let mountedCount: Int
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "externaldrive.badge.questionmark")
+                .font(.system(size: 64))
+                .foregroundStyle(.orange)
+            
+            Text("保存先を変更")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                Text("保存先を変更するには、現在マウント中のすべてのディスクイメージをアンマウントする必要があります。")
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400)
+                
+                if mountedCount > 0 {
+                    HStack {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundStyle(.blue)
+                        Text("マウント中: \(mountedCount) 個のコンテナ")
+                            .font(.callout)
+                    }
+                    .padding(8)
+                    .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                }
+                
+                Text("すべてのアプリを終了してからアンマウントを実行してください。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400)
+            }
+            
+            HStack(spacing: 12) {
+                Button("キャンセル", action: onCancel)
+                    .keyboardShortcut(.cancelAction)
+                
+                Button("アンマウントして続行", action: onConfirm)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(32)
+        .frame(minWidth: 500)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.3), radius: 20)
     }
 }
 
@@ -262,6 +326,64 @@ private struct ForceUnmountOfferingView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.orange)
                 .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(32)
+        .frame(minWidth: 500)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.3), radius: 20)
+    }
+}
+
+// MARK: - Storage Change Confirmation View
+
+private struct StorageChangeConfirmationView: View {
+    let mountedCount: Int
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "folder.badge.gearshape")
+                .font(.system(size: 64))
+                .foregroundStyle(.blue)
+            
+            Text("保存先を変更")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                Text("保存先を変更するには、すべてのコンテナをアンマウントする必要があります。")
+                    .multilineTextAlignment(.center)
+                
+                if mountedCount > 0 {
+                    HStack(spacing: 8) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.blue)
+                        Text("現在 \(mountedCount) 個のボリュームがマウントされています")
+                            .font(.callout)
+                            .fontWeight(.medium)
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                }
+                
+                Text("アンマウント後、新しい保存先を選択できます。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: 400)
+            
+            HStack(spacing: 12) {
+                Button("キャンセル", action: onCancel)
+                    .keyboardShortcut(.cancelAction)
+                
+                Button("アンマウントして続ける", action: onConfirm)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
             }
         }
         .padding(32)

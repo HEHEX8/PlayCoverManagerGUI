@@ -74,13 +74,13 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 Button("保存先を変更...") {
-                    // Close settings sheet and show overlay wizard
+                    // Close settings sheet and initiate storage change flow
                     dismiss()
-                    appViewModel.changeStorageSettings()
+                    appViewModel.requestStorageLocationChange()
                 }
-                .help("初期設定ウィザードを開いて保存先を変更します")
+                .help("すべてのコンテナをアンマウントしてから保存先を変更します")
                 
-                Text("保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。")
+                Text("保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

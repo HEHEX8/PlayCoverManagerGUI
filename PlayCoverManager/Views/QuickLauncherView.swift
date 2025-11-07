@@ -14,6 +14,7 @@ struct IdentifiableString: Identifiable {
 struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
+    @Environment(AppViewModel.self) private var appViewModel
     @State private var selectedAppForDetail: PlayCoverApp?
     @State private var hasPerformedInitialAnimation = false
     @State private var showingSettings = false
@@ -21,6 +22,7 @@ struct QuickLauncherView: View {
     @State private var showingUninstaller = false  // For general uninstall (from drawer)
     @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
+    @State private var previousUnmountFlowState: LauncherViewModel.UnmountFlowState = .idle
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -289,6 +291,12 @@ struct QuickLauncherView: View {
         if viewModel.selectedApp == nil {
             viewModel.selectedApp = viewModel.filteredApps.first
         }
+        
+        // Set up storage change completion callback
+        viewModel.onStorageChangeCompleted = { [weak appViewModel] in
+            print("[QuickLauncher] Storage change completed, showing wizard")
+            appViewModel?.completeStorageLocationChange()
+        }
     }
     .onChange(of: isDrawerOpen) { oldValue, newValue in
         print("[QuickLauncher] Drawer state changed: \(oldValue) -> \(newValue)")
@@ -301,6 +309,24 @@ struct QuickLauncherView: View {
     }
     .onChange(of: showingUninstaller) { oldValue, newValue in
         print("[QuickLauncher] showingUninstaller changed: \(oldValue) -> \(newValue)")
+    }
+    .onChange(of: viewModel.unmountFlowState) { oldValue, newValue in
+        print("[QuickLauncher] unmountFlowState changed: \(oldValue) -> \(newValue)")
+        
+        // Handle storage change flow completion
+        // When unmount completes successfully during storage change, trigger wizard
+        if case .storageChangeConfirming = previousUnmountFlowState,
+           case .success = newValue {
+            // User completed unmount for storage change
+            // Dismiss success overlay and show storage wizard
+            print("[QuickLauncher] Storage change unmount completed, showing wizard after delay")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                viewModel.unmountFlowState = .idle
+                appViewModel.completeStorageLocationChange()
+            }
+        }
+        
+        previousUnmountFlowState = newValue
     }
     .overlay {
         // Left drawer overlay - full screen when open

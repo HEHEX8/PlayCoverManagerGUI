@@ -128,6 +128,12 @@ final class AppViewModel {
                                        perAppSettings: perAppSettings,
                                        lockService: lockService,
                                        processRunner: ProcessRunner())
+            
+            // Set callback for storage location change
+            vm.onStorageChangeCompleted = { [weak self] in
+                self?.completeStorageLocationChange()
+            }
+            
             launcherViewModel = vm
             phase = .launcher
         } catch {
@@ -144,7 +150,18 @@ final class AppViewModel {
         }
     }
 
-    func changeStorageSettings() {
+    /// Request to change storage location
+    /// This should be called from the settings view
+    /// The actual UI flow is handled by the LauncherViewModel
+    func requestStorageLocationChange() {
+        print("[AppViewModel] Storage location change requested")
+        // Signal the launcher to initiate storage change flow
+        launcherViewModel?.initiateStorageLocationChange()
+    }
+    
+    /// Complete storage location change after unmounting
+    /// Called by LauncherViewModel after successful unmount
+    func completeStorageLocationChange() {
         // Create context for storage change (PlayCover exists, no disk image check, no mount required)
         let context = AppPhase.SetupContext(
             missingPlayCover: false,
@@ -171,6 +188,11 @@ final class AppViewModel {
         
         setupViewModel = setupVM
         phase = .setup(context)
+    }
+    
+    @available(*, deprecated, message: "Use requestStorageLocationChange instead")
+    func changeStorageSettings() {
+        requestStorageLocationChange()
     }
     
     func terminateApplication() {
