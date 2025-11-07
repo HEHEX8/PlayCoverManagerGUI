@@ -46,6 +46,14 @@ private struct GeneralSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var calculatingSize = false
     @State private var totalDiskUsage: Int64 = 0
+    @State private var showLanguageChangeAlert = false
+    @State private var previousLanguage: SettingsStore.AppLanguage
+
+    init() {
+        // Initialize with current language
+        let store = SettingsStore()
+        _previousLanguage = State(initialValue: store.appLanguage)
+    }
 
     var body: some View {
         Form {
@@ -86,7 +94,15 @@ private struct GeneralSettingsView: View {
             }
             
             Section(header: Text("言語")) {
-                Picker("アプリの言語", selection: Binding(get: { settingsStore.appLanguage }, set: { settingsStore.appLanguage = $0 })) {
+                Picker("アプリの言語", selection: Binding(
+                    get: { settingsStore.appLanguage },
+                    set: { newValue in
+                        if newValue != previousLanguage {
+                            settingsStore.appLanguage = newValue
+                            showLanguageChangeAlert = true
+                        }
+                    }
+                )) {
                     ForEach(SettingsStore.AppLanguage.allCases) { language in
                         Text(language.localizedDescription).tag(language)
                     }
@@ -99,10 +115,35 @@ private struct GeneralSettingsView: View {
             }
         }
         .onAppear {
+            // Update previous language when view appears
+            previousLanguage = settingsStore.appLanguage
             Task {
                 await calculateDiskUsage()
             }
         }
+        .alert("言語を変更しました", isPresented: $showLanguageChangeAlert) {
+            Button("後で再起動", role: .cancel) {
+                previousLanguage = settingsStore.appLanguage
+            }
+            Button("今すぐ再起動") {
+                restartApp()
+            }
+        } message: {
+            Text("言語の変更を完全に反映するには、アプリを再起動する必要があります。")
+        }
+    }
+    
+    private func restartApp() {
+        // Relaunch the app
+        let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
+        let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
+        let task = Process()
+        task.launchPath = "/usr/bin/open"
+        task.arguments = [path]
+        task.launch()
+        
+        // Quit current instance
+        NSApplication.shared.terminate(nil)
     }
     
     private func calculateDiskUsage() async {
