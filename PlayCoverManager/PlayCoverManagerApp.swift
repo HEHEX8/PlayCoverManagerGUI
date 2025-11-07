@@ -47,12 +47,6 @@ struct PlayCoverManagerApp: App {
                     .environment(perAppSettingsStore)
             }
         }
-        Settings {
-            SettingsRootView()
-                .environment(appViewModel)
-                .environment(settingsStore)
-                .environment(perAppSettingsStore)
-        }
     }
 }
 
