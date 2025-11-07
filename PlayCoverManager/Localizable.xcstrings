@@ -356,7 +356,8 @@
             "value": "設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "概要": {
       "extractionState": "manual",
@@ -679,7 +680,8 @@
             "value": "バージョン"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "言語": {
       "extractionState": "manual",
@@ -1614,7 +1616,8 @@
             "value": "処理中..."
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "処理中…": {
       "extractionState": "manual",
@@ -1631,7 +1634,8 @@
             "value": "処理中…"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "準備中...": {
       "extractionState": "manual",
@@ -1750,7 +1754,8 @@
             "value": "設定 (⌘,)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "すべてアンマウント (⌘⇧U)": {
       "extractionState": "manual",
@@ -1971,7 +1976,8 @@
             "value": "Finder に表示しない (nobrowse)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "Finder に表示しない (-nobrowse)": {
       "extractionState": "manual",
@@ -1988,7 +1994,8 @@
             "value": "Finder に表示しない (-nobrowse)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "このアプリのディスクイメージを Finder で非表示にするかどうかを設定します。": {
       "extractionState": "manual",
@@ -2821,7 +2828,8 @@
             "value": "バージョン:"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ファイル名": {
       "extractionState": "manual",
@@ -3110,7 +3118,8 @@
             "value": "保存先を変更"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "外部ストレージの使用を推奨": {
       "extractionState": "manual",
@@ -3348,7 +3357,8 @@
             "value": "アンインストール中"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アンインストール完了": {
       "extractionState": "manual",
@@ -4164,7 +4174,8 @@
             "value": "×"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "「完了」ボタンをクリックして PlayCover Manager を起動します。": {
       "extractionState": "manual",
