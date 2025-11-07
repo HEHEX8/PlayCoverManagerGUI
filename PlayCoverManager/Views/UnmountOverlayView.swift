@@ -392,6 +392,7 @@ private struct UnmountSuccessView: View {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
         }
+    }
 }
 
 // MARK: - Force Unmount Offering View
