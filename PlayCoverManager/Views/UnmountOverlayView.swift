@@ -112,8 +112,14 @@ private struct StorageChangeConfirmationView: View {
             
             HStack(spacing: 12) {
                 Button("キャンセル", action: onCancel)
-                    .buttonStyle(selectedButton == 0 ? .borderedProminent : .bordered)
-                    .tint(selectedButton == 0 ? .blue : nil)
+                    .buttonStyle(.bordered)
+                    .tint(selectedButton == 0 ? .blue : .gray)
+                    .overlay {
+                        if selectedButton == 0 {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(Color.blue, lineWidth: 2)
+                        }
+                    }
                     .keyboardShortcut(.cancelAction)
                 
                 Button("アンマウントして続行", action: onConfirm)
@@ -193,8 +199,14 @@ private struct UnmountConfirmationView: View {
             
             HStack(spacing: 12) {
                 Button("キャンセル", action: onCancel)
-                    .buttonStyle(selectedButton == 0 ? .borderedProminent : .bordered)
-                    .tint(selectedButton == 0 ? .blue : nil)
+                    .buttonStyle(.bordered)
+                    .tint(selectedButton == 0 ? .blue : .gray)
+                    .overlay {
+                        if selectedButton == 0 {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(Color.blue, lineWidth: 2)
+                        }
+                    }
                     .keyboardShortcut(.cancelAction)
                 
                 Button("アンマウントして終了", action: onConfirm)
@@ -301,8 +313,14 @@ private struct UnmountEjectConfirmationView: View {
                 Button("イジェクトしない") {
                     onCancel()
                 }
-                .buttonStyle(selectedButton == 0 ? .borderedProminent : .bordered)
-                .tint(selectedButton == 0 ? .blue : nil)
+                .buttonStyle(.bordered)
+                .tint(selectedButton == 0 ? .blue : .gray)
+                .overlay {
+                    if selectedButton == 0 {
+                        RoundedRectangle(cornerRadius: 6)
+                            .strokeBorder(Color.blue, lineWidth: 2)
+                    }
+                }
                 .keyboardShortcut(.cancelAction)
                 
                 Button("イジェクト") {
