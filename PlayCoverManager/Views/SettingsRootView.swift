@@ -226,7 +226,6 @@ struct IPAInstallerSheet: View {
     @State private var showResults = false
     @State private var currentPhase: InstallPhase = .selection
     @State private var statusUpdateTask: Task<Void, Never>?
-    @State private var showInstallConfirmation = false
     
     enum InstallPhase {
         case selection      // IPA選択
@@ -266,16 +265,6 @@ struct IPAInstallerSheet: View {
             let launcherService = LauncherService()
             installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore, launcherService: launcherService)
         }
-        .alert("インストール確認", isPresented: $showInstallConfirmation) {
-            Button("キャンセル", role: .cancel) { }
-            Button("インストール", role: .destructive) {
-                Task {
-                    await startInstallation()
-                }
-            }
-        } message: {
-            Text("\(analyzedIPAs.count) 個のアプリをインストールします。よろしいですか？")
-        }
     }
     
     // MARK: - Selection View
@@ -312,105 +301,164 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Confirmation View
     private var confirmationView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("インストール内容の確認")
-                .font(.headline)
-            
-            List(analyzedIPAs) { info in
-                HStack(spacing: 12) {
+        VStack(spacing: 24) {
+            // Single or multiple app confirmation
+            if analyzedIPAs.count == 1, let info = analyzedIPAs.first {
+                // Single app confirmation
+                VStack(spacing: 16) {
+                    // App icon
                     if let icon = info.icon {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: 48, height: 48)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    } else {
-                        Image(systemName: "app.fill")
-                            .resizable()
-                            .frame(width: 48, height: 48)
-                            .foregroundStyle(.secondary)
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
                     }
                     
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(spacing: 8) {
                         Text(info.appName)
-                            .font(.body)
-                            .fontWeight(.medium)
+                            .font(.title2)
+                            .fontWeight(.semibold)
                             .lineLimit(2)
+                        
                         Text(info.bundleID)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
+                }
+                
+                Divider()
+                
+                // Install type indicator
+                VStack(spacing: 12) {
+                    installTypeIndicator(for: info)
                     
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        // Install type badge
-                        HStack(spacing: 4) {
-                            switch info.installType {
-                            case .newInstall:
-                                Image(systemName: "sparkles")
-                                    .font(.caption2)
-                                    .foregroundStyle(.blue)
-                                Text("新規")
-                                    .font(.caption2)
-                                    .foregroundStyle(.blue)
-                            case .upgrade:
-                                Image(systemName: "arrow.up.circle.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.green)
-                                Text("アップグレード")
-                                    .font(.caption2)
-                                    .foregroundStyle(.green)
-                            case .downgrade:
-                                Image(systemName: "arrow.down.circle.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.orange)
-                                Text("ダウングレード")
-                                    .font(.caption2)
-                                    .foregroundStyle(.orange)
-                            case .reinstall:
-                                Image(systemName: "arrow.clockwise.circle.fill")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                Text("上書き")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color(nsColor: .controlBackgroundColor))
-                        .cornerRadius(4)
-                        
-                        // Version info
+                    Text(installTypeMessage(for: info))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Divider()
+                
+                // Details
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("バージョン:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
                         if let existing = info.existingVersion {
                             Text("\(existing) → \(info.version)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
+                                .fontWeight(.medium)
                         } else {
-                            Text("v\(info.version)")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
+                            Text(info.version)
+                                .fontWeight(.medium)
                         }
-                        
+                    }
+                    HStack {
+                        Text("ファイルサイズ:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
                         Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .font(.callout)
+                .padding()
+                .background(Color(nsColor: .controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                
+            } else if analyzedIPAs.count > 1 {
+                // Multiple apps confirmation
+                VStack(spacing: 16) {
+                    // App icons grid (max 6)
+                    let displayApps = Array(analyzedIPAs.prefix(6))
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: 12) {
+                        ForEach(displayApps) { info in
+                            VStack(spacing: 4) {
+                                if let icon = info.icon {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(RoundedRectangle(cornerRadius: 13))
+                                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                }
+                                Text(info.appName)
+                                    .font(.caption2)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+                        }
                     }
                     
-                    Button {
-                        analyzedIPAs.removeAll { $0.id == info.id }
-                        selectedIPAs.removeAll { $0 == info.ipaURL }
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
+                    if analyzedIPAs.count > 6 {
+                        Text("+\(analyzedIPAs.count - 6) 個のアプリ")
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain)
                 }
-                .padding(.vertical, 4)
+                
+                Divider()
+                
+                // Confirmation message
+                VStack(spacing: 12) {
+                    Image(systemName: "square.and.arrow.down.fill")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.blue)
+                    
+                    Text("\(analyzedIPAs.count) 個のアプリをインストールしますか？")
+                        .font(.headline)
+                }
+                
+                Divider()
+                
+                // Summary
+                let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
+                let newInstalls = analyzedIPAs.filter { $0.installType == .newInstall }.count
+                let upgrades = analyzedIPAs.filter { $0.installType == .upgrade }.count
+                let others = analyzedIPAs.count - newInstalls - upgrades
+                
+                VStack(spacing: 8) {
+                    if newInstalls > 0 {
+                        HStack {
+                            Label("\(newInstalls) 個", systemImage: "sparkles")
+                                .foregroundStyle(.blue)
+                            Spacer()
+                            Text("新規インストール")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    if upgrades > 0 {
+                        HStack {
+                            Label("\(upgrades) 個", systemImage: "arrow.up.circle.fill")
+                                .foregroundStyle(.green)
+                            Spacer()
+                            Text("アップグレード")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    if others > 0 {
+                        HStack {
+                            Label("\(others) 個", systemImage: "arrow.clockwise.circle.fill")
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text("上書き・その他")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Divider()
+                    HStack {
+                        Text("合計サイズ:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
+                            .fontWeight(.semibold)
+                    }
+                }
+                .font(.callout)
+                .padding()
+                .background(Color(nsColor: .controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -682,6 +730,57 @@ struct IPAInstallerSheet: View {
         .padding()
     }
     
+    // MARK: - Helper Views
+    
+    @ViewBuilder
+    private func installTypeIndicator(for info: IPAInstallerService.IPAInfo) -> some View {
+        HStack(spacing: 8) {
+            switch info.installType {
+            case .newInstall:
+                Image(systemName: "sparkles")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.blue)
+                Text("新規インストール")
+                    .font(.headline)
+                    .foregroundStyle(.blue)
+            case .upgrade:
+                Image(systemName: "arrow.up.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.green)
+                Text("アップグレード")
+                    .font(.headline)
+                    .foregroundStyle(.green)
+            case .downgrade:
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.orange)
+                Text("ダウングレード")
+                    .font(.headline)
+                    .foregroundStyle(.orange)
+            case .reinstall:
+                Image(systemName: "arrow.clockwise.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.secondary)
+                Text("再インストール")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+    
+    private func installTypeMessage(for info: IPAInstallerService.IPAInfo) -> String {
+        switch info.installType {
+        case .newInstall:
+            return "このアプリを新しくインストールします。"
+        case .upgrade:
+            return "既存のアプリを新しいバージョンにアップグレードします。"
+        case .downgrade:
+            return "既存のアプリを古いバージョンにダウングレードします。"
+        case .reinstall:
+            return "同じバージョンで上書きインストールします。"
+        }
+    }
+    
     // MARK: - Bottom Buttons
     private var bottomButtons: some View {
         HStack {
@@ -699,7 +798,9 @@ struct IPAInstallerSheet: View {
                 }
                 
                 Button("インストール開始") {
-                    showInstallConfirmation = true
+                    Task {
+                        await startInstallation()
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .disabled(analyzedIPAs.isEmpty)
