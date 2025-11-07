@@ -208,7 +208,7 @@ private struct GeneralSettingsView: View {
                 }
             ],
             icon: .info
-        }
+        )
     }
     
     private func restartApp() {
