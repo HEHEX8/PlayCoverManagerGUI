@@ -1153,15 +1153,13 @@ struct AppUninstallerSheet: View {
                 if apps.contains(where: { $0.bundleID == bundleID }) {
                     selectedApps = [bundleID]
                     currentPhase = .selection
-                    // Show confirmation dialog after a brief delay to ensure UI is ready
+                    // Show confirmation dialog after a delay to ensure UI is fully ready
                     Task { @MainActor in
-                        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                        try? await Task.sleep(for: .milliseconds(300))
                         showUninstallConfirmation = true
                     }
                     return
-                } else {
                 }
-            } else {
             }
         } catch {
             apps = []
