@@ -11,21 +11,12 @@ struct IdentifiableString: Identifiable {
     }
 }
 
-// PreferenceKey to track app icon positions in grid
+// PreferenceKey to track app icon positions in grid (using named coordinate space)
 struct AppIconPositionKey: PreferenceKey {
     static var defaultValue: [String: CGRect] = [:]
     
     static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
         value.merge(nextValue()) { $1 }
-    }
-}
-
-// PreferenceKey to track recent button position
-struct RecentButtonPositionKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
-    
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
     }
 }
 
@@ -180,6 +171,7 @@ struct QuickLauncherView: View {
                 endPoint: .bottom
             )
             .ignoresSafeArea()
+            .coordinateSpace(name: "mainContent")  // Define shared coordinate space
             
             VStack(spacing: 0) {
                 // Modern toolbar with glassmorphism
@@ -299,7 +291,7 @@ struct QuickLauncherView: View {
                                         GeometryReader { geo in
                                             Color.clear.preference(
                                                 key: AppIconPositionKey.self,
-                                                value: [app.bundleIdentifier: geo.frame(in: .global)]
+                                                value: [app.bundleIdentifier: geo.frame(in: .named("mainContent"))]
                                             )
                                         }
                                     )
@@ -1221,7 +1213,6 @@ private struct RecentAppLaunchButton: View {
     @State private var previousAppID: String = ""
     @State private var currentIcon: NSImage? = nil  // Track current icon to detect changes
     @State private var displayedTitle: String = ""  // Title being displayed (may differ from app.displayName during transition)
-    @State private var myPosition: CGRect = .zero  // Track this button's position
     
     var body: some View {
         Button {
@@ -1274,16 +1265,6 @@ private struct RecentAppLaunchButton: View {
                 }
                 .frame(width: 56, height: 56)
                 .zIndex(999)  // Ensure icons render above all other content
-                .background(
-                    GeometryReader { geo in
-                        Color.clear.onAppear {
-                            // Get icon's actual position in global coordinates
-                            let frame = geo.frame(in: .global)
-                            myPosition = frame
-                            print("📍 Icon position detected: \(frame)")
-                        }
-                    }
-                )
                 
                 // App info with modern styling
                 VStack(alignment: .leading, spacing: 6) {
@@ -1339,27 +1320,28 @@ private struct RecentAppLaunchButton: View {
             }
         }
         .keyboardShortcut(.defaultAction)
-        .onChange(of: app.bundleIdentifier) { oldValue, newValue in
-            // Detect app change and trigger rich transition
-            if !oldValue.isEmpty && oldValue != newValue {
-                // Save CURRENT displayed icon as old icon (before it updates)
-                oldIcon = currentIcon
-                performAppSwitchAnimation()
+        .background(
+            GeometryReader { geo in
+                Color.clear.onChange(of: app.bundleIdentifier) { oldValue, newValue in
+                    // Detect app change and trigger rich transition
+                    if !oldValue.isEmpty && oldValue != newValue {
+                        // Save CURRENT displayed icon as old icon (before it updates)
+                        oldIcon = currentIcon
+                        // Pass geometry to get live position
+                        performAppSwitchAnimation(iconGeometry: geo)
+                    }
+                    previousAppID = newValue
+                    // Update current icon after animation starts
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        currentIcon = app.icon
+                    }
+                }
             }
-            previousAppID = newValue
-            // Update current icon after animation starts
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                currentIcon = app.icon
-            }
-        }
+        )
         .onAppear {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
             displayedTitle = app.displayName
-            print("📍 RecentButton appeared with gridPos: \(gridIconPosition?.debugDescription ?? "nil")")
-        }
-        .onChange(of: gridIconPosition) { oldVal, newVal in
-            print("📍 GridPos changed from \(oldVal?.debugDescription ?? "nil") to \(newVal?.debugDescription ?? "nil")")
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerRecentAppBounce"))) { _ in
             // Grid icon was tapped for the recent app, trigger bounce animation
@@ -1390,7 +1372,7 @@ private struct RecentAppLaunchButton: View {
     }
     
     // App switch animation - icon flies from actual grid position and crashes into old one
-    private func performAppSwitchAnimation() {
+    private func performAppSwitchAnimation(iconGeometry: GeometryProxy) {
         // Reset old icon state (oldIcon already saved in onChange)
         oldIconOffsetX = 0
         oldIconOffsetY = 0
@@ -1398,11 +1380,13 @@ private struct RecentAppLaunchButton: View {
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
         oldIconRotation = 0.0  // Reset rotation
         
-        // Calculate offset to position icon at grid location
+        // Get this button's icon position in shared coordinate space at animation time
+        let myPosition = iconGeometry.frame(in: .named("mainContent"))
+        
         print("🔍 Animation starting - gridPos: \(gridIconPosition?.debugDescription ?? "nil"), myPos: \(myPosition)")
         
-        if let gridPos = gridIconPosition, myPosition != .zero {
-            // Both icons are 56x56, we already have their center positions
+        if let gridPos = gridIconPosition {
+            // Both positions are now in the same coordinate space (mainContent)
             // Calculate offset to place our icon at grid position
             let deltaX = gridPos.midX - myPosition.midX
             let deltaY = gridPos.midY - myPosition.midY
@@ -1417,7 +1401,7 @@ private struct RecentAppLaunchButton: View {
             iconScale = 0.6  // Starts smaller (far away effect)
         } else {
             // Fallback: start from above if position not available
-            print("⚠️ No grid position available - gridPos nil: \(gridIconPosition == nil), myPos zero: \(myPosition == .zero)")
+            print("⚠️ No grid position available")
             iconOffsetY = -250
             iconOffsetX = 0
             iconScale = 0.6
