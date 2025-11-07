@@ -176,7 +176,7 @@ final class LauncherViewModel {
             }
 
             // Acquire lock on container before launching
-            let lockAcquired = lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
+            _ = lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
             
             try await launcherService.openApp(app)
             pendingLaunchContext = nil
