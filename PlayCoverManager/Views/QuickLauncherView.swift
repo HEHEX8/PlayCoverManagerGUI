@@ -2233,7 +2233,7 @@ private struct KeyboardShortcutGuide: View {
         ShortcutItem(keys: "⌘D", description: "アプリをアンインストール", category: "グローバル"),
         ShortcutItem(keys: "⌘M", description: "メニューを開く/閉じる", category: "グローバル"),
         ShortcutItem(keys: "⌘R", description: "アプリ一覧を更新", category: "グローバル"),
-        ShortcutItem(keys: "⌘⇧U", description: "すべてアンマウント", category: "グローバル"),
+        ShortcutItem(keys: "⌘⇧U", description: "すべてマウント解除", category: "グローバル"),
         ShortcutItem(keys: "⌘⇧P", description: "PlayCover.app を開く", category: "グローバル"),
         ShortcutItem(keys: "⌘/", description: "このヘルプを表示", category: "グローバル"),
         
