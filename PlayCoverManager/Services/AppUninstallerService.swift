@@ -86,11 +86,13 @@ class AppUninstallerService {
                     continue
                 }
                 
-                // Extract app name (try system language, fallback to English)
+                // Extract app name (try app's configured language, fallback to English)
                 var appName = ""
                 
-                // Get system language
-                let systemLang = Locale.preferredLanguages.first?.prefix(2) ?? "en"
+                // Get app's configured language (respects user's language setting in app)
+                let appLanguages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? []
+                let primaryLang = appLanguages.first ?? Locale.preferredLanguages.first ?? "en"
+                let systemLang = String(primaryLang.prefix(2))
                 let langLproj = appURL.appendingPathComponent("\(systemLang).lproj/InfoPlist.strings")
                 
                 if FileManager.default.fileExists(atPath: langLproj.path) {

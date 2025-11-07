@@ -103,19 +103,19 @@ class IPAInstallerService {
         
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
         
-        // Get system language for localization
-        let preferredLanguages = Locale.preferredLanguages
-        let systemLanguage = preferredLanguages.first?.split(separator: "-").first.map(String.init) ?? "en"
+        // Get app's configured language (respects user's language setting in app)
+        let appLanguages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? []
+        let primaryLanguage = appLanguages.first ?? Locale.preferredLanguages.first ?? "en"
+        let systemLanguage = primaryLanguage.split(separator: "-").first.map(String.init) ?? "en"
         
         // Extract Info.plist and localized strings using wildcards (FAST - no listing needed)
-        // Use wildcards to extract: Payload/*.app/Info.plist, ja.lproj, system language .lproj, and app icon
+        // Use wildcards to extract: Payload/*.app/Info.plist, system language .lproj, and app icon
         var extractPatterns = [
             "Payload/*.app/Info.plist",
-            "Payload/*.app/ja.lproj/InfoPlist.strings",
             "Payload/*.app/AppIcon60x60@2x.png",  // Most common iOS app icon
             "Payload/*.app/AppIcon76x76@2x~ipad.png"  // iPad icon
         ]
-        if systemLanguage != "en" && systemLanguage != "ja" {
+        if systemLanguage != "en" {
             extractPatterns.append("Payload/*.app/\(systemLanguage).lproj/InfoPlist.strings")
         }
         

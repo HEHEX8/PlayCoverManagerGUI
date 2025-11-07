@@ -79,9 +79,9 @@ final class LauncherService {
     }
 
     private func getLocalizedAppName(for bundle: Bundle, url: URL) -> String {
-        // Get current system language
-        let preferredLanguages = Locale.preferredLanguages
-        let primaryLanguage = preferredLanguages.first ?? "en"
+        // Get app's configured language (respects user's language setting in app)
+        let appLanguages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? []
+        let primaryLanguage = appLanguages.first ?? Locale.preferredLanguages.first ?? "en"
         
         // Try to find localized strings for current language
         // Check .lproj directories inside the app bundle
