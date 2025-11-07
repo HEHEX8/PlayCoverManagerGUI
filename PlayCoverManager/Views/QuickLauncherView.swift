@@ -1335,27 +1335,27 @@ private struct RecentAppLaunchButton: View {
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
         oldIconRotation = 0.0  // Reset rotation
         
-        // New icon starts from grid area (center-bottom, where app grid is)
-        // This simulates the icon lifting off from the grid
-        iconOffsetY = 200  // Below current position (grid area)
+        // New icon starts from grid area (center-top, where app grid is)
+        // This simulates the icon lifting off from the grid above
+        iconOffsetY = -250  // ABOVE current position (grid is above recent button)
         iconOffsetX = 0  // Center aligned
-        iconScale = 0.6  // Starts smaller (lifting off effect)
+        iconScale = 0.6  // Starts smaller (far away effect)
         
         // Text stays visible (shows OLD title during animation)
         textOpacity = 1.0
         
-        // Phase 1: Lift off from grid with gentle float
+        // Phase 1: Lift off from grid with gentle float (move UP first, away from grid)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             withAnimation(.easeOut(duration: 0.25)) {
-                iconOffsetY = 150  // Lift up smoothly
-                iconScale = 0.75  // Get slightly bigger as it approaches
+                iconOffsetY = -280  // Lift UP even more (floating away from grid)
+                iconScale = 0.75  // Get slightly bigger as it prepares to dive
             }
         }
         
-        // Phase 2: Accelerate towards target
+        // Phase 2: Dive down towards target with acceleration
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             withAnimation(.easeIn(duration: 0.3)) {
-                iconOffsetY = 0  // Arrive at target position
+                iconOffsetY = 0  // Dive down to target position
                 iconOffsetX = 0
                 iconScale = 1.3  // Overshoot scale for impact
             }
