@@ -287,14 +287,6 @@ struct QuickLauncherView: View {
                                         // Uninstall action - open uninstaller with pre-selected app
                                         selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
                                     }
-                                    .background(
-                                        GeometryReader { geo in
-                                            Color.clear.preference(
-                                                key: AppIconPositionKey.self,
-                                                value: [app.bundleIdentifier: geo.frame(in: .named("mainContent"))]
-                                            )
-                                        }
-                                    )
                                     .onTapGesture {
                                         // Clear search focus and focus this app
                                         isSearchFieldFocused = false
@@ -694,6 +686,14 @@ private struct iOSAppIconView: View {
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .background(
+                GeometryReader { iconGeo in
+                    Color.clear.preference(
+                        key: AppIconPositionKey.self,
+                        value: [app.bundleIdentifier: iconGeo.frame(in: .named("mainContent"))]
+                    )
+                }
+            )
             .overlay {
                 // Keyboard focus ring only
                 if isFocused {
