@@ -123,34 +123,20 @@ private struct StorageChangeConfirmationView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .focusable()
-        .onAppear {
-            setupKeyboardMonitor()
-        }
-        .onDisappear {
-            cleanupKeyboardMonitor()
-        }
+        .onAppear { setupKeyboardMonitor() }
+        .onDisappear { cleanupKeyboardMonitor() }
     }
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            switch event.keyCode {
-            case 53:  // Escape
-                onCancel()
-                return nil
-            case 36:  // Return
-                onConfirm()
-                return nil
-            default:
-                return event
-            }
+            if event.keyCode == 53 { onCancel(); return nil }
+            if event.keyCode == 36 { onConfirm(); return nil }
+            return event
         }
     }
     
     private func cleanupKeyboardMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
+        if let monitor = eventMonitor { NSEvent.removeMonitor(monitor); eventMonitor = nil }
     }
 }
 
@@ -191,34 +177,20 @@ private struct UnmountConfirmationView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .focusable()
-        .onAppear {
-            setupKeyboardMonitor()
-        }
-        .onDisappear {
-            cleanupKeyboardMonitor()
-        }
+        .onAppear { setupKeyboardMonitor() }
+        .onDisappear { cleanupKeyboardMonitor() }
     }
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            switch event.keyCode {
-            case 53:  // Escape
-                onCancel()
-                return nil
-            case 36:  // Return
-                onConfirm()
-                return nil
-            default:
-                return event
-            }
+            if event.keyCode == 53 { onCancel(); return nil }
+            if event.keyCode == 36 { onConfirm(); return nil }
+            return event
         }
     }
     
     private func cleanupKeyboardMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
+        if let monitor = eventMonitor { NSEvent.removeMonitor(monitor); eventMonitor = nil }
     }
 }
 
@@ -288,34 +260,20 @@ private struct UnmountEjectConfirmationView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .focusable()
-        .onAppear {
-            setupKeyboardMonitor()
-        }
-        .onDisappear {
-            cleanupKeyboardMonitor()
-        }
+        .onAppear { setupKeyboardMonitor() }
+        .onDisappear { cleanupKeyboardMonitor() }
     }
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            switch event.keyCode {
-            case 53:  // Escape
-                onCancel()
-                return nil
-            case 36:  // Return
-                onConfirm()
-                return nil
-            default:
-                return event
-            }
+            if event.keyCode == 53 { onCancel(); return nil }
+            if event.keyCode == 36 { onConfirm(); return nil }
+            return event
         }
     }
     
     private func cleanupKeyboardMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
+        if let monitor = eventMonitor { NSEvent.removeMonitor(monitor); eventMonitor = nil }
     }
 }
 
@@ -325,7 +283,6 @@ private struct UnmountSuccessView: View {
     let unmountedCount: Int
     let ejectedDrive: String?
     let onDismiss: () -> Void
-    @State private var eventMonitor: Any?
     
     var body: some View {
         VStack(spacing: 20) {
@@ -366,32 +323,6 @@ private struct UnmountSuccessView: View {
         .frame(minWidth: 500)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
-        .focusable()
-        .onAppear {
-            setupKeyboardMonitor()
-        }
-        .onDisappear {
-            cleanupKeyboardMonitor()
-        }
-    }
-    
-    private func setupKeyboardMonitor() {
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            switch event.keyCode {
-            case 53, 36:  // Escape or Return
-                onDismiss()
-                return nil
-            default:
-                return event
-            }
-        }
-    }
-    
-    private func cleanupKeyboardMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
     }
 }
 
@@ -401,7 +332,6 @@ private struct ForceUnmountOfferingView: View {
     let failedCount: Int
     let onForce: () -> Void
     let onCancel: () -> Void
-    @State private var eventMonitor: Any?
     
     var body: some View {
         VStack(spacing: 20) {
@@ -450,38 +380,7 @@ private struct ForceUnmountOfferingView: View {
         .frame(minWidth: 500)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
-        .focusable()
-        .onAppear {
-            setupKeyboardMonitor()
-        }
-        .onDisappear {
-            cleanupKeyboardMonitor()
-        }
     }
-    
-    private func setupKeyboardMonitor() {
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            switch event.keyCode {
-            case 53:  // Escape
-                onCancel()
-                return nil
-            case 36:  // Return
-                onForce()
-                return nil
-            default:
-                return event
-            }
-        }
-    }
-    
-    private func cleanupKeyboardMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
-    }
-}
-
 }
 
 // MARK: - Error View
@@ -490,7 +389,6 @@ private struct UnmountErrorView: View {
     let title: String
     let message: String
     let onDismiss: () -> Void
-    @State private var eventMonitor: Any?
     
     var body: some View {
         VStack(spacing: 20) {
@@ -515,32 +413,5 @@ private struct UnmountErrorView: View {
         .frame(minWidth: 500)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
-        .focusable()
-        .onAppear {
-            setupKeyboardMonitor()
-        }
-        .onDisappear {
-            cleanupKeyboardMonitor()
-        }
-    }
-    
-    private func setupKeyboardMonitor() {
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            switch event.keyCode {
-            case 53, 36:  // Escape or Return
-                onDismiss()
-                return nil
-            default:
-                return event
-            }
-        }
-    }
-    
-    private func cleanupKeyboardMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
     }
 }
-
