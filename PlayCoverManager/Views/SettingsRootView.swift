@@ -84,6 +84,19 @@ private struct GeneralSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            
+            Section(header: Text("言語")) {
+                Picker("アプリの言語", selection: Binding(get: { settingsStore.appLanguage }, set: { settingsStore.appLanguage = $0 })) {
+                    ForEach(SettingsStore.AppLanguage.allCases) { language in
+                        Text(language.localizedDescription).tag(language)
+                    }
+                }
+                .pickerStyle(.segmented)
+                
+                Text("言語を変更すると、アプリを再起動する必要があります。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .onAppear {
             Task {

@@ -10,8 +10,39 @@ final class SettingsStore {
         static let nobrowseEnabled = "nobrowseEnabled"
         static let defaultDataHandling = "defaultDataHandling"
         static let imageFormat = "diskImageFormat"
+        static let appLanguage = "appLanguage"
     }
 
+    enum AppLanguage: String, CaseIterable, Identifiable {
+        case system = "system"
+        case japanese = "ja"
+        case english = "en"
+        
+        var id: String { rawValue }
+        
+        var localizedDescription: String {
+            switch self {
+            case .system:
+                return "システム設定に従う"
+            case .japanese:
+                return "日本語"
+            case .english:
+                return "English"
+            }
+        }
+        
+        var languageCode: String? {
+            switch self {
+            case .system:
+                return nil
+            case .japanese:
+                return "ja"
+            case .english:
+                return "en"
+            }
+        }
+    }
+    
     enum InternalDataStrategy: String, CaseIterable, Identifiable {
         case discard
         case mergeThenDelete
@@ -52,6 +83,13 @@ final class SettingsStore {
     var defaultDataHandling: InternalDataStrategy = .default {
         didSet { UserDefaults.standard.set(defaultDataHandling.rawValue, forKey: Keys.defaultDataHandling) }
     }
+    
+    var appLanguage: AppLanguage = .system {
+        didSet {
+            UserDefaults.standard.set(appLanguage.rawValue, forKey: Keys.appLanguage)
+            applyLanguage()
+        }
+    }
 
     // ASIF format is hardcoded - no user selection needed
     let diskImageFormat: DiskImageFormat = .asif
@@ -73,6 +111,25 @@ final class SettingsStore {
             defaultDataHandling = .default
             userDefaults.set(defaultDataHandling.rawValue, forKey: Keys.defaultDataHandling)
         }
+        
+        if let raw = userDefaults.string(forKey: Keys.appLanguage),
+           let language = AppLanguage(rawValue: raw) {
+            appLanguage = language
+        } else {
+            appLanguage = .system
+        }
+        
+        // Apply language on init
+        applyLanguage()
+    }
+    
+    private func applyLanguage() {
+        if let languageCode = appLanguage.languageCode {
+            UserDefaults.standard.set([languageCode], forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        }
+        UserDefaults.standard.synchronize()
     }
 
     private func saveDiskImageDirectory() {
