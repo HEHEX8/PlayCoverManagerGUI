@@ -40,7 +40,7 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 - **macOS Tahoe 26.0 以降** （必須）
   - このアプリは macOS Tahoe で導入された **ASIF ディスクイメージフォーマット** を使用しています
   - macOS Sequoia (25.x) 以前では動作しません
-- **アーキテクチャ**: Apple Silicon / Intel 両対応
+- **アーキテクチャ**: Apple Silicon 専用（Intel Mac 非対応）
 
 ### なぜ macOS Tahoe が必要？
 

@@ -1420,7 +1420,7 @@ private struct AboutView: View {
                             Image(systemName: "cpu")
                                 .foregroundStyle(.secondary)
                                 .frame(width: 20)
-                            Text("Apple Silicon / Intel（ユニバーサル）")
+                            Text("Apple Silicon Mac 専用")
                                 .font(.callout)
                         }
                         
