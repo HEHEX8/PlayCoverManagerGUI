@@ -1274,6 +1274,16 @@ private struct RecentAppLaunchButton: View {
                 }
                 .frame(width: 56, height: 56)
                 .zIndex(999)  // Ensure icons render above all other content
+                .background(
+                    GeometryReader { geo in
+                        Color.clear.onAppear {
+                            // Get icon's actual position in global coordinates
+                            let frame = geo.frame(in: .global)
+                            myPosition = frame
+                            print("📍 Icon position detected: \(frame)")
+                        }
+                    }
+                )
                 
                 // App info with modern styling
                 VStack(alignment: .leading, spacing: 6) {
@@ -1342,15 +1352,6 @@ private struct RecentAppLaunchButton: View {
                 currentIcon = app.icon
             }
         }
-        .background(
-            GeometryReader { geo in
-                Color.clear
-                    .preference(key: RecentButtonPositionKey.self, value: geo.frame(in: .global))
-            }
-        )
-        .onPreferenceChange(RecentButtonPositionKey.self) { position in
-            myPosition = position
-        }
         .onAppear {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
@@ -1398,19 +1399,16 @@ private struct RecentAppLaunchButton: View {
         oldIconRotation = 0.0  // Reset rotation
         
         // Calculate offset to position icon at grid location
-        print("🔍 Checking gridIconPosition: \(gridIconPosition?.debugDescription ?? "nil"), myPosition: \(myPosition)")
+        print("🔍 Animation starting - gridPos: \(gridIconPosition?.debugDescription ?? "nil"), myPos: \(myPosition)")
+        
         if let gridPos = gridIconPosition, myPosition != .zero {
-            // The icon ZStack is at (myPosition + icon offset within button)
-            // Icon is 56x56, positioned at left edge of button after 24pt padding + 20pt spacing from left
-            let iconCenterX = myPosition.minX + 24 + 28  // 24 padding + 28 icon center
-            let iconCenterY = myPosition.minY + 16 + 28  // 16 padding + 28 icon center
+            // Both icons are 56x56, we already have their center positions
+            // Calculate offset to place our icon at grid position
+            let deltaX = gridPos.midX - myPosition.midX
+            let deltaY = gridPos.midY - myPosition.midY
             
-            // Calculate offset to place icon at grid position
-            let deltaX = gridPos.midX - iconCenterX
-            let deltaY = gridPos.midY - iconCenterY
-            
-            print("🎯 Grid: (\(gridPos.midX), \(gridPos.midY))")
-            print("🎯 Icon center: (\(iconCenterX), \(iconCenterY))")
+            print("🎯 Grid center: (\(gridPos.midX), \(gridPos.midY))")
+            print("🎯 My center: (\(myPosition.midX), \(myPosition.midY))")
             print("🎯 Delta: (\(deltaX), \(deltaY))")
             
             // Start icon at grid position
@@ -1419,7 +1417,7 @@ private struct RecentAppLaunchButton: View {
             iconScale = 0.6  // Starts smaller (far away effect)
         } else {
             // Fallback: start from above if position not available
-            print("⚠️ No grid position available")
+            print("⚠️ No grid position available - gridPos nil: \(gridIconPosition == nil), myPos zero: \(myPosition == .zero)")
             iconOffsetY = -250
             iconOffsetX = 0
             iconScale = 0.6
