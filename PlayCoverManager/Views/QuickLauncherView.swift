@@ -23,13 +23,99 @@ struct QuickLauncherView: View {
     @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
     @State private var refreshRotation: Double = 0  // For refresh button rotation animation
+    @FocusState private var focusedAppIndex: Int?  // For keyboard navigation
+    @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
         GridItem(.adaptive(minimum: 100, maximum: 100), spacing: 24)
     ]
     
-
+    // Calculate columns per row based on window width
+    private var columnsPerRow: Int {
+        // Assuming minimum window width of 960, icon width of 100, spacing of 24, padding of 32 each side
+        // Available width: 960 - 64 (padding) = 896
+        // Per item: 100 (icon) + 24 (spacing) = 124
+        // Columns: 896 / 124 ≈ 7
+        return 7
+    }
+    
+    // Keyboard navigation handler
+    private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
+        // Don't handle keyboard if search field is focused
+        if isSearchFieldFocused {
+            return .ignored
+        }
+        
+        let apps = viewModel.filteredApps
+        guard !apps.isEmpty else { return .ignored }
+        
+        // Handle Escape key
+        if keyPress.key == .escape {
+            if isDrawerOpen {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    isDrawerOpen = false
+                }
+                return .handled
+            }
+            // Clear focus
+            focusedAppIndex = nil
+            return .handled
+        }
+        
+        // If no app is focused, focus the first one on any arrow key
+        if focusedAppIndex == nil {
+            if keyPress.key == .downArrow || keyPress.key == .upArrow || 
+               keyPress.key == .leftArrow || keyPress.key == .rightArrow {
+                focusedAppIndex = 0
+                return .handled
+            }
+        }
+        
+        guard let currentIndex = focusedAppIndex else { return .ignored }
+        
+        switch keyPress.key {
+        case .return, .space:
+            // Launch focused app
+            if currentIndex < apps.count {
+                viewModel.launch(app: apps[currentIndex])
+            }
+            return .handled
+            
+        case .rightArrow:
+            // Move focus right
+            if currentIndex < apps.count - 1 {
+                focusedAppIndex = currentIndex + 1
+            }
+            return .handled
+            
+        case .leftArrow:
+            // Move focus left
+            if currentIndex > 0 {
+                focusedAppIndex = currentIndex - 1
+            }
+            return .handled
+            
+        case .downArrow:
+            // Move focus down (next row)
+            let nextIndex = currentIndex + columnsPerRow
+            if nextIndex < apps.count {
+                focusedAppIndex = nextIndex
+            }
+            return .handled
+            
+        case .upArrow:
+            // Move focus up (previous row)
+            let prevIndex = currentIndex - columnsPerRow
+            if prevIndex >= 0 {
+                focusedAppIndex = prevIndex
+            }
+            return .handled
+            
+        default:
+            return .ignored
+        }
+    }
     
     // Get PlayCover.app icon (macOS app)
     private func getPlayCoverIcon() -> NSImage? {
@@ -78,12 +164,26 @@ struct QuickLauncherView: View {
                         TextField("アプリを検索", text: $viewModel.searchText)
                             .textFieldStyle(.plain)
                             .disabled(isDrawerOpen)
+                            .focused($isSearchFieldFocused)
+                            .onSubmit {
+                                // When Enter is pressed in search, focus first app
+                                isSearchFieldFocused = false
+                                if !viewModel.filteredApps.isEmpty {
+                                    focusedAppIndex = 0
+                                }
+                            }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: 280)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .onTapGesture {
+                        // Focus search field when clicked
+                        isSearchFieldFocused = true
+                        // Clear app focus
+                        focusedAppIndex = nil
+                    }
                     
                     Spacer()
                     
@@ -135,7 +235,7 @@ struct QuickLauncherView: View {
                                         app: app, 
                                         index: index,
                                         shouldAnimate: !hasPerformedInitialAnimation,
-                                        isFocused: false
+                                        isFocused: focusedAppIndex == index
                                     ) {
                                         // Single tap - launch
                                         viewModel.launch(app: app)
@@ -145,6 +245,12 @@ struct QuickLauncherView: View {
                                     } uninstallAction: {
                                         // Uninstall action - open uninstaller with pre-selected app
                                         selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                    }
+                                    .onTapGesture {
+                                        // Clear search focus and focus this app
+                                        isSearchFieldFocused = false
+                                        focusedAppIndex = index
+                                        viewModel.launch(app: app)
                                     }
                                 }
                             }
@@ -200,7 +306,7 @@ struct QuickLauncherView: View {
                                     app: app, 
                                     index: index,
                                     shouldAnimate: !hasPerformedInitialAnimation,
-                                    isFocused: false
+                                    isFocused: focusedAppIndex == index
                                 ) {
                                     // Single tap - launch
                                     viewModel.launch(app: app)
@@ -210,6 +316,12 @@ struct QuickLauncherView: View {
                                 } uninstallAction: {
                                     // Uninstall action - open uninstaller with pre-selected app
                                     selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                }
+                                .onTapGesture {
+                                    // Clear search focus and focus this app
+                                    isSearchFieldFocused = false
+                                    focusedAppIndex = index
+                                    viewModel.launch(app: app)
                                 }
                             }
                         }
@@ -245,6 +357,9 @@ struct QuickLauncherView: View {
         AppUninstallerSheet(preSelectedBundleID: nil)
     }
     .frame(minWidth: 960, minHeight: 640)
+    .onKeyPress { keyPress in
+        handleKeyPress(keyPress)
+    }
     .overlay(alignment: .center) {
         // Unmount flow overlay (confirmation, progress, result, error)
         if viewModel.unmountFlowState != .idle {
