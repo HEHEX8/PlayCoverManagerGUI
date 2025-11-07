@@ -261,6 +261,14 @@ struct QuickLauncherView: View {
                                     ) {
                                         // Single tap - launch
                                         viewModel.launch(app: app)
+                                        
+                                        // If this is the recent app, trigger bounce animation on recent button
+                                        if app.lastLaunchedFlag {
+                                            NotificationCenter.default.post(
+                                                name: NSNotification.Name("TriggerRecentAppBounce"),
+                                                object: nil
+                                            )
+                                        }
                                     } rightClickAction: {
                                         // Right click - show detail/settings
                                         selectedAppForDetail = app
@@ -332,6 +340,14 @@ struct QuickLauncherView: View {
                                 ) {
                                     // Single tap - launch
                                     viewModel.launch(app: app)
+                                    
+                                    // If this is the recent app, trigger bounce animation on recent button
+                                    if app.lastLaunchedFlag {
+                                        NotificationCenter.default.post(
+                                            name: NSNotification.Name("TriggerRecentAppBounce"),
+                                            object: nil
+                                        )
+                                    }
                                 } rightClickAction: {
                                     // Right click - show detail/settings
                                     selectedAppForDetail = app
@@ -1299,6 +1315,9 @@ private struct RecentAppLaunchButton: View {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
             displayedTitle = app.displayName
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerRecentAppBounce"))) { _ in
+            performIconBounce()
         }
     }
     
