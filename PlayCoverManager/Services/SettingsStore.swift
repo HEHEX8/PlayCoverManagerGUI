@@ -17,6 +17,17 @@ final class SettingsStore {
         case system = "system"
         case japanese = "ja"
         case english = "en"
+        case chinese = "zh-Hans"
+        case chineseTraditional = "zh-Hant"
+        case korean = "ko"
+        case french = "fr"
+        case german = "de"
+        case spanish = "es"
+        case italian = "it"
+        case russian = "ru"
+        case portuguese = "pt"
+        case arabic = "ar"
+        case hindi = "hi"
         
         var id: String { rawValue }
         
@@ -28,6 +39,28 @@ final class SettingsStore {
                 return "日本語"
             case .english:
                 return "English"
+            case .chinese:
+                return "简体中文"
+            case .chineseTraditional:
+                return "繁體中文"
+            case .korean:
+                return "한국어"
+            case .french:
+                return "Français"
+            case .german:
+                return "Deutsch"
+            case .spanish:
+                return "Español"
+            case .italian:
+                return "Italiano"
+            case .russian:
+                return "Русский"
+            case .portuguese:
+                return "Português"
+            case .arabic:
+                return "العربية"
+            case .hindi:
+                return "हिन्दी"
             }
         }
         
@@ -39,6 +72,28 @@ final class SettingsStore {
                 return "ja"
             case .english:
                 return "en"
+            case .chinese:
+                return "zh-Hans"
+            case .chineseTraditional:
+                return "zh-Hant"
+            case .korean:
+                return "ko"
+            case .french:
+                return "fr"
+            case .german:
+                return "de"
+            case .spanish:
+                return "es"
+            case .italian:
+                return "it"
+            case .russian:
+                return "ru"
+            case .portuguese:
+                return "pt"
+            case .arabic:
+                return "ar"
+            case .hindi:
+                return "hi"
             }
         }
     }
