@@ -64,18 +64,30 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 
 ## 📦 インストール
 
-### GitHub Releases（推奨）
+### 方法 1: GitHub Releases（推奨）
 
 1. [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases) から `PlayCoverManager.dmg` をダウンロード
 2. DMG をマウントして「アプリケーション」フォルダへドラッグ
 3. 初回起動: 右クリック → 「開く」（署名なしアプリのため）
 
-### ソースからビルド
+### 方法 2: Homebrew
+
+```bash
+# Tap を追加（初回のみ）
+brew tap HEHEX8/playcover-manager
+
+# インストール
+brew install --cask playcover-manager
+```
+
+**注意**: Homebrew Tap は初回リリース後に利用可能になります。
+
+### 方法 3: ソースからビルド
 
 ```bash
 git clone https://github.com/HEHEX8/PlayCoverManagerGUI.git
 cd PlayCoverManagerGUI
-open PlayCoverManager.xcodeproj
+./scripts/build_release_unsigned.sh
 ```
 
 **要件**: macOS Sequoia 15.6+、Xcode 26.0+

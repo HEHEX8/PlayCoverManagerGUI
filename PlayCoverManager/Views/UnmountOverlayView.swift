@@ -138,7 +138,6 @@ private struct StorageChangeConfirmationView: View {
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
-            print("🎯 StorageChangeDialog keyCode: \(event.keyCode), selected: \(self.selectedButton)")
             switch event.keyCode {
             case 53:  // Escape
                 self.onCancel()
@@ -215,22 +214,17 @@ private struct UnmountConfirmationView: View {
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
-            print("🎯 UnmountDialog keyCode: \(event.keyCode), selected: \(self.selectedButton)")
             switch event.keyCode {
             case 53:  // Escape
-                print("❌ Cancel")
                 self.onCancel()
                 return nil
             case 36:  // Return
-                print("✅ Confirm button \(self.selectedButton)")
                 if self.selectedButton == 0 { self.onCancel() } else { self.onConfirm() }
                 return nil
             case 123:  // Left arrow
-                print("⬅️ Select cancel")
                 self.selectedButton = 0
                 return nil
             case 124:  // Right arrow
-                print("➡️ Select confirm")
                 self.selectedButton = 1
                 return nil
             default:
@@ -325,7 +319,6 @@ private struct UnmountEjectConfirmationView: View {
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
-            print("🎯 EjectDialog keyCode: \(event.keyCode), selected: \(self.selectedButton)")
             switch event.keyCode {
             case 53:  // Escape
                 self.onCancel()

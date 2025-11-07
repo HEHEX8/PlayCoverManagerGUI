@@ -55,17 +55,13 @@ struct QuickLauncherView: View {
     
     // Handle keyboard event directly from NSEvent
     private func handleKeyCode(_ keyCode: UInt16) -> Bool {
-        print("🎹 Key code: \(keyCode), searchFocused: \(isSearchFieldFocused), focusedApp: \(focusedAppIndex ?? -1)")
-        
         // Don't handle keyboard if search field is focused
         if isSearchFieldFocused {
-            print("🔍 Search field is focused, ignoring key")
             return false
         }
         
         let apps = viewModel.filteredApps
         guard !apps.isEmpty else { 
-            print("📭 No apps available")
             return false
         }
         
@@ -85,11 +81,9 @@ struct QuickLauncherView: View {
         // If no app is focused, focus the first one on any arrow key
         if focusedAppIndex == nil {
             if keyCode == 123 || keyCode == 124 || keyCode == 125 || keyCode == 126 {
-                print("⬆️ Arrow key pressed, focusing first app")
                 focusedAppIndex = 0
                 return true
             }
-            print("❓ No app focused and not an arrow key")
             return false
         }
         
@@ -98,7 +92,6 @@ struct QuickLauncherView: View {
         switch keyCode {
         case 36, 49:  // Return (36) or Space (49)
             // Launch focused app
-            print("🚀 Launch app at index \(currentIndex)")
             if currentIndex < apps.count {
                 viewModel.launch(app: apps[currentIndex])
             }
@@ -106,7 +99,6 @@ struct QuickLauncherView: View {
             
         case 124:  // Right arrow
             // Move focus right
-            print("➡️ Right arrow: \(currentIndex) -> \(currentIndex + 1)")
             if currentIndex < apps.count - 1 {
                 focusedAppIndex = currentIndex + 1
             }
@@ -114,7 +106,6 @@ struct QuickLauncherView: View {
             
         case 123:  // Left arrow
             // Move focus left
-            print("⬅️ Left arrow: \(currentIndex) -> \(currentIndex - 1)")
             if currentIndex > 0 {
                 focusedAppIndex = currentIndex - 1
             }
@@ -123,7 +114,6 @@ struct QuickLauncherView: View {
         case 125:  // Down arrow
             // Move focus down (next row)
             let nextIndex = currentIndex + columnsPerRow
-            print("⬇️ Down arrow: \(currentIndex) -> \(nextIndex)")
             if nextIndex < apps.count {
                 focusedAppIndex = nextIndex
             }
@@ -132,7 +122,6 @@ struct QuickLauncherView: View {
         case 126:  // Up arrow
             // Move focus up (previous row)
             let prevIndex = currentIndex - columnsPerRow
-            print("⬆️ Up arrow: \(currentIndex) -> \(prevIndex)")
             if prevIndex >= 0 {
                 focusedAppIndex = prevIndex
             }
@@ -516,19 +505,15 @@ struct QuickLauncherView: View {
     .onAppear {
         // Set up local keyboard event monitor for arrow keys
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            print("🎹 NSEvent Key: \(event.keyCode), chars: \(event.characters ?? "none")")
-            
             // Don't intercept keys if any modal/sheet is showing
             if showingSettings || showingInstaller || showingUninstaller || 
                selectedAppForDetail != nil || selectedAppForUninstall != nil ||
                showingShortcutGuide || viewModel.unmountFlowState != .idle {
-                print("🪟 Modal/sheet active, passing through")
                 return event
             }
             
             // Check if search field is focused
             if isSearchFieldFocused {
-                print("🔍 Search field focused, passing through")
                 return event
             }
             
@@ -538,7 +523,6 @@ struct QuickLauncherView: View {
             case 123, 124, 125, 126, 36, 49, 53:
                 let handled = handleKeyCode(event.keyCode)
                 if handled {
-                    print("✅ Event handled, suppressing system beep")
                     return nil  // Suppress the event (no beep)
                 }
                 return event
