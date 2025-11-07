@@ -55,22 +55,17 @@ struct QuickLauncherView: View {
                 // Modern toolbar with glassmorphism
                 HStack(spacing: 16) {
                     // Hamburger menu button
-                    Button {
+                    ModernToolbarButton(
+                        icon: "line.3.horizontal",
+                        color: .primary,
+                        help: "メニュー"
+                    ) {
                         print("[QuickLauncher] Hamburger button tapped, current state: \(isDrawerOpen)")
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isDrawerOpen.toggle()
                         }
                         print("[QuickLauncher] After toggle, new state: \(isDrawerOpen)")
-                    } label: {
-                        Image(systemName: "line.3.horizontal")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
-                    .buttonStyle(.plain)
-                    .help("メニュー")
                     
                     // Modern search field with icon
                     HStack(spacing: 8) {
@@ -91,33 +86,23 @@ struct QuickLauncherView: View {
                     Spacer()
                     
                     // Refresh button - modern style
-                    Button {
+                    ModernToolbarButton(
+                        icon: "arrow.clockwise",
+                        color: .primary,
+                        help: "アプリ一覧を更新 (⌘R)"
+                    ) {
                         Task { await viewModel.refresh() }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
-                    .buttonStyle(.plain)
-                    .help("アプリ一覧を更新 (⌘R)")
                     .keyboardShortcut("r", modifiers: [.command])
                     
                     // Unmount button - modern style
-                    Button {
+                    ModernToolbarButton(
+                        icon: "eject.fill",
+                        color: .red,
+                        help: "すべてアンマウント (⌘⇧U)"
+                    ) {
                         viewModel.unmountAll(applyToPlayCoverContainer: true)
-                    } label: {
-                        Image(systemName: "eject.fill")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.red)
-                            .frame(width: 44, height: 44)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
-                    .buttonStyle(.plain)
-                    .help("すべてアンマウント (⌘⇧U)")
                     .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
                 }
                 .padding(.horizontal, 24)
@@ -375,6 +360,36 @@ struct QuickLauncherView: View {
     }
 }
 
+// MARK: - Modern Toolbar Button with Hover Effect
+private struct ModernToolbarButton: View {
+    let icon: String
+    let color: Color
+    let help: String
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 44, height: 44)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .scaleEffect(isHovered ? 1.05 : 1.0)
+                .brightness(isHovered ? 0.05 : 0)
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
 // iOS-style app icon with name below
 private struct iOSAppIconView: View {
     let app: PlayCoverApp
@@ -390,6 +405,7 @@ private struct iOSAppIconView: View {
     @State private var isCancelled = false
     @State private var shakeOffset: CGFloat = 0
     @State private var isDragging = false
+    @State private var isHovered = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -412,6 +428,8 @@ private struct iOSAppIconView: View {
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .brightness(isHovered ? 0.1 : 0)
+            .shadow(color: .blue.opacity(isHovered ? 0.3 : 0), radius: isHovered ? 8 : 0, x: 0, y: 0)
             .overlay(alignment: .topTrailing) {
                 if app.isRunning {
                     // Running indicator - adaptive for light/dark mode
@@ -458,6 +476,11 @@ private struct iOSAppIconView: View {
         .scaleEffect(max(0.3, shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1))
         .offset(y: shouldAnimate ? (hasAppeared ? 0 : 20) : 0)
         .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry during initial animation
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
         .onAppear {
             if shouldAnimate && !hasAppeared {
                 // Staggered fade-in animation (Mac Dock style) - only on first load
@@ -903,6 +926,7 @@ private struct RecentAppLaunchButton: View {
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
+    @State private var isHovered = false
     
     // Current icon states
     @State private var iconOffsetY: CGFloat = 0
@@ -1012,9 +1036,19 @@ private struct RecentAppLaunchButton: View {
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
+            .background(
+                RoundedRectangle(cornerRadius: 0)
+                    .fill(Color.accentColor.opacity(isHovered ? 0.08 : 0))
+            )
+            .brightness(isHovered ? 0.02 : 0)
         }
         .buttonStyle(.plain)
         .clipped()
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
         .keyboardShortcut(.defaultAction)
         .onChange(of: app.bundleIdentifier) { oldValue, newValue in
             // Detect app change and trigger rich transition
@@ -1835,118 +1869,96 @@ private struct DrawerPanel: View {
                     .frame(height: 20)
             
                 // PlayCover.app button
-                Button {
+                DrawerMenuItem(
+                    icon: AnyView(
+                        Group {
+                            if let playCoverIcon = getPlayCoverIcon() {
+                                Image(nsImage: playCoverIcon)
+                                    .resizable()
+                                    .frame(width: 32, height: 32)
+                                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                            } else {
+                                Image(systemName: "app.badge.checkmark")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 32, height: 32)
+                            }
+                        }
+                    ),
+                    title: "PlayCover.app",
+                    help: "PlayCover を開く (⌘⇧P)"
+                ) {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
-                } label: {
-                    HStack(spacing: 12) {
-                        if let playCoverIcon = getPlayCoverIcon() {
-                            Image(nsImage: playCoverIcon)
-                                .resizable()
-                                .frame(width: 32, height: 32)
-                                .clipShape(RoundedRectangle(cornerRadius: 7))
-                        } else {
-                            Image(systemName: "app.badge.checkmark")
-                                .font(.system(size: 20))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 32, height: 32)
-                        }
-                        Text("PlayCover.app")
-                            .font(.body)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .help("PlayCover を開く (⌘⇧P)")
                 .keyboardShortcut("p", modifiers: [.command, .shift])
                 
                 Divider()
                     .padding(.leading, 16)
                 
                 // Install button
-                Button {
+                DrawerMenuItem(
+                    icon: AnyView(
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.blue)
+                            .frame(width: 32, height: 32)
+                    ),
+                    title: "IPA をインストール",
+                    help: "IPA をインストール (⌘I)"
+                ) {
                     print("[DrawerPanel] Install button tapped")
                     showingInstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
                     print("[DrawerPanel] Drawer closed, showingInstaller: \(showingInstaller)")
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.blue)
-                            .frame(width: 32, height: 32)
-                        Text("IPA をインストール")
-                            .font(.body)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .help("IPA をインストール (⌘I)")
                 .keyboardShortcut("i", modifiers: [.command])
                 
                 // Uninstall button
-                Button {
+                DrawerMenuItem(
+                    icon: AnyView(
+                        Image(systemName: "trash")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.red)
+                            .frame(width: 32, height: 32)
+                    ),
+                    title: "アプリをアンインストール",
+                    help: "アプリをアンインストール (⌘D)"
+                ) {
                     print("[DrawerPanel] Uninstall button tapped")
                     showingUninstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
                     print("[DrawerPanel] Drawer closed, showingUninstaller: \(showingUninstaller)")
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.red)
-                            .frame(width: 32, height: 32)
-                        Text("アプリをアンインストール")
-                            .font(.body)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .help("アプリをアンインストール (⌘D)")
                 .keyboardShortcut("d", modifiers: [.command])
                 
                 Divider()
                     .padding(.leading, 16)
                 
                 // Settings button
-                Button {
+                DrawerMenuItem(
+                    icon: AnyView(
+                        Image(systemName: "gear")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 32, height: 32)
+                    ),
+                    title: "設定",
+                    help: "設定 (⌘,)"
+                ) {
                     print("[DrawerPanel] Settings button tapped")
                     showingSettings = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
                     print("[DrawerPanel] Drawer closed, showingSettings: \(showingSettings)")
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 32, height: 32)
-                        Text("設定")
-                            .font(.body)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
-                .help("設定 (⌘,)")
                 .keyboardShortcut(",", modifiers: [.command])
             
                 Spacer()
@@ -1961,5 +1973,40 @@ private struct DrawerPanel: View {
                 .frame(width: 1)
         }
         .shadow(color: .black.opacity(0.3), radius: 10, x: 2, y: 0)
+    }
+}
+
+// MARK: - Drawer Menu Item with Hover Effect
+private struct DrawerMenuItem: View {
+    let icon: AnyView
+    let title: String
+    let help: String
+    let action: () -> Void
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                icon
+                Text(title)
+                    .font(.body)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+            .background(
+                RoundedRectangle(cornerRadius: 0)
+                    .fill(Color.accentColor.opacity(isHovered ? 0.1 : 0))
+            )
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
     }
 }
