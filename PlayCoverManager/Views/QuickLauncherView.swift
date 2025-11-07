@@ -11,15 +11,6 @@ struct IdentifiableString: Identifiable {
     }
 }
 
-// PreferenceKey to track app icon positions in grid (using named coordinate space)
-struct AppIconPositionKey: PreferenceKey {
-    static var defaultValue: [String: CGRect] = [:]
-    
-    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
-        value.merge(nextValue()) { $1 }
-    }
-}
-
 struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
@@ -33,7 +24,6 @@ struct QuickLauncherView: View {
     @State private var isDrawerOpen = false
     @State private var refreshRotation: Double = 0  // For refresh button rotation animation
     @State private var focusedAppIndex: Int?  // For keyboard navigation
-    @State private var appIconPositions: [String: CGRect] = [:]  // Track icon positions in grid
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
@@ -171,7 +161,6 @@ struct QuickLauncherView: View {
                 endPoint: .bottom
             )
             .ignoresSafeArea()
-            .coordinateSpace(name: "mainContent")  // Define shared coordinate space
             
             VStack(spacing: 0) {
                 // Modern toolbar with glassmorphism
@@ -296,14 +285,6 @@ struct QuickLauncherView: View {
                                 }
                             }
                             .padding(32)
-                            .onPreferenceChange(AppIconPositionKey.self) { positions in
-                                appIconPositions = positions
-                                print("📍 Got \(positions.count) icon positions:")
-                                for (bundleID, rect) in positions {
-                                    let shortID = bundleID.components(separatedBy: ".").last ?? bundleID
-                                    print("   - \(shortID): origin=(\(rect.minX), \(rect.minY)), size=(\(rect.width)x\(rect.height)), center=(\(rect.midX), \(rect.midY))")
-                                }
-                            }
                             .onAppear {
                                 // Mark as performed after grid appears
                                 // Use delay to ensure animation starts before flag is set
@@ -335,11 +316,7 @@ struct QuickLauncherView: View {
                                         userInfo: ["bundleID": recentApp.bundleIdentifier]
                                     )
                                 }
-                            },
-                            gridIconPosition: Binding(
-                                get: { appIconPositions[recentApp.bundleIdentifier] },
-                                set: { _ in }
-                            )
+                            }
                         )
                         .background(.ultraThinMaterial)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
@@ -363,6 +340,14 @@ struct QuickLauncherView: View {
                                 ) {
                                     // Single tap - launch
                                     viewModel.launch(app: app)
+                                    
+                                    // If this is the recent app, trigger bounce animation on recent button
+                                    if app.lastLaunchedFlag {
+                                        NotificationCenter.default.post(
+                                            name: NSNotification.Name("TriggerRecentAppBounce"),
+                                            object: nil
+                                        )
+                                    }
                                 } rightClickAction: {
                                     // Right click - show detail/settings
                                     selectedAppForDetail = app
@@ -690,14 +675,6 @@ private struct iOSAppIconView: View {
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
-            .background(
-                GeometryReader { iconGeo in
-                    Color.clear.preference(
-                        key: AppIconPositionKey.self,
-                        value: [app.bundleIdentifier: iconGeo.frame(in: .named("mainContent"))]
-                    )
-                }
-            )
             .overlay {
                 // Keyboard focus ring only
                 if isFocused {
@@ -1195,7 +1172,6 @@ private struct IPAInstallerSheetWrapper: View {
 private struct RecentAppLaunchButton: View {
     let app: PlayCoverApp
     let onLaunch: () -> Void
-    @Binding var gridIconPosition: CGRect?  // Position of this app's icon in grid (binding for reactive updates)
     
     @State private var rippleTrigger = 0
     @State private var isHovered = false
@@ -1211,7 +1187,6 @@ private struct RecentAppLaunchButton: View {
     @State private var oldIconOffsetX: CGFloat = 0
     @State private var oldIconScale: CGFloat = 1.0
     @State private var oldIconOpacity: Double = 0.0
-    @State private var oldIconRotation: Double = 0.0  // Spinning effect when blasted away
     
     @State private var textOpacity: Double = 1.0
     @State private var previousAppID: String = ""
@@ -1235,7 +1210,6 @@ private struct RecentAppLaunchButton: View {
                             .frame(width: 56, height: 56)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
-                            .rotationEffect(.degrees(oldIconRotation))
                             .offset(x: oldIconOffsetX, y: oldIconOffsetY)
                             .scaleEffect(oldIconScale)
                             .opacity(oldIconOpacity)
@@ -1268,25 +1242,6 @@ private struct RecentAppLaunchButton: View {
                     }
                 }
                 .frame(width: 56, height: 56)
-                .zIndex(999)  // Ensure icons render above all other content
-                .background(
-                    GeometryReader { iconGeo in
-                        Color.clear.onChange(of: app.bundleIdentifier) { oldValue, newValue in
-                            // Detect app change and trigger rich transition
-                            if !oldValue.isEmpty && oldValue != newValue {
-                                // Save CURRENT displayed icon as old icon (before it updates)
-                                oldIcon = currentIcon
-                                // Pass icon-specific geometry to get live position
-                                performAppSwitchAnimation(iconGeometry: iconGeo)
-                            }
-                            previousAppID = newValue
-                            // Update current icon after animation starts
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                currentIcon = app.icon
-                            }
-                        }
-                    }
-                )
                 
                 // App info with modern styling
                 VStack(alignment: .leading, spacing: 6) {
@@ -1336,19 +1291,32 @@ private struct RecentAppLaunchButton: View {
             .brightness(isHovered ? 0.02 : 0)
         }
         .buttonStyle(.plain)
+        .clipped()
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }
         .keyboardShortcut(.defaultAction)
+        .onChange(of: app.bundleIdentifier) { oldValue, newValue in
+            // Detect app change and trigger rich transition
+            if !oldValue.isEmpty && oldValue != newValue {
+                // Save CURRENT displayed icon as old icon (before it updates)
+                oldIcon = currentIcon
+                performAppSwitchAnimation()
+            }
+            previousAppID = newValue
+            // Update current icon after animation starts
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                currentIcon = app.icon
+            }
+        }
         .onAppear {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
             displayedTitle = app.displayName
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerRecentAppBounce"))) { _ in
-            // Grid icon was tapped for the recent app, trigger bounce animation
             performIconBounce()
         }
     }
@@ -1375,114 +1343,63 @@ private struct RecentAppLaunchButton: View {
         }
     }
     
-    // App switch animation - icon flies from actual grid position and crashes into old one
-    private func performAppSwitchAnimation(iconGeometry: GeometryProxy) {
-        // Get this button's icon position in shared coordinate space at animation time
-        let myPosition = iconGeometry.frame(in: .named("mainContent"))
-        
-        // Skip animation if position not ready yet (geometry still calculating)
-        guard myPosition != .zero else {
-            print("⏸️ Skipping animation - icon position not ready yet")
-            return
-        }
-        
+    // App switch animation - new icon drops and collides with old one
+    private func performAppSwitchAnimation() {
         // Reset old icon state (oldIcon already saved in onChange)
         oldIconOffsetX = 0
         oldIconOffsetY = 0
         oldIconScale = 1.0
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
-        oldIconRotation = 0.0  // Reset rotation
         
-        print("🔍 Animation starting")
-        print("📊 Grid icon position: \(gridIconPosition?.debugDescription ?? "nil")")
-        print("📊 Recent button icon position: \(myPosition)")
-        
-        if let gridPos = gridIconPosition {
-            // Both positions are now in the same coordinate space (mainContent)
-            print("📐 Grid icon: origin=(\(gridPos.minX), \(gridPos.minY)), size=(\(gridPos.width)x\(gridPos.height)), center=(\(gridPos.midX), \(gridPos.midY))")
-            print("📐 Recent icon: origin=(\(myPosition.minX), \(myPosition.minY)), size=(\(myPosition.width)x\(myPosition.height)), center=(\(myPosition.midX), \(myPosition.midY))")
-            
-            // Calculate offset to place our icon at grid position
-            let deltaX = gridPos.midX - myPosition.midX
-            let deltaY = gridPos.midY - myPosition.midY
-            
-            print("🎯 Delta (grid center - my center): (\(deltaX), \(deltaY))")
-            print("✨ Starting icon at offset: (\(deltaX), \(deltaY)) with scale 0.6")
-            
-            // Start icon at grid position
-            iconOffsetX = deltaX
-            iconOffsetY = deltaY
-            iconScale = 0.6  // Starts smaller (far away effect)
-        } else {
-            // Fallback: start from above if position not available
-            print("⚠️ No grid position available")
-            iconOffsetY = -250
-            iconOffsetX = 0
-            iconScale = 0.6
-        }
+        // New icon starts from above
+        iconOffsetY = -150
+        iconOffsetX = 0
+        iconScale = 1.2
         
         // Text stays visible (shows OLD title during animation)
         textOpacity = 1.0
         
-        // Phase 1: Lift off from grid icon with gentle float
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            withAnimation(.easeOut(duration: 0.25)) {
-                // Lift up slightly from current position (whatever it is)
-                iconOffsetY += -30  // Float up a bit more
-                iconScale = 0.75  // Get slightly bigger as it prepares to accelerate
-            }
-        }
-        
-        // Phase 2: Dive down towards target with acceleration
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        // Drop new icon
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.easeIn(duration: 0.3)) {
-                iconOffsetY = 0  // Dive down to target position
-                iconOffsetX = 0
-                iconScale = 1.3  // Overshoot scale for impact
+                iconOffsetY = 0  // Falls to collision point
             }
             
-            // CRASH! Both icons react
+            // COLLISION! Both icons react
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // Impact effect - new icon squashes
-                withAnimation(.easeOut(duration: 0.08)) {
-                    iconScale = 0.9
+                // New icon squashes
+                withAnimation(.easeOut(duration: 0.1)) {
+                    iconScale = 0.95
                 }
                 
-                // Old icon gets BLASTED away (rotates and flies out)
-                withAnimation(.easeOut(duration: 0.4)) {
-                    oldIconOffsetY = -100  // Flies upward
-                    oldIconOffsetX = 150  // Flies to the right
-                    oldIconScale = 0.4  // Shrinks as it flies away
-                    oldIconOpacity = 0.0  // Fades out
-                    oldIconRotation = 720  // Spins twice while flying away
+                // Old icon gets pushed down and flies away
+                withAnimation(.easeOut(duration: 0.35)) {
+                    oldIconOffsetY = 120  // Pushed down
+                    oldIconScale = 0.6
+                    oldIconOpacity = 0.0
                 }
                 
-                // New icon settles with elastic bounce
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-                    withAnimation(.interpolatingSpring(stiffness: 350, damping: 18)) {
+                // New icon bounces back
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
                         iconScale = 1.0
                     }
                 }
                 
-                // Shockwave ripple effect on impact
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
-                    rippleTrigger += 1
-                }
-                
-                // After impact settles (0.5s), update title
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                // After new icon lands (0.45s), update title
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
                     // Fade out old title
                     withAnimation(.easeOut(duration: 0.2)) {
                         textOpacity = 0.0
                     }
                     
-                    // Update displayed title while faded out
+                    // Update displayed title while faded out (triggers layout animation)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             displayedTitle = app.displayName
                         }
                         
-                        // Fade in new title
+                        // Fade in new title after layout settles
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             withAnimation(.easeIn(duration: 0.25)) {
                                 textOpacity = 1.0
