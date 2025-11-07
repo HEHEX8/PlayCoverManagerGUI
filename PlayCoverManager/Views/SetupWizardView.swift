@@ -147,7 +147,8 @@ struct SetupWizardView: View {
     private var canContinue: Bool {
         switch viewModel.currentStep {
         case .selectStorage:
-            return viewModel.storageURL != nil
+            guard let url = viewModel.storageURL else { return false }
+            return FileManager.default.fileExists(atPath: url.path)
         default:
             return true
         }
@@ -294,6 +295,11 @@ private struct StorageStepView: View {
     let storageURL: URL?
     let chooseStorageDirectory: () -> Void
     
+    private var pathExists: Bool {
+        guard let url = storageURL else { return false }
+        return FileManager.default.fileExists(atPath: url.path)
+    }
+    
     var body: some View {
         VStack(spacing: 32) {
             // Icon and title
@@ -310,26 +316,56 @@ private struct StorageStepView: View {
             // Content
             VStack(spacing: 20) {
                 if let url = storageURL {
-                    // Storage selected
+                    // Storage selected - validate path existence
                     VStack(spacing: 12) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 32))
-                                .foregroundStyle(.green)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("保存先")
+                        if pathExists {
+                            // Path exists - show green checkmark
+                            HStack(spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(.green)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("保存先")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(url.path)
+                                        .font(.system(.body, design: .monospaced))
+                                        .lineLimit(2)
+                                        .truncationMode(.middle)
+                                }
+                            }
+                            .padding(20)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                        } else {
+                            // Path doesn't exist - show warning
+                            VStack(spacing: 8) {
+                                HStack(spacing: 12) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .font(.system(size: 32))
+                                        .foregroundStyle(.orange)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("パスが存在しません")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text(url.path)
+                                            .font(.system(.body, design: .monospaced))
+                                            .lineLimit(2)
+                                            .truncationMode(.middle)
+                                    }
+                                }
+                                .padding(20)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                                
+                                Text("ドライブが接続されていないか、パスが無効です。\n別の保存先を選択してください。")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                Text(url.path)
-                                    .font(.system(.body, design: .monospaced))
-                                    .lineLimit(2)
-                                    .truncationMode(.middle)
+                                    .multilineTextAlignment(.center)
                             }
                         }
-                        .padding(20)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                     }
                 } else {
                     // No storage selected
