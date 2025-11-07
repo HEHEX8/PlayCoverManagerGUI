@@ -68,21 +68,35 @@ struct KeyboardNavigableAlert: View {
     @ViewBuilder
     private func makeButton(for button: AlertButton, at index: Int) -> some View {
         let isSelected = selectedButtonIndex == index
-        let buttonStyle: SwiftUI.ButtonStyle = (button.style == .borderedProminent || button.style == .destructive) ? .borderedProminent : .bordered
         let tintColor: Color = button.style == .destructive ? .red : (isSelected ? .blue : .gray)
         
-        Button(button.title) {
-            button.action()
-        }
-        .buttonStyle(buttonStyle)
-        .tint(tintColor)
-        .overlay {
-            if isSelected {
-                RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(Color.blue, lineWidth: 2)
+        if button.style == .borderedProminent || button.style == .destructive {
+            Button(button.title) {
+                button.action()
             }
+            .buttonStyle(.borderedProminent)
+            .tint(tintColor)
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(Color.blue, lineWidth: 2)
+                }
+            }
+            .applyKeyboardShortcut(button.keyEquivalent)
+        } else {
+            Button(button.title) {
+                button.action()
+            }
+            .buttonStyle(.bordered)
+            .tint(tintColor)
+            .overlay {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 6)
+                        .strokeBorder(Color.blue, lineWidth: 2)
+                }
+            }
+            .applyKeyboardShortcut(button.keyEquivalent)
         }
-        .applyKeyboardShortcut(button.keyEquivalent)
     }
     
     private func setupKeyboardMonitor() {
