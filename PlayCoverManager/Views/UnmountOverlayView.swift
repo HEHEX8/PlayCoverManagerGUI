@@ -335,64 +335,6 @@ private struct ForceUnmountOfferingView: View {
     }
 }
 
-// MARK: - Storage Change Confirmation View
-
-private struct StorageChangeConfirmationView: View {
-    let mountedCount: Int
-    let onConfirm: () -> Void
-    let onCancel: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "folder.badge.gearshape")
-                .font(.system(size: 64))
-                .foregroundStyle(.blue)
-            
-            Text("保存先を変更")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            VStack(spacing: 12) {
-                Text("保存先を変更するには、すべてのコンテナをアンマウントする必要があります。")
-                    .multilineTextAlignment(.center)
-                
-                if mountedCount > 0 {
-                    HStack(spacing: 8) {
-                        Image(systemName: "info.circle.fill")
-                            .font(.caption)
-                            .foregroundStyle(.blue)
-                        Text("現在 \(mountedCount) 個のボリュームがマウントされています")
-                            .font(.callout)
-                            .fontWeight(.medium)
-                    }
-                    .padding(12)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
-                }
-                
-                Text("アンマウント後、新しい保存先を選択できます。")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: 400)
-            
-            HStack(spacing: 12) {
-                Button("キャンセル", action: onCancel)
-                    .keyboardShortcut(.cancelAction)
-                
-                Button("アンマウントして続ける", action: onConfirm)
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-            }
-        }
-        .padding(32)
-        .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.3), radius: 20)
-    }
-}
-
 // MARK: - Error View
 
 private struct UnmountErrorView: View {
