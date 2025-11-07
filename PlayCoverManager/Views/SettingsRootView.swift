@@ -791,7 +791,7 @@ struct AppUninstallerSheet: View {
         }
         .alert("アンインストール確認", isPresented: $showUninstallConfirmation) {
             Button("キャンセル", role: .cancel) { }
-            Button("削除", role: .destructive) {
+            Button("アンインストール", role: .destructive) {
                 Task {
                     await startUninstallation()
                 }
@@ -799,9 +799,9 @@ struct AppUninstallerSheet: View {
         } message: {
             let appNames = apps.filter { selectedApps.contains($0.bundleID) }.map { $0.appName }
             if appNames.count <= 3 {
-                Text("\(appNames.joined(separator: "、")) を削除します。\n\nこの操作は取り消せません。よろしいですか？")
+                Text("\(appNames.joined(separator: "、")) をアンインストールします。\n\nこの操作は取り消せません。よろしいですか？")
             } else {
-                Text("\(selectedApps.count) 個のアプリを削除します。\n\nこの操作は取り消せません。よろしいですか？")
+                Text("\(selectedApps.count) 個のアプリをアンインストールします。\n\nこの操作は取り消せません。よろしいですか？")
             }
         }
     }
@@ -1104,7 +1104,7 @@ struct AppUninstallerSheet: View {
             Spacer()
             
             if currentPhase == .selection && !selectedApps.isEmpty {
-                Button("削除 (\(selectedApps.count) 個)") {
+                Button("アンインストール (\(selectedApps.count) 個)") {
                     showUninstallConfirmation = true
                 }
                 .tint(.red)

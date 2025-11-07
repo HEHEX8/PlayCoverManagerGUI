@@ -1757,7 +1757,7 @@ private struct DrawerPanel: View {
                             .font(.system(size: 20))
                             .foregroundStyle(.red)
                             .frame(width: 32, height: 32)
-                        Text("アプリを削除")
+                        Text("アプリをアンインストール")
                             .font(.body)
                         Spacer()
                     }
