@@ -2,9 +2,13 @@ import SwiftUI
 import AppKit
 import Observation
 
-// Make String Identifiable for .sheet(item:) usage
-extension String: Identifiable {
-    public var id: String { self }
+// Wrapper to make String Identifiable for .sheet(item:) usage
+struct IdentifiableString: Identifiable {
+    let id: String
+    
+    init(_ string: String) {
+        self.id = string
+    }
 }
 
 struct QuickLauncherView: View {
@@ -14,7 +18,8 @@ struct QuickLauncherView: View {
     @State private var hasPerformedInitialAnimation = false
     @State private var showingSettings = false
     @State private var showingInstaller = false
-    @State private var selectedAppForUninstall: String? = nil
+    @State private var showingUninstaller = false  // For general uninstall (from drawer)
+    @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
     
     // iOS-style grid with fixed size icons
@@ -110,8 +115,7 @@ struct QuickLauncherView: View {
                                         selectedAppForDetail = app
                                     } uninstallAction: {
                                         // Uninstall action - open uninstaller with pre-selected app
-                                        selectedAppForUninstall = app.bundleIdentifier
-                                        showingUninstaller = true
+                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
                                     }
                                 }
                             }
@@ -173,7 +177,7 @@ struct QuickLauncherView: View {
                                     selectedAppForDetail = app
                                 } uninstallAction: {
                                     // Uninstall action - open uninstaller with pre-selected app
-                                    selectedAppForUninstall = app.bundleIdentifier
+                                    selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
                                 }
                             }
                         }
@@ -202,8 +206,11 @@ struct QuickLauncherView: View {
     .sheet(isPresented: $showingInstaller) {
         IPAInstallerSheet()
     }
-    .sheet(item: $selectedAppForUninstall) { bundleID in
-        AppUninstallerSheet(preSelectedBundleID: bundleID)
+    .sheet(item: $selectedAppForUninstall) { identifiableString in
+        AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
+    }
+    .sheet(isPresented: $showingUninstaller) {
+        AppUninstallerSheet(preSelectedBundleID: nil)
     }
     .frame(minWidth: 960, minHeight: 640)
     .overlay(alignment: .center) {
