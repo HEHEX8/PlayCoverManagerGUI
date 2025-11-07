@@ -25,6 +25,7 @@ struct QuickLauncherView: View {
     @State private var refreshRotation: Double = 0  // For refresh button rotation animation
     @FocusState private var focusedAppIndex: Int?  // For keyboard navigation
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
+    @State private var eventMonitor: Any?  // For monitoring keyboard events
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -38,6 +39,19 @@ struct QuickLauncherView: View {
         // Per item: 100 (icon) + 24 (spacing) = 124
         // Columns: 896 / 124 ≈ 7
         return 7
+    }
+    
+    // Convert NSEvent keyCode to KeyPress.Key
+    private func keyCodeToKey(_ keyCode: UInt16) -> KeyPress.Key {
+        switch keyCode {
+        case 123: return .leftArrow
+        case 124: return .rightArrow
+        case 125: return .downArrow
+        case 126: return .upArrow
+        case 36: return .return
+        case 49: return .space
+        default: return .return  // Fallback
+        }
     }
     
     // Keyboard navigation handler
@@ -141,6 +155,13 @@ struct QuickLauncherView: View {
 
     var body: some View {
         ZStack {
+            // Hidden focusable view to capture keyboard events
+            // This ensures the view can receive keyboard input
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .focusable()
+                .opacity(0.01)  // Nearly invisible but still present
+            
             // Modern gradient background
             LinearGradient(
                 colors: [
@@ -440,6 +461,45 @@ struct QuickLauncherView: View {
         // Set up storage change completion callback
         viewModel.onStorageChangeCompleted = { [weak appViewModel] in
             appViewModel?.completeStorageLocationChange()
+        }
+    }
+    .onAppear {
+        // Set up local keyboard event monitor for arrow keys
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            print("🎹 NSEvent Key: \(event.keyCode), chars: \(event.characters ?? "none")")
+            
+            // Check if search field is focused
+            if isSearchFieldFocused {
+                print("🔍 Search field focused, passing through")
+                return event
+            }
+            
+            // Handle arrow keys (keyCode: 123=left, 124=right, 125=down, 126=up)
+            // Handle space (49) and return (36)
+            switch event.keyCode {
+            case 123, 124, 125, 126, 36, 49:
+                // Convert to KeyPress equivalent
+                let keyPress = KeyPress(
+                    key: keyCodeToKey(event.keyCode),
+                    characters: event.characters ?? "",
+                    modifiers: []
+                )
+                let result = handleKeyPress(keyPress)
+                if result == .handled {
+                    print("✅ Event handled, suppressing system beep")
+                    return nil  // Suppress the event (no beep)
+                }
+                return event
+            default:
+                return event
+            }
+        }
+    }
+    .onDisappear {
+        // Clean up event monitor
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
     .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSettings"))) { _ in
