@@ -79,6 +79,13 @@ struct PlayCoverManagerApp: App {
                     NotificationCenter.default.post(name: NSNotification.Name("UnmountAll"), object: nil)
                 }
                 .keyboardShortcut("u", modifiers: [.command, .shift])
+                
+                Divider()
+                
+                Button("PlayCover.app を開く") {
+                    NotificationCenter.default.post(name: NSNotification.Name("OpenPlayCover"), object: nil)
+                }
+                .keyboardShortcut("p", modifiers: [.command, .shift])
             }
             
             // Settings menu

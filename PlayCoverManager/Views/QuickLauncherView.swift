@@ -454,6 +454,14 @@ struct QuickLauncherView: View {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             print("🎹 NSEvent Key: \(event.keyCode), chars: \(event.characters ?? "none")")
             
+            // Don't intercept keys if any modal/sheet is showing
+            if showingSettings || showingInstaller || showingUninstaller || 
+               selectedAppForDetail != nil || selectedAppForUninstall != nil ||
+               showingShortcutGuide || viewModel.unmountFlowState != .idle {
+                print("🪟 Modal/sheet active, passing through")
+                return event
+            }
+            
             // Check if search field is focused
             if isSearchFieldFocused {
                 print("🔍 Search field focused, passing through")
@@ -508,6 +516,9 @@ struct QuickLauncherView: View {
     }
     .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowShortcutGuide"))) { _ in
         showingShortcutGuide = true
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenPlayCover"))) { _ in
+        NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
     }
     .overlay {
         // Left drawer overlay - full screen when open
