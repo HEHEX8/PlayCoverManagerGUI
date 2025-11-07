@@ -51,6 +51,8 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 - ⚡ 高速なマウント・アンマウント
 - 🔄 読み書き可能なコンテナ
 
+**バージョン番号について**: Apple は 2025 年から OS のバージョンナンバリングを変更しました。macOS Sequoia は 15 でしたが、macOS Tahoe からは年ベースの「26」（2025-2026 年を表す）に変わりました。これにより、すべての Apple OS のバージョン管理が統一されました。
+
 ---
 
 ## ✨ 機能
@@ -167,12 +169,19 @@ ASIF ディスクイメージの保存先を柔軟に管理：
 
 ### 方法2: ソースからビルド
 
+**必要な環境**:
+- macOS Sequoia 15.6 以降
+- Xcode 26.0 以降
+
 ```bash
 # リポジトリをクローン
 git clone https://github.com/HEHEX8/PlayCoverManagerGUI.git
 cd PlayCoverManagerGUI
 
-# ビルド（Xcode 15+ が必要）
+# Xcode でプロジェクトを開く
+open PlayCoverManager.xcodeproj
+
+# または、コマンドラインでビルド
 xcodebuild -scheme PlayCoverManager -configuration Release archive
 ```
 
@@ -269,9 +278,10 @@ PlayCoverManagerGUI/
 
 ### 技術スタック
 
-- **言語**: Swift 5.9+
+- **言語**: Swift 6.0+
 - **フレームワーク**: SwiftUI
 - **最小ターゲット**: macOS 26.0 Tahoe
+- **開発環境**: Xcode 26.0+ (macOS Sequoia 15.6+ が必要)
 - **アーキテクチャ**: MVVM + Service Layer + Phase-based State Management
 - **ディスクイメージ**: ASIF (Apple Software Image Format)
 
@@ -337,7 +347,11 @@ macOS Gatekeeper により、初回起動時に警告が表示されます：
 
 ## ❓ FAQ
 
-### Q: macOS Sequoia (25.x) で動作しますか？
+### Q: なぜ macOS 15 Sequoia の次が macOS 26 Tahoe なの？
+
+**A:** Apple が 2025 年からバージョンナンバリングルールを変更したためです。従来の連番（15, 16, 17...）から、年ベースのナンバリング（26 = 2025-2026年）に変わりました。これにより iOS、iPadOS、macOS などすべての OS のバージョン管理が統一されました。
+
+### Q: macOS Sequoia (15.x) で動作しますか？
 
 **A:** いいえ。このアプリは macOS Tahoe 26.0 以降が必須です。ASIF ディスクイメージフォーマットは macOS Tahoe で導入されました。
 
