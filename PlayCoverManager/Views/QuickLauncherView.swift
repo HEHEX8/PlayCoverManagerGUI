@@ -348,7 +348,10 @@ struct QuickLauncherView: View {
                                     )
                                 }
                             },
-                            gridIconPosition: appIconPositions[recentApp.bundleIdentifier]
+                            gridIconPosition: Binding(
+                                get: { appIconPositions[recentApp.bundleIdentifier] },
+                                set: { _ in }
+                            )
                         )
                         .background(.ultraThinMaterial)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
@@ -1196,7 +1199,7 @@ private struct IPAInstallerSheetWrapper: View {
 private struct RecentAppLaunchButton: View {
     let app: PlayCoverApp
     let onLaunch: () -> Void
-    let gridIconPosition: CGRect?  // Position of this app's icon in grid
+    @Binding var gridIconPosition: CGRect?  // Position of this app's icon in grid (binding for reactive updates)
     
     @State private var rippleTrigger = 0
     @State private var isHovered = false
@@ -1353,6 +1356,9 @@ private struct RecentAppLaunchButton: View {
             currentIcon = app.icon
             displayedTitle = app.displayName
             print("📍 RecentButton appeared with gridPos: \(gridIconPosition?.debugDescription ?? "nil")")
+        }
+        .onChange(of: gridIconPosition) { oldVal, newVal in
+            print("📍 GridPos changed from \(oldVal?.debugDescription ?? "nil") to \(newVal?.debugDescription ?? "nil")")
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerRecentAppBounce"))) { _ in
             // Grid icon was tapped for the recent app, trigger bounce animation
