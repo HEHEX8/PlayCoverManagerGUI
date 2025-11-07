@@ -792,6 +792,13 @@ struct AppUninstallerSheet: View {
         .frame(width: 700, height: 600)
         .task {
             await loadApps()
+            // After loading, if preSelectedBundleID is set, apply selection
+            if let bundleID = preSelectedBundleID, apps.contains(where: { $0.bundleID == bundleID }) {
+                selectedApps = [bundleID]
+                // Wait for selection to render
+                try? await Task.sleep(for: .milliseconds(100))
+                showUninstallConfirmation = true
+            }
         }
         .alert("アンインストール確認", isPresented: $showUninstallConfirmation) {
             Button("キャンセル", role: .cancel) { }
@@ -1154,19 +1161,6 @@ struct AppUninstallerSheet: View {
         
         // Always transition to selection phase after loading
         currentPhase = .selection
-        
-        // If preSelectedBundleID is provided, select it and show confirmation immediately
-        if let bundleID = preSelectedBundleID, apps.contains(where: { $0.bundleID == bundleID }) {
-            // Use MainActor.run to ensure state updates are applied immediately
-            await MainActor.run {
-                selectedApps = [bundleID]
-            }
-            // Small delay to ensure selection UI is rendered before showing dialog
-            try? await Task.sleep(for: .milliseconds(100))
-            await MainActor.run {
-                showUninstallConfirmation = true
-            }
-        }
     }
     
     private func startUninstallation() async {
