@@ -1171,6 +1171,7 @@ private struct RecentAppLaunchButton: View {
     @State private var oldIconOffsetX: CGFloat = 0
     @State private var oldIconScale: CGFloat = 1.0
     @State private var oldIconOpacity: Double = 0.0
+    @State private var oldIconRotation: Double = 0.0  // Spinning effect when blasted away
     
     @State private var textOpacity: Double = 1.0
     @State private var previousAppID: String = ""
@@ -1194,6 +1195,7 @@ private struct RecentAppLaunchButton: View {
                             .frame(width: 56, height: 56)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                            .rotationEffect(.degrees(oldIconRotation))
                             .offset(x: oldIconOffsetX, y: oldIconOffsetY)
                             .scaleEffect(oldIconScale)
                             .opacity(oldIconOpacity)
@@ -1324,63 +1326,82 @@ private struct RecentAppLaunchButton: View {
         }
     }
     
-    // App switch animation - new icon drops and collides with old one
+    // App switch animation - icon flies from drawer and crashes into old one
     private func performAppSwitchAnimation() {
         // Reset old icon state (oldIcon already saved in onChange)
         oldIconOffsetX = 0
         oldIconOffsetY = 0
         oldIconScale = 1.0
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
+        oldIconRotation = 0.0  // Reset rotation
         
-        // New icon starts from above
-        iconOffsetY = -150
-        iconOffsetX = 0
-        iconScale = 1.2
+        // New icon starts from drawer position (bottom-left, approximation)
+        // In reality, drawer is to the left and below, so we start there
+        iconOffsetY = 350  // Below current position (drawer is at bottom)
+        iconOffsetX = -600  // To the left (drawer is on left side)
+        iconScale = 0.5  // Starts small (far away effect)
         
         // Text stays visible (shows OLD title during animation)
         textOpacity = 1.0
         
-        // Drop new icon
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(.easeIn(duration: 0.3)) {
-                iconOffsetY = 0  // Falls to collision point
+        // Phase 1: Lift off from drawer with rotation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(.easeOut(duration: 0.2)) {
+                iconOffsetY = 300  // Lift up a bit
+                iconScale = 0.7  // Get slightly bigger
+            }
+        }
+        
+        // Phase 2: Fly towards target with speed increase
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            withAnimation(.easeIn(duration: 0.35)) {
+                iconOffsetY = 0  // Arrive at target position
+                iconOffsetX = 0
+                iconScale = 1.3  // Overshoot scale for impact
             }
             
-            // COLLISION! Both icons react
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // New icon squashes
-                withAnimation(.easeOut(duration: 0.1)) {
-                    iconScale = 0.95
+            // CRASH! Both icons react
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                // Impact effect - new icon squashes
+                withAnimation(.easeOut(duration: 0.08)) {
+                    iconScale = 0.9
                 }
                 
-                // Old icon gets pushed down and flies away
-                withAnimation(.easeOut(duration: 0.35)) {
-                    oldIconOffsetY = 120  // Pushed down
-                    oldIconScale = 0.6
-                    oldIconOpacity = 0.0
+                // Old icon gets BLASTED away (rotates and flies out)
+                withAnimation(.easeOut(duration: 0.4)) {
+                    oldIconOffsetY = -100  // Flies upward
+                    oldIconOffsetX = 150  // Flies to the right
+                    oldIconScale = 0.4  // Shrinks as it flies away
+                    oldIconOpacity = 0.0  // Fades out
+                    oldIconRotation = 720  // Spins twice while flying away
                 }
                 
-                // New icon bounces back
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
+                // New icon settles with elastic bounce
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                    withAnimation(.interpolatingSpring(stiffness: 350, damping: 18)) {
                         iconScale = 1.0
                     }
                 }
                 
-                // After new icon lands (0.45s), update title
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                // Shockwave ripple effect on impact
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) {
+                    rippleTrigger += 1
+                }
+                
+                // After impact settles (0.5s), update title
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     // Fade out old title
                     withAnimation(.easeOut(duration: 0.2)) {
                         textOpacity = 0.0
                     }
                     
-                    // Update displayed title while faded out (triggers layout animation)
+                    // Update displayed title while faded out
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         withAnimation(.easeInOut(duration: 0.3)) {
                             displayedTitle = app.displayName
                         }
                         
-                        // Fade in new title after layout settles
+                        // Fade in new title
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                             withAnimation(.easeIn(duration: 0.25)) {
                                 textOpacity = 1.0
