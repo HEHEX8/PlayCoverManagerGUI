@@ -267,9 +267,12 @@ struct IPAInstallerSheet: View {
                         Text(info.appName)
                             .font(.body)
                             .fontWeight(.medium)
+                            .lineLimit(2)
                         Text(info.bundleID)
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
                     }
                     
                     Spacer()
@@ -318,10 +321,12 @@ struct IPAInstallerSheet: View {
                             Text("\(existing) → \(info.version)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
+                                .lineLimit(1)
                         } else {
                             Text("v\(info.version)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
+                                .lineLimit(1)
                         }
                         
                         Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
@@ -421,6 +426,7 @@ struct IPAInstallerSheet: View {
                                     Text(detail.appName)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text("インストール完了")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -461,9 +467,11 @@ struct IPAInstallerSheet: View {
                                     Text(service.currentAppName)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text(service.currentStatus)
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                 }
                                 
                                 Spacer()
@@ -486,6 +494,7 @@ struct IPAInstallerSheet: View {
                                     Text(error.components(separatedBy: ":").first ?? error)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -561,6 +570,7 @@ struct IPAInstallerSheet: View {
                                     Text(detail.appName)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text("インストール完了")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -844,9 +854,12 @@ struct AppUninstallerSheet: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(app.appName)
                                 .font(.body)
+                                .lineLimit(2)
                             Text(app.bundleID)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
                         }
                         
                         Spacer()
@@ -922,6 +935,7 @@ struct AppUninstallerSheet: View {
                                     Text(appName)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text("アンインストール完了")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -947,6 +961,7 @@ struct AppUninstallerSheet: View {
                                     Text(service.currentStatus)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text("処理中...")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -972,6 +987,7 @@ struct AppUninstallerSheet: View {
                                     Text(error.components(separatedBy: ":").first ?? error)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
@@ -1032,6 +1048,7 @@ struct AppUninstallerSheet: View {
                                     Text(appName)
                                         .font(.body)
                                         .fontWeight(.medium)
+                                        .lineLimit(2)
                                     Text("アンインストール完了")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)

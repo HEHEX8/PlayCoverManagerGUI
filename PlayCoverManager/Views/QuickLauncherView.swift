@@ -552,16 +552,20 @@ private struct AppDetailSheet: View {
                     Text(app.displayName)
                         .font(.title2)
                         .fontWeight(.semibold)
+                        .lineLimit(2)
                     
                     if let version = app.version {
                         Text("バージョン \(version)")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
                     
                     Text(app.bundleIdentifier)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
                 
                 Spacer()
@@ -821,6 +825,7 @@ private struct RecentAppLaunchButton: View {
                         Text(displayedTitle)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.primary)
+                            .lineLimit(2)
                         Text("前回起動したアプリ")
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
@@ -1596,6 +1601,8 @@ private struct InfoView: View {
                     Text(app.bundleIdentifier)
                         .font(.system(.body, design: .monospaced))
                         .textSelection(.enabled)
+                        .lineLimit(3)
+                        .truncationMode(.middle)
                 }
                 
                 if let version = app.version {
@@ -1609,6 +1616,8 @@ private struct InfoView: View {
                     Text(app.appURL.path)
                         .font(.system(.caption, design: .monospaced))
                         .textSelection(.enabled)
+                        .lineLimit(3)
+                        .truncationMode(.middle)
                 }
                 
                 Divider()
