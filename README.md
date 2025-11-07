@@ -116,7 +116,7 @@ open PlayCoverManager.xcodeproj
 - **UI**: SwiftUI
 - **ターゲット**: macOS 26.0 Tahoe
 - **アーキテクチャ**: MVVM + Service Layer
-- **ストレージ**: ASIF (Apple Software Image Format)
+- **ストレージ**: ASIF (Apple Sparse Image Format)
 
 ### プロジェクト構造
 
