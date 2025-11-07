@@ -1,1468 +1,4290 @@
 {
-  "sourceLanguage" : "ja",
-  "strings" : {
-    "アプリ一覧を読み込み中..." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading app list..."
+  "sourceLanguage": "ja",
+  "strings": {
+    "アプリ一覧を読み込み中...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading app list..."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリ一覧を読み込み中..."
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ一覧を読み込み中..."
           }
         }
       }
     },
-    "このアプリをアンインストールしますか？" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstall this app?"
+    "このアプリをアンインストールしますか？": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall this app?"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このアプリをアンインストールしますか？"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリをアンインストールしますか？"
           }
         }
       }
     },
-    "この操作は取り消せません。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This action cannot be undone."
+    "この操作は取り消せません。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This action cannot be undone."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この操作は取り消せません。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この操作は取り消せません。"
           }
         }
       }
     },
-    "アプリサイズ:" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Size:"
+    "アプリサイズ:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Size:"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリサイズ:"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリサイズ:"
           }
         }
       }
     },
-    "ディスクイメージ:" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Disk Image:"
+    "ディスクイメージ:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk Image:"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ディスクイメージ:"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ディスクイメージ:"
           }
         }
       }
     },
-    "合計:" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Total:"
+    "合計:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total:"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計:"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計:"
           }
         }
       }
     },
-    "アンインストール" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstall"
+    "アンインストール": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アンインストール"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール"
           }
         }
       }
     },
-    "キャンセル" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cancel"
+    "キャンセル": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キャンセル"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
           }
         }
       }
     },
-    "閉じる" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Close"
+    "閉じる": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "閉じる"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
           }
         }
       }
     },
-    "戻る" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Back"
+    "戻る": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "戻る"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "戻る"
           }
         }
       }
     },
-    "次へ" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Next"
+    "次へ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "次へ"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次へ"
           }
         }
       }
     },
-    "アプリアンインストーラー" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Uninstaller"
+    "アプリアンインストーラー": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Uninstaller"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリアンインストーラー"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリアンインストーラー"
           }
         }
       }
     },
-    "%lld 個のアプリをアンインストールしますか？" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstall %lld apps?"
+    "%lld 個のアプリをアンインストールしますか？": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall %lld apps?"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld 個のアプリをアンインストールしますか？"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 個のアプリをアンインストールしますか？"
           }
         }
       }
     },
-    "アプリ情報が見つかりません" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App information not found"
+    "アプリ情報が見つかりません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App information not found"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリ情報が見つかりません"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ情報が見つかりません"
           }
         }
       }
     },
-    "アンインストール可能なアプリがありません" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No apps available to uninstall"
+    "アンインストール可能なアプリがありません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No apps available to uninstall"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アンインストール可能なアプリがありません"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール可能なアプリがありません"
           }
         }
       }
     },
-    "インストール済みアプリ (%lld 個)" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Installed Apps (%lld)"
+    "インストール済みアプリ (%lld 個)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed Apps (%lld)"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "インストール済みアプリ (%lld 個)"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール済みアプリ (%lld 個)"
           }
         }
       }
     },
-    "アンインストール中..." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstalling..."
+    "アンインストール中...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstalling..."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アンインストール中..."
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール中..."
           }
         }
       }
     },
-    "アンインストール結果" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstall Results"
+    "アンインストール結果": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall Results"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アンインストール結果"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール結果"
           }
         }
       }
     },
-    "成功" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Success"
+    "成功": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Success"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "成功"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "成功"
           }
         }
       }
     },
-    "失敗" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Failed"
+    "失敗": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "失敗"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "失敗"
           }
         }
       }
     },
-    "設定" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings"
+    "設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定"
           }
         }
       }
     },
-    "概要" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "About"
+    "概要": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "概要"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "概要"
           }
         }
       }
     },
-    "システム要件" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System Requirements"
+    "システム要件": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Requirements"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "システム要件"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システム要件"
           }
         }
       }
     },
-    "リンク" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Links"
+    "リンク": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Links"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リンク"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リンク"
           }
         }
       }
     },
-    "macOS Tahoe 26.0 以降" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS Tahoe 26.0 or later"
+    "macOS Tahoe 26.0 以降": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS Tahoe 26.0 or later"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS Tahoe 26.0 以降"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS Tahoe 26.0 以降"
           }
         }
       }
     },
-    "Apple Silicon Mac 専用" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apple Silicon Mac only"
+    "Apple Silicon Mac 専用": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Silicon Mac only"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apple Silicon Mac 専用"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Silicon Mac 専用"
           }
         }
       }
     },
-    "MIT ライセンスで提供" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Licensed under MIT License"
+    "MIT ライセンスで提供": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Licensed under MIT License"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MIT ライセンスで提供"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MIT ライセンスで提供"
           }
         }
       }
     },
-    "このアプリは macOS Tahoe 26.0 以降が必要です" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This app requires macOS Tahoe 26.0 or later"
+    "このアプリは macOS Tahoe 26.0 以降が必要です": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This app requires macOS Tahoe 26.0 or later"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このアプリは macOS Tahoe 26.0 以降が必要です"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリは macOS Tahoe 26.0 以降が必要です"
           }
         }
       }
     },
-    "お使いの macOS バージョン: %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your macOS version: %@"
+    "お使いの macOS バージョン: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your macOS version: %@"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "お使いの macOS バージョン: %@"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "お使いの macOS バージョン: %@"
           }
         }
       }
     },
-    "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe (バージョン 26) 以降でのみ動作します。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This app uses the ASIF disk image format and only works on macOS Tahoe (version 26) or later."
+    "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe (バージョン 26) 以降でのみ動作します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This app uses the ASIF disk image format and only works on macOS Tahoe (version 26) or later."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe (バージョン 26) 以降でのみ動作します。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe (バージョン 26) 以降でのみ動作します。"
           }
         }
       }
     },
-    "macOS をアップデート" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Update macOS"
+    "macOS をアップデート": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Update macOS"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "macOS をアップデート"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS をアップデート"
           }
         }
       }
     },
-    "終了" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quit"
+    "終了": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "終了"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "終了"
           }
         }
       }
     },
-    "メニュー" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menu"
+    "メニュー": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menu"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メニュー"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メニュー"
           }
         }
       }
     },
-    "IPA をインストール" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Install IPA"
+    "IPA をインストール": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install IPA"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IPA をインストール"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA をインストール"
           }
         }
       }
     },
-    "アプリをアンインストール" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstall Apps"
+    "アプリをアンインストール": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall Apps"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリをアンインストール"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリをアンインストール"
           }
         }
       }
     },
-    "検索" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search"
+    "検索": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "検索"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "検索"
           }
         }
       }
     },
-    "アプリが見つかりません" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Apps Found"
+    "アプリが見つかりません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Apps Found"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリが見つかりません"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリが見つかりません"
           }
         }
       }
     },
-    "インストール済みアプリがありません" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No Installed Apps"
+    "インストール済みアプリがありません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Installed Apps"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "インストール済みアプリがありません"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール済みアプリがありません"
           }
         }
       }
     },
-    "IPA インストーラー" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IPA Installer"
+    "IPA インストーラー": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA Installer"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IPA インストーラー"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA インストーラー"
           }
         }
       }
     },
-    "バージョン" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Version"
+    "バージョン": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "バージョン"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン"
           }
         }
       }
     },
-    "言語" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Language"
+    "言語": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言語"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語"
           }
         }
       }
     },
-    "アプリの言語" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Language"
+    "アプリの言語": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Language"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリの言語"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリの言語"
           }
         }
       }
     },
-    "言語を変更すると、アプリを再起動する必要があります。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Changing the language requires restarting the app."
+    "言語を変更すると、アプリを再起動する必要があります。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changing the language requires restarting the app."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言語を変更すると、アプリを再起動する必要があります。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語を変更すると、アプリを再起動する必要があります。"
           }
         }
       }
     },
-    "システム設定に従う" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Follow System"
+    "システム設定に従う": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow System"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "システム設定に従う"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システム設定に従う"
           }
         }
       }
     },
-    "日本語" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Japanese"
+    "日本語": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Japanese"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日本語"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日本語"
           }
         }
       }
     },
-    "ストレージ" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Storage"
+    "ストレージ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storage"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ストレージ"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ストレージ"
           }
         }
       }
     },
-    "マウント設定" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mount Settings"
+    "マウント設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mount Settings"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "マウント設定"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マウント設定"
           }
         }
       }
     },
-    "保存先" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Location"
+    "保存先": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Location"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存先"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先"
           }
         }
       }
     },
-    "未設定" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not Set"
+    "未設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Set"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未設定"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未設定"
           }
         }
       }
     },
-    "使用中: %@" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In Use: %@"
+    "使用中: %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Use: %@"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "使用中: %@"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用中: %@"
           }
         }
       }
     },
-    "保存先を変更..." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change Location..."
+    "保存先を変更...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change Location..."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存先を変更..."
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先を変更..."
           }
         }
       }
     },
-    "初期設定ウィザードを開いて保存先を変更します" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens setup wizard to change storage location"
+    "初期設定ウィザードを開いて保存先を変更します": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens setup wizard to change storage location"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "初期設定ウィザードを開いて保存先を変更します"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "初期設定ウィザードを開いて保存先を変更します"
           }
         }
       }
     },
-    "保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Changing the location will check PlayCover container mount status and remount if necessary."
+    "保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changing the location will check PlayCover container mount status and remount if necessary."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。"
           }
         }
       }
     },
-    "マウント時に Finder に表示しない (-nobrowse)" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hide from Finder when mounted (-nobrowse)"
+    "マウント時に Finder に表示しない (-nobrowse)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide from Finder when mounted (-nobrowse)"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "マウント時に Finder に表示しない (-nobrowse)"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マウント時に Finder に表示しない (-nobrowse)"
           }
         }
       }
     },
-    "有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "When enabled, mounted disk images won't appear in Finder sidebar."
+    "有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When enabled, mounted disk images won't appear in Finder sidebar."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。"
           }
         }
       }
     },
-    "データ処理" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data Handling"
+    "データ処理": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data Handling"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "データ処理"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データ処理"
           }
         }
       }
     },
-    "内部データのデフォルト処理" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Default Internal Data Handling"
+    "内部データのデフォルト処理": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default Internal Data Handling"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "内部データのデフォルト処理"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データのデフォルト処理"
           }
         }
       }
     },
-    "アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Default behavior when internal data remains in app container. Can be changed when launching from launcher."
+    "アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default behavior when internal data remains in app container. Can be changed when launching from launcher."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。"
           }
         }
       }
     },
-    "内部データを破棄してからマウント" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Discard internal data before mount"
+    "内部データを破棄してからマウント": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard internal data before mount"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "内部データを破棄してからマウント"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データを破棄してからマウント"
           }
         }
       }
     },
-    "内部データを統合してから削除しマウント" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Merge internal data, then delete and mount"
+    "内部データを統合してから削除しマウント": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merge internal data, then delete and mount"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "内部データを統合してから削除しマウント"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データを統合してから削除しマウント"
           }
         }
       }
     },
-    "何もせずにマウント" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mount without changes"
+    "何もせずにマウント": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mount without changes"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "何もせずにマウント"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "何もせずにマウント"
           }
         }
       }
     },
-    "メンテナンス" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Maintenance"
+    "メンテナンス": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maintenance"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メンテナンス"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メンテナンス"
           }
         }
       }
     },
-    "キャッシュ" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cache"
+    "キャッシュ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cache"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キャッシュ"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュ"
           }
         }
       }
     },
-    "アイコンキャッシュをクリア" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear Icon Cache"
+    "アイコンキャッシュをクリア": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Icon Cache"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アイコンキャッシュをクリア"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコンキャッシュをクリア"
           }
         }
       }
     },
-    "アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clears app icon cache. Icons will reload on next launch."
+    "アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clears app icon cache. Icons will reload on next launch."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。"
           }
         }
       }
     },
-    "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Icon cache cleared. Icons will reload on next launch."
+    "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icon cache cleared. Icons will reload on next launch."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。"
           }
         }
       }
     },
-    "リセット" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset"
+    "リセット": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "リセット"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リセット"
           }
         }
       }
     },
-    "設定をリセット" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Reset Settings"
+    "設定をリセット": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset Settings"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "設定をリセット"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定をリセット"
           }
         }
       }
     },
-    "すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Resets all settings to defaults (disk images and apps are not deleted)."
+    "すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resets all settings to defaults (disk images and apps are not deleted)."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。"
           }
         }
       }
     },
-    "アプリが再起動され、初期設定ウィザードが表示されます。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App will restart and show the setup wizard."
+    "アプリが再起動され、初期設定ウィザードが表示されます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App will restart and show the setup wizard."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アプリが再起動され、初期設定ウィザードが表示されます。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリが再起動され、初期設定ウィザードが表示されます。"
           }
         }
       }
     },
-    "一般" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "General"
+    "一般": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "General"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一般"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一般"
           }
         }
       }
     },
-    "PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PlayCover Manager is a GUI tool for comprehensive management of iOS apps installed with PlayCover."
+    "PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Manager is a GUI tool for comprehensive management of iOS apps installed with PlayCover."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。"
           }
         }
       }
     },
-    "IPA インストール、アプリ起動、アンインストール、ストレージ管理などの機能を提供します。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Provides IPA installation, app launching, uninstallation, and storage management features."
+    "IPA インストール、アプリ起動、アンインストール、ストレージ管理などの機能を提供します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Provides IPA installation, app launching, uninstallation, and storage management features."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IPA インストール、アプリ起動、アンインストール、ストレージ管理などの機能を提供します。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA インストール、アプリ起動、アンインストール、ストレージ管理などの機能を提供します。"
           }
         }
       }
     },
-    "ASIF ディスクイメージ形式対応" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Supports ASIF disk image format"
+    "ASIF ディスクイメージ形式対応": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supports ASIF disk image format"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ASIF ディスクイメージ形式対応"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ASIF ディスクイメージ形式対応"
           }
         }
       }
     },
-    "GitHub リポジトリ" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GitHub Repository"
+    "GitHub リポジトリ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub Repository"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "GitHub リポジトリ"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub リポジトリ"
           }
         }
       }
     },
-    "PlayCover プロジェクト" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PlayCover Project"
+    "PlayCover プロジェクト": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Project"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PlayCover プロジェクト"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover プロジェクト"
           }
         }
       }
     },
-    "アンインストール (%lld 個)" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstall (%lld)"
+    "アンインストール (%lld 個)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall (%lld)"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アンインストール (%lld 個)"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール (%lld 個)"
           }
         }
       }
     },
-    "アンインストール中..." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uninstalling..."
+    "インストール中": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "アンインストール中..."
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール中"
           }
         }
       }
     },
-    "インストール中" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Installing"
+    "インストール完了": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installation Complete"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "インストール中"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール完了"
           }
         }
       }
     },
-    "インストール完了" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Installation Complete"
+    "IPA ファイルを選択してください": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select IPA Files"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "インストール完了"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA ファイルを選択してください"
           }
         }
       }
     },
-    "IPA ファイルを選択してください" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select IPA Files"
+    "IPA を選択": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select IPA"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IPA ファイルを選択してください"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA を選択"
           }
         }
       }
     },
-    "IPA を選択" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Select IPA"
+    "言語を変更しました": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language Changed"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "IPA を選択"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語を変更しました"
           }
         }
       }
     },
-    "言語を変更しました" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Language Changed"
+    "言語の変更を完全に反映するには、アプリを再起動する必要があります。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To fully apply the language change, the app needs to restart."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言語を変更しました"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "言語の変更を完全に反映するには、アプリを再起動する必要があります。"
           }
         }
       }
     },
-    "言語の変更を完全に反映するには、アプリを再起動する必要があります。" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "To fully apply the language change, the app needs to restart."
+    "今すぐ再起動": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart Now"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "言語の変更を完全に反映するには、アプリを再起動する必要があります。"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今すぐ再起動"
           }
         }
       }
     },
-    "今すぐ再起動" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restart Now"
+    "後で再起動": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart Later"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今すぐ再起動"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "後で再起動"
           }
         }
       }
     },
-    "後で再起動" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Restart Later"
+    "アプリを検索": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Apps"
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "後で再起動"
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリを検索"
+          }
+        }
+      }
+    },
+    "Finder で表示": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show in Finder"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder で表示"
+          }
+        }
+      }
+    },
+    "再読み込み": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reload"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再読み込み"
+          }
+        }
+      }
+    },
+    "起動": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launch"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "起動"
+          }
+        }
+      }
+    },
+    "終了しています…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitting…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "終了しています…"
+          }
+        }
+      }
+    },
+    "確認": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確認"
+          }
+        }
+      }
+    },
+    "作成": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作成"
+          }
+        }
+      }
+    },
+    "完了": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了"
+          }
+        }
+      }
+    },
+    "実行": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Execute"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "実行"
+          }
+        }
+      }
+    },
+    "処理中...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processing..."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "処理中..."
+          }
+        }
+      }
+    },
+    "処理中…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processing…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "処理中…"
+          }
+        }
+      }
+    },
+    "準備中...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing..."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "準備中..."
+          }
+        }
+      }
+    },
+    "何もしない": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Do Nothing"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "何もしない"
+          }
+        }
+      }
+    },
+    "別の IPA を追加": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Another IPA"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別の IPA を追加"
+          }
+        }
+      }
+    },
+    "アプリ一覧を更新 (⌘R)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh App List (⌘R)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ一覧を更新 (⌘R)"
+          }
+        }
+      }
+    },
+    "IPA をインストール (⌘I)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install IPA (⌘I)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA をインストール (⌘I)"
+          }
+        }
+      }
+    },
+    "PlayCover を開く (⌘⇧P)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open PlayCover (⌘⇧P)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover を開く (⌘⇧P)"
+          }
+        }
+      }
+    },
+    "設定 (⌘,)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings (⌘,)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定 (⌘,)"
+          }
+        }
+      }
+    },
+    "すべてアンマウント (⌘⇧U)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unmount All (⌘⇧U)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてアンマウント (⌘⇧U)"
+          }
+        }
+      }
+    },
+    "アプリをアンインストール (⌘D)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall App (⌘D)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリをアンインストール (⌘D)"
+          }
+        }
+      }
+    },
+    "検索結果が見つかりません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Search Results"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "検索結果が見つかりません"
+          }
+        }
+      }
+    },
+    "IPA ファイルをインストールすると、ここに表示されます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed IPA files will appear here."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA ファイルをインストールすると、ここに表示されます。"
+          }
+        }
+      }
+    },
+    "下のボタンから IPA をインストールしてください。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please install an IPA using the button below."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下のボタンから IPA をインストールしてください。"
+          }
+        }
+      }
+    },
+    "別のキーワードで検索してみてください。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try searching with a different keyword."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別のキーワードで検索してみてください。"
+          }
+        }
+      }
+    },
+    "基本設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basic Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本設定"
+          }
+        }
+      }
+    },
+    "グラフィックス設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graphics Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グラフィックス設定"
+          }
+        }
+      }
+    },
+    "コントロール設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コントロール設定"
+          }
+        }
+      }
+    },
+    "詳細設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳細設定"
+          }
+        }
+      }
+    },
+    "内部データ処理方法": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internal Data Handling"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データ処理方法"
+          }
+        }
+      }
+    },
+    "内部データ処理の既定値": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default Internal Data Handling"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データ処理の既定値"
+          }
+        }
+      }
+    },
+    "Finder に表示しない (nobrowse)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide from Finder (nobrowse)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder に表示しない (nobrowse)"
+          }
+        }
+      }
+    },
+    "Finder に表示しない (-nobrowse)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide from Finder (-nobrowse)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder に表示しない (-nobrowse)"
+          }
+        }
+      }
+    },
+    "このアプリのディスクイメージを Finder で非表示にするかどうかを設定します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure whether to hide this app's disk image in Finder."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリのディスクイメージを Finder で非表示にするかどうかを設定します。"
+          }
+        }
+      }
+    },
+    "起動時に内部データが見つかった場合の処理方法を設定します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure how to handle internal data found at launch."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "起動時に内部データが見つかった場合の処理方法を設定します。"
+          }
+        }
+      }
+    },
+    "グローバル設定に戻す": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to Global Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グローバル設定に戻す"
+          }
+        }
+      }
+    },
+    "グローバル設定を使用": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Global Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グローバル設定を使用"
+          }
+        }
+      }
+    },
+    "設定を開く": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定を開く"
+          }
+        }
+      }
+    },
+    "設定をリセットしますか？": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset settings?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定をリセットしますか？"
+          }
+        }
+      }
+    },
+    "設定バージョン": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings Version"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定バージョン"
+          }
+        }
+      }
+    },
+    "設定ファイル": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings File"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定ファイル"
+          }
+        }
+      }
+    },
+    "iOS デバイスモデル": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS Device Model"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS デバイスモデル"
+          }
+        }
+      }
+    },
+    "解像度": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resolution"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解像度"
+          }
+        }
+      }
+    },
+    "幅": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Width"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "幅"
+          }
+        }
+      }
+    },
+    "高さ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Height"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高さ"
+          }
+        }
+      }
+    },
+    "アスペクト比": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aspect Ratio"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アスペクト比"
+          }
+        }
+      }
+    },
+    "表示オプション": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display Options"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表示オプション"
+          }
+        }
+      }
+    },
+    "ノッチを表示": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Notch"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ノッチを表示"
+          }
+        }
+      }
+    },
+    "画面値を反転": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invert Screen Values"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面値を反転"
+          }
+        }
+      }
+    },
+    "キーマッピングを有効化": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable Key Mapping"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キーマッピングを有効化"
+          }
+        }
+      }
+    },
+    "画面上のタッチ操作をキーボード/マウスに割り当てます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Map on-screen touch operations to keyboard/mouse."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面上のタッチ操作をキーボード/マウスに割り当てます。"
+          }
+        }
+      }
+    },
+    "テキスト入力時にキーマッピングを無効化": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disable Key Mapping During Text Input"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "テキスト入力時にキーマッピングを無効化"
+          }
+        }
+      }
+    },
+    "スクロールホイールを有効化": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable Scroll Wheel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スクロールホイールを有効化"
+          }
+        }
+      }
+    },
+    "内蔵マウスを無効化": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disable Built-in Mouse"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内蔵マウスを無効化"
+          }
+        }
+      }
+    },
+    "ウィンドウ修正方法": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window Fix Method"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィンドウ修正方法"
+          }
+        }
+      }
+    },
+    "ウィンドウ表示の問題を修正します。動作しない場合は別の方法を試してください。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fix window display issues. If it doesn't work, try a different method."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ウィンドウ表示の問題を修正します。動作しない場合は別の方法を試してください。"
+          }
+        }
+      }
+    },
+    "方法 1": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Method 1"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方法 1"
+          }
+        }
+      }
+    },
+    "方法 2": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Method 2"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方法 2"
+          }
+        }
+      }
+    },
+    "タイトルバーを非表示": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide Title Bar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "タイトルバーを非表示"
+          }
+        }
+      }
+    },
+    "フローティングウィンドウ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Floating Window"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フローティングウィンドウ"
+          }
+        }
+      }
+    },
+    "PlayChain を有効化": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable PlayChain"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayChain を有効化"
+          }
+        }
+      }
+    },
+    "PlayChain デバッグモード": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayChain Debug Mode"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayChain デバッグモード"
+          }
+        }
+      }
+    },
+    "PlayCover の実行時パッチ機能を有効にします。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enable PlayCover's runtime patching features."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover の実行時パッチ機能を有効にします。"
+          }
+        }
+      }
+    },
+    "Jailbreak 検出回避": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bypass Jailbreak Detection"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jailbreak 検出回避"
+          }
+        }
+      }
+    },
+    "一部のアプリで必要な jailbreak 検出を回避します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bypass jailbreak detection required by some apps."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一部のアプリで必要な jailbreak 検出を回避します。"
+          }
+        }
+      }
+    },
+    "Introspection を注入": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inject Introspection"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introspection を注入"
+          }
+        }
+      }
+    },
+    "Metal HUD を表示": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Metal HUD"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metal HUD を表示"
+          }
+        }
+      }
+    },
+    "ディスプレイスリープを無効化": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disable Display Sleep"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ディスプレイスリープを無効化"
+          }
+        }
+      }
+    },
+    "アプリ実行中にディスプレイが自動的にスリープするのを防ぎます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prevent the display from automatically sleeping while the app is running."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ実行中にディスプレイが自動的にスリープするのを防ぎます。"
+          }
+        }
+      }
+    },
+    "作業ディレクトリをルートに設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set Working Directory to Root"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作業ディレクトリをルートに設定"
+          }
+        }
+      }
+    },
+    "インストールする IPA ファイルを選択してください": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please select IPA files to install"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストールする IPA ファイルを選択してください"
+          }
+        }
+      }
+    },
+    "IPA ファイルを解析中...": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analyzing IPA files..."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IPA ファイルを解析中..."
+          }
+        }
+      }
+    },
+    "インストール開始": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start Installation"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール開始"
+          }
+        }
+      }
+    },
+    "インストール結果": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installation Results"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール結果"
+          }
+        }
+      }
+    },
+    "新規インストール": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New Install"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規インストール"
+          }
+        }
+      }
+    },
+    "アップグレード": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upgrade"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アップグレード"
+          }
+        }
+      }
+    },
+    "ダウングレード": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downgrade"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダウングレード"
+          }
+        }
+      }
+    },
+    "再インストール": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reinstall"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再インストール"
+          }
+        }
+      }
+    },
+    "上書き・その他": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overwrite/Other"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上書き・その他"
+          }
+        }
+      }
+    },
+    "アプリ情報": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Info"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ情報"
+          }
+        }
+      }
+    },
+    "アプリ情報を取得しています…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Getting app info…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリ情報を取得しています…"
+          }
+        }
+      }
+    },
+    "バージョン:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン:"
+          }
+        }
+      }
+    },
+    "ファイル名": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Name"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイル名"
+          }
+        }
+      }
+    },
+    "パス": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Path"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パス"
+          }
+        }
+      }
+    },
+    "ファイルサイズ:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File Size:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルサイズ:"
+          }
+        }
+      }
+    },
+    "詳細": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳細"
+          }
+        }
+      }
+    },
+    "詳細と設定": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Details & Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳細と設定"
+          }
+        }
+      }
+    },
+    "ディスクイメージが存在しません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk Image Does Not Exist"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ディスクイメージが存在しません"
+          }
+        }
+      }
+    },
+    "内部データが見つかりました": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internal Data Found"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データが見つかりました"
+          }
+        }
+      }
+    },
+    "内部データを破棄": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard Internal Data"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データを破棄"
+          }
+        }
+      }
+    },
+    "内部データを統合": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Merge Internal Data"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "内部データを統合"
+          }
+        }
+      }
+    },
+    "既定の処理": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default Action"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既定の処理"
+          }
+        }
+      }
+    },
+    "セットアップを準備しています…": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing setup…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セットアップを準備しています…"
+          }
+        }
+      }
+    },
+    "セットアップ完了": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Setup Complete"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セットアップ完了"
+          }
+        }
+      }
+    },
+    "ディスクイメージの保存先を選択してください": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select Disk Image Storage Location"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ディスクイメージの保存先を選択してください"
+          }
+        }
+      }
+    },
+    "ディスクイメージの準備": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing Disk Image"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ディスクイメージの準備"
+          }
+        }
+      }
+    },
+    "保存先の選択": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select Storage Location"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先の選択"
+          }
+        }
+      }
+    },
+    "保存先を選択": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Storage Location"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先を選択"
+          }
+        }
+      }
+    },
+    "保存先を変更": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change Storage Location"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先を変更"
+          }
+        }
+      }
+    },
+    "外部ストレージの使用を推奨": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "External Storage Recommended"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外部ストレージの使用を推奨"
+          }
+        }
+      }
+    },
+    "PlayCover 用のディスクイメージを作成します": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create disk images for PlayCover"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover 用のディスクイメージを作成します"
+          }
+        }
+      }
+    },
+    "実行すると、ディスクイメージの作成とマウントを行います。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This will create and mount disk images."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "実行すると、ディスクイメージの作成とマウントを行います。"
+          }
+        }
+      }
+    },
+    "PlayCover の検出": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detecting PlayCover"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover の検出"
+          }
+        }
+      }
+    },
+    "PlayCover が見つかりました": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Found"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover が見つかりました"
+          }
+        }
+      }
+    },
+    "PlayCover が見つかりません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Not Found"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover が見つかりません"
+          }
+        }
+      }
+    },
+    "PlayCover.app を /Applications にインストールしてください": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Please install PlayCover.app in /Applications"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover.app を /Applications にインストールしてください"
+          }
+        }
+      }
+    },
+    "PlayCover サイトを開く": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open PlayCover Site"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover サイトを開く"
+          }
+        }
+      }
+    },
+    "このアプリを新しくインストールします。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install this app as new."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このアプリを新しくインストールします。"
+          }
+        }
+      }
+    },
+    "既存のアプリを新しいバージョンにアップグレードします。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upgrade existing app to newer version."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既存のアプリを新しいバージョンにアップグレードします。"
+          }
+        }
+      }
+    },
+    "既存のアプリを古いバージョンにダウングレードします。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downgrade existing app to older version."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既存のアプリを古いバージョンにダウングレードします。"
+          }
+        }
+      }
+    },
+    "同じバージョンで上書きインストールします。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overwrite install with same version."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同じバージョンで上書きインストールします。"
+          }
+        }
+      }
+    },
+    "すべての IPA の解析に失敗しました": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to analyze all IPAs"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべての IPA の解析に失敗しました"
+          }
+        }
+      }
+    },
+    "アンインストール中": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstalling"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール中"
+          }
+        }
+      }
+    },
+    "アンインストール完了": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstallation Complete"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール完了"
+          }
+        }
+      }
+    },
+    "すべてのコンテナをアンマウントしてから保存先を変更します": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unmount all containers before changing storage location"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのコンテナをアンマウントしてから保存先を変更します"
+          }
+        }
+      }
+    },
+    "保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changing storage will unmount all mounted containers and set up the environment in the new location."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。"
+          }
+        }
+      }
+    },
+    "キャッシュをクリアしました": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cache Cleared"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュをクリアしました"
+          }
+        }
+      }
+    },
+    "キャッシュをクリアしますか?": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear cache?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャッシュをクリアしますか?"
+          }
+        }
+      }
+    },
+    "クリア": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クリア"
+          }
+        }
+      }
+    },
+    "前回起動したアプリ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently Launched Apps"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前回起動したアプリ"
+          }
+        }
+      }
+    },
+    "アプリフォルダを開く": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open App Folder"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリフォルダを開く"
+          }
+        }
+      }
+    },
+    "アプリを再起動すると、アイコンが再読み込みされます。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restart the app to reload icons."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリを再起動すると、アイコンが再読み込みされます。"
+          }
+        }
+      }
+    },
+    "未作成（デフォルト値を使用中）": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Created (Using Default Values)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未作成（デフォルト値を使用中）"
+          }
+        }
+      }
+    },
+    "有効": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enabled"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効"
+          }
+        }
+      }
+    },
+    "無効": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disabled"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無効"
+          }
+        }
+      }
+    },
+    "パスが存在しません": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Path Does Not Exist"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パスが存在しません"
+          }
+        }
+      }
+    },
+    "基本": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basic"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本"
+          }
+        }
+      }
+    },
+    "情報": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Information"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "情報"
+          }
+        }
+      }
+    },
+    "説明": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Description"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "説明"
+          }
+        }
+      }
+    },
+    "コントロール": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Controls"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コントロール"
+          }
+        }
+      }
+    },
+    "グラフィックス": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graphics"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グラフィックス"
+          }
+        }
+      }
+    },
+    "問題を報告": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report Issue"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "問題を報告"
+          }
+        }
+      }
+    },
+    "入力オプション": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Input Options"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入力オプション"
+          }
+        }
+      }
+    },
+    "バージョン \\(version)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version \\(version)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バージョン \\(version)"
+          }
+        }
+      }
+    },
+    "\\(apps.count) 個": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(apps.count) items"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(apps.count) 個"
+          }
+        }
+      }
+    },
+    "インストール済みアプリ (\\(apps.count) 個)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installed Apps (\\(apps.count))"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール済みアプリ (\\(apps.count) 個)"
+          }
+        }
+      }
+    },
+    "アンインストール (\\(selectedApps.count) 個)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall (\\(selectedApps.count))"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アンインストール (\\(selectedApps.count) 個)"
+          }
+        }
+      }
+    },
+    "\\(analyzedIPAs.count) 個のアプリをインストールしますか？": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install \\(analyzedIPAs.count) apps?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(analyzedIPAs.count) 個のアプリをインストールしますか？"
+          }
+        }
+      }
+    },
+    "\\(selectedAppInfos.count) 個のアプリをアンインストールしますか？": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uninstall \\(selectedAppInfos.count) apps?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(selectedAppInfos.count) 個のアプリをアンインストールしますか？"
+          }
+        }
+      }
+    },
+    "\\(app.displayName) 用の ASIF ディスクイメージを作成しますか？": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create ASIF disk image for \\(app.displayName)?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(app.displayName) 用の ASIF ディスクイメージを作成しますか？"
+          }
+        }
+      }
+    },
+    "\\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internal storage data exists for \\(request.app.displayName). How would you like to handle it?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？"
+          }
+        }
+      }
+    },
+    "\\(completed) / \\(totalItems) 完了": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(completed) / \\(totalItems) Complete"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(completed) / \\(totalItems) 完了"
+          }
+        }
+      }
+    },
+    "\\(newInstalls) 個": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(newInstalls) new"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(newInstalls) 個"
+          }
+        }
+      }
+    },
+    "\\(upgrades) 個": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(upgrades) upgrades"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(upgrades) 個"
+          }
+        }
+      }
+    },
+    "\\(others) 個": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(others) other"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\\(others) 個"
+          }
+        }
+      }
+    },
+    "+\\(analyzedIPAs.count - 6) 個のアプリ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+\\(analyzedIPAs.count - 6) apps"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+\\(analyzedIPAs.count - 6) 個のアプリ"
+          }
+        }
+      }
+    },
+    "+\\(selectedAppInfos.count - 6) 個のアプリ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+\\(selectedAppInfos.count - 6) apps"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+\\(selectedAppInfos.count - 6) 個のアプリ"
+          }
+        }
+      }
+    },
+    "合計: \\(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total: \\(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計: \\(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))"
+          }
+        }
+      }
+    },
+    "合計サイズ:": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Total Size:"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計サイズ:"
+          }
+        }
+      }
+    },
+    "現在のグローバル設定: \\(settingsStore.defaultDataHandling.localizedDescription)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current Global Setting: \\(settingsStore.defaultDataHandling.localizedDescription)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在のグローバル設定: \\(settingsStore.defaultDataHandling.localizedDescription)"
+          }
+        }
+      }
+    },
+    " に一致するアプリが見つかりませんでした。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " - No matching apps found."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " に一致するアプリが見つかりませんでした。"
+          }
+        }
+      }
+    },
+    "ドライブが接続されていないか、パスが無効です。\\n別の保存先を選択してください。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drive is not connected or path is invalid.\\nPlease select a different storage location."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ドライブが接続されていないか、パスが無効です。\\n別の保存先を選択してください。"
+          }
+        }
+      }
+    },
+    "ディスクイメージは大容量になる場合があります。\\n十分な空き容量のあるドライブを選択してください。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk images can be large in size.\\nPlease select a drive with sufficient free space."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ディスクイメージは大容量になる場合があります。\\n十分な空き容量のあるドライブを選択してください。"
+          }
+        }
+      }
+    },
+    "PlayCover Manager は PlayCover を補完するアプリです。\\n\\nディスクイメージの管理と IPA インストールを簡単にします。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Manager complements PlayCover.\\n\\nIt simplifies disk image management and IPA installation."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Manager は PlayCover を補完するアプリです。\\n\\nディスクイメージの管理と IPA インストールを簡単にします。"
+          }
+        }
+      }
+    },
+    "自動（ディスプレイに基づく）": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto (Based on Display)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自動（ディスプレイに基づく）"
+          }
+        }
+      }
+    },
+    "小型ディスプレイ向け": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For Small Displays"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小型ディスプレイ向け"
+          }
+        }
+      }
+    },
+    "iPhone 専用アプリ向け": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For iPhone-only Apps"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 専用アプリ向け"
+          }
+        }
+      }
+    },
+    "マウス感度: \\(Int(settings.sensitivity))": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mouse Sensitivity: \\(Int(settings.sensitivity))"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マウス感度: \\(Int(settings.sensitivity))"
+          }
+        }
+      }
+    },
+    "マウスカーソルの移動速度を調整します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjust mouse cursor movement speed."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "マウスカーソルの移動速度を調整します。"
+          }
+        }
+      }
+    },
+    "（既定）": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(Default)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "（既定）"
+          }
+        }
+      }
+    },
+    "×": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "×"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "×"
+          }
+        }
+      }
+    },
+    "「完了」ボタンをクリックして PlayCover Manager を起動します。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click the \"Done\" button to launch PlayCover Manager."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「完了」ボタンをクリックして PlayCover Manager を起動します。"
+          }
+        }
+      }
+    },
+    "その他のオプション": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other Options"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その他のオプション"
+          }
+        }
+      }
+    },
+    "エラー: \\(error.localizedDescription)": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error: \\(error.localizedDescription)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エラー: \\(error.localizedDescription)"
+          }
+        }
+      }
+    },
+    "システム設定を開く": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システム設定を開く"
+          }
+        }
+      }
+    },
+    "データ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "データ"
+          }
+        }
+      }
+    },
+    "再試行": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再試行"
+          }
+        }
+      }
+    },
+    "現在のグローバル設定: \\(settingsStore.nobrowseEnabled ? ": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current Global Setting: \\(settingsStore.nobrowseEnabled ? "
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在のグローバル設定: \\(settingsStore.nobrowseEnabled ? "
           }
         }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.0"
 }
