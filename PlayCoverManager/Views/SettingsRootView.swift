@@ -134,16 +134,25 @@ private struct GeneralSettingsView: View {
     }
     
     private func restartApp() {
-        // Relaunch the app
-        let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
-        let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
-        let task = Process()
-        task.launchPath = "/usr/bin/open"
-        task.arguments = [path]
-        task.launch()
+        // Get the app bundle URL
+        guard let bundleURL = Bundle.main.bundleURL as URL? else {
+            // Fallback: just terminate and let user restart manually
+            NSApplication.shared.terminate(nil)
+            return
+        }
         
-        // Quit current instance
-        NSApplication.shared.terminate(nil)
+        // Use NSWorkspace to reopen the app
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        
+        NSWorkspace.shared.openApplication(at: bundleURL, configuration: configuration) { app, error in
+            if error == nil {
+                // Successfully launched new instance, quit this one
+                DispatchQueue.main.async {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
+        }
     }
     
     private func calculateDiskUsage() async {
