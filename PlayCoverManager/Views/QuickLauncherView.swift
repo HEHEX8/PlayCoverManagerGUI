@@ -39,10 +39,22 @@ struct QuickLauncherView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-                // Simplified toolbar with only search and main actions
+        ZStack {
+            // Modern gradient background
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .windowBackgroundColor),
+                    Color(nsColor: .controlBackgroundColor).opacity(0.3)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Modern toolbar with glassmorphism
                 HStack(spacing: 16) {
-                    // Hamburger menu button to toggle drawer
+                    // Hamburger menu button
                     Button {
                         print("[QuickLauncher] Hamburger button tapped, current state: \(isDrawerOpen)")
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -51,49 +63,67 @@ struct QuickLauncherView: View {
                         print("[QuickLauncher] After toggle, new state: \(isDrawerOpen)")
                     } label: {
                         Image(systemName: "line.3.horizontal")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 44, height: 44)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.plain)
                     .help("メニュー")
                     
-                    // Search field - left aligned
-                    // Disable when drawer is open to prevent interference
-                    TextField("検索", text: $viewModel.searchText)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 200)
-                        .disabled(isDrawerOpen)
+                    // Modern search field with icon
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        
+                        TextField("アプリを検索", text: $viewModel.searchText)
+                            .textFieldStyle(.plain)
+                            .disabled(isDrawerOpen)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: 280)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     
                     Spacer()
                     
-                    // Large refresh button - subtle style
+                    // Refresh button - modern style
                     Button {
                         Task { await viewModel.refresh() }
                     } label: {
-                        Label("再読み込み", systemImage: "arrow.clockwise")
-                            .font(.system(size: 15, weight: .medium))
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 44, height: 44)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    .buttonStyle(.plain)
                     .help("アプリ一覧を更新 (⌘R)")
                     .keyboardShortcut("r", modifiers: [.command])
                     
-                    // Large unmount button - subtle style
+                    // Unmount button - modern style
                     Button {
                         viewModel.unmountAll(applyToPlayCoverContainer: true)
                     } label: {
-                        Label("すべてアンマウント", systemImage: "eject.fill")
-                            .font(.system(size: 15, weight: .medium))
+                        Image(systemName: "eject.fill")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.red)
+                            .frame(width: 44, height: 44)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    .buttonStyle(.plain)
                     .help("すべてアンマウント (⌘⇧U)")
                     .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color(nsColor: .windowBackgroundColor))
-                
-                Divider()
+                .padding(.horizontal, 24)
+                .padding(.vertical, 16)
+                .background(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
             
             // Recently launched app button (fixed at bottom)
             if let recentApp = viewModel.filteredApps.first(where: { $0.lastLaunchedFlag }) {
@@ -135,29 +165,32 @@ struct QuickLauncherView: View {
                                 }
                             }
                         }
-                        .background(Color(nsColor: .windowBackgroundColor))
                     }
                     
-                    // Recently launched app quick launch button with ripple effect
-                    Divider()
-                    
-                    RecentAppLaunchButton(
-                        app: recentApp,
-                        onLaunch: {
-                            // Launch app first
-                            viewModel.launch(app: recentApp)
-                            
-                            // Trigger animation on the grid icon after a brief delay
-                            // to ensure the observer is set up
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                NotificationCenter.default.post(
-                                    name: NSNotification.Name("TriggerAppIconAnimation"),
-                                    object: nil,
-                                    userInfo: ["bundleID": recentApp.bundleIdentifier]
-                                )
+                    // Modern recently launched app button
+                    VStack(spacing: 0) {
+                        Divider()
+                        
+                        RecentAppLaunchButton(
+                            app: recentApp,
+                            onLaunch: {
+                                // Launch app first
+                                viewModel.launch(app: recentApp)
+                                
+                                // Trigger animation on the grid icon after a brief delay
+                                // to ensure the observer is set up
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    NotificationCenter.default.post(
+                                        name: NSNotification.Name("TriggerAppIconAnimation"),
+                                        object: nil,
+                                        userInfo: ["bundleID": recentApp.bundleIdentifier]
+                                    )
+                                }
                             }
-                        }
-                    )
+                        )
+                        .background(.ultraThinMaterial)
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
+                    }
                 }
             } else {
                 // No recent app - show regular grid
@@ -197,8 +230,8 @@ struct QuickLauncherView: View {
                             }
                         }
                     }
-                    .background(Color(nsColor: .windowBackgroundColor))
                 }
+            }
             }
         }
         .sheet(item: $selectedAppForDetail) { app in
@@ -895,100 +928,93 @@ private struct RecentAppLaunchButton: View {
             
             onLaunch()
         } label: {
-            HStack(spacing: 0) {
-                Spacer()
+            HStack(spacing: 20) {
+                // Icon with animations - ZStack layers old icon, ripple, and new icon
+                ZStack {
+                    // Old icon (during transition) - bottom layer
+                    if let oldIcon = oldIcon {
+                        Image(nsImage: oldIcon)
+                            .resizable()
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                            .offset(x: oldIconOffsetX, y: oldIconOffsetY)
+                            .scaleEffect(oldIconScale)
+                            .opacity(oldIconOpacity)
+                    }
+                    
+                    // Ripple effect - middle layer, centered on icon
+                    RippleEffect(trigger: rippleTrigger)
+                        .frame(width: 56, height: 56)
+                    
+                    // Current icon - top layer with modern shadow
+                    if let icon = app.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                            .offset(x: iconOffsetX, y: iconOffsetY)
+                            .scaleEffect(iconScale)
+                    } else {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 56, height: 56)
+                            .overlay {
+                                Image(systemName: "app.fill")
+                                    .font(.system(size: 28))
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .offset(x: iconOffsetX, y: iconOffsetY)
+                            .scaleEffect(iconScale)
+                    }
+                }
+                .frame(width: 56, height: 56)
                 
-                HStack(spacing: 16) {
-                    // Icon with animations - ZStack layers old icon, ripple, and new icon
-                    ZStack {
-                        // Old icon (during transition) - bottom layer
-                        if let oldIcon = oldIcon {
-                            Image(nsImage: oldIcon)
-                                .resizable()
-                                .frame(width: 52, height: 52)
-                                .clipShape(RoundedRectangle(cornerRadius: 11))
-                                .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
-                                .offset(x: oldIconOffsetX, y: oldIconOffsetY)
-                                .scaleEffect(oldIconScale)
-                                .opacity(oldIconOpacity)
-                        }
-                        
-                        // Ripple effect - middle layer, centered on icon
-                        RippleEffect(trigger: rippleTrigger)
-                            .frame(width: 52, height: 52)
-                        
-                        // Current icon - top layer
-                        if let icon = app.icon {
-                            Image(nsImage: icon)
-                                .resizable()
-                                .frame(width: 52, height: 52)
-                                .clipShape(RoundedRectangle(cornerRadius: 11))
-                                .shadow(color: .black.opacity(0.12), radius: 4, x: 0, y: 2)
-                                .offset(x: iconOffsetX, y: iconOffsetY)
-                                .scaleEffect(iconScale)
-                        } else {
-                            RoundedRectangle(cornerRadius: 11)
-                                .fill(Color(nsColor: .controlBackgroundColor))
-                                .frame(width: 52, height: 52)
-                                .overlay {
-                                    Image(systemName: "app.fill")
-                                        .font(.system(size: 26))
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .offset(x: iconOffsetX, y: iconOffsetY)
-                                .scaleEffect(iconScale)
-                        }
-                    }
-                    .frame(width: 52, height: 52)
+                // App info with modern styling
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(displayedTitle)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
                     
-                    // App info with fade transition
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(displayedTitle)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .lineLimit(2)
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.system(size: 11, weight: .medium))
                         Text("前回起動したアプリ")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 13, weight: .medium))
                     }
-                    .opacity(textOpacity)
-                    .animation(.easeInOut(duration: 0.3), value: displayedTitle)  // Animate layout when title length changes
-                    
-                    // Enter key hint
-                    HStack(spacing: 5) {
-                        Image(systemName: "return")
-                            .font(.system(size: 10, weight: .semibold))
-                        Text("Enter")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color(nsColor: .controlBackgroundColor))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .strokeBorder(Color.primary.opacity(0.15), lineWidth: 1)
-                    )
                     .foregroundStyle(.secondary)
                 }
+                .opacity(textOpacity)
+                .animation(.easeInOut(duration: 0.3), value: displayedTitle)
                 
                 Spacer()
+                
+                // Modern Enter key hint with glassmorphism
+                HStack(spacing: 6) {
+                    Image(systemName: "return")
+                        .font(.system(size: 11, weight: .bold))
+                    Text("Enter")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                )
+                .foregroundStyle(.secondary)
+                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
             }
-            .padding(.vertical, 14)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .clipped() // Clip all content (icon motion + ripple) to button bounds
-        .overlay(
-            Rectangle()
-                .fill(Color.primary.opacity(0.08))
-                .frame(height: 1),
-            alignment: .top
-        )
+        .clipped()
         .keyboardShortcut(.defaultAction)
         .onChange(of: app.bundleIdentifier) { oldValue, newValue in
             // Detect app change and trigger rich transition
