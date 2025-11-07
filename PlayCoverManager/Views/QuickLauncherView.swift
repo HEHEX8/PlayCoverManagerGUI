@@ -298,7 +298,11 @@ struct QuickLauncherView: View {
                             .padding(32)
                             .onPreferenceChange(AppIconPositionKey.self) { positions in
                                 appIconPositions = positions
-                                print("📍 Got \(positions.count) icon positions")
+                                print("📍 Got \(positions.count) icon positions:")
+                                for (bundleID, rect) in positions {
+                                    let shortID = bundleID.components(separatedBy: ".").last ?? bundleID
+                                    print("   - \(shortID): origin=(\(rect.minX), \(rect.minY)), size=(\(rect.width)x\(rect.height)), center=(\(rect.midX), \(rect.midY))")
+                                }
                             }
                             .onAppear {
                                 // Mark as performed after grid appears
@@ -1383,17 +1387,21 @@ private struct RecentAppLaunchButton: View {
         // Get this button's icon position in shared coordinate space at animation time
         let myPosition = iconGeometry.frame(in: .named("mainContent"))
         
-        print("🔍 Animation starting - gridPos: \(gridIconPosition?.debugDescription ?? "nil"), myPos: \(myPosition)")
+        print("🔍 Animation starting")
+        print("📊 Grid icon position: \(gridIconPosition?.debugDescription ?? "nil")")
+        print("📊 Recent button icon position: \(myPosition)")
         
         if let gridPos = gridIconPosition {
             // Both positions are now in the same coordinate space (mainContent)
+            print("📐 Grid icon: origin=(\(gridPos.minX), \(gridPos.minY)), size=(\(gridPos.width)x\(gridPos.height)), center=(\(gridPos.midX), \(gridPos.midY))")
+            print("📐 Recent icon: origin=(\(myPosition.minX), \(myPosition.minY)), size=(\(myPosition.width)x\(myPosition.height)), center=(\(myPosition.midX), \(myPosition.midY))")
+            
             // Calculate offset to place our icon at grid position
             let deltaX = gridPos.midX - myPosition.midX
             let deltaY = gridPos.midY - myPosition.midY
             
-            print("🎯 Grid center: (\(gridPos.midX), \(gridPos.midY))")
-            print("🎯 My center: (\(myPosition.midX), \(myPosition.midY))")
-            print("🎯 Delta: (\(deltaX), \(deltaY))")
+            print("🎯 Delta (grid center - my center): (\(deltaX), \(deltaY))")
+            print("✨ Starting icon at offset: (\(deltaX), \(deltaY)) with scale 0.6")
             
             // Start icon at grid position
             iconOffsetX = deltaX
