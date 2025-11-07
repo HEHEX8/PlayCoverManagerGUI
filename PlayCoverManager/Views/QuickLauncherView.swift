@@ -93,12 +93,10 @@ struct QuickLauncherView: View {
                         help: "アプリ一覧を更新 (⌘R)",
                         rotation: refreshRotation
                     ) {
-                        // Trigger engine-like rev animation - ブォーン！🏁
-                        // Start slow, speed up, then slow down like revving an engine
-                        // 3 rotations = perfect balance of speed and visibility
-                        // Lower stiffness = slower buildup, more dramatic effect
+                        // Trigger smooth rotation animation
+                        // Single rotation with spring physics for natural feel
                         withAnimation(.interpolatingSpring(stiffness: 40, damping: 7)) {
-                            refreshRotation += 1080  // 360° × 3 = 1080°
+                            refreshRotation += 360  // Single smooth rotation
                         }
                         Task { await viewModel.refresh() }
                     }
