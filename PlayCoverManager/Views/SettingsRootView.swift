@@ -37,7 +37,7 @@ struct SettingsRootView: View {
                 .help("設定を閉じる (Esc)")
             }
         }
-        .onKeyPress(.escape) { _ in
+        .onKeyPress(.escape) {
             dismiss()
             return .handled
         }
