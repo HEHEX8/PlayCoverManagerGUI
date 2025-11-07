@@ -75,6 +75,7 @@ private struct StorageChangeConfirmationView: View {
     let onConfirm: () -> Void
     let onCancel: () -> Void
     @State private var eventMonitor: Any?
+    @State private var selectedButton: Int = 1  // 0=cancel, 1=confirm (default)
     
     var body: some View {
         VStack(spacing: 20) {
@@ -111,12 +112,24 @@ private struct StorageChangeConfirmationView: View {
             
             HStack(spacing: 12) {
                 Button("キャンセル", action: onCancel)
+                    .buttonStyle(selectedButton == 0 ? .borderedProminent : .bordered)
+                    .tint(selectedButton == 0 ? .blue : nil)
                     .keyboardShortcut(.cancelAction)
                 
                 Button("アンマウントして続行", action: onConfirm)
                     .buttonStyle(.borderedProminent)
+                    .tint(selectedButton == 1 ? .blue : .gray)
                     .keyboardShortcut(.defaultAction)
             }
+            
+            // Keyboard hint
+            HStack(spacing: 16) {
+                Text("←→: 選択")
+                Text("Enter: 実行")
+                Text("Esc: キャンセル")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .padding(32)
         .frame(minWidth: 500)
@@ -129,9 +142,22 @@ private struct StorageChangeConfirmationView: View {
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if event.keyCode == 53 { onCancel(); return nil }
-            if event.keyCode == 36 { onConfirm(); return nil }
-            return event
+            switch event.keyCode {
+            case 53:  // Escape
+                onCancel()
+                return nil
+            case 36:  // Return
+                if selectedButton == 0 { onCancel() } else { onConfirm() }
+                return nil
+            case 123:  // Left arrow
+                selectedButton = 0
+                return nil
+            case 124:  // Right arrow
+                selectedButton = 1
+                return nil
+            default:
+                return event
+            }
         }
     }
     
@@ -147,6 +173,7 @@ private struct UnmountConfirmationView: View {
     let onConfirm: () -> Void
     let onCancel: () -> Void
     @State private var eventMonitor: Any?
+    @State private var selectedButton: Int = 1  // 0=cancel, 1=confirm (default)
     
     var body: some View {
         VStack(spacing: 20) {
@@ -165,12 +192,24 @@ private struct UnmountConfirmationView: View {
             
             HStack(spacing: 12) {
                 Button("キャンセル", action: onCancel)
+                    .buttonStyle(selectedButton == 0 ? .borderedProminent : .bordered)
+                    .tint(selectedButton == 0 ? .blue : nil)
                     .keyboardShortcut(.cancelAction)
                 
                 Button("アンマウントして終了", action: onConfirm)
                     .buttonStyle(.borderedProminent)
+                    .tint(selectedButton == 1 ? .blue : .gray)
                     .keyboardShortcut(.defaultAction)
             }
+            
+            // Keyboard hint
+            HStack(spacing: 16) {
+                Text("←→: 選択")
+                Text("Enter: 実行")
+                Text("Esc: キャンセル")
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .padding(32)
         .frame(minWidth: 500)
@@ -182,10 +221,28 @@ private struct UnmountConfirmationView: View {
     }
     
     private func setupKeyboardMonitor() {
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if event.keyCode == 53 { onCancel(); return nil }
-            if event.keyCode == 36 { onConfirm(); return nil }
-            return event
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
+            print("🎯 UnmountDialog keyCode: \(event.keyCode), selected: \(self.selectedButton)")
+            switch event.keyCode {
+            case 53:  // Escape
+                print("❌ Cancel")
+                self.onCancel()
+                return nil
+            case 36:  // Return
+                print("✅ Confirm button \(self.selectedButton)")
+                if self.selectedButton == 0 { self.onCancel() } else { self.onConfirm() }
+                return nil
+            case 123:  // Left arrow
+                print("⬅️ Select cancel")
+                self.selectedButton = 0
+                return nil
+            case 124:  // Right arrow
+                print("➡️ Select confirm")
+                self.selectedButton = 1
+                return nil
+            default:
+                return event
+            }
         }
     }
     
@@ -222,6 +279,7 @@ private struct UnmountEjectConfirmationView: View {
     let onConfirm: () -> Void
     let onCancel: () -> Void
     @State private var eventMonitor: Any?
+    @State private var selectedButton: Int = 1  // 0=cancel, 1=eject (default)
     
     var body: some View {
         VStack(spacing: 20) {
@@ -242,18 +300,33 @@ private struct UnmountEjectConfirmationView: View {
                 Button("イジェクトしない") {
                     onCancel()
                 }
+                .buttonStyle(selectedButton == 0 ? .borderedProminent : .bordered)
+                .tint(selectedButton == 0 ? .blue : nil)
                 .keyboardShortcut(.cancelAction)
                 
                 Button("イジェクト") {
                     onConfirm()
                 }
                 .buttonStyle(.borderedProminent)
+                .tint(selectedButton == 1 ? .blue : .gray)
                 .keyboardShortcut(.defaultAction)
             }
             
-            Text("「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します")
+            VStack(spacing: 4) {
+                Text("「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                
+                // Keyboard hint
+                HStack(spacing: 16) {
+                    Text("←→: 選択")
+                    Text("Enter: 実行")
+                    Text("Esc: キャンセル")
+                }
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
+                .padding(.top, 4)
+            }
         }
         .padding(32)
         .frame(minWidth: 500)
@@ -266,9 +339,22 @@ private struct UnmountEjectConfirmationView: View {
     
     private func setupKeyboardMonitor() {
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if event.keyCode == 53 { onCancel(); return nil }
-            if event.keyCode == 36 { onConfirm(); return nil }
-            return event
+            switch event.keyCode {
+            case 53:  // Escape
+                onCancel()
+                return nil
+            case 36:  // Return
+                if selectedButton == 0 { onCancel() } else { onConfirm() }
+                return nil
+            case 123:  // Left arrow
+                selectedButton = 0
+                return nil
+            case 124:  // Right arrow
+                selectedButton = 1
+                return nil
+            default:
+                return event
+            }
         }
     }
     
