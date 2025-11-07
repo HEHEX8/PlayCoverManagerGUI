@@ -62,29 +62,52 @@ struct SetupWizardView: View {
                 .padding(.bottom, 40)
             }
         }
-        .alert(item: $viewModel.error) { error in
-            if error.category == .permissionDenied {
-                Alert(
-                    title: Text(error.title),
-                    message: Text(error.message),
-                    primaryButton: .default(Text("システム設定を開く")) {
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
-                            NSWorkspace.shared.open(url)
-                        }
-                    },
-                    secondaryButton: .cancel(Text("OK"))
-                )
-            } else if error.requiresAction {
-                Alert(
-                    title: Text(error.title),
-                    message: Text(error.message),
-                    primaryButton: .default(Text("設定を開く")) {
-                        viewModel.openSettings()
-                    },
-                    secondaryButton: .cancel(Text("OK"))
-                )
-            } else {
-                Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
+        .overlay {
+            if let error = viewModel.error {
+                if error.category == .permissionDenied {
+                    KeyboardNavigableAlert(
+                        title: error.title,
+                        message: error.message,
+                        buttons: [
+                            AlertButton("OK", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                                viewModel.error = nil
+                            },
+                            AlertButton("システム設定を開く", style: .borderedProminent, keyEquivalent: .default) {
+                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                                viewModel.error = nil
+                            }
+                        ],
+                        icon: .warning
+                    )
+                } else if error.requiresAction {
+                    KeyboardNavigableAlert(
+                        title: error.title,
+                        message: error.message,
+                        buttons: [
+                            AlertButton("OK", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                                viewModel.error = nil
+                            },
+                            AlertButton("設定を開く", style: .borderedProminent, keyEquivalent: .default) {
+                                viewModel.openSettings()
+                                viewModel.error = nil
+                            }
+                        ],
+                        icon: .error
+                    )
+                } else {
+                    KeyboardNavigableAlert(
+                        title: error.title,
+                        message: error.message,
+                        buttons: [
+                            AlertButton("OK", role: .cancel, style: .borderedProminent, keyEquivalent: .default) {
+                                viewModel.error = nil
+                            }
+                        ],
+                        icon: .error
+                    )
+                }
             }
         }
     }

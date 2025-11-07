@@ -1,0 +1,248 @@
+import SwiftUI
+import AppKit
+
+/// Reusable keyboard-navigable alert component
+/// Supports arrow key navigation, Enter to confirm, Escape to cancel
+struct KeyboardNavigableAlert: View {
+    let title: String
+    let message: String
+    let buttons: [AlertButton]
+    let icon: AlertIcon?
+    
+    @State private var selectedButtonIndex: Int
+    @State private var eventMonitor: Any?
+    
+    init(
+        title: String,
+        message: String,
+        buttons: [AlertButton],
+        icon: AlertIcon? = nil,
+        defaultButtonIndex: Int? = nil
+    ) {
+        self.title = title
+        self.message = message
+        self.buttons = buttons
+        self.icon = icon
+        
+        // Default to last button (usually the primary action)
+        _selectedButtonIndex = State(initialValue: defaultButtonIndex ?? max(0, buttons.count - 1))
+    }
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Icon (optional)
+            if let icon = icon {
+                Image(systemName: icon.systemName)
+                    .font(.system(size: 64))
+                    .foregroundStyle(icon.color)
+            }
+            
+            // Title
+            Text(title)
+                .font(.title2)
+                .fontWeight(.semibold)
+                .multilineTextAlignment(.center)
+            
+            // Message
+            Text(message)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 400)
+            
+            // Buttons
+            HStack(spacing: 12) {
+                ForEach(Array(buttons.enumerated()), id: \.offset) { index, button in
+                    Button(button.title) {
+                        button.action()
+                    }
+                    .buttonStyle(button.style == .borderedProminent || button.style == .destructive ? .borderedProminent : .bordered)
+                    .tint(button.style == .destructive ? .red : (selectedButtonIndex == index ? .blue : .gray))
+                    .overlay {
+                        if selectedButtonIndex == index {
+                            RoundedRectangle(cornerRadius: 6)
+                                .strokeBorder(Color.blue, lineWidth: 2)
+                        }
+                    }
+                    .keyboardShortcut(button.keyEquivalent)
+                }
+            }
+        }
+        .padding(32)
+        .frame(minWidth: 400)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.3), radius: 20)
+        .onAppear { setupKeyboardMonitor() }
+        .onDisappear { cleanupKeyboardMonitor() }
+    }
+    
+    private func setupKeyboardMonitor() {
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
+            switch event.keyCode {
+            case 53:  // Escape - trigger cancel button
+                if let cancelIndex = buttons.firstIndex(where: { $0.role == .cancel }) {
+                    buttons[cancelIndex].action()
+                    return nil
+                }
+                return event
+                
+            case 36:  // Return - trigger selected button
+                buttons[self.selectedButtonIndex].action()
+                return nil
+                
+            case 123:  // Left arrow
+                if self.selectedButtonIndex > 0 {
+                    self.selectedButtonIndex -= 1
+                }
+                return nil
+                
+            case 124:  // Right arrow
+                if self.selectedButtonIndex < buttons.count - 1 {
+                    self.selectedButtonIndex += 1
+                }
+                return nil
+                
+            default:
+                return event
+            }
+        }
+    }
+    
+    private func cleanupKeyboardMonitor() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
+        }
+    }
+}
+
+// MARK: - Alert Button
+
+struct AlertButton {
+    let title: String
+    let role: ButtonRole
+    let style: ButtonStyle
+    let keyEquivalent: KeyEquivalent
+    let action: () -> Void
+    
+    init(
+        _ title: String,
+        role: ButtonRole = .normal,
+        style: ButtonStyle = .bordered,
+        keyEquivalent: KeyEquivalent = .none,
+        action: @escaping () -> Void
+    ) {
+        self.title = title
+        self.role = role
+        self.style = style
+        self.keyEquivalent = keyEquivalent
+        self.action = action
+    }
+    
+    enum ButtonRole {
+        case normal
+        case cancel
+        case destructive
+    }
+    
+    enum ButtonStyle {
+        case bordered
+        case borderedProminent
+        case destructive
+    }
+    
+    enum KeyEquivalent {
+        case none
+        case `default`
+        case cancel
+        
+        var swiftUIEquivalent: SwiftUI.KeyEquivalent? {
+            switch self {
+            case .none:
+                return nil
+            case .default:
+                return .defaultAction
+            case .cancel:
+                return .cancelAction
+            }
+        }
+    }
+}
+
+// MARK: - Alert Icon
+
+struct AlertIcon {
+    let systemName: String
+    let color: Color
+    
+    static let info = AlertIcon(systemName: "info.circle.fill", color: .blue)
+    static let warning = AlertIcon(systemName: "exclamationmark.triangle.fill", color: .orange)
+    static let error = AlertIcon(systemName: "xmark.circle.fill", color: .red)
+    static let success = AlertIcon(systemName: "checkmark.circle.fill", color: .green)
+    static let question = AlertIcon(systemName: "questionmark.circle.fill", color: .blue)
+}
+
+// MARK: - View Extension for Easy Usage
+
+extension View {
+    func keyboardNavigableAlert(
+        isPresented: Binding<Bool>,
+        title: String,
+        message: String,
+        buttons: [AlertButton],
+        icon: AlertIcon? = nil,
+        defaultButtonIndex: Int? = nil
+    ) -> some View {
+        ZStack {
+            self
+            
+            if isPresented.wrappedValue {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        // Allow dismissing by clicking background if there's a cancel button
+                        if let cancelIndex = buttons.firstIndex(where: { $0.role == .cancel }) {
+                            buttons[cancelIndex].action()
+                        }
+                    }
+                
+                KeyboardNavigableAlert(
+                    title: title,
+                    message: message,
+                    buttons: buttons,
+                    icon: icon,
+                    defaultButtonIndex: defaultButtonIndex
+                )
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
+    }
+}
+
+// MARK: - Helper for KeyEquivalent
+
+extension AlertButton.KeyEquivalent {
+    fileprivate var swiftUIKeyboardShortcut: SwiftUI.KeyboardShortcut? {
+        switch self {
+        case .none:
+            return nil
+        case .default:
+            return .defaultAction
+        case .cancel:
+            return .cancelAction
+        }
+    }
+}
+
+// Fix for ButtonStyle application
+private extension Button {
+    @ViewBuilder
+    func keyboardShortcut(_ keyEquivalent: AlertButton.KeyEquivalent) -> some View {
+        if let shortcut = keyEquivalent.swiftUIKeyboardShortcut {
+            self.keyboardShortcut(shortcut)
+        } else {
+            self
+        }
+    }
+}

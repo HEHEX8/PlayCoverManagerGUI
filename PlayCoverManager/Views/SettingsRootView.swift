@@ -194,15 +194,20 @@ private struct GeneralSettingsView: View {
                 await calculateDiskUsage()
             }
         }
-        .alert("言語を変更しました", isPresented: $showLanguageChangeAlert) {
-            Button("後で再起動", role: .cancel) {
-                previousLanguage = settingsStore.appLanguage
-            }
-            Button("今すぐ再起動") {
-                restartApp()
-            }
-        } message: {
-            Text("言語の変更を完全に反映するには、アプリを再起動する必要があります。")
+        .keyboardNavigableAlert(
+            isPresented: $showLanguageChangeAlert,
+            title: "言語を変更しました",
+            message: "言語の変更を完全に反映するには、アプリを再起動する必要があります。",
+            buttons: [
+                AlertButton("後で再起動", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                    previousLanguage = settingsStore.appLanguage
+                    showLanguageChangeAlert = false
+                },
+                AlertButton("今すぐ再起動", style: .borderedProminent, keyEquivalent: .default) {
+                    restartApp()
+                }
+            ],
+            icon: .info
         }
     }
     
@@ -1710,22 +1715,34 @@ private struct MaintenanceSettingsView: View {
             }
             .padding(20)
         }
-        .alert("設定をリセットしますか？", isPresented: $showingResetConfirmation) {
-            Button("キャンセル", role: .cancel) { }
-            Button("リセット", role: .destructive) {
-                resetSettings()
-            }
-        } message: {
-            Text("アプリが再起動され、初期設定ウィザードが表示されます。")
-        }
-        .alert("キャッシュをクリアしますか?", isPresented: $showingClearCacheConfirmation) {
-            Button("キャンセル", role: .cancel) { }
-            Button("クリア", role: .destructive) {
-                clearIconCache()
-            }
-        } message: {
-            Text("アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。")
-        }
+        .keyboardNavigableAlert(
+            isPresented: $showingResetConfirmation,
+            title: "設定をリセットしますか？",
+            message: "アプリが再起動され、初期設定ウィザードが表示されます。",
+            buttons: [
+                AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                    showingResetConfirmation = false
+                },
+                AlertButton("リセット", role: .destructive, style: .destructive, keyEquivalent: .default) {
+                    resetSettings()
+                }
+            ],
+            icon: .warning
+        )
+        .keyboardNavigableAlert(
+            isPresented: $showingClearCacheConfirmation,
+            title: "キャッシュをクリアしますか?",
+            message: "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。",
+            buttons: [
+                AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                    showingClearCacheConfirmation = false
+                },
+                AlertButton("クリア", role: .destructive, style: .destructive, keyEquivalent: .default) {
+                    clearIconCache()
+                }
+            ],
+            icon: .warning
+        )
     }
     
     private func clearIconCache() {

@@ -409,31 +409,49 @@ struct QuickLauncherView: View {
             .shadow(radius: 12)
         }
     }
-    .alert(item: $viewModel.error) { error in
-        Alert(title: Text(error.title), message: Text(error.message), dismissButton: .default(Text("OK")))
-    }
-    .alert(item: $viewModel.pendingImageCreation) { app in
-        Alert(title: Text("ディスクイメージが存在しません"),
-              message: Text("\(app.displayName) 用の ASIF ディスクイメージを作成しますか？"),
-              primaryButton: .default(Text("作成")) { viewModel.confirmImageCreation() },
-              secondaryButton: .cancel { viewModel.cancelImageCreation() })
-    }
-    .confirmationDialog("内部データが見つかりました", isPresented: Binding(
-        get: { viewModel.pendingDataHandling != nil },
-        set: { newValue in if !newValue { viewModel.pendingDataHandling = nil } }
-    ), titleVisibility: .visible) {
-        if viewModel.pendingDataHandling != nil {
-            ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
-                let title = strategy.localizedDescription + (strategy == settingsStore.defaultDataHandling ? "（既定）" : "")
-                Button(title) {
-                    viewModel.applyDataHandling(strategy: strategy)
-                }
+    .keyboardNavigableAlert(
+        isPresented: Binding(
+            get: { viewModel.error != nil },
+            set: { if !$0 { viewModel.error = nil } }
+        ),
+        title: viewModel.error?.title ?? "",
+        message: viewModel.error?.message ?? "",
+        buttons: [
+            AlertButton("OK", role: .cancel, style: .borderedProminent, keyEquivalent: .default) {
+                viewModel.error = nil
             }
-            Button("キャンセル", role: .cancel) {}
-        }
-    } message: {
-        if let request = viewModel.pendingDataHandling {
-            Text("\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？")
+        ],
+        icon: .error
+    )
+    .keyboardNavigableAlert(
+        isPresented: Binding(
+            get: { viewModel.pendingImageCreation != nil },
+            set: { if !$0 { viewModel.cancelImageCreation() } }
+        ),
+        title: "ディスクイメージが存在しません",
+        message: "\(viewModel.pendingImageCreation?.displayName ?? "") 用の ASIF ディスクイメージを作成しますか？",
+        buttons: [
+            AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                viewModel.cancelImageCreation()
+            },
+            AlertButton("作成", style: .borderedProminent, keyEquivalent: .default) {
+                viewModel.confirmImageCreation()
+            }
+        ],
+        icon: .question
+    )
+    .overlay {
+        if viewModel.pendingDataHandling != nil {
+            DataHandlingAlertView(
+                request: viewModel.pendingDataHandling!,
+                defaultStrategy: settingsStore.defaultDataHandling,
+                onSelect: { strategy in
+                    viewModel.applyDataHandling(strategy: strategy)
+                },
+                onCancel: {
+                    viewModel.pendingDataHandling = nil
+                }
+            )
         }
     }
     .task {
@@ -2352,5 +2370,156 @@ private struct KeyboardShortcutGuide: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
+    }
+}
+
+// MARK: - Data Handling Alert View
+
+private struct DataHandlingAlertView: View {
+    let request: LauncherViewModel.DataHandlingRequest
+    let defaultStrategy: SettingsStore.InternalDataStrategy
+    let onSelect: (SettingsStore.InternalDataStrategy) -> Void
+    let onCancel: () -> Void
+    
+    @State private var selectedIndex: Int = 0
+    @State private var eventMonitor: Any?
+    
+    var body: some View {
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onCancel()
+                }
+            
+            // Alert content
+            VStack(spacing: 20) {
+                Image(systemName: "folder.fill.badge.questionmark")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.blue)
+                
+                Text("内部データが見つかりました")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                Text("\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400)
+                
+                // Strategy selection buttons
+                VStack(spacing: 12) {
+                    ForEach(Array(SettingsStore.InternalDataStrategy.allCases.enumerated()), id: \.offset) { index, strategy in
+                        Button {
+                            onSelect(strategy)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    HStack(spacing: 6) {
+                                        Text(strategy.localizedDescription)
+                                            .font(.body)
+                                            .fontWeight(.medium)
+                                        
+                                        if strategy == defaultStrategy {
+                                            Text("（既定）")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    
+                                    // Add description for each strategy
+                                    Text(strategyDescription(for: strategy))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.leading)
+                                }
+                                
+                                Spacer()
+                                
+                                if selectedIndex == index {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.blue)
+                                }
+                            }
+                            .padding(12)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(selectedIndex == index ? Color.blue.opacity(0.1) : Color.clear)
+                            )
+                            .overlay {
+                                if selectedIndex == index {
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .strokeBorder(Color.blue, lineWidth: 2)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .frame(maxWidth: 500)
+                
+                // Cancel button
+                Button("キャンセル") {
+                    onCancel()
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
+            }
+            .padding(32)
+            .frame(maxWidth: 600)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.3), radius: 20)
+        }
+        .onAppear { setupKeyboardMonitor() }
+        .onDisappear { cleanupKeyboardMonitor() }
+    }
+    
+    private func strategyDescription(for strategy: SettingsStore.InternalDataStrategy) -> String {
+        switch strategy {
+        case .useExisting:
+            return "既存のデータをそのまま使用します"
+        case .askEachTime:
+            return "毎回確認します"
+        case .clearAndUseContainer:
+            return "内部データを削除してコンテナを使用します"
+        }
+    }
+    
+    private func setupKeyboardMonitor() {
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
+            switch event.keyCode {
+            case 53:  // Escape
+                self.onCancel()
+                return nil
+            case 36:  // Return
+                let strategies = SettingsStore.InternalDataStrategy.allCases
+                if self.selectedIndex < strategies.count {
+                    self.onSelect(strategies[self.selectedIndex])
+                }
+                return nil
+            case 125:  // Down arrow
+                if self.selectedIndex < SettingsStore.InternalDataStrategy.allCases.count - 1 {
+                    self.selectedIndex += 1
+                }
+                return nil
+            case 126:  // Up arrow
+                if self.selectedIndex > 0 {
+                    self.selectedIndex -= 1
+                }
+                return nil
+            default:
+                return event
+            }
+        }
+    }
+    
+    private func cleanupKeyboardMonitor() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
+        }
     }
 }
