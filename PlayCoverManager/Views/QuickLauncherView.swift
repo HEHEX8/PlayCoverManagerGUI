@@ -229,13 +229,18 @@ struct QuickLauncherView: View {
         // Unmount flow overlay (confirmation, progress, result, error)
         if viewModel.unmountFlowState != .idle {
             ZStack {
+                // Background overlay - blocks interaction but doesn't close on tap
+                // User must use buttons in the dialog
                 Color.black.opacity(0.3)
+                    .contentShape(Rectangle())  // Capture all tap events
                     .ignoresSafeArea()
                 
                 UnmountOverlayView(viewModel: viewModel)
                     .transition(.opacity.animation(.easeInOut(duration: 0.15)))
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .transition(.opacity)
+            .zIndex(998)  // Just below drawer (999), above regular content
         }
         // Regular status overlay for other time-consuming operations
         else if viewModel.isBusy && viewModel.isShowingStatus {
