@@ -91,7 +91,7 @@ private struct GeneralSettingsView: View {
                         Text(language.localizedDescription).tag(language)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
                 
                 Text("言語を変更すると、アプリを再起動する必要があります。")
                     .font(.caption)
