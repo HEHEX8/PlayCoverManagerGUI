@@ -316,7 +316,6 @@ struct QuickLauncherView: View {
                         
                         RecentAppLaunchButton(
                             app: recentApp,
-                            gridIconPosition: appIconPositions[recentApp.bundleIdentifier],
                             onLaunch: {
                                 // Launch app first
                                 viewModel.launch(app: recentApp)
@@ -330,7 +329,8 @@ struct QuickLauncherView: View {
                                         userInfo: ["bundleID": recentApp.bundleIdentifier]
                                     )
                                 }
-                            }
+                            },
+                            gridIconPosition: appIconPositions[recentApp.bundleIdentifier]
                         )
                         .background(.ultraThinMaterial)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
