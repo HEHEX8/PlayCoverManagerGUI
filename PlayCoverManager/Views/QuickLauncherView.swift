@@ -29,15 +29,6 @@ struct RecentButtonPositionKey: PreferenceKey {
     }
 }
 
-// PreferenceKey to track recent button position
-struct RecentButtonPositionKey: PreferenceKey {
-    static var defaultValue: CGRect = .zero
-    
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        value = nextValue()
-    }
-}
-
 struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
