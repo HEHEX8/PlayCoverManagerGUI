@@ -86,16 +86,16 @@ struct QuickLauncherView: View {
                     
                     Spacer()
                     
-                    // Refresh button - modern style with rotation animation
+                    // Refresh button - modern style with rotation animation (5 spins!)
                     ModernToolbarButton(
                         icon: "arrow.clockwise",
                         color: .primary,
                         help: "アプリ一覧を更新 (⌘R)",
                         rotation: refreshRotation
                     ) {
-                        // Trigger rotation animation
+                        // Trigger rotation animation - SPIN IT 5 TIMES! 🌀
                         withAnimation(.easeInOut(duration: 0.5)) {
-                            refreshRotation += 360
+                            refreshRotation += 1800  // 360° × 5 = 1800°
                         }
                         Task { await viewModel.refresh() }
                     }
