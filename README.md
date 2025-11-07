@@ -4,15 +4,15 @@
 
 ![PlayCover Manager Icon](PlayCoverManager/Assets.xcassets/AppIcon.appiconset/icon_512x512.png)
 
-**macOS用 PlayCover iOSアプリ管理ツール**
+**macOS Tahoe 26.0+ 用 PlayCover アプリ統合管理ツール**
 
-簡単起動 • 検索機能 • ストレージ管理
+IPA インストール • アプリ起動 • ストレージ管理 • アンインストール
 
 [![Swift](https://img.shields.io/badge/Swift-5.9-orange.svg)](https://swift.org)
-[![Platform](https://img.shields.io/badge/Platform-macOS%2011.0+-lightgrey.svg)](https://www.apple.com/macos/)
+[![Platform](https://img.shields.io/badge/Platform-macOS%2026.0%20Tahoe+-lightgrey.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[機能](#-機能) • [インストール](#-インストール) • [使い方](#-使い方) • [開発](#-開発) • [配布](#-配布)
+[機能](#-機能) • [必須環境](#-必須環境) • [インストール](#-インストール) • [使い方](#-使い方) • [開発](#-開発)
 
 </div>
 
@@ -20,82 +20,161 @@
 
 ## 📖 概要
 
-**PlayCover Manager** は、[PlayCover](https://github.com/PlayCover/PlayCover)でインストールしたiOSアプリを快適に管理・起動するためのGUIツールです。
+**PlayCover Manager** は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。
 
-### なぜPlayCover Managerが必要？
+### 主な特徴
 
-PlayCoverでインストールしたiOSアプリは、通常Finderから見つけにくい場所に保存されます。PlayCover Managerを使えば：
+- ✅ **IPA インストーラー内蔵** - IPA ファイルを直接インストール
+- ✅ **クイックランチャー** - インストール済みアプリを一覧表示・起動
+- ✅ **アプリアンインストーラー** - 複数アプリの一括アンインストール
+- ✅ **ASIF ディスクイメージ** - macOS Tahoe の最新フォーマット採用
+- ✅ **ストレージ管理** - 外部ドライブへの保存先変更対応
+- ✅ **検索機能** - アプリ名・Bundle ID で素早く検索
 
-- ✅ インストール済みアプリを一覧表示
-- ✅ ワンクリックで起動
-- ✅ 検索機能で素早くアプリを発見
-- ✅ ディスク使用量を確認
-- ✅ ストレージ場所を管理
+---
+
+## ⚠️ 必須環境
+
+### システム要件
+
+- **macOS Tahoe 26.0 以降** （必須）
+  - このアプリは macOS Tahoe で導入された **ASIF ディスクイメージフォーマット** を使用しています
+  - macOS Sequoia (25.x) 以前では動作しません
+- **アーキテクチャ**: Apple Silicon / Intel 両対応
+
+### なぜ macOS Tahoe が必要？
+
+このアプリは ASIF (Apple Software Image Format) という新しいディスクイメージフォーマットを使用しています。ASIF は macOS Tahoe 26.0 で導入され、以下の利点があります：
+
+- 📦 より効率的なストレージ管理
+- 🔒 強化されたセキュリティ
+- ⚡ 高速なマウント・アンマウント
+- 🔄 読み書き可能なコンテナ
 
 ---
 
 ## ✨ 機能
 
-### 🚀 クイックランチャー
-- インストール済みiOSアプリをグリッド表示
-- アプリアイコンとシステム言語名を表示
-- ダブルクリックで即起動
-- 起動中のアプリにはバッジ表示
+### 🚀 1. IPA インストーラー
 
-### 🔍 検索機能
-- アプリ名、Bundle IDで検索
-- システム言語名・英語名の両方に対応
-- リアルタイム検索結果
+IPA ファイルを直接インストールできます：
 
-### 💾 ストレージ管理
-- PlayCoverコンテナの自動検出
-- ディスクイメージの使用量確認
-- 保存先の変更（セットアップウィザード統合）
+- 複数の IPA ファイルを一度に選択可能
+- インストール前に確認ダイアログ表示
+- リアルタイムでインストール進捗を表示
+- アプリアイコンと名前を確認しながらインストール
+- バージョンアップグレード・ダウングレード対応
 
-### 🛠️ メンテナンス機能
-- アンマウント機能（ディスクイメージの安全な取り外し）
-- キャッシュクリア
-- データ管理
+**使い方**:
+1. ランチャー画面右上の「IPA をインストール」ボタンをクリック
+2. IPA ファイルを選択（複数選択可）
+3. 確認画面でインストール内容を確認
+4. 「インストール」をクリック
+
+### 🎮 2. クイックランチャー
+
+インストール済みアプリを快適に管理・起動：
+
+- グリッド表示でアプリ一覧を視覚的に確認
+- アプリアイコンと表示名を表示
+- ダブルクリックまたは Enter キーで起動
+- 起動中のアプリには「実行中」バッジ表示
+- 最近起動したアプリのクイック起動ボタン
+
+**操作方法**:
+- **ダブルクリック**: アプリを起動
+- **右クリック**: コンテキストメニュー
+  - Finder で表示
+  - アプリをアンインストール
+  - アプリ詳細設定
+- **Enter キー**: 最近起動したアプリを起動
+
+### 🔍 3. 検索機能
+
+アプリをすばやく見つける：
+
+- アプリ名で検索
+- Bundle ID で検索
+- リアルタイム検索結果表示
+- 検索結果が 0 件の場合の分かりやすい表示
+
+### 🗑️ 4. アプリアンインストーラー
+
+複数のアプリを一括でアンインストール：
+
+- チェックボックスで複数選択
+- アプリサイズとディスクイメージサイズを表示
+- 確認ダイアログで削除内容を確認
+- アンインストール進捗をリアルタイム表示
+- 完了・失敗したアプリを個別に表示
+
+**使い方**:
+1. ランチャー画面右上の「アンインストーラー」ボタンをクリック
+2. アンインストールしたいアプリをチェック
+3. 「アンインストール (X 個)」ボタンをクリック
+4. 確認ダイアログで内容を確認
+5. 「アンインストール」をクリック
+
+### 💾 5. ストレージ管理
+
+ASIF ディスクイメージの保存先を柔軟に管理：
+
+- 現在の保存先とディスク使用量を表示
+- 外部ドライブへの保存先変更
+- 保存先変更時の自動再マウント
+- 容量の大きい外部ストレージを推奨（必須ではない）
+- Finder に表示しない設定（nobrowse オプション）
+
+**設定画面**:
+- 「データ」タブ: 保存先の設定
+- 「メンテナンス」タブ: アンマウント・キャッシュクリア
+
+### 🛠️ 6. メンテナンス機能
+
+システムを快適に保つ：
+
+- **アンマウント機能**
+  - すべてのディスクイメージを安全にアンマウント
+  - 外部ドライブの場合、ドライブごと安全に取り外せる状態にする
+  - アンマウント完了後にアプリを終了するオプション
+- **アイコンキャッシュクリア**
+  - アプリアイコンのキャッシュをクリア
+  - アイコン表示の不具合を解消
+- **設定リセット**
+  - すべての設定を初期値に戻す
+  - ディスクイメージとアプリは削除されない
+
+### ⚙️ 7. アプリ個別設定
+
+各アプリごとに詳細な設定が可能：
+
+- **基本設定**: 起動時の内部データ処理方法
+- **グラフィックス設定**: 解像度、アスペクト比、ウィンドウ修正方法
+- **コントロール設定**: マウス感度、画面タッチのキーマッピング
+- **詳細設定**: iOS デバイスモデル、PlayCover 実行時パッチ、jailbreak 検出回避
+- **情報**: アプリ情報、設定ファイルの場所
 
 ---
 
 ## 📦 インストール
 
-### 方法1: Homebrew（推奨）
+### 方法1: GitHub Releases（推奨）
 
-```bash
-# リポジトリをTapに追加
-brew tap HEHEX8/playcovermanager
+1. [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases) から最新の `PlayCoverManager.dmg` をダウンロード
+2. DMG をマウント
+3. PlayCoverManager.app を「アプリケーション」フォルダにドラッグ
+4. 初回起動時は **右クリック → 「開く」** を選択（署名なしアプリのため）
 
-# インストール
-brew install --cask playcovermanager
-```
-
-### 方法2: GitHub Releases
-
-1. [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)から最新の `PlayCoverManager.dmg` をダウンロード
-2. DMGをマウント
-3. PlayCoverManager.appを「アプリケーション」フォルダにドラッグ
-4. 初回起動時は **右クリック → 「開く」** を選択
-
-### 方法3: ソースからビルド
+### 方法2: ソースからビルド
 
 ```bash
 # リポジトリをクローン
 git clone https://github.com/HEHEX8/PlayCoverManagerGUI.git
 cd PlayCoverManagerGUI
 
-# ビルド
-./scripts/build_release_unsigned.sh
+# ビルド（Xcode 15+ が必要）
+xcodebuild -scheme PlayCoverManager -configuration Release archive
 ```
-
----
-
-## 💻 動作環境
-
-- **macOS**: 11.0 Big Sur以降
-- **アーキテクチャ**: Apple Silicon / Intel両対応
-- **必須**: PlayCoverがインストール済み
 
 ---
 
@@ -103,23 +182,52 @@ cd PlayCoverManagerGUI
 
 ### 初回起動
 
-1. PlayCover Managerを起動
-2. セットアップウィザードが表示されます
-3. PlayCoverの場所を選択
-4. ディスクイメージの保存先を選択
-5. 完了！
+1. PlayCover Manager を起動
+2. macOS バージョンチェックが実行されます
+   - macOS Tahoe 26.0 未満の場合、エラーメッセージが表示されます
+3. セットアップウィザードが表示されます（初回のみ）
+4. PlayCover.app の場所を選択
+   - デフォルト: `/Applications/PlayCover.app`
+5. ASIF ディスクイメージの保存先を選択
+   - 内蔵ストレージまたは外部ドライブを選択可能
+6. 完了！ランチャー画面が表示されます
 
-### アプリ起動
+### IPA のインストール
 
-1. ランチャー画面でアプリを見つける
-2. ダブルクリックで起動
-3. または検索バーでアプリ名を入力して検索
+1. 右上の「IPA をインストール」ボタンをクリック
+2. IPA ファイルを選択（複数選択可能）
+3. 解析完了後、インストール確認画面が表示されます
+4. 「インストール」をクリック
+5. インストール完了後、ランチャーに追加されます
+
+### アプリの起動
+
+- **方法1**: グリッド内のアプリアイコンをダブルクリック
+- **方法2**: 検索バーでアプリを検索してダブルクリック
+- **方法3**: 最近起動したアプリが表示されている場合、Enter キーを押す
+
+### アプリのアンインストール
+
+**個別アンインストール**:
+1. アプリを右クリック
+2. 「アプリをアンインストール」を選択
+3. 確認ダイアログで「アンインストール」をクリック
+
+**一括アンインストール**:
+1. 右上の「アンインストーラー」ボタンをクリック
+2. アンインストールしたいアプリにチェック
+3. 「アンインストール (X 個)」をクリック
+4. 確認後、実行
 
 ### ストレージ管理
 
-1. 設定（⚙️）を開く
-2. 「一般」タブでディスク使用量を確認
-3. 「保存先を変更」で別の場所に移動可能
+1. 右上の歯車アイコンで設定画面を開く
+2. 「データ」タブを選択
+3. 現在の保存先とディスク使用量を確認
+4. 保存先を変更する場合:
+   - 「保存先を変更」ボタンをクリック
+   - 新しい保存先を選択
+   - 自動的に再マウントされます
 
 ---
 
@@ -129,67 +237,78 @@ cd PlayCoverManagerGUI
 
 ```
 PlayCoverManagerGUI/
-├── PlayCoverManager/           # メインアプリコード
-│   ├── Views/                  # SwiftUI Views
-│   ├── ViewModels/             # ViewModels
-│   ├── Services/               # ビジネスロジック
-│   ├── Models/                 # データモデル
-│   └── Assets.xcassets/        # アセット
-├── scripts/                    # ビルドスクリプト
-├── homebrew/                   # Homebrew Cask formula
-├── docs/                       # 開発ドキュメント
-└── README.md                   # このファイル
-```
-
-### ビルドとテスト
-
-```bash
-# 開発用ビルド
-./scripts/build_dev.sh
-
-# リリース用ビルド
-./scripts/build_release_unsigned.sh
+├── PlayCoverManager/              # メインアプリコード
+│   ├── Views/                     # SwiftUI Views
+│   │   ├── AppRootView.swift         # ルートビュー（フェーズ管理）
+│   │   ├── QuickLauncherView.swift   # ランチャー画面
+│   │   ├── SettingsRootView.swift    # 設定画面（IPA インストーラー・アンインストーラー含む）
+│   │   ├── SetupWizardView.swift     # セットアップウィザード
+│   │   └── UnmountOverlayView.swift  # アンマウントオーバーレイ
+│   ├── ViewModels/                # ViewModels
+│   │   ├── AppViewModel.swift        # アプリ全体の状態管理
+│   │   ├── LauncherViewModel.swift   # ランチャーロジック
+│   │   └── SetupWizardViewModel.swift # セットアップロジック
+│   ├── Services/                  # ビジネスロジック
+│   │   ├── DiskImageService.swift    # ASIF ディスクイメージ管理
+│   │   ├── IPAInstallerService.swift # IPA インストーラー
+│   │   ├── AppUninstallerService.swift # アンインストーラー
+│   │   ├── LauncherService.swift     # アプリ起動管理
+│   │   ├── PlayCoverEnvironmentService.swift # PlayCover 環境検出
+│   │   ├── ContainerLockService.swift # コンテナロック管理
+│   │   └── ProcessRunner.swift       # プロセス実行ユーティリティ
+│   ├── Models/                    # データモデル
+│   │   ├── AppError.swift           # エラー定義
+│   │   ├── AppPhase.swift           # アプリフェーズ定義
+│   │   ├── PlayCoverPaths.swift     # パス管理
+│   │   └── PlayCoverAppSettings.swift # アプリ設定
+│   ├── Utilities/                 # ユーティリティ
+│   │   └── AppIconHelper.swift      # アイコン読み込み
+│   └── Assets.xcassets/           # アセット
+└── README.md                      # このファイル
 ```
 
 ### 技術スタック
 
 - **言語**: Swift 5.9+
 - **フレームワーク**: SwiftUI
-- **最小ターゲット**: macOS 11.0
-- **アーキテクチャ**: MVVM + Service Layer
+- **最小ターゲット**: macOS 26.0 Tahoe
+- **アーキテクチャ**: MVVM + Service Layer + Phase-based State Management
+- **ディスクイメージ**: ASIF (Apple Software Image Format)
+
+### 主要な技術的特徴
+
+1. **ASIF ディスクイメージ**
+   - `diskutil` コマンドで ASIF フォーマットのディスクイメージを作成
+   - 読み書き可能なコンテナとしてマウント
+   - アプリごとに個別のディスクイメージを管理
+
+2. **フェーズベース状態管理**
+   - インストーラー・アンインストーラーで enum によるフェーズ管理
+   - boolean フラグの乱立を避け、状態遷移を明確化
+
+3. **非同期処理**
+   - Swift Concurrency (async/await) を全面採用
+   - MainActor で UI 更新を安全に管理
+
+4. **アイコンキャッシュ**
+   - NSCache を使用した高解像度アイコンのキャッシュ
+   - 512x512 解像度で鮮明な表示
 
 ---
 
 ## 📤 配布
 
-このプロジェクトは **署名なし** で配布されています（個人製作のため）。
+このプロジェクトは **署名なし** で配布されています（個人プロジェクトのため）。
 
-### GitHub Releasesでの配布
+### 初回起動時の注意
 
-詳細は [DISTRIBUTION_FREE.md](DISTRIBUTION_FREE.md) を参照。
+macOS Gatekeeper により、初回起動時に警告が表示されます：
 
-### Homebrew Caskでの配布
+1. アプリを右クリック
+2. 「開く」を選択
+3. 「開く」をもう一度クリック
 
-詳細は [homebrew/README.md](homebrew/README.md) を参照。
-
----
-
-## 🤝 コントリビューション
-
-プルリクエストを歓迎します！
-
-### 貢献方法
-
-1. このリポジトリをフォーク
-2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'feat: Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
-
-### 開発ドキュメント
-
-- [開発メモ](docs/) - 実装詳細、バグフィックス履歴
-- [配布ガイド](DISTRIBUTION_FREE.md) - リリース手順
+これにより、以降は通常通り起動できます。
 
 ---
 
@@ -201,8 +320,9 @@ PlayCoverManagerGUI/
 
 ## 🙏 謝辞
 
-- [PlayCover](https://github.com/PlayCover/PlayCover) - iOSアプリをmacOSで実行可能にする素晴らしいプロジェクト
-- SF Symbols - macOS標準アイコンセット
+- [PlayCover](https://github.com/PlayCover/PlayCover) - iOS アプリを macOS で実行可能にする素晴らしいプロジェクト
+- Apple の ASIF ディスクイメージフォーマット
+- SF Symbols - macOS 標準アイコンセット
 
 ---
 
@@ -211,41 +331,39 @@ PlayCoverManagerGUI/
 - [GitHub リポジトリ](https://github.com/HEHEX8/PlayCoverManagerGUI)
 - [Issues](https://github.com/HEHEX8/PlayCoverManagerGUI/issues)
 - [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)
-- [PlayCover公式](https://github.com/PlayCover/PlayCover)
-
----
-
-## 📸 スクリーンショット
-
-### ランチャー画面
-アプリ一覧、検索、起動機能
-
-### セットアップウィザード
-初回起動時の設定画面
-
-### 設定画面
-ストレージ管理、メンテナンス
-
-*(スクリーンショット画像は後日追加予定)*
+- [PlayCover 公式](https://github.com/PlayCover/PlayCover)
 
 ---
 
 ## ❓ FAQ
 
-### Q: PlayCoverがインストールされていないとどうなる？
-**A:** セットアップウィザードでPlayCoverの場所を指定するよう求められます。
+### Q: macOS Sequoia (25.x) で動作しますか？
+
+**A:** いいえ。このアプリは macOS Tahoe 26.0 以降が必須です。ASIF ディスクイメージフォーマットは macOS Tahoe で導入されました。
+
+### Q: PlayCover は別途インストールが必要ですか？
+
+**A:** はい。PlayCover Manager は PlayCover の補助ツールです。PlayCover 本体は別途インストールしてください。
+
+### Q: IPA ファイルはどこから入手できますか？
+
+**A:** IPA ファイルの入手方法については、PlayCover の公式ドキュメントを参照してください。
 
 ### Q: アプリが起動しない場合は？
+
 **A:** 以下を確認してください：
-- PlayCoverが正しくインストールされているか
+- macOS Tahoe 26.0 以降であるか
+- PlayCover が正しくインストールされているか
 - ディスクイメージがマウントされているか
-- アプリが削除されていないか
+- 設定画面の「メンテナンス」タブからアンマウントを実行してみる
 
-### Q: ディスク使用量が多い場合は？
-**A:** 設定の「メンテナンス」タブからキャッシュクリアを実行してください。
+### Q: 外部ドライブに保存先を変更するメリットは？
 
-### Q: 複数のPlayCoverアプリがある場合は？
-**A:** 現在はPlayCover.appのみサポートしています。
+**A:** 内蔵ストレージの容量を節約できます。大容量のゲームなどをインストールする場合に推奨します。ただし、外部ドライブが接続されていないとアプリが起動できません。
+
+### Q: ディスクイメージが Finder に表示されるのを防ぐには？
+
+**A:** 設定画面の「データ」タブで「マウント時に Finder に表示しない (-nobrowse)」を有効にしてください。
 
 ---
 
@@ -253,11 +371,17 @@ PlayCoverManagerGUI/
 
 バグや機能リクエストは [GitHub Issues](https://github.com/HEHEX8/PlayCoverManagerGUI/issues) で報告してください。
 
+報告時には以下の情報を含めてください：
+- macOS バージョン
+- PlayCover Manager バージョン
+- 問題の詳細と再現手順
+- スクリーンショット（可能な場合）
+
 ---
 
 <div align="center">
 
-Made with ❤️ for PlayCover users
+Made with ❤️ for PlayCover users on macOS Tahoe
 
 [⬆ トップに戻る](#playcover-manager)
 
