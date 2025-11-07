@@ -95,8 +95,10 @@ struct QuickLauncherView: View {
                     ) {
                         // Trigger engine-like rev animation - ブォーン！🏁
                         // Start slow, speed up, then slow down like revving an engine
-                        withAnimation(.interpolatingSpring(stiffness: 50, damping: 8)) {
-                            refreshRotation += 1800  // 360° × 5 = 1800°
+                        // 3 rotations = perfect balance of speed and visibility
+                        // Lower stiffness = slower buildup, more dramatic effect
+                        withAnimation(.interpolatingSpring(stiffness: 40, damping: 7)) {
+                            refreshRotation += 1080  // 360° × 3 = 1080°
                         }
                         Task { await viewModel.refresh() }
                     }
