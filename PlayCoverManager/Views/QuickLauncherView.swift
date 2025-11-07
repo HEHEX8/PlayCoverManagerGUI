@@ -42,6 +42,17 @@ struct QuickLauncherView: View {
         return 7
     }
     
+    // Workaround for macOS focus loss bug after dismissing sheets/overlays
+    // Forces the window to regain focus and become key window
+    private func restoreWindowFocus() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let window = NSApp.keyWindow ?? NSApp.windows.first {
+                window.makeKey()
+                window.makeFirstResponder(window.contentView)
+            }
+        }
+    }
+    
     // Handle keyboard event directly from NSEvent
     private func handleKeyCode(_ keyCode: UInt16) -> Bool {
         print("🎹 Key code: \(keyCode), searchFocused: \(isSearchFieldFocused), focusedApp: \(focusedAppIndex ?? -1)")
@@ -380,19 +391,38 @@ struct QuickLauncherView: View {
         }
         .sheet(item: $selectedAppForDetail) { app in
         AppDetailSheet(app: app, viewModel: viewModel)
+            .interactiveDismissDisabled(false)
+            .onDisappear {
+                restoreWindowFocus()
+            }
     }
     .sheet(isPresented: $showingSettings) {
         SettingsRootView()
             .interactiveDismissDisabled(false)
+            .onDisappear {
+                restoreWindowFocus()
+            }
     }
     .sheet(isPresented: $showingInstaller) {
         IPAInstallerSheet()
+            .interactiveDismissDisabled(false)
+            .onDisappear {
+                restoreWindowFocus()
+            }
     }
     .sheet(item: $selectedAppForUninstall) { identifiableString in
         AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
+            .interactiveDismissDisabled(false)
+            .onDisappear {
+                restoreWindowFocus()
+            }
     }
     .sheet(isPresented: $showingUninstaller) {
         AppUninstallerSheet(preSelectedBundleID: nil)
+            .interactiveDismissDisabled(false)
+            .onDisappear {
+                restoreWindowFocus()
+            }
     }
     .frame(minWidth: 960, minHeight: 640)
     .overlay(alignment: .center) {

@@ -348,6 +348,7 @@ final class LauncherViewModel {
     func cancelUnmount() {
         unmountFlowState = .idle
         pendingUnmountTask = nil
+        restoreWindowFocus()
     }
     
     func confirmEject() {
@@ -367,7 +368,21 @@ final class LauncherViewModel {
     
     func dismissUnmountError() {
         unmountFlowState = .idle
+        restoreWindowFocus()
         isStorageChangeFlow = false
+    }
+    
+    // MARK: - Focus Restoration
+    
+    /// Workaround for macOS focus loss bug after dismissing overlays/dialogs
+    /// Forces the window to regain focus and become key window
+    private func restoreWindowFocus() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let window = NSApp.keyWindow ?? NSApp.windows.first {
+                window.makeKey()
+                window.makeFirstResponder(window.contentView)
+            }
+        }
     }
     
     private var pendingEjectConfirmed: Bool?
@@ -726,6 +741,7 @@ final class LauncherViewModel {
                 // All succeeded - proceed to storage selection
                 unmountFlowState = .idle
                 isStorageChangeFlow = false
+                restoreWindowFocus()
                 
                 // Notify AppViewModel to show storage selection
                 onStorageChangeCompleted?()
@@ -847,6 +863,7 @@ final class LauncherViewModel {
     func cancelStorageLocationChange() {
         unmountFlowState = .idle
         isStorageChangeFlow = false
+        restoreWindowFocus()
     }
     
     /// Perform unmount all for storage location change (does not quit)
@@ -895,6 +912,7 @@ final class LauncherViewModel {
             } else {
                 // All succeeded - proceed to storage selection
                 unmountFlowState = .idle
+                restoreWindowFocus()
                 
                 // Notify AppViewModel to show storage selection
                 onStorageChangeCompleted?()
