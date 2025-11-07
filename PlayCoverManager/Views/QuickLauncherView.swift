@@ -2479,12 +2479,12 @@ private struct DataHandlingAlertView: View {
     
     private func strategyDescription(for strategy: SettingsStore.InternalDataStrategy) -> String {
         switch strategy {
-        case .useExisting:
-            return "既存のデータをそのまま使用します"
-        case .askEachTime:
-            return "毎回確認します"
-        case .clearAndUseContainer:
-            return "内部データを削除してコンテナを使用します"
+        case .discard:
+            return "内部データを破棄してから新しくマウントします"
+        case .mergeThenDelete:
+            return "内部データをコンテナに統合してから削除してマウントします"
+        case .leave:
+            return "内部データはそのまま残してマウントします"
         }
     }
     
