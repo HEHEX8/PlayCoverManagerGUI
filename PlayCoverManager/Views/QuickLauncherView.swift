@@ -430,8 +430,30 @@ struct QuickLauncherView: View {
             appViewModel?.completeStorageLocationChange()
         }
     }
-
-
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSettings"))) { _ in
+        showingSettings = true
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowInstaller"))) { _ in
+        showingInstaller = true
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowUninstaller"))) { _ in
+        showingUninstaller = true
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleDrawer"))) { _ in
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+            isDrawerOpen.toggle()
+        }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshApps"))) { _ in
+        // Trigger sharp rotation animation
+        withAnimation(.interpolatingSpring(stiffness: 120, damping: 12)) {
+            refreshRotation += 360
+        }
+        Task { await viewModel.refresh() }
+    }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UnmountAll"))) { _ in
+        viewModel.unmountAll(applyToPlayCoverContainer: true)
+    }
     .overlay {
         // Left drawer overlay - full screen when open
         if isDrawerOpen {

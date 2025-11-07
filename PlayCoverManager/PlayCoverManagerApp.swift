@@ -47,6 +47,48 @@ struct PlayCoverManagerApp: App {
                     .environment(perAppSettingsStore)
             }
         }
+        .commands {
+            // File menu
+            CommandGroup(replacing: .newItem) {
+                Button("IPA をインストール") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowInstaller"), object: nil)
+                }
+                .keyboardShortcut("i", modifiers: [.command])
+                
+                Button("アプリをアンインストール") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowUninstaller"), object: nil)
+                }
+                .keyboardShortcut("d", modifiers: [.command])
+            }
+            
+            // View menu
+            CommandGroup(after: .sidebar) {
+                Button("メニューを表示") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ToggleDrawer"), object: nil)
+                }
+                .keyboardShortcut("m", modifiers: [.command])
+                
+                Divider()
+                
+                Button("アプリ一覧を更新") {
+                    NotificationCenter.default.post(name: NSNotification.Name("RefreshApps"), object: nil)
+                }
+                .keyboardShortcut("r", modifiers: [.command])
+                
+                Button("すべてアンマウント") {
+                    NotificationCenter.default.post(name: NSNotification.Name("UnmountAll"), object: nil)
+                }
+                .keyboardShortcut("u", modifiers: [.command, .shift])
+            }
+            
+            // Settings menu
+            CommandGroup(replacing: .appSettings) {
+                Button("設定...") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowSettings"), object: nil)
+                }
+                .keyboardShortcut(",", modifiers: [.command])
+            }
+        }
     }
 }
 
