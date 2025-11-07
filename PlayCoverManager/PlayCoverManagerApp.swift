@@ -88,6 +88,14 @@ struct PlayCoverManagerApp: App {
                 }
                 .keyboardShortcut(",", modifiers: [.command])
             }
+            
+            // Help menu
+            CommandGroup(after: .help) {
+                Button("キーボードショートカット") {
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowShortcutGuide"), object: nil)
+                }
+                .keyboardShortcut("/", modifiers: [.command])
+            }
         }
     }
 }

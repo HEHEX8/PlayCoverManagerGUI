@@ -26,6 +26,7 @@ struct QuickLauncherView: View {
     @State private var focusedAppIndex: Int?  // For keyboard navigation
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     @State private var eventMonitor: Any?  // For monitoring keyboard events
+    @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -505,6 +506,9 @@ struct QuickLauncherView: View {
     .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UnmountAll"))) { _ in
         viewModel.unmountAll(applyToPlayCoverContainer: true)
     }
+    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowShortcutGuide"))) { _ in
+        showingShortcutGuide = true
+    }
     .overlay {
         // Left drawer overlay - full screen when open
         if isDrawerOpen {
@@ -532,6 +536,25 @@ struct QuickLauncherView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .zIndex(999)  // Ensure drawer overlay is above all other content
+        }
+        
+        // Keyboard shortcut guide overlay
+        if showingShortcutGuide {
+            ZStack {
+                // Background overlay - tap to close
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showingShortcutGuide = false
+                        }
+                    }
+                
+                KeyboardShortcutGuide(isShowing: $showingShortcutGuide)
+                    .transition(.scale.combined(with: .opacity))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(1000)  // Above drawer
         }
     }
     }
@@ -2190,5 +2213,133 @@ private struct DrawerMenuItem: View {
                 isHovered = hovering
             }
         }
+    }
+}
+
+// MARK: - Keyboard Shortcut Guide
+private struct KeyboardShortcutGuide: View {
+    @Binding var isShowing: Bool
+    
+    struct ShortcutItem {
+        let keys: String
+        let description: String
+        let category: String
+    }
+    
+    let shortcuts: [ShortcutItem] = [
+        // Global commands
+        ShortcutItem(keys: "⌘,", description: "設定を開く", category: "グローバル"),
+        ShortcutItem(keys: "⌘I", description: "IPA をインストール", category: "グローバル"),
+        ShortcutItem(keys: "⌘D", description: "アプリをアンインストール", category: "グローバル"),
+        ShortcutItem(keys: "⌘M", description: "メニューを開く/閉じる", category: "グローバル"),
+        ShortcutItem(keys: "⌘R", description: "アプリ一覧を更新", category: "グローバル"),
+        ShortcutItem(keys: "⌘⇧U", description: "すべてアンマウント", category: "グローバル"),
+        ShortcutItem(keys: "⌘⇧P", description: "PlayCover.app を開く", category: "グローバル"),
+        ShortcutItem(keys: "⌘/", description: "このヘルプを表示", category: "グローバル"),
+        
+        // Navigation
+        ShortcutItem(keys: "↑↓←→", description: "アプリ間を移動", category: "ナビゲーション"),
+        ShortcutItem(keys: "Enter / Space", description: "フォーカスされたアプリを起動", category: "ナビゲーション"),
+        ShortcutItem(keys: "Escape", description: "フォーカスをクリア", category: "ナビゲーション"),
+    ]
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Image(systemName: "keyboard")
+                    .font(.system(size: 24))
+                    .foregroundStyle(.blue)
+                
+                Text("キーボードショートカット")
+                    .font(.title2.bold())
+                
+                Spacer()
+                
+                Button {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isShowing = false
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("閉じる (Esc)")
+            }
+            .padding(24)
+            .background(.ultraThinMaterial)
+            
+            Divider()
+            
+            // Shortcuts list
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(["グローバル", "ナビゲーション"], id: \.self) { category in
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(category)
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 24)
+                                .padding(.top, 16)
+                            
+                            VStack(spacing: 0) {
+                                ForEach(shortcuts.filter { $0.category == category }, id: \.keys) { shortcut in
+                                    HStack(spacing: 16) {
+                                        // Key combination
+                                        Text(shortcut.keys)
+                                            .font(.system(.body, design: .monospaced).weight(.semibold))
+                                            .foregroundStyle(.primary)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+                                            .frame(minWidth: 100, alignment: .leading)
+                                        
+                                        // Description
+                                        Text(shortcut.description)
+                                            .font(.body)
+                                            .foregroundStyle(.primary)
+                                        
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 24)
+                                    .padding(.vertical, 10)
+                                    .background(Color.clear)
+                                    .contentShape(Rectangle())
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 12)
+            }
+            
+            Divider()
+            
+            // Footer
+            HStack {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(.secondary)
+                Text("Escキーまたは背景をクリックして閉じる")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                Button("閉じる") {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        isShowing = false
+                    }
+                }
+                .keyboardShortcut(.cancelAction)
+            }
+            .padding(16)
+            .background(.ultraThinMaterial)
+        }
+        .frame(width: 600, height: 500)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
     }
 }
