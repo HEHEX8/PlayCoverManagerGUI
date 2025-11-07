@@ -127,21 +127,11 @@ private struct StorageChangeConfirmationView: View {
                     .tint(selectedButton == 1 ? .blue : .gray)
                     .keyboardShortcut(.defaultAction)
             }
-            
-            // Keyboard hint
-            HStack(spacing: 16) {
-                Text("←→: 選択")
-                Text("Enter: 実行")
-                Text("Esc: キャンセル")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
         }
         .padding(32)
         .frame(minWidth: 500)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
-        .focusable()
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
@@ -214,21 +204,11 @@ private struct UnmountConfirmationView: View {
                     .tint(selectedButton == 1 ? .blue : .gray)
                     .keyboardShortcut(.defaultAction)
             }
-            
-            // Keyboard hint
-            HStack(spacing: 16) {
-                Text("←→: 選択")
-                Text("Enter: 実行")
-                Text("Esc: キャンセル")
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
         }
         .padding(32)
         .frame(minWidth: 500)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
-        .focusable()
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
@@ -331,27 +311,14 @@ private struct UnmountEjectConfirmationView: View {
                 .keyboardShortcut(.defaultAction)
             }
             
-            VStack(spacing: 4) {
-                Text("「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                
-                // Keyboard hint
-                HStack(spacing: 16) {
-                    Text("←→: 選択")
-                    Text("Enter: 実行")
-                    Text("Esc: キャンセル")
-                }
+            Text("「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します")
                 .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.top, 4)
-            }
+                .foregroundStyle(.tertiary)
         }
         .padding(32)
         .frame(minWidth: 500)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
-        .focusable()
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
