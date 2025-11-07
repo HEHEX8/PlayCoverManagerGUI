@@ -87,7 +87,14 @@ brew install --cask playcover-manager
 ```bash
 git clone https://github.com/HEHEX8/PlayCoverManagerGUI.git
 cd PlayCoverManagerGUI
+
+# アプリをビルド
 ./scripts/build_release_unsigned.sh
+
+# DMGを作成（オプション）
+# 注意: npm と appdmg が必要
+# インストール: brew install node && npm install -g appdmg
+./scripts/create_dmg.sh
 ```
 
 **要件**: macOS Sequoia 15.6+、Xcode 26.0+

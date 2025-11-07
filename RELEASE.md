@@ -47,16 +47,35 @@ ls -lh build/Release/PlayCoverManager.app
 
 ### 4. DMG の作成
 
+#### 前提条件
+
+appdmg ツールが必要です：
+
 ```bash
-# DMGを作成
+# Node.js をインストール（未インストールの場合）
+brew install node
+
+# appdmg をグローバルにインストール
+npm install -g appdmg
+```
+
+#### DMG 作成
+
+```bash
+# DMGを作成（appdmgを使用）
 ./scripts/create_dmg.sh
 
 # DMG が作成されたことを確認
-ls -lh build/PlayCoverManager.dmg
+ls -lh build/PlayCoverManager-*.dmg
 
 # SHA256ハッシュを取得（Homebrew Caskで使用）
-shasum -a 256 build/PlayCoverManager.dmg
+shasum -a 256 build/PlayCoverManager-*.dmg
 ```
+
+**注意**: 
+- スクリプトは自動的にバージョン番号を Info.plist から取得します
+- 出力ファイル名: `PlayCoverManager-{VERSION}.dmg`
+- 背景画像は オプション（なくても動作します）
 
 ### 5. GitHub Release の作成
 
@@ -209,11 +228,42 @@ xcodebuild clean -project PlayCoverManager.xcodeproj -scheme PlayCoverManager -c
 
 ### DMG 作成が失敗する
 
+#### appdmg がインストールされていない
+
 ```bash
-# 既存のマウントを解除
-hdiutil detach /Volumes/PlayCover\ Manager -force
+# Node.js をインストール
+brew install node
+
+# appdmg をインストール
+npm install -g appdmg
+
 # 再実行
 ./scripts/create_dmg.sh
+```
+
+#### appdmg でエラーが発生する
+
+```bash
+# appdmg を再インストール
+npm uninstall -g appdmg
+npm cache clean --force
+npm install -g appdmg
+
+# 一時ファイルを削除
+rm -f appdmg-config.json
+
+# 再実行
+./scripts/create_dmg.sh
+```
+
+#### アイコンが見つからないエラー
+
+```bash
+# アイコンファイルの存在を確認
+ls -la PlayCoverManager/Assets.xcassets/AppIcon.appiconset/icon_512x512.png
+
+# なければ、Xcodeでアセットカタログを確認
+open PlayCoverManager.xcodeproj
 ```
 
 ### GitHub Actions で自動化（将来）

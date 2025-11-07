@@ -1,103 +1,138 @@
 #!/bin/bash
-
-# PlayCover Manager DMG作成スクリプト
-# このスクリプトは.appをDMGファイルにパッケージングします
+#######################################################
+# PlayCover Manager GUI - DMG作成スクリプト
+# appdmgツールを使用した確実なDMG作成
+#######################################################
 
 set -e
 
-# カラー出力
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}PlayCover Manager DMG作成${NC}"
-echo -e "${GREEN}========================================${NC}"
-
-# 変数設定
 APP_NAME="PlayCoverManager"
-APP_PATH="build/Release/${APP_NAME}.app"
-DMG_NAME="${APP_NAME}"
-OUTPUT_DIR="build"
-TEMP_DMG="${OUTPUT_DIR}/${DMG_NAME}_temp.dmg"
-FINAL_DMG="${OUTPUT_DIR}/${DMG_NAME}.dmg"
-VOLUME_NAME="PlayCover Manager"
-BACKGROUND_COLOR="#2C2C2E"
 
-# .appファイルの存在確認
-if [ ! -d "$APP_PATH" ]; then
-    echo -e "${RED}エラー: ${APP_PATH} が見つかりません${NC}"
-    echo -e "${YELLOW}先に build_release_unsigned.sh を実行してください${NC}"
-    exit 1
+# バージョン情報を取得（Info.plistから）
+if [ -f "PlayCoverManager/Info.plist" ]; then
+    APP_VERSION=$(defaults read "${PWD}/PlayCoverManager/Info.plist" CFBundleShortVersionString 2>/dev/null || echo "1.0.0")
+else
+    APP_VERSION="1.0.0"
 fi
 
-echo -e "${YELLOW}[1/5] 既存のDMGを削除中...${NC}"
-rm -f "$TEMP_DMG" "$FINAL_DMG"
+SOURCE_APP="build/Release/${APP_NAME}.app"
+DMG_NAME="PlayCoverManager-${APP_VERSION}.dmg"
+CONFIG_JSON="appdmg-config.json"
 
-echo -e "${YELLOW}[2/5] 一時DMGを作成中...${NC}"
-# 100MBのDMGを作成（.appのサイズに応じて調整）
-hdiutil create -size 100m -fs HFS+ -volname "$VOLUME_NAME" "$TEMP_DMG"
-
-echo -e "${YELLOW}[3/5] DMGをマウント中...${NC}"
-MOUNT_DIR=$(hdiutil attach -readwrite -noverify -noautoopen "$TEMP_DMG" | grep "/Volumes/${VOLUME_NAME}" | awk '{print $3}')
-
-if [ -z "$MOUNT_DIR" ]; then
-    echo -e "${RED}エラー: DMGのマウントに失敗しました${NC}"
-    exit 1
-fi
-
-echo -e "${YELLOW}[4/5] アプリをコピー中...${NC}"
-# .appをDMGにコピー
-cp -R "$APP_PATH" "$MOUNT_DIR/"
-
-# アプリケーションフォルダへのシンボリックリンクを作成
-ln -s /Applications "$MOUNT_DIR/Applications"
-
-# .DS_Storeを設定（Finderで開いたときの見た目を調整）
-cat > "$MOUNT_DIR/.DS_Store" << 'DSSTORE'
-# カスタムFinderビュー設定はバイナリ形式のため、
-# 代わりにapplescriptで設定することを推奨
-DSSTORE
-
-# Finderウィンドウの設定（applescript）
-osascript << EOS
-tell application "Finder"
-    tell disk "$VOLUME_NAME"
-        open
-        set current view of container window to icon view
-        set toolbar visible of container window to false
-        set statusbar visible of container window to false
-        set the bounds of container window to {100, 100, 600, 400}
-        set viewOptions to the icon view options of container window
-        set arrangement of viewOptions to not arranged
-        set icon size of viewOptions to 128
-        set background color of viewOptions to {11520, 11520, 11776}
-        set position of item "${APP_NAME}.app" of container window to {120, 160}
-        set position of item "Applications" of container window to {380, 160}
-        update without registering applications
-        delay 1
-    end tell
-end tell
-EOS
-
-echo -e "${YELLOW}[5/5] DMGをアンマウントして圧縮中...${NC}"
-# 同期してアンマウント
-sync
-hdiutil detach "$MOUNT_DIR"
-
-# 最終的な圧縮DMGを作成
-hdiutil convert "$TEMP_DMG" -format UDZO -o "$FINAL_DMG"
-
-# 一時ファイルを削除
-rm -f "$TEMP_DMG"
-
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}✅ DMG作成完了！${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo -e "出力: ${FINAL_DMG}"
+echo "🚀 appdmgでDMGを作成中..."
 echo ""
-echo -e "${YELLOW}次のステップ:${NC}"
-echo "1. DMGをテストインストール"
-echo "2. GitHub Releasesにアップロード"
-echo "3. SHA256ハッシュを取得: shasum -a 256 ${FINAL_DMG}"
+
+# アプリの存在確認
+if [ ! -d "$SOURCE_APP" ]; then
+    echo "❌ アプリが見つかりません: $SOURCE_APP"
+    echo "   先に ./scripts/build_release_unsigned.sh を実行してください"
+    exit 1
+fi
+
+# appdmgツールがインストールされているか確認
+if ! command -v appdmg &> /dev/null; then
+    echo "📦 appdmgツールをインストール中..."
+    if command -v npm &> /dev/null; then
+        npm install -g appdmg
+    else
+        echo "❌ npmが必要です"
+        echo ""
+        echo "インストール方法:"
+        echo "  brew install node"
+        echo "  npm install -g appdmg"
+        exit 1
+    fi
+fi
+
+# appdmg設定ファイルを生成
+echo "📝 appdmg設定ファイルを生成中..."
+cat > "$CONFIG_JSON" << EOF
+{
+  "title": "PlayCover Manager ${APP_VERSION}",
+  "icon": "PlayCoverManager/Assets.xcassets/AppIcon.appiconset/icon_512x512.png",
+  "background": "dmg-background.png",
+  "icon-size": 128,
+  "window": {
+    "size": {
+      "width": 600,
+      "height": 400
+    },
+    "position": {
+      "x": 200,
+      "y": 120
+    }
+  },
+  "contents": [
+    {
+      "x": 150,
+      "y": 200,
+      "type": "file",
+      "path": "${SOURCE_APP}"
+    },
+    {
+      "x": 450,
+      "y": 200,
+      "type": "link",
+      "path": "/Applications"
+    }
+  ]
+}
+EOF
+
+# 背景画像の確認（オプション）
+if [ ! -f "dmg-background.png" ]; then
+    echo "⚠️  背景画像が見つかりません: dmg-background.png"
+    echo "   背景なしでDMGを作成します"
+    echo ""
+    # 背景なしの設定に変更
+    sed -i '' '/"background":/d' "$CONFIG_JSON"
+fi
+
+# 以前のDMGを削除
+rm -f "build/${DMG_NAME}"
+
+# appdmgでDMGを作成
+echo "📦 DMGを作成中..."
+echo ""
+echo "📐 設定:"
+echo "   バージョン: ${APP_VERSION}"
+echo "   ウィンドウサイズ: 600x400"
+echo "   アイコンサイズ: 128x128"
+echo "   左アイコン位置: (150, 200)"
+echo "   右アイコン位置: (450, 200)"
+echo ""
+
+appdmg "$CONFIG_JSON" "build/${DMG_NAME}"
+
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "✅ DMGの作成に成功しました！"
+    echo ""
+    ls -lh "build/${DMG_NAME}"
+    echo ""
+    echo "🎉 配布用DMGが準備できました！"
+    echo ""
+    echo "📦 次のステップ:"
+    echo "   1. DMGをテスト: open 'build/${DMG_NAME}'"
+    echo "   2. SHA256ハッシュを取得: shasum -a 256 'build/${DMG_NAME}'"
+    echo "   3. GitHub Releasesにアップロード"
+    echo ""
+    echo "✨ 特徴:"
+    echo "   - 確実に動作するappdmg方式"
+    echo "   - JSON設定で簡単カスタマイズ"
+    echo "   - 正確なアイコン配置"
+    
+    # 設定ファイルをクリーンアップ
+    rm -f "$CONFIG_JSON"
+else
+    echo ""
+    echo "❌ DMGの作成に失敗しました"
+    echo ""
+    echo "🔍 トラブルシューティング:"
+    echo "   1. appdmg-config.jsonの内容を確認"
+    echo "   2. アプリのパスが正しいか確認"
+    echo "   3. 背景画像のパスが正しいか確認（オプション）"
+    echo "   4. appdmgを再インストール: npm install -g appdmg"
+    rm -f "$CONFIG_JSON"
+    exit 1
+fi

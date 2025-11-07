@@ -11,6 +11,10 @@ build/
 *.dSYM.zip
 *.dSYM/
 
+# appdmg temporary files
+appdmg-config.json
+dmg-background.png
+
 # Xcode
 DerivedData/
 *.xcodeproj/xcuserdata/
