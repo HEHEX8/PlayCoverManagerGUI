@@ -2,6 +2,11 @@ import SwiftUI
 import AppKit
 import Observation
 
+// Make String Identifiable for .sheet(item:) usage
+extension String: Identifiable {
+    public var id: String { self }
+}
+
 struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
@@ -9,7 +14,6 @@ struct QuickLauncherView: View {
     @State private var hasPerformedInitialAnimation = false
     @State private var showingSettings = false
     @State private var showingInstaller = false
-    @State private var showingUninstaller = false
     @State private var selectedAppForUninstall: String? = nil
     @State private var isDrawerOpen = false
     
@@ -170,7 +174,6 @@ struct QuickLauncherView: View {
                                 } uninstallAction: {
                                     // Uninstall action - open uninstaller with pre-selected app
                                     selectedAppForUninstall = app.bundleIdentifier
-                                    showingUninstaller = true
                                 }
                             }
                         }
@@ -199,11 +202,8 @@ struct QuickLauncherView: View {
     .sheet(isPresented: $showingInstaller) {
         IPAInstallerSheet()
     }
-    .sheet(isPresented: $showingUninstaller) {
-        AppUninstallerSheet(preSelectedBundleID: selectedAppForUninstall)
-            .onDisappear {
-                selectedAppForUninstall = nil
-            }
+    .sheet(item: $selectedAppForUninstall) { bundleID in
+        AppUninstallerSheet(preSelectedBundleID: bundleID)
     }
     .frame(minWidth: 960, minHeight: 640)
     .overlay(alignment: .center) {
