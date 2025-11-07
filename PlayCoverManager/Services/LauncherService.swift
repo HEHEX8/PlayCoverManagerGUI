@@ -85,16 +85,25 @@ final class LauncherService {
         
         // Try to find localized strings for current language
         // Check .lproj directories inside the app bundle
-        let languageCode = String(primaryLanguage.prefix(2)) // "ja" from "ja-JP"
         
-        // Try language-specific lproj (e.g., ja.lproj)
-        if let localizedName = getLocalizedName(from: url, languageCode: languageCode) {
-            return localizedName
+        // Try full language code first (e.g., zh-Hans.lproj)
+        if primaryLanguage != "en" {
+            if let localizedName = getLocalizedName(from: url, languageCode: primaryLanguage) {
+                return localizedName
+            }
+            
+            // If not found, try base language code (e.g., zh.lproj)
+            let baseLanguageCode = String(primaryLanguage.prefix(2))
+            if baseLanguageCode != primaryLanguage {
+                if let localizedName = getLocalizedName(from: url, languageCode: baseLanguageCode) {
+                    return localizedName
+                }
+            }
         }
         
         // CRITICAL: Fallback to English if current language not found
         // This ensures we show English names instead of potentially Japanese Info.plist defaults
-        if languageCode != "en" {
+        if primaryLanguage != "en" {
             if let englishName = getLocalizedName(from: url, languageCode: "en") {
                 return englishName
             }

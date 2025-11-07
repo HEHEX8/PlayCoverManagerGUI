@@ -106,7 +106,6 @@ class IPAInstallerService {
         // Get app's configured language (respects user's language setting in app)
         let appLanguages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? []
         let primaryLanguage = appLanguages.first ?? Locale.preferredLanguages.first ?? "en"
-        let systemLanguage = primaryLanguage.split(separator: "-").first.map(String.init) ?? "en"
         
         // Extract Info.plist and localized strings using wildcards (FAST - no listing needed)
         // Use wildcards to extract: Payload/*.app/Info.plist, en.lproj (fallback), system language .lproj, and app icon
@@ -116,8 +115,16 @@ class IPAInstallerService {
             "Payload/*.app/AppIcon60x60@2x.png",  // Most common iOS app icon
             "Payload/*.app/AppIcon76x76@2x~ipad.png"  // iPad icon
         ]
-        if systemLanguage != "en" {
-            extractPatterns.append("Payload/*.app/\(systemLanguage).lproj/InfoPlist.strings")
+        
+        // Add patterns for configured language (try both full code and base code)
+        if primaryLanguage != "en" {
+            // Try full language code first (e.g., zh-Hans)
+            extractPatterns.append("Payload/*.app/\(primaryLanguage).lproj/InfoPlist.strings")
+            // Also try base code (e.g., zh)
+            let baseLanguageCode = String(primaryLanguage.prefix(2))
+            if baseLanguageCode != primaryLanguage {
+                extractPatterns.append("Payload/*.app/\(baseLanguageCode).lproj/InfoPlist.strings")
+            }
         }
         
         // Extract with wildcards - unzip handles pattern matching internally (much faster)
@@ -172,18 +179,30 @@ class IPAInstallerService {
         // Try to extract localized app name for configured language
         var appName = ""
         
-        // Try configured language first
-        if !systemLanguage.isEmpty {
-            let langStringsURL = appURL.appendingPathComponent("\(systemLanguage).lproj/InfoPlist.strings")
+        // Try configured language first (try both full code and base code)
+        if primaryLanguage != "en" {
+            // Try full language code first (e.g., zh-Hans.lproj)
+            var langStringsURL = appURL.appendingPathComponent("\(primaryLanguage).lproj/InfoPlist.strings")
             if FileManager.default.fileExists(atPath: langStringsURL.path),
                let stringsData = try? Data(contentsOf: langStringsURL),
                let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
                 appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
             }
+            
+            // If not found, try base language code (e.g., zh.lproj)
+            if appName.isEmpty {
+                let baseLanguageCode = String(primaryLanguage.prefix(2))
+                langStringsURL = appURL.appendingPathComponent("\(baseLanguageCode).lproj/InfoPlist.strings")
+                if FileManager.default.fileExists(atPath: langStringsURL.path),
+                   let stringsData = try? Data(contentsOf: langStringsURL),
+                   let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                    appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
+                }
+            }
         }
         
         // Middle fallback to English if configured language not found
-        if appName.isEmpty && systemLanguage != "en" {
+        if appName.isEmpty && primaryLanguage != "en" {
             appName = appNameEnglish
         }
         

@@ -92,18 +92,33 @@ class AppUninstallerService {
                 // Get app's configured language (respects user's language setting in app)
                 let appLanguages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? []
                 let primaryLang = appLanguages.first ?? Locale.preferredLanguages.first ?? "en"
-                let systemLang = String(primaryLang.prefix(2))
-                let langLproj = appURL.appendingPathComponent("\(systemLang).lproj/InfoPlist.strings")
                 
-                if FileManager.default.fileExists(atPath: langLproj.path) {
-                    if let stringsData = try? Data(contentsOf: langLproj),
-                       let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
-                        appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
+                // Try configured language (try both full code and base code)
+                if primaryLang != "en" {
+                    // Try full language code first (e.g., zh-Hans.lproj)
+                    var langLproj = appURL.appendingPathComponent("\(primaryLang).lproj/InfoPlist.strings")
+                    if FileManager.default.fileExists(atPath: langLproj.path) {
+                        if let stringsData = try? Data(contentsOf: langLproj),
+                           let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                            appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
+                        }
+                    }
+                    
+                    // If not found, try base language code (e.g., zh.lproj)
+                    if appName.isEmpty {
+                        let baseLang = String(primaryLang.prefix(2))
+                        langLproj = appURL.appendingPathComponent("\(baseLang).lproj/InfoPlist.strings")
+                        if FileManager.default.fileExists(atPath: langLproj.path) {
+                            if let stringsData = try? Data(contentsOf: langLproj),
+                               let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                                appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
+                            }
+                        }
                     }
                 }
                 
-                // Fallback to English if system language not found
-                if appName.isEmpty && systemLang != "en" {
+                // Fallback to English if configured language not found
+                if appName.isEmpty && primaryLang != "en" {
                     let enLproj = appURL.appendingPathComponent("en.lproj/InfoPlist.strings")
                     if FileManager.default.fileExists(atPath: enLproj.path) {
                         if let stringsData = try? Data(contentsOf: enLproj),
