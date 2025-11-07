@@ -42,13 +42,19 @@ struct QuickLauncherView: View {
     
     // Keyboard navigation handler
     private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
+        print("🎹 Key pressed: \(keyPress.key), searchFocused: \(isSearchFieldFocused), focusedApp: \(focusedAppIndex ?? -1)")
+        
         // Don't handle keyboard if search field is focused
         if isSearchFieldFocused {
+            print("🔍 Search field is focused, ignoring key")
             return .ignored
         }
         
         let apps = viewModel.filteredApps
-        guard !apps.isEmpty else { return .ignored }
+        guard !apps.isEmpty else { 
+            print("📭 No apps available")
+            return .ignored 
+        }
         
         // Handle Escape key
         if keyPress.key == .escape {
@@ -67,9 +73,11 @@ struct QuickLauncherView: View {
         if focusedAppIndex == nil {
             if keyPress.key == .downArrow || keyPress.key == .upArrow || 
                keyPress.key == .leftArrow || keyPress.key == .rightArrow {
+                print("⬆️ Arrow key pressed, focusing first app")
                 focusedAppIndex = 0
                 return .handled
             }
+            print("❓ No app focused and not an arrow key")
         }
         
         guard let currentIndex = focusedAppIndex else { return .ignored }
@@ -84,6 +92,7 @@ struct QuickLauncherView: View {
             
         case .rightArrow:
             // Move focus right
+            print("➡️ Right arrow: \(currentIndex) -> \(currentIndex + 1)")
             if currentIndex < apps.count - 1 {
                 focusedAppIndex = currentIndex + 1
             }
@@ -91,6 +100,7 @@ struct QuickLauncherView: View {
             
         case .leftArrow:
             // Move focus left
+            print("⬅️ Left arrow: \(currentIndex) -> \(currentIndex - 1)")
             if currentIndex > 0 {
                 focusedAppIndex = currentIndex - 1
             }
@@ -99,6 +109,7 @@ struct QuickLauncherView: View {
         case .downArrow:
             // Move focus down (next row)
             let nextIndex = currentIndex + columnsPerRow
+            print("⬇️ Down arrow: \(currentIndex) -> \(nextIndex)")
             if nextIndex < apps.count {
                 focusedAppIndex = nextIndex
             }
@@ -107,6 +118,7 @@ struct QuickLauncherView: View {
         case .upArrow:
             // Move focus up (previous row)
             let prevIndex = currentIndex - columnsPerRow
+            print("⬆️ Up arrow: \(currentIndex) -> \(prevIndex)")
             if prevIndex >= 0 {
                 focusedAppIndex = prevIndex
             }
@@ -358,7 +370,7 @@ struct QuickLauncherView: View {
     }
     .frame(minWidth: 960, minHeight: 640)
     .onKeyPress { keyPress in
-        handleKeyPress(keyPress)
+        return handleKeyPress(keyPress)
     }
     .overlay(alignment: .center) {
         // Unmount flow overlay (confirmation, progress, result, error)
