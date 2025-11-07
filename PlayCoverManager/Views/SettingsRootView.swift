@@ -795,11 +795,6 @@ struct AppUninstallerSheet: View {
         .frame(width: 700, height: 600)
         .task {
             await loadApps()
-            // If preSelectedBundleID is set, go directly to confirmation phase
-            if let bundleID = preSelectedBundleID, apps.contains(where: { $0.bundleID == bundleID }) {
-                selectedApps = [bundleID]
-                currentPhase = .confirmingSingle
-            }
         }
         .alert("アンインストール確認", isPresented: $showUninstallConfirmation) {
             Button("キャンセル", role: .cancel) { }
@@ -1254,8 +1249,14 @@ struct AppUninstallerSheet: View {
             totalSize = 0
         }
         
-        // Always transition to selection phase after loading
-        currentPhase = .selection
+        // If preSelectedBundleID is set and exists in loaded apps, go to confirmingSingle
+        // Otherwise, transition to selection phase
+        if let bundleID = preSelectedBundleID, apps.contains(where: { $0.bundleID == bundleID }) {
+            selectedApps = [bundleID]
+            currentPhase = .confirmingSingle
+        } else {
+            currentPhase = .selection
+        }
     }
     
     private func startUninstallation() async {
