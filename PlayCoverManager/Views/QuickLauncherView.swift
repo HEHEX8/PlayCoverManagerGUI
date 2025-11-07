@@ -93,10 +93,11 @@ struct QuickLauncherView: View {
                         help: "アプリ一覧を更新 (⌘R)",
                         rotation: refreshRotation
                     ) {
-                        // Trigger smooth rotation animation
-                        // Single rotation with spring physics for natural feel
-                        withAnimation(.interpolatingSpring(stiffness: 40, damping: 7)) {
-                            refreshRotation += 360  // Single smooth rotation
+                        // Trigger sharp rotation animation - snappy engine rev! 🏎️
+                        // Higher stiffness = sharper acceleration (more responsive)
+                        // Lower damping = more aggressive snap with slight overshoot
+                        withAnimation(.interpolatingSpring(stiffness: 120, damping: 12)) {
+                            refreshRotation += 360  // Single sharp rotation
                         }
                         Task { await viewModel.refresh() }
                     }
