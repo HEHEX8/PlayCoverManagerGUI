@@ -35,6 +35,7 @@ struct SettingsRootView: View {
                     dismiss()
                 }
                 .keyboardShortcut(.escape, modifiers: [])
+                .help("設定を閉じる (Esc)")
             }
         }
     }
