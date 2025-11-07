@@ -1335,33 +1335,33 @@ private struct RecentAppLaunchButton: View {
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
         oldIconRotation = 0.0  // Reset rotation
         
-        // New icon starts from drawer position (bottom-left, approximation)
-        // In reality, drawer is to the left and below, so we start there
-        iconOffsetY = 350  // Below current position (drawer is at bottom)
-        iconOffsetX = -600  // To the left (drawer is on left side)
-        iconScale = 0.5  // Starts small (far away effect)
+        // New icon starts from grid area (center-bottom, where app grid is)
+        // This simulates the icon lifting off from the grid
+        iconOffsetY = 200  // Below current position (grid area)
+        iconOffsetX = 0  // Center aligned
+        iconScale = 0.6  // Starts smaller (lifting off effect)
         
         // Text stays visible (shows OLD title during animation)
         textOpacity = 1.0
         
-        // Phase 1: Lift off from drawer with rotation
+        // Phase 1: Lift off from grid with gentle float
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            withAnimation(.easeOut(duration: 0.2)) {
-                iconOffsetY = 300  // Lift up a bit
-                iconScale = 0.7  // Get slightly bigger
+            withAnimation(.easeOut(duration: 0.25)) {
+                iconOffsetY = 150  // Lift up smoothly
+                iconScale = 0.75  // Get slightly bigger as it approaches
             }
         }
         
-        // Phase 2: Fly towards target with speed increase
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            withAnimation(.easeIn(duration: 0.35)) {
+        // Phase 2: Accelerate towards target
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.easeIn(duration: 0.3)) {
                 iconOffsetY = 0  // Arrive at target position
                 iconOffsetX = 0
                 iconScale = 1.3  // Overshoot scale for impact
             }
             
             // CRASH! Both icons react
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 // Impact effect - new icon squashes
                 withAnimation(.easeOut(duration: 0.08)) {
                     iconScale = 0.9
