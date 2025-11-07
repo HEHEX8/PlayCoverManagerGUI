@@ -22,7 +22,6 @@ struct QuickLauncherView: View {
     @State private var showingUninstaller = false  // For general uninstall (from drawer)
     @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
-    @State private var previousUnmountFlowState: LauncherViewModel.UnmountFlowState = .idle
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -309,24 +308,6 @@ struct QuickLauncherView: View {
     }
     .onChange(of: showingUninstaller) { oldValue, newValue in
         print("[QuickLauncher] showingUninstaller changed: \(oldValue) -> \(newValue)")
-    }
-    .onChange(of: viewModel.unmountFlowState) { oldValue, newValue in
-        print("[QuickLauncher] unmountFlowState changed: \(oldValue) -> \(newValue)")
-        
-        // Handle storage change flow completion
-        // When unmount completes successfully during storage change, trigger wizard
-        if case .storageChangeConfirming = previousUnmountFlowState,
-           case .success = newValue {
-            // User completed unmount for storage change
-            // Dismiss success overlay and show storage wizard
-            print("[QuickLauncher] Storage change unmount completed, showing wizard after delay")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                viewModel.unmountFlowState = .idle
-                appViewModel.completeStorageLocationChange()
-            }
-        }
-        
-        previousUnmountFlowState = newValue
     }
     .overlay {
         // Left drawer overlay - full screen when open
