@@ -23,7 +23,7 @@ struct QuickLauncherView: View {
     @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
     @State private var refreshRotation: Double = 0  // For refresh button rotation animation
-    @FocusState private var focusedAppIndex: Int?  // For keyboard navigation
+    @State private var focusedAppIndex: Int?  // For keyboard navigation
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     
