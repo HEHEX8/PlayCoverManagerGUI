@@ -35,7 +35,7 @@ struct AppRootView: View {
             case .error(let error):
                 ErrorView(error: error,
                           onRetry: { appViewModel.retry() },
-                          onChangeSettings: { appViewModel.changeStorageSettings() })
+                          onChangeSettings: { appViewModel.requestStorageLocationChange() })
             case .terminating:
                 ProgressView("終了しています…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -51,13 +51,33 @@ struct CheckingView: View {
     let retry: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-            Text(status)
-            Button("再試行", action: retry)
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 32) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                
+                Text(status)
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                
+                Button {
+                    retry()
+                } label: {
+                    Label("再試行", systemImage: "arrow.clockwise")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
+            }
+            .padding(40)
+            .frame(maxWidth: 500)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
         }
-        .padding()
     }
 }
 
@@ -67,48 +87,109 @@ struct ErrorView: View {
     let onChangeSettings: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: iconName)
-                .font(.system(size: 48, weight: .medium))
-                .foregroundStyle(iconColor)
-            Text(error.title)
-                .font(.title2)
-            Text(error.message)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 500)
-            HStack(spacing: 12) {
-                if error.category == .permissionDenied {
-                    Button("システム設定を開く") {
-                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
-                            NSWorkspace.shared.open(url)
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 32) {
+                // Icon
+                Image(systemName: iconName)
+                    .font(.system(size: 80))
+                    .foregroundStyle(iconColor)
+                
+                // Title and message
+                VStack(spacing: 16) {
+                    Text(error.title)
+                        .font(.title.bold())
+                        .multilineTextAlignment(.center)
+                    
+                    Text(error.message)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 450)
+                }
+                
+                Divider()
+                    .frame(maxWidth: 400)
+                
+                // Action buttons
+                VStack(spacing: 12) {
+                    if error.category == .permissionDenied {
+                        Button {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            Label("システム設定を開く", systemImage: "gear")
+                                .font(.system(size: 15, weight: .medium))
+                                .frame(minWidth: 200)
                         }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .keyboardShortcut("s", modifiers: [.command])
+                        
+                    } else if error.category == .diskImage {
+                        Button {
+                            onChangeSettings()
+                        } label: {
+                            Label("保存先を変更", systemImage: "folder.badge.gearshape")
+                                .font(.system(size: 15, weight: .medium))
+                                .frame(minWidth: 200)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .keyboardShortcut("s", modifiers: [.command])
+                        
+                    } else if error.requiresAction {
+                        SettingsLink {
+                            Label("設定を開く", systemImage: "gear")
+                                .font(.system(size: 15, weight: .medium))
+                                .frame(minWidth: 200)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                     }
-                    .keyboardShortcut("s", modifiers: [.command])
-                } else if error.category == .diskImage {
-                    // Disk image errors (e.g., drive not connected)
-                    Button("設定を変更") {
-                        onChangeSettings()
-                    }
-                    .keyboardShortcut("s", modifiers: [.command])
-                } else if error.requiresAction {
-                    SettingsLink {
-                        Text("設定を開く")
+                    
+                    HStack(spacing: 12) {
+                        Button {
+                            NSApplication.shared.terminate(nil)
+                        } label: {
+                            Text("終了")
+                                .font(.system(size: 14, weight: .medium))
+                                .frame(minWidth: 80)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        
+                        Button {
+                            onRetry()
+                        } label: {
+                            Label("再試行", systemImage: "arrow.clockwise")
+                                .font(.system(size: 14, weight: .medium))
+                                .frame(minWidth: 100)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .keyboardShortcut(.defaultAction)
                     }
                 }
-                Button("終了") { NSApplication.shared.terminate(nil) }
-                Button("再試行", action: onRetry)
-                    .keyboardShortcut(.defaultAction)
             }
+            .padding(48)
+            .frame(maxWidth: 600)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
         }
-        .padding()
     }
     
     private var iconName: String {
         switch error.category {
         case .permissionDenied:
-            return "lock.shield"
+            return "lock.shield.fill"
+        case .diskImage:
+            return "externaldrive.badge.exclamationmark"
         default:
-            return "exclamationmark.triangle"
+            return "exclamationmark.triangle.fill"
         }
     }
     
@@ -116,6 +197,8 @@ struct ErrorView: View {
         switch error.category {
         case .permissionDenied:
             return .red
+        case .diskImage:
+            return .orange
         default:
             return .orange
         }
