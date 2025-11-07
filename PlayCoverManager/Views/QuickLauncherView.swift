@@ -1377,15 +1377,21 @@ private struct RecentAppLaunchButton: View {
     
     // App switch animation - icon flies from actual grid position and crashes into old one
     private func performAppSwitchAnimation(iconGeometry: GeometryProxy) {
+        // Get this button's icon position in shared coordinate space at animation time
+        let myPosition = iconGeometry.frame(in: .named("mainContent"))
+        
+        // Skip animation if position not ready yet (geometry still calculating)
+        guard myPosition != .zero else {
+            print("⏸️ Skipping animation - icon position not ready yet")
+            return
+        }
+        
         // Reset old icon state (oldIcon already saved in onChange)
         oldIconOffsetX = 0
         oldIconOffsetY = 0
         oldIconScale = 1.0
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
         oldIconRotation = 0.0  // Reset rotation
-        
-        // Get this button's icon position in shared coordinate space at animation time
-        let myPosition = iconGeometry.frame(in: .named("mainContent"))
         
         print("🔍 Animation starting")
         print("📊 Grid icon position: \(gridIconPosition?.debugDescription ?? "nil")")
