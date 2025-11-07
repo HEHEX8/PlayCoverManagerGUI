@@ -20,6 +20,24 @@ struct AppIconPositionKey: PreferenceKey {
     }
 }
 
+// PreferenceKey to track recent button position
+struct RecentButtonPositionKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
+    }
+}
+
+// PreferenceKey to track recent button position
+struct RecentButtonPositionKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
+    }
+}
+
 struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
@@ -271,6 +289,14 @@ struct QuickLauncherView: View {
                                     ) {
                                         // Single tap - launch
                                         viewModel.launch(app: app)
+                                        
+                                        // If this is the recent app, trigger bounce animation on recent button
+                                        if app.lastLaunchedFlag {
+                                            NotificationCenter.default.post(
+                                                name: NSNotification.Name("TriggerRecentAppBounce"),
+                                                object: nil
+                                            )
+                                        }
                                     } rightClickAction: {
                                         // Right click - show detail/settings
                                         selectedAppForDetail = app
@@ -1323,15 +1349,21 @@ private struct RecentAppLaunchButton: View {
         }
         .background(
             GeometryReader { geo in
-                Color.clear.onAppear {
-                    myPosition = geo.frame(in: .global)
-                }
+                Color.clear
+                    .preference(key: RecentButtonPositionKey.self, value: geo.frame(in: .global))
             }
         )
+        .onPreferenceChange(RecentButtonPositionKey.self) { position in
+            myPosition = position
+        }
         .onAppear {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
             displayedTitle = app.displayName
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerRecentAppBounce"))) { _ in
+            // Grid icon was tapped for the recent app, trigger bounce animation
+            performIconBounce()
         }
     }
     
@@ -1366,18 +1398,28 @@ private struct RecentAppLaunchButton: View {
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
         oldIconRotation = 0.0  // Reset rotation
         
-        // Calculate offset from grid icon position to this button's position
-        if let gridPos = gridIconPosition {
-            // Grid icon position relative to this button
-            let deltaX = gridPos.midX - myPosition.midX
-            let deltaY = gridPos.midY - myPosition.midY
+        // Calculate offset to position icon at grid location
+        if let gridPos = gridIconPosition, myPosition != .zero {
+            // The icon ZStack is at (myPosition + icon offset within button)
+            // Icon is 56x56, positioned at left edge of button after 24pt padding + 20pt spacing from left
+            let iconCenterX = myPosition.minX + 24 + 28  // 24 padding + 28 icon center
+            let iconCenterY = myPosition.minY + 16 + 28  // 16 padding + 28 icon center
             
-            // Start from grid icon position
+            // Calculate offset to place icon at grid position
+            let deltaX = gridPos.midX - iconCenterX
+            let deltaY = gridPos.midY - iconCenterY
+            
+            print("🎯 Grid: (\(gridPos.midX), \(gridPos.midY))")
+            print("🎯 Icon center: (\(iconCenterX), \(iconCenterY))")
+            print("🎯 Delta: (\(deltaX), \(deltaY))")
+            
+            // Start icon at grid position
             iconOffsetX = deltaX
             iconOffsetY = deltaY
             iconScale = 0.6  // Starts smaller (far away effect)
         } else {
             // Fallback: start from above if position not available
+            print("⚠️ No grid position available")
             iconOffsetY = -250
             iconOffsetX = 0
             iconScale = 0.6
