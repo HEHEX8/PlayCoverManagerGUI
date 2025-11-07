@@ -1228,6 +1228,7 @@ private struct RecentAppLaunchButton: View {
                     }
                 }
                 .frame(width: 56, height: 56)
+                .zIndex(999)  // Ensure icons render above all other content
                 
                 // App info with modern styling
                 VStack(alignment: .leading, spacing: 6) {
@@ -1277,7 +1278,6 @@ private struct RecentAppLaunchButton: View {
             .brightness(isHovered ? 0.02 : 0)
         }
         .buttonStyle(.plain)
-        .clipped()
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.2)) {
                 isHovered = hovering
