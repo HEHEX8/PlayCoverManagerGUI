@@ -752,13 +752,13 @@ struct AppUninstallerSheet: View {
     @State private var currentPhase: UninstallPhase = .loading
     @State private var totalSize: Int64 = 0
     @State private var statusUpdateTask: Task<Void, Never>?
-    @State private var showUninstallConfirmation = false
     
     let preSelectedBundleID: String?
     
     enum UninstallPhase {
         case loading        // アプリ一覧読み込み中
         case confirmingSingle  // 個別アンインストール確認中
+        case confirmingMultiple  // 複数アンインストール確認中
         case selection      // アプリ選択
         case uninstalling   // アンインストール中
         case results        // 結果表示
@@ -777,8 +777,8 @@ struct AppUninstallerSheet: View {
             switch currentPhase {
             case .loading:
                 loadingView
-            case .confirmingSingle:
-                confirmingSingleView
+            case .confirmingSingle, .confirmingMultiple:
+                confirmingView
             case .selection:
                 selectionView
             case .uninstalling:
@@ -798,21 +798,6 @@ struct AppUninstallerSheet: View {
                 await loadApps()
             }
         }
-        .alert("アンインストール確認", isPresented: $showUninstallConfirmation) {
-            Button("キャンセル", role: .cancel) { }
-            Button("アンインストール", role: .destructive) {
-                Task {
-                    await startUninstallation()
-                }
-            }
-        } message: {
-            let appNames = apps.filter { selectedApps.contains($0.bundleID) }.map { $0.appName }
-            if appNames.count <= 3 {
-                Text("\(appNames.joined(separator: "、")) をアンインストールします。\n\nこの操作は取り消せません。よろしいですか？")
-            } else {
-                Text("\(selectedApps.count) 個のアプリをアンインストールします。\n\nこの操作は取り消せません。よろしいですか？")
-            }
-        }
     }
     
     // MARK: - Loading View
@@ -825,12 +810,13 @@ struct AppUninstallerSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    // MARK: - Confirming Single App View
-    private var confirmingSingleView: some View {
+    // MARK: - Confirming View (Single or Multiple)
+    private var confirmingView: some View {
         VStack(spacing: 24) {
-            // Get the app info
-            if let bundleID = selectedApps.first,
-               let app = apps.first(where: { $0.bundleID == bundleID }) {
+            let selectedAppInfos = apps.filter { selectedApps.contains($0.bundleID) }
+            
+            if selectedAppInfos.count == 1, let app = selectedAppInfos.first {
+                // Single app confirmation
                 
                 // App icon and info
                 VStack(spacing: 16) {
@@ -894,6 +880,86 @@ struct AppUninstallerSheet: View {
                             .fontWeight(.semibold)
                         Spacer()
                         Text(ByteCountFormatter.string(fromByteCount: app.appSize + app.diskImageSize, countStyle: .file))
+                            .fontWeight(.semibold)
+                    }
+                }
+                .font(.callout)
+                .padding()
+                .background(Color(nsColor: .controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                
+            } else if selectedAppInfos.count > 1 {
+                // Multiple apps confirmation
+                VStack(spacing: 16) {
+                    // App icons grid (max 6 icons)
+                    let displayApps = Array(selectedAppInfos.prefix(6))
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: 12) {
+                        ForEach(displayApps, id: \.bundleID) { app in
+                            VStack(spacing: 4) {
+                                if let icon = app.icon {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(RoundedRectangle(cornerRadius: 13))
+                                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                }
+                                Text(app.appName)
+                                    .font(.caption2)
+                                    .lineLimit(1)
+                                    .truncationMode(.middle)
+                            }
+                        }
+                    }
+                    
+                    if selectedAppInfos.count > 6 {
+                        Text("+\(selectedAppInfos.count - 6) 個のアプリ")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                Divider()
+                
+                // Confirmation message
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.orange)
+                    
+                    Text("\(selectedAppInfos.count) 個のアプリをアンインストールしますか？")
+                        .font(.headline)
+                    
+                    Text("この操作は取り消せません。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Divider()
+                
+                // Size info
+                let totalAppSize = selectedAppInfos.reduce(0) { $0 + $1.appSize }
+                let totalDiskImageSize = selectedAppInfos.reduce(0) { $0 + $1.diskImageSize }
+                let totalSelectedSize = totalAppSize + totalDiskImageSize
+                
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("アプリサイズ:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: totalAppSize, countStyle: .file))
+                    }
+                    HStack {
+                        Text("ディスクイメージ:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: totalDiskImageSize, countStyle: .file))
+                    }
+                    Divider()
+                    HStack {
+                        Text("合計:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: totalSelectedSize, countStyle: .file))
                             .fontWeight(.semibold)
                     }
                 }
@@ -1190,10 +1256,17 @@ struct AppUninstallerSheet: View {
     // MARK: - Bottom Buttons
     private var bottomButtons: some View {
         HStack {
-            Button(currentPhase == .results ? "閉じる" : "キャンセル") {
-                dismiss()
+            if currentPhase == .confirmingMultiple {
+                Button("戻る") {
+                    currentPhase = .selection
+                }
+                .keyboardShortcut(.cancelAction)
+            } else {
+                Button(currentPhase == .results ? "閉じる" : "キャンセル") {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
             }
-            .keyboardShortcut(.cancelAction)
             
             Spacer()
             
@@ -1206,11 +1279,19 @@ struct AppUninstallerSheet: View {
                 .tint(.red)
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
-            } else if currentPhase == .selection && !selectedApps.isEmpty {
+            } else if currentPhase == .confirmingMultiple && !selectedApps.isEmpty {
                 Button("アンインストール (\(selectedApps.count) 個)") {
-                    showUninstallConfirmation = true
+                    Task {
+                        await startUninstallation()
+                    }
                 }
                 .tint(.red)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+            } else if currentPhase == .selection && !selectedApps.isEmpty {
+                Button("次へ") {
+                    currentPhase = .confirmingMultiple
+                }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
             }
