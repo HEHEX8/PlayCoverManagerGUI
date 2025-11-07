@@ -149,7 +149,13 @@ class IPAInstallerService {
         // Extract version
         let version = (plist["CFBundleShortVersionString"] as? String) ?? (plist["CFBundleVersion"] as? String) ?? "Unknown"
         
-        // Try to get English app name first (from en.lproj)
+        // Get Info.plist default name (used as final fallback)
+        let infoPlistDefaultName = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String) ?? ""
+        guard !infoPlistDefaultName.isEmpty else {
+            throw AppError.installation("アプリ名の取得に失敗しました", message: "")
+        }
+        
+        // Try to get English app name (from en.lproj) for middle fallback
         var appNameEnglish = ""
         let enLprojURL = appURL.appendingPathComponent("en.lproj/InfoPlist.strings")
         if FileManager.default.fileExists(atPath: enLprojURL.path),
@@ -158,34 +164,33 @@ class IPAInstallerService {
             appNameEnglish = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
         }
         
-        // Fallback to Info.plist if no English localization
+        // Fallback: English name or Info.plist default
         if appNameEnglish.isEmpty {
-            appNameEnglish = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String) ?? ""
-        }
-        
-        guard !appNameEnglish.isEmpty else {
-            throw AppError.installation("アプリ名の取得に失敗しました", message: "")
+            appNameEnglish = infoPlistDefaultName
         }
         
         // Try to extract localized app name for configured language
-        var appName: String = appNameEnglish  // Default to English
+        var appName = ""
         
-        // Try configured language first (if not en)
-        if systemLanguage != "en" {
+        // Try configured language first
+        if !systemLanguage.isEmpty {
             let langStringsURL = appURL.appendingPathComponent("\(systemLanguage).lproj/InfoPlist.strings")
             if FileManager.default.fileExists(atPath: langStringsURL.path),
                let stringsData = try? Data(contentsOf: langStringsURL),
                let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
-                if let displayName = stringsDict["CFBundleDisplayName"], !displayName.isEmpty {
-                    appName = displayName
-                } else if let bundleName = stringsDict["CFBundleName"], !bundleName.isEmpty {
-                    appName = bundleName
-                }
+                appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
             }
         }
         
-        // If configured language didn't work, appName stays as English
-        // This ensures English fallback instead of potentially Japanese Info.plist defaults
+        // Middle fallback to English if configured language not found
+        if appName.isEmpty && systemLanguage != "en" {
+            appName = appNameEnglish
+        }
+        
+        // Final fallback to Info.plist default if no English either
+        if appName.isEmpty {
+            appName = infoPlistDefaultName
+        }
         
         // Try to load extracted icon
         var icon: NSImage? = nil
@@ -239,7 +244,7 @@ class IPAInstallerService {
             ipaURL: ipaURL,
             bundleID: bundleID,
             appName: appName,
-            appNameEnglish: appNameEn,
+            appNameEnglish: appNameEnglish,
             version: version,
             icon: icon,
             fileSize: fileSize,
