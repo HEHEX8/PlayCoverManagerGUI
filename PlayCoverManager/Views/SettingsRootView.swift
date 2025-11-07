@@ -22,6 +22,10 @@ struct SettingsRootView: View {
                 .tabItem {
                     Label("メンテナンス", systemImage: "wrench.and.screwdriver")
                 }
+            AboutView()
+                .tabItem {
+                    Label("About", systemImage: "info.circle")
+                }
         }
         .padding(24)
         .frame(width: 600, height: 500)
@@ -1256,6 +1260,150 @@ private struct MaintenanceSettingsView: View {
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
         
         NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
+    }
+}
+
+// MARK: - About View
+private struct AboutView: View {
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+    }
+    
+    private var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // App Icon and Name
+                VStack(spacing: 12) {
+                    if let icon = NSImage(named: "AppIcon") {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: 128, height: 128)
+                            .clipShape(RoundedRectangle(cornerRadius: 24))
+                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    }
+                    
+                    Text("PlayCover Manager")
+                        .font(.title)
+                        .fontWeight(.semibold)
+                    
+                    Text("Version \(appVersion) (Build \(buildNumber))")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Divider()
+                
+                // Description
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("About")
+                        .font(.headline)
+                    
+                    Text("PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                    
+                    Text("IPA インストール、アプリ起動、アンインストール、ストレージ管理などの機能を提供します。")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Divider()
+                
+                // System Requirements
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("System Requirements")
+                        .font(.headline)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: "desktopcomputer")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 20)
+                            Text("macOS Tahoe 26.0 or later")
+                                .font(.callout)
+                        }
+                        
+                        HStack {
+                            Image(systemName: "cpu")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 20)
+                            Text("Apple Silicon / Intel (Universal)")
+                                .font(.callout)
+                        }
+                        
+                        HStack {
+                            Image(systemName: "square.stack.3d.down.right")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 20)
+                            Text("ASIF Disk Image Format")
+                                .font(.callout)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Divider()
+                
+                // Links
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Links")
+                        .font(.headline)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Link(destination: URL(string: "https://github.com/HEHEX8/PlayCoverManagerGUI")!) {
+                            HStack {
+                                Image(systemName: "link")
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20)
+                                Text("GitHub Repository")
+                                    .font(.callout)
+                            }
+                        }
+                        
+                        Link(destination: URL(string: "https://github.com/HEHEX8/PlayCoverManagerGUI/issues")!) {
+                            HStack {
+                                Image(systemName: "exclamationmark.bubble")
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20)
+                                Text("Report Issues")
+                                    .font(.callout)
+                            }
+                        }
+                        
+                        Link(destination: URL(string: "https://github.com/PlayCover/PlayCover")!) {
+                            HStack {
+                                Image(systemName: "gamecontroller")
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20)
+                                Text("PlayCover Project")
+                                    .font(.callout)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Divider()
+                
+                // Copyright
+                VStack(spacing: 4) {
+                    Text("© 2025 HEHEX8")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Text("Licensed under MIT License")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
