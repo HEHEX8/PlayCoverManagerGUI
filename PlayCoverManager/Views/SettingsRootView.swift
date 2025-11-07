@@ -1147,26 +1147,26 @@ struct AppUninstallerSheet: View {
         do {
             apps = try await service.getInstalledApps()
             totalSize = apps.reduce(0) { $0 + $1.appSize + $1.diskImageSize }
-            
-            // If preSelectedBundleID is provided, select it and show confirmation
-            if let bundleID = preSelectedBundleID {
-                if apps.contains(where: { $0.bundleID == bundleID }) {
-                    selectedApps = [bundleID]
-                    currentPhase = .selection
-                    // Show confirmation dialog after a delay to ensure UI is fully ready
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(300))
-                        showUninstallConfirmation = true
-                    }
-                    return
-                }
-            }
         } catch {
             apps = []
             totalSize = 0
         }
         
+        // Always transition to selection phase after loading
         currentPhase = .selection
+        
+        // If preSelectedBundleID is provided, select it and show confirmation immediately
+        if let bundleID = preSelectedBundleID, apps.contains(where: { $0.bundleID == bundleID }) {
+            // Use MainActor.run to ensure state updates are applied immediately
+            await MainActor.run {
+                selectedApps = [bundleID]
+            }
+            // Small delay to ensure selection UI is rendered before showing dialog
+            try? await Task.sleep(for: .milliseconds(100))
+            await MainActor.run {
+                showUninstallConfirmation = true
+            }
+        }
     }
     
     private func startUninstallation() async {
