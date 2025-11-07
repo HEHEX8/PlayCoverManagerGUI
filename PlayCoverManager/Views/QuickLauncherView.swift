@@ -11,6 +11,15 @@ struct IdentifiableString: Identifiable {
     }
 }
 
+// PreferenceKey to track app icon positions in grid
+struct AppIconPositionKey: PreferenceKey {
+    static var defaultValue: [String: CGRect] = [:]
+    
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
 struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
@@ -24,6 +33,7 @@ struct QuickLauncherView: View {
     @State private var isDrawerOpen = false
     @State private var refreshRotation: Double = 0  // For refresh button rotation animation
     @State private var focusedAppIndex: Int?  // For keyboard navigation
+    @State private var appIconPositions: [String: CGRect] = [:]  // Track icon positions in grid
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
@@ -268,6 +278,14 @@ struct QuickLauncherView: View {
                                         // Uninstall action - open uninstaller with pre-selected app
                                         selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
                                     }
+                                    .background(
+                                        GeometryReader { geo in
+                                            Color.clear.preference(
+                                                key: AppIconPositionKey.self,
+                                                value: [app.bundleIdentifier: geo.frame(in: .global)]
+                                            )
+                                        }
+                                    )
                                     .onTapGesture {
                                         // Clear search focus and focus this app
                                         isSearchFieldFocused = false
@@ -277,6 +295,9 @@ struct QuickLauncherView: View {
                                 }
                             }
                             .padding(32)
+                            .onPreferenceChange(AppIconPositionKey.self) { positions in
+                                appIconPositions = positions
+                            }
                             .onAppear {
                                 // Mark as performed after grid appears
                                 // Use delay to ensure animation starts before flag is set
@@ -295,6 +316,7 @@ struct QuickLauncherView: View {
                         
                         RecentAppLaunchButton(
                             app: recentApp,
+                            gridIconPosition: appIconPositions[recentApp.bundleIdentifier],
                             onLaunch: {
                                 // Launch app first
                                 viewModel.launch(app: recentApp)
@@ -1156,6 +1178,7 @@ private struct IPAInstallerSheetWrapper: View {
 private struct RecentAppLaunchButton: View {
     let app: PlayCoverApp
     let onLaunch: () -> Void
+    let gridIconPosition: CGRect?  // Position of this app's icon in grid
     
     @State private var rippleTrigger = 0
     @State private var isHovered = false
@@ -1177,6 +1200,7 @@ private struct RecentAppLaunchButton: View {
     @State private var previousAppID: String = ""
     @State private var currentIcon: NSImage? = nil  // Track current icon to detect changes
     @State private var displayedTitle: String = ""  // Title being displayed (may differ from app.displayName during transition)
+    @State private var myPosition: CGRect = .zero  // Track this button's position
     
     var body: some View {
         Button {
@@ -1297,6 +1321,13 @@ private struct RecentAppLaunchButton: View {
                 currentIcon = app.icon
             }
         }
+        .background(
+            GeometryReader { geo in
+                Color.clear.onAppear {
+                    myPosition = geo.frame(in: .global)
+                }
+            }
+        )
         .onAppear {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
@@ -1326,7 +1357,7 @@ private struct RecentAppLaunchButton: View {
         }
     }
     
-    // App switch animation - icon flies from drawer and crashes into old one
+    // App switch animation - icon flies from actual grid position and crashes into old one
     private func performAppSwitchAnimation() {
         // Reset old icon state (oldIcon already saved in onChange)
         oldIconOffsetX = 0
@@ -1335,20 +1366,32 @@ private struct RecentAppLaunchButton: View {
         oldIconOpacity = 1.0  // Old icon is visible and stays in place
         oldIconRotation = 0.0  // Reset rotation
         
-        // New icon starts from grid area (center-top, where app grid is)
-        // This simulates the icon lifting off from the grid above
-        iconOffsetY = -250  // ABOVE current position (grid is above recent button)
-        iconOffsetX = 0  // Center aligned
-        iconScale = 0.6  // Starts smaller (far away effect)
+        // Calculate offset from grid icon position to this button's position
+        if let gridPos = gridIconPosition {
+            // Grid icon position relative to this button
+            let deltaX = gridPos.midX - myPosition.midX
+            let deltaY = gridPos.midY - myPosition.midY
+            
+            // Start from grid icon position
+            iconOffsetX = deltaX
+            iconOffsetY = deltaY
+            iconScale = 0.6  // Starts smaller (far away effect)
+        } else {
+            // Fallback: start from above if position not available
+            iconOffsetY = -250
+            iconOffsetX = 0
+            iconScale = 0.6
+        }
         
         // Text stays visible (shows OLD title during animation)
         textOpacity = 1.0
         
-        // Phase 1: Lift off from grid with gentle float (move UP first, away from grid)
+        // Phase 1: Lift off from grid icon with gentle float
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             withAnimation(.easeOut(duration: 0.25)) {
-                iconOffsetY = -280  // Lift UP even more (floating away from grid)
-                iconScale = 0.75  // Get slightly bigger as it prepares to dive
+                // Lift up slightly from current position (whatever it is)
+                iconOffsetY += -30  // Float up a bit more
+                iconScale = 0.75  // Get slightly bigger as it prepares to accelerate
             }
         }
         
