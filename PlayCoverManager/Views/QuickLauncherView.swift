@@ -1398,6 +1398,7 @@ private struct RecentAppLaunchButton: View {
         oldIconRotation = 0.0  // Reset rotation
         
         // Calculate offset to position icon at grid location
+        print("🔍 Checking gridIconPosition: \(gridIconPosition?.debugDescription ?? "nil"), myPosition: \(myPosition)")
         if let gridPos = gridIconPosition, myPosition != .zero {
             // The icon ZStack is at (myPosition + icon offset within button)
             // Icon is 56x56, positioned at left edge of button after 24pt padding + 20pt spacing from left
