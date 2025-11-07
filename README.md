@@ -39,7 +39,7 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 
 | 項目 | オリジナル版 (ZSH CLI) | GUI 版 (このプロジェクト) |
 |------|----------------------|------------------------|
-| **ディスクイメージ形式** | APFS ボリューム (`diskutil` マウント) | **ASIF** (Apple Software Image Format) |
+| **ディスクイメージ形式** | APFS ボリューム (`diskutil` マウント) | **ASIF** (`.asif` 拡張子) |
 | **対応 macOS** | macOS Sequoia 15.1+ | **macOS Tahoe 26.0+** のみ |
 | **マッピングファイル** | `.playcover-volume-mapping.tsv` | 不要（ASIF が情報を保持） |
 | **ボリューム管理** | 手動マウント/アンマウント必須 | 自動マウント・自動管理 |
@@ -54,13 +54,13 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 
 1. **ディスクイメージフォーマットの違い**
    - オリジナル版: APFS ボリュームを `diskutil` + `mount -t apfs -o nobrowse` でマウント
-   - GUI 版: ASIF 形式 (`.dmg`) を `hdiutil attach` でマウント
+   - GUI 版: ASIF 形式 (`.asif` 拡張子) を `diskutil image create --format ASIF` で作成し、`diskutil image attach` でマウント
    - **移行不可**: 既存の APFS ボリュームは ASIF に変換できません
 
 2. **マウントポイントの違い**
    - オリジナル版: `~/Library/Containers/[BundleID]` に直接マウント
-   - GUI 版: `/Volumes/[Volume Name]` にマウント後、コンテナとしてリンク
-   - **互換性なし**: マウント構造が根本的に異なります
+   - GUI 版: `~/Library/Containers/[BundleID]` に直接マウント（`--mountPoint` オプション指定）
+   - **コマンドの違い**: `mount -t apfs` vs `diskutil image attach`
 
 3. **設定・状態管理の違い**
    - オリジナル版: TSV ファイルでマッピング管理、zsh 変数で設定保持
