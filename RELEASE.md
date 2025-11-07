@@ -47,9 +47,12 @@ ls -lh build/Release/PlayCoverManager.app
 
 ### 4. DMG の作成
 
-#### 前提条件
+`build_release_unsigned.sh` が既にシンプルなDMGを作成しています。
+以下は **オプション** で、より見た目の良いDMGを作成したい場合のみ実行してください。
 
-appdmg ツールが必要です：
+#### オプション: カスタムDMG作成（appdmg使用）
+
+**前提条件**:
 
 ```bash
 # Node.js をインストール（未インストールの場合）
@@ -59,22 +62,24 @@ brew install node
 npm install -g appdmg
 ```
 
-#### DMG 作成
+**DMG 作成**:
 
 ```bash
-# DMGを作成（appdmgを使用）
+# カスタムDMGを作成（appdmgを使用）
 ./scripts/create_dmg.sh
 
 # DMG が作成されたことを確認
-ls -lh build/PlayCoverManager-*.dmg
+ls -lh build/release-unsigned/PlayCoverManager-*-appdmg.dmg
 
 # SHA256ハッシュを取得（Homebrew Caskで使用）
-shasum -a 256 build/PlayCoverManager-*.dmg
+shasum -a 256 build/release-unsigned/PlayCoverManager-*-appdmg.dmg
 ```
 
 **注意**: 
+- `build_release_unsigned.sh` が作成したシンプルなDMGでも配布可能です
+- appdmg版はアイコン配置が美しく、プロフェッショナルな見た目になります
 - スクリプトは自動的にバージョン番号を Info.plist から取得します
-- 出力ファイル名: `PlayCoverManager-{VERSION}.dmg`
+- 出力ファイル名: `PlayCoverManager-{VERSION}-appdmg.dmg`
 - 背景画像は オプション（なくても動作します）
 
 ### 5. GitHub Release の作成

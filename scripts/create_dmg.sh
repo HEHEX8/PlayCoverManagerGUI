@@ -15,8 +15,19 @@ else
     APP_VERSION="1.0.0"
 fi
 
-SOURCE_APP="build/Release/${APP_NAME}.app"
-DMG_NAME="PlayCoverManager-${APP_VERSION}.dmg"
+# build_release_unsigned.sh の出力を探す
+if [ -d "build/release-unsigned/Build/Products/Release/${APP_NAME}.app" ]; then
+    SOURCE_APP="build/release-unsigned/Build/Products/Release/${APP_NAME}.app"
+    OUTPUT_DIR="build/release-unsigned"
+elif [ -d "build/Release/${APP_NAME}.app" ]; then
+    SOURCE_APP="build/Release/${APP_NAME}.app"
+    OUTPUT_DIR="build"
+else
+    SOURCE_APP="build/Release/${APP_NAME}.app"
+    OUTPUT_DIR="build"
+fi
+
+DMG_NAME="PlayCoverManager-${APP_VERSION}-appdmg.dmg"
 CONFIG_JSON="appdmg-config.json"
 
 echo "🚀 appdmgでDMGを作成中..."
@@ -88,8 +99,11 @@ if [ ! -f "dmg-background.png" ]; then
     sed -i '' '/"background":/d' "$CONFIG_JSON"
 fi
 
+# 出力ディレクトリを作成
+mkdir -p "$OUTPUT_DIR"
+
 # 以前のDMGを削除
-rm -f "build/${DMG_NAME}"
+rm -f "${OUTPUT_DIR}/${DMG_NAME}"
 
 # appdmgでDMGを作成
 echo "📦 DMGを作成中..."
@@ -102,19 +116,19 @@ echo "   左アイコン位置: (150, 200)"
 echo "   右アイコン位置: (450, 200)"
 echo ""
 
-appdmg "$CONFIG_JSON" "build/${DMG_NAME}"
+appdmg "$CONFIG_JSON" "${OUTPUT_DIR}/${DMG_NAME}"
 
 if [ $? -eq 0 ]; then
     echo ""
     echo "✅ DMGの作成に成功しました！"
     echo ""
-    ls -lh "build/${DMG_NAME}"
+    ls -lh "${OUTPUT_DIR}/${DMG_NAME}"
     echo ""
     echo "🎉 配布用DMGが準備できました！"
     echo ""
     echo "📦 次のステップ:"
-    echo "   1. DMGをテスト: open 'build/${DMG_NAME}'"
-    echo "   2. SHA256ハッシュを取得: shasum -a 256 'build/${DMG_NAME}'"
+    echo "   1. DMGをテスト: open '${OUTPUT_DIR}/${DMG_NAME}'"
+    echo "   2. SHA256ハッシュを取得: shasum -a 256 '${OUTPUT_DIR}/${DMG_NAME}'"
     echo "   3. GitHub Releasesにアップロード"
     echo ""
     echo "✨ 特徴:"
