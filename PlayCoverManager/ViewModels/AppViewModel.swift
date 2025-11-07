@@ -153,15 +153,11 @@ final class AppViewModel {
     /// Request to change storage location
     /// This should be called from the settings view or error screen
     func requestStorageLocationChange() {
-        print("[AppViewModel] Storage location change requested")
-        
         // If launcher exists, use its flow (which handles unmounting)
         if let launcherVM = launcherViewModel {
-            print("[AppViewModel] Using launcher's storage change flow")
             launcherVM.initiateStorageLocationChange()
         } else {
             // If no launcher (e.g., startup error), directly show storage wizard
-            print("[AppViewModel] No launcher available, showing storage wizard directly")
             completeStorageLocationChange()
         }
     }

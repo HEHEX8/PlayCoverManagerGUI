@@ -257,8 +257,6 @@ private struct GeneralSettingsView: View {
     }
 }
 
-
-
 private struct DataSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
 

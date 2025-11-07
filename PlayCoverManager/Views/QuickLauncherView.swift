@@ -61,11 +61,9 @@ struct QuickLauncherView: View {
                         color: .primary,
                         help: "メニュー"
                     ) {
-                        print("[QuickLauncher] Hamburger button tapped, current state: \(isDrawerOpen)")
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isDrawerOpen.toggle()
                         }
-                        print("[QuickLauncher] After toggle, new state: \(isDrawerOpen)")
                     }
                     
                     // Modern search field with icon
@@ -233,23 +231,15 @@ struct QuickLauncherView: View {
     .sheet(isPresented: $showingSettings) {
         SettingsRootView()
             .interactiveDismissDisabled(false)
-            .onAppear { print("[QuickLauncher] Settings sheet appeared") }
-            .onDisappear { print("[QuickLauncher] Settings sheet disappeared") }
     }
     .sheet(isPresented: $showingInstaller) {
         IPAInstallerSheet()
-            .onAppear { print("[QuickLauncher] Installer sheet appeared") }
-            .onDisappear { print("[QuickLauncher] Installer sheet disappeared") }
     }
     .sheet(item: $selectedAppForUninstall) { identifiableString in
         AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
-            .onAppear { print("[QuickLauncher] Uninstaller sheet (preselected) appeared") }
-            .onDisappear { print("[QuickLauncher] Uninstaller sheet (preselected) disappeared") }
     }
     .sheet(isPresented: $showingUninstaller) {
         AppUninstallerSheet(preSelectedBundleID: nil)
-            .onAppear { print("[QuickLauncher] Uninstaller sheet (general) appeared") }
-            .onDisappear { print("[QuickLauncher] Uninstaller sheet (general) disappeared") }
     }
     .frame(minWidth: 960, minHeight: 640)
     .overlay(alignment: .center) {
@@ -319,22 +309,11 @@ struct QuickLauncherView: View {
         
         // Set up storage change completion callback
         viewModel.onStorageChangeCompleted = { [weak appViewModel] in
-            print("[QuickLauncher] Storage change completed, showing wizard")
             appViewModel?.completeStorageLocationChange()
         }
     }
-    .onChange(of: isDrawerOpen) { oldValue, newValue in
-        print("[QuickLauncher] Drawer state changed: \(oldValue) -> \(newValue)")
-    }
-    .onChange(of: showingSettings) { oldValue, newValue in
-        print("[QuickLauncher] showingSettings changed: \(oldValue) -> \(newValue)")
-    }
-    .onChange(of: showingInstaller) { oldValue, newValue in
-        print("[QuickLauncher] showingInstaller changed: \(oldValue) -> \(newValue)")
-    }
-    .onChange(of: showingUninstaller) { oldValue, newValue in
-        print("[QuickLauncher] showingUninstaller changed: \(oldValue) -> \(newValue)")
-    }
+
+
     .overlay {
         // Left drawer overlay - full screen when open
         if isDrawerOpen {
@@ -345,7 +324,6 @@ struct QuickLauncherView: View {
                     .contentShape(Rectangle())
                     .ignoresSafeArea()
                     .onTapGesture {
-                        print("[QuickLauncher] Background tapped, closing drawer")
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isDrawerOpen = false
                         }
@@ -1919,12 +1897,10 @@ private struct DrawerPanel: View {
                     title: "IPA をインストール",
                     help: "IPA をインストール (⌘I)"
                 ) {
-                    print("[DrawerPanel] Install button tapped")
                     showingInstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
-                    print("[DrawerPanel] Drawer closed, showingInstaller: \(showingInstaller)")
                 }
                 .keyboardShortcut("i", modifiers: [.command])
                 
@@ -1939,12 +1915,10 @@ private struct DrawerPanel: View {
                     title: "アプリをアンインストール",
                     help: "アプリをアンインストール (⌘D)"
                 ) {
-                    print("[DrawerPanel] Uninstall button tapped")
                     showingUninstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
-                    print("[DrawerPanel] Drawer closed, showingUninstaller: \(showingUninstaller)")
                 }
                 .keyboardShortcut("d", modifiers: [.command])
                 
@@ -1962,12 +1936,10 @@ private struct DrawerPanel: View {
                     title: "設定",
                     help: "設定 (⌘,)"
                 ) {
-                    print("[DrawerPanel] Settings button tapped")
                     showingSettings = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
-                    print("[DrawerPanel] Drawer closed, showingSettings: \(showingSettings)")
                 }
                 .keyboardShortcut(",", modifiers: [.command])
             
