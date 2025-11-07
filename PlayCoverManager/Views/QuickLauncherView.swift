@@ -314,6 +314,7 @@ struct QuickLauncherView: View {
                             .padding(32)
                             .onPreferenceChange(AppIconPositionKey.self) { positions in
                                 appIconPositions = positions
+                                print("📍 Got \(positions.count) icon positions")
                             }
                             .onAppear {
                                 // Mark as performed after grid appears
@@ -1351,6 +1352,7 @@ private struct RecentAppLaunchButton: View {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
             displayedTitle = app.displayName
+            print("📍 RecentButton appeared with gridPos: \(gridIconPosition?.debugDescription ?? "nil")")
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerRecentAppBounce"))) { _ in
             // Grid icon was tapped for the recent app, trigger bounce animation
