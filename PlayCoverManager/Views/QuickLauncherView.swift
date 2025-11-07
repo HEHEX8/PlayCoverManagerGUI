@@ -43,9 +43,11 @@ struct QuickLauncherView: View {
                 HStack(spacing: 16) {
                     // Hamburger menu button to toggle drawer
                     Button {
+                        print("[QuickLauncher] Hamburger button tapped, current state: \(isDrawerOpen)")
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isDrawerOpen.toggle()
                         }
+                        print("[QuickLauncher] After toggle, new state: \(isDrawerOpen)")
                     } label: {
                         Image(systemName: "line.3.horizontal")
                             .font(.system(size: 16, weight: .medium))
@@ -202,15 +204,23 @@ struct QuickLauncherView: View {
     .sheet(isPresented: $showingSettings) {
         SettingsRootView()
             .interactiveDismissDisabled(false)
+            .onAppear { print("[QuickLauncher] Settings sheet appeared") }
+            .onDisappear { print("[QuickLauncher] Settings sheet disappeared") }
     }
     .sheet(isPresented: $showingInstaller) {
         IPAInstallerSheet()
+            .onAppear { print("[QuickLauncher] Installer sheet appeared") }
+            .onDisappear { print("[QuickLauncher] Installer sheet disappeared") }
     }
     .sheet(item: $selectedAppForUninstall) { identifiableString in
         AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
+            .onAppear { print("[QuickLauncher] Uninstaller sheet (preselected) appeared") }
+            .onDisappear { print("[QuickLauncher] Uninstaller sheet (preselected) disappeared") }
     }
     .sheet(isPresented: $showingUninstaller) {
         AppUninstallerSheet(preSelectedBundleID: nil)
+            .onAppear { print("[QuickLauncher] Uninstaller sheet (general) appeared") }
+            .onDisappear { print("[QuickLauncher] Uninstaller sheet (general) disappeared") }
     }
     .frame(minWidth: 960, minHeight: 640)
     .overlay(alignment: .center) {
@@ -273,6 +283,18 @@ struct QuickLauncherView: View {
             viewModel.selectedApp = viewModel.filteredApps.first
         }
     }
+    .onChange(of: isDrawerOpen) { oldValue, newValue in
+        print("[QuickLauncher] Drawer state changed: \(oldValue) -> \(newValue)")
+    }
+    .onChange(of: showingSettings) { oldValue, newValue in
+        print("[QuickLauncher] showingSettings changed: \(oldValue) -> \(newValue)")
+    }
+    .onChange(of: showingInstaller) { oldValue, newValue in
+        print("[QuickLauncher] showingInstaller changed: \(oldValue) -> \(newValue)")
+    }
+    .onChange(of: showingUninstaller) { oldValue, newValue in
+        print("[QuickLauncher] showingUninstaller changed: \(oldValue) -> \(newValue)")
+    }
     .overlay(alignment: .leading) {
         // Left drawer overlay
         if isDrawerOpen {
@@ -281,6 +303,7 @@ struct QuickLauncherView: View {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
                     .onTapGesture {
+                        print("[QuickLauncher] Background tapped, closing drawer")
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isDrawerOpen = false
                         }
@@ -1730,10 +1753,12 @@ private struct DrawerPanel: View {
                 
                 // Install button
                 Button {
+                    print("[DrawerPanel] Install button tapped")
                     showingInstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
+                    print("[DrawerPanel] Drawer closed, showingInstaller: \(showingInstaller)")
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "square.and.arrow.down")
@@ -1754,10 +1779,12 @@ private struct DrawerPanel: View {
                 
                 // Uninstall button
                 Button {
+                    print("[DrawerPanel] Uninstall button tapped")
                     showingUninstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
+                    print("[DrawerPanel] Drawer closed, showingUninstaller: \(showingUninstaller)")
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "trash")
@@ -1781,10 +1808,12 @@ private struct DrawerPanel: View {
                 
                 // Settings button
                 Button {
+                    print("[DrawerPanel] Settings button tapped")
                     showingSettings = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         isOpen = false
                     }
+                    print("[DrawerPanel] Drawer closed, showingSettings: \(showingSettings)")
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "gear")
