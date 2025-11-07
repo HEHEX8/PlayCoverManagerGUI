@@ -793,8 +793,10 @@ struct AppUninstallerSheet: View {
         }
         .padding(24)
         .frame(width: 700, height: 600)
-        .task {
-            await loadApps()
+        .onAppear {
+            Task {
+                await loadApps()
+            }
         }
         .alert("アンインストール確認", isPresented: $showUninstallConfirmation) {
             Button("キャンセル", role: .cancel) { }
