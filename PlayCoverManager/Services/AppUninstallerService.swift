@@ -86,16 +86,32 @@ class AppUninstallerService {
                     continue
                 }
                 
-                // Extract app name (try Japanese first, fallback to English)
+                // Extract app name (try system language, fallback to English)
                 var appName = ""
-                let jaLproj = appURL.appendingPathComponent("ja.lproj/InfoPlist.strings")
-                if FileManager.default.fileExists(atPath: jaLproj.path) {
-                    if let stringsData = try? Data(contentsOf: jaLproj),
+                
+                // Get system language
+                let systemLang = Locale.preferredLanguages.first?.prefix(2) ?? "en"
+                let langLproj = appURL.appendingPathComponent("\(systemLang).lproj/InfoPlist.strings")
+                
+                if FileManager.default.fileExists(atPath: langLproj.path) {
+                    if let stringsData = try? Data(contentsOf: langLproj),
                        let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
                         appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
                     }
                 }
                 
+                // Fallback to English if system language not found
+                if appName.isEmpty && systemLang != "en" {
+                    let enLproj = appURL.appendingPathComponent("en.lproj/InfoPlist.strings")
+                    if FileManager.default.fileExists(atPath: enLproj.path) {
+                        if let stringsData = try? Data(contentsOf: enLproj),
+                           let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                            appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
+                        }
+                    }
+                }
+                
+                // Final fallback to Info.plist
                 if appName.isEmpty {
                     appName = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String) ?? appURL.deletingPathExtension().lastPathComponent
                 }

@@ -92,6 +92,13 @@ final class LauncherService {
             return localizedName
         }
         
+        // Fallback to English if current language not found
+        if languageCode != "en" {
+            if let englishName = getLocalizedName(from: url, languageCode: "en") {
+                return englishName
+            }
+        }
+        
         // Try bundle's localizedInfoDictionary as fallback
         if let localizedDict = bundle.localizedInfoDictionary {
             if let displayName = localizedDict["CFBundleDisplayName"] as? String, !displayName.isEmpty {

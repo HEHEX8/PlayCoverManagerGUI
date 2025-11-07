@@ -153,8 +153,8 @@ class IPAInstallerService {
         // Try to extract localized app name (system language first, then Japanese fallback)
         var appName: String = appNameEn
         
-        // Try system language first (if not en/ja)
-        if systemLanguage != "en" && systemLanguage != "ja" {
+        // Try system language first (if not en)
+        if systemLanguage != "en" {
             let langStringsURL = tempDir.appendingPathComponent("InfoPlist.strings")
             if FileManager.default.fileExists(atPath: langStringsURL.path),
                let stringsData = try? Data(contentsOf: langStringsURL),
@@ -167,19 +167,8 @@ class IPAInstallerService {
             }
         }
         
-        // Fallback to Japanese if system language didn't work
-        if appName == appNameEn {
-            let jaStringsURL = tempDir.appendingPathComponent("InfoPlist.strings")
-            if FileManager.default.fileExists(atPath: jaStringsURL.path),
-               let stringsData = try? Data(contentsOf: jaStringsURL),
-               let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
-                if let displayName = stringsDict["CFBundleDisplayName"], !displayName.isEmpty {
-                    appName = displayName
-                } else if let bundleName = stringsDict["CFBundleName"], !bundleName.isEmpty {
-                    appName = bundleName
-                }
-            }
-        }
+        // If system language didn't work, appName stays as English (appNameEn)
+        // No fallback to Japanese - English is the universal fallback
         
         // Try to load extracted icon (already extracted with Info.plist in one command)
         var icon: NSImage? = nil
