@@ -54,19 +54,83 @@ APP_PATH="$BUILD_DIR/Build/Products/Release/${PROJECT_NAME}.app"
 
 log_success "ビルド完了！"
 
-# DMG作成
-log_info "DMGを作成中..."
+# DMG作成（appdmgを使用）
+log_info "DMGを作成中（appdmgを使用）..."
 DMG_PATH="$BUILD_DIR/$DMG_NAME"
 
-# 既存のDMGを削除
-[ -f "$DMG_PATH" ] && rm "$DMG_PATH"
-
-# DMG作成
-hdiutil create -volname "$PROJECT_NAME" \
-    -srcfolder "$APP_PATH" \
-    -ov -format UDZO "$DMG_PATH"
-
-log_success "DMG作成完了！"
+# appdmgがインストールされているか確認
+if ! command -v appdmg &> /dev/null; then
+    log_warning "appdmgがインストールされていません。シンプルなDMGを作成します。"
+    
+    # 既存のDMGを削除
+    [ -f "$DMG_PATH" ] && rm "$DMG_PATH"
+    
+    # シンプルなDMG作成（フォールバック）
+    hdiutil create -volname "$PROJECT_NAME" \
+        -srcfolder "$APP_PATH" \
+        -ov -format UDZO "$DMG_PATH"
+    
+    log_success "DMG作成完了！（シンプル版）"
+    log_info "より見た目の良いDMGを作成するには:"
+    echo "  npm install -g appdmg"
+    echo "  ./scripts/build_release_unsigned.sh"
+else
+    # appdmgで綺麗なDMGを作成
+    
+    # 既存のDMGを削除
+    [ -f "$DMG_PATH" ] && rm "$DMG_PATH"
+    
+    # 背景画像の確認と作成
+    if [ ! -f "dmg-background.png" ]; then
+        if [ -x "scripts/create_dmg_background.sh" ]; then
+            log_info "背景画像を作成中..."
+            ./scripts/create_dmg_background.sh > /dev/null 2>&1 || true
+        fi
+    fi
+    
+    # アイコンパス
+    ICON_PATH="PlayCoverManager/Assets.xcassets/AppIcon.appiconset/icon_512x512.png"
+    
+    # appdmg設定ファイルを生成
+    CONFIG_JSON="appdmg-config-temp.json"
+    cat > "$CONFIG_JSON" << EOF
+{
+  "title": "$PROJECT_NAME",
+EOF
+    
+    if [ -f "$ICON_PATH" ]; then
+        cat >> "$CONFIG_JSON" << EOF
+  "icon": "$ICON_PATH",
+EOF
+    fi
+    
+    if [ -f "dmg-background.png" ]; then
+        cat >> "$CONFIG_JSON" << EOF
+  "background": "dmg-background.png",
+EOF
+    fi
+    
+    cat >> "$CONFIG_JSON" << EOF
+  "icon-size": 128,
+  "window": {
+    "size": { "width": 600, "height": 400 },
+    "position": { "x": 200, "y": 120 }
+  },
+  "contents": [
+    { "x": 150, "y": 200, "type": "file", "path": "$APP_PATH" },
+    { "x": 450, "y": 200, "type": "link", "path": "/Applications" }
+  ]
+}
+EOF
+    
+    # appdmgでDMG作成
+    appdmg "$CONFIG_JSON" "$DMG_PATH" > /dev/null 2>&1
+    
+    # 一時ファイル削除
+    rm -f "$CONFIG_JSON"
+    
+    log_success "DMG作成完了！（appdmg版 - プロフェッショナル）"
+fi
 
 # SHA256計算
 log_info "SHA256ハッシュを計算中..."

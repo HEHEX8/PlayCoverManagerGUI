@@ -38,49 +38,42 @@ grep -r "print(" --include="*.swift" PlayCoverManager/ | wc -l
 ### 3. リリースビルドの作成
 
 ```bash
-# リリースビルドを実行
+# appdmgをインストール（推奨 - 綺麗なDMGを自動作成）
+npm install -g appdmg
+
+# リリースビルドを実行（DMGも自動作成）
 ./scripts/build_release_unsigned.sh
 
 # ビルド成功を確認
-ls -lh build/Release/PlayCoverManager.app
-```
-
-### 4. DMG の作成
-
-`build_release_unsigned.sh` が既にシンプルなDMGを作成しています。
-以下は **オプション** で、より見た目の良いDMGを作成したい場合のみ実行してください。
-
-#### オプション: カスタムDMG作成（appdmg使用）
-
-**前提条件**:
-
-```bash
-# Node.js をインストール（未インストールの場合）
-brew install node
-
-# appdmg をグローバルにインストール
-npm install -g appdmg
-```
-
-**DMG 作成**:
-
-```bash
-# カスタムDMGを作成（appdmgを使用）
-./scripts/create_dmg.sh
-
-# DMG が作成されたことを確認
-ls -lh build/release-unsigned/PlayCoverManager-*-appdmg.dmg
-
-# SHA256ハッシュを取得（Homebrew Caskで使用）
-shasum -a 256 build/release-unsigned/PlayCoverManager-*-appdmg.dmg
+ls -lh build/release-unsigned/Build/Products/Release/PlayCoverManager.app
+ls -lh build/release-unsigned/PlayCoverManager.dmg
 ```
 
 **注意**: 
-- `build_release_unsigned.sh` が作成したシンプルなDMGでも配布可能です
-- appdmg版はアイコン配置が美しく、プロフェッショナルな見た目になります
-- スクリプトは自動的にバージョン番号を Info.plist から取得します
-- 出力ファイル名: `PlayCoverManager-{VERSION}-appdmg.dmg`
-- 背景画像は オプション（なくても動作します）
+- appdmgがインストールされていれば、プロフェッショナルな見た目のDMGを自動作成
+- appdmgがなければ、シンプルなDMGを作成（フォールバック）
+- 背景画像も自動生成されます
+
+### 4. DMG の確認
+
+`build_release_unsigned.sh` がDMGを自動作成しています。
+SHA256ハッシュも表示されているので、それをメモしてください。
+
+#### スタンドアロンでDMG作成する場合（オプション）
+
+別途DMGを作り直したい場合：
+
+```bash
+# スタンドアロンDMG作成
+./scripts/create_dmg.sh
+
+# DMG が作成されたことを確認
+ls -lh build/release-unsigned/PlayCoverManager-*.dmg
+```
+
+**メモ**: 
+- `build_release_unsigned.sh` のDMGで十分配布可能です
+- `create_dmg.sh` は独立して実行でき、SHA256も自動計算します
 
 ### 5. GitHub Release の作成
 

@@ -27,7 +27,7 @@ else
     OUTPUT_DIR="build"
 fi
 
-DMG_NAME="PlayCoverManager-${APP_VERSION}-appdmg.dmg"
+DMG_NAME="PlayCoverManager-${APP_VERSION}.dmg"
 CONFIG_JSON="appdmg-config.json"
 
 echo "🚀 appdmgでDMGを作成中..."
@@ -55,13 +55,48 @@ if ! command -v appdmg &> /dev/null; then
     fi
 fi
 
+# 背景画像の確認と作成
+if [ ! -f "dmg-background.png" ]; then
+    echo "⚠️  背景画像が見つかりません"
+    echo "📦 背景画像を自動作成中..."
+    
+    if [ -x "scripts/create_dmg_background.sh" ]; then
+        ./scripts/create_dmg_background.sh
+    else
+        echo "⚠️  背景画像作成スクリプトが見つかりません"
+        echo "   背景なしでDMGを作成します"
+    fi
+fi
+
+# アイコンファイルのパス
+ICON_PATH="PlayCoverManager/Assets.xcassets/AppIcon.appiconset/icon_512x512.png"
+if [ ! -f "$ICON_PATH" ]; then
+    echo "⚠️  アイコンファイルが見つかりません: $ICON_PATH"
+    ICON_PATH=""
+fi
+
 # appdmg設定ファイルを生成
 echo "📝 appdmg設定ファイルを生成中..."
 cat > "$CONFIG_JSON" << EOF
 {
   "title": "PlayCover Manager ${APP_VERSION}",
-  "icon": "PlayCoverManager/Assets.xcassets/AppIcon.appiconset/icon_512x512.png",
+EOF
+
+# アイコンを追加（存在する場合のみ）
+if [ -n "$ICON_PATH" ]; then
+    cat >> "$CONFIG_JSON" << EOF
+  "icon": "${ICON_PATH}",
+EOF
+fi
+
+# 背景を追加（存在する場合のみ）
+if [ -f "dmg-background.png" ]; then
+    cat >> "$CONFIG_JSON" << EOF
   "background": "dmg-background.png",
+EOF
+fi
+
+cat >> "$CONFIG_JSON" << EOF
   "icon-size": 128,
   "window": {
     "size": {
@@ -90,15 +125,6 @@ cat > "$CONFIG_JSON" << EOF
 }
 EOF
 
-# 背景画像の確認（オプション）
-if [ ! -f "dmg-background.png" ]; then
-    echo "⚠️  背景画像が見つかりません: dmg-background.png"
-    echo "   背景なしでDMGを作成します"
-    echo ""
-    # 背景なしの設定に変更
-    sed -i '' '/"background":/d' "$CONFIG_JSON"
-fi
-
 # 出力ディレクトリを作成
 mkdir -p "$OUTPUT_DIR"
 
@@ -114,6 +140,11 @@ echo "   ウィンドウサイズ: 600x400"
 echo "   アイコンサイズ: 128x128"
 echo "   左アイコン位置: (150, 200)"
 echo "   右アイコン位置: (450, 200)"
+if [ -f "dmg-background.png" ]; then
+    echo "   背景画像: あり"
+else
+    echo "   背景画像: なし"
+fi
 echo ""
 
 appdmg "$CONFIG_JSON" "${OUTPUT_DIR}/${DMG_NAME}"
@@ -124,17 +155,33 @@ if [ $? -eq 0 ]; then
     echo ""
     ls -lh "${OUTPUT_DIR}/${DMG_NAME}"
     echo ""
+    
+    # SHA256ハッシュを計算
+    echo "🔐 SHA256ハッシュを計算中..."
+    SHA256=$(shasum -a 256 "${OUTPUT_DIR}/${DMG_NAME}" | awk '{print $1}')
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "🎉 配布用DMGが準備できました！"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "📦 DMGファイル:"
+    echo "   ${OUTPUT_DIR}/${DMG_NAME}"
+    echo ""
+    echo "🔐 SHA256ハッシュ（Homebrew Cask用）:"
+    echo "   ${SHA256}"
     echo ""
     echo "📦 次のステップ:"
     echo "   1. DMGをテスト: open '${OUTPUT_DIR}/${DMG_NAME}'"
-    echo "   2. SHA256ハッシュを取得: shasum -a 256 '${OUTPUT_DIR}/${DMG_NAME}'"
-    echo "   3. GitHub Releasesにアップロード"
+    echo "   2. GitHub Releasesにアップロード"
+    echo "   3. Homebrew Caskに SHA256 を記載"
     echo ""
     echo "✨ 特徴:"
     echo "   - 確実に動作するappdmg方式"
     echo "   - JSON設定で簡単カスタマイズ"
     echo "   - 正確なアイコン配置"
+    if [ -f "dmg-background.png" ]; then
+        echo "   - カスタム背景画像付き"
+    fi
     
     # 設定ファイルをクリーンアップ
     rm -f "$CONFIG_JSON"

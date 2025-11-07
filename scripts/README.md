@@ -16,23 +16,29 @@
 
 ### `build_release_unsigned.sh` - リリース用ビルド（無料配布）
 GitHub Releases / Homebrew Cask配布用。署名なし。
-シンプルなDMGを自動作成します。
+appdmgが利用可能な場合は自動的に綺麗なDMGを作成します。
 
 **使用方法**:
 ```bash
+# appdmgをインストール（推奨）
+npm install -g appdmg
+
+# ビルド実行
 ./scripts/build_release_unsigned.sh
 ```
 
 **出力**: 
 - `build/release-unsigned/Build/Products/Release/PlayCoverManager.app`
-- `build/release-unsigned/PlayCoverManager.dmg` (シンプルなDMG)
+- `build/release-unsigned/PlayCoverManager.dmg`
+  - appdmgあり: プロフェッショナルな見た目
+  - appdmgなし: シンプルなDMG（フォールバック）
 - SHA256ハッシュ（Homebrew Cask用）
+- 背景画像（自動生成）
 
 ---
 
-### `create_dmg.sh` - カスタムDMG作成（オプション）
-appdmgを使用して見た目の良いDMGを作成します。
-`build_release_unsigned.sh` 実行後に使用可能。
+### `create_dmg.sh` - スタンドアロンDMG作成（オプション）
+`build_release_unsigned.sh` とは独立して、appdmgでDMGを作成します。
 
 **前提条件**:
 ```bash
@@ -42,29 +48,32 @@ npm install -g appdmg
 
 **使用方法**:
 ```bash
-# まず通常ビルド
+# まず通常ビルド（またはXcodeでビルド）
 ./scripts/build_release_unsigned.sh
 
-# 次にカスタムDMG作成
+# スタンドアロンDMG作成
 ./scripts/create_dmg.sh
 ```
 
 **出力**:
-- `build/release-unsigned/PlayCoverManager-{VERSION}-appdmg.dmg`
+- `build/release-unsigned/PlayCoverManager-{VERSION}.dmg`
 
 **特徴**:
-- アイコンが綺麗に配置される
-- Finderウィンドウのレイアウトが統一
-- プロフェッショナルな見た目
+- バージョン番号を自動取得
+- 背景画像を自動生成（なければ）
+- SHA256ハッシュを自動計算
+- 完全な配布準備完了
 
 ---
 
-### `create_dmg_background.sh` - DMG背景画像生成（オプション）
-ImageMagickを使用して背景画像を生成します。
+### `create_dmg_background.sh` - DMG背景画像生成
+Python + Pillow を使用して背景画像を自動生成します。
+矢印付きで「ドラッグ&ドロップでインストール」を表示。
 
 **前提条件**:
 ```bash
-brew install imagemagick
+# Python 3（macOSに標準搭載）
+# Pillow（自動インストール）
 ```
 
 **使用方法**:
@@ -73,6 +82,12 @@ brew install imagemagick
 ```
 
 **出力**: `dmg-background.png` (600x400px)
+
+**特徴**:
+- appdmg推奨サイズ（600x400）
+- 矢印とテキストで分かりやすい
+- ヒラギノフォント使用（日本語）
+- Pillow自動インストール
 
 ---
 
