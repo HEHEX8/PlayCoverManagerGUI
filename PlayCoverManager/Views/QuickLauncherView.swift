@@ -41,105 +41,93 @@ struct QuickLauncherView: View {
         return 7
     }
     
-    // Convert NSEvent keyCode to KeyPress.Key
-    private func keyCodeToKey(_ keyCode: UInt16) -> KeyPress.Key {
-        switch keyCode {
-        case 123: return .leftArrow
-        case 124: return .rightArrow
-        case 125: return .downArrow
-        case 126: return .upArrow
-        case 36: return .return
-        case 49: return .space
-        default: return .return  // Fallback
-        }
-    }
-    
-    // Keyboard navigation handler
-    private func handleKeyPress(_ keyPress: KeyPress) -> KeyPress.Result {
-        print("🎹 Key pressed: \(keyPress.key), searchFocused: \(isSearchFieldFocused), focusedApp: \(focusedAppIndex ?? -1)")
+    // Handle keyboard event directly from NSEvent
+    private func handleKeyCode(_ keyCode: UInt16) -> Bool {
+        print("🎹 Key code: \(keyCode), searchFocused: \(isSearchFieldFocused), focusedApp: \(focusedAppIndex ?? -1)")
         
         // Don't handle keyboard if search field is focused
         if isSearchFieldFocused {
             print("🔍 Search field is focused, ignoring key")
-            return .ignored
+            return false
         }
         
         let apps = viewModel.filteredApps
         guard !apps.isEmpty else { 
             print("📭 No apps available")
-            return .ignored 
+            return false
         }
         
-        // Handle Escape key
-        if keyPress.key == .escape {
+        // Handle Escape key (53)
+        if keyCode == 53 {
             if isDrawerOpen {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     isDrawerOpen = false
                 }
-                return .handled
+                return true
             }
             // Clear focus
             focusedAppIndex = nil
-            return .handled
+            return true
         }
         
         // If no app is focused, focus the first one on any arrow key
         if focusedAppIndex == nil {
-            if keyPress.key == .downArrow || keyPress.key == .upArrow || 
-               keyPress.key == .leftArrow || keyPress.key == .rightArrow {
+            if keyCode == 123 || keyCode == 124 || keyCode == 125 || keyCode == 126 {
                 print("⬆️ Arrow key pressed, focusing first app")
                 focusedAppIndex = 0
-                return .handled
+                return true
             }
             print("❓ No app focused and not an arrow key")
+            return false
         }
         
-        guard let currentIndex = focusedAppIndex else { return .ignored }
+        guard let currentIndex = focusedAppIndex else { return false }
         
-        switch keyPress.key {
-        case .return, .space:
+        switch keyCode {
+        case 36, 49:  // Return (36) or Space (49)
             // Launch focused app
+            print("🚀 Launch app at index \(currentIndex)")
             if currentIndex < apps.count {
                 viewModel.launch(app: apps[currentIndex])
             }
-            return .handled
+            return true
             
-        case .rightArrow:
+        case 124:  // Right arrow
             // Move focus right
             print("➡️ Right arrow: \(currentIndex) -> \(currentIndex + 1)")
             if currentIndex < apps.count - 1 {
                 focusedAppIndex = currentIndex + 1
             }
-            return .handled
+            return true
             
-        case .leftArrow:
+        case 123:  // Left arrow
             // Move focus left
             print("⬅️ Left arrow: \(currentIndex) -> \(currentIndex - 1)")
             if currentIndex > 0 {
                 focusedAppIndex = currentIndex - 1
             }
-            return .handled
+            return true
             
-        case .downArrow:
+        case 125:  // Down arrow
             // Move focus down (next row)
             let nextIndex = currentIndex + columnsPerRow
             print("⬇️ Down arrow: \(currentIndex) -> \(nextIndex)")
             if nextIndex < apps.count {
                 focusedAppIndex = nextIndex
             }
-            return .handled
+            return true
             
-        case .upArrow:
+        case 126:  // Up arrow
             // Move focus up (previous row)
             let prevIndex = currentIndex - columnsPerRow
             print("⬆️ Up arrow: \(currentIndex) -> \(prevIndex)")
             if prevIndex >= 0 {
                 focusedAppIndex = prevIndex
             }
-            return .handled
+            return true
             
         default:
-            return .ignored
+            return false
         }
     }
     
@@ -390,9 +378,6 @@ struct QuickLauncherView: View {
         AppUninstallerSheet(preSelectedBundleID: nil)
     }
     .frame(minWidth: 960, minHeight: 640)
-    .onKeyPress { keyPress in
-        return handleKeyPress(keyPress)
-    }
     .overlay(alignment: .center) {
         // Unmount flow overlay (confirmation, progress, result, error)
         if viewModel.unmountFlowState != .idle {
@@ -475,17 +460,11 @@ struct QuickLauncherView: View {
             }
             
             // Handle arrow keys (keyCode: 123=left, 124=right, 125=down, 126=up)
-            // Handle space (49) and return (36)
+            // Handle space (49), return (36), and escape (53)
             switch event.keyCode {
-            case 123, 124, 125, 126, 36, 49:
-                // Convert to KeyPress equivalent
-                let keyPress = KeyPress(
-                    key: keyCodeToKey(event.keyCode),
-                    characters: event.characters ?? "",
-                    modifiers: []
-                )
-                let result = handleKeyPress(keyPress)
-                if result == .handled {
+            case 123, 124, 125, 126, 36, 49, 53:
+                let handled = handleKeyCode(event.keyCode)
+                if handled {
                     print("✅ Event handled, suppressing system beep")
                     return nil  // Suppress the event (no beep)
                 }
