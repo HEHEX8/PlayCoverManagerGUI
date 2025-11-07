@@ -56,9 +56,11 @@ struct QuickLauncherView: View {
                     .help("メニュー")
                     
                     // Search field - left aligned
+                    // Disable when drawer is open to prevent interference
                     TextField("検索", text: $viewModel.searchText)
                         .textFieldStyle(.roundedBorder)
                         .frame(maxWidth: 200)
+                        .disabled(isDrawerOpen)
                     
                     Spacer()
                     
@@ -295,12 +297,14 @@ struct QuickLauncherView: View {
     .onChange(of: showingUninstaller) { oldValue, newValue in
         print("[QuickLauncher] showingUninstaller changed: \(oldValue) -> \(newValue)")
     }
-    .overlay(alignment: .leading) {
-        // Left drawer overlay
+    .overlay {
+        // Left drawer overlay - full screen when open
         if isDrawerOpen {
             ZStack(alignment: .leading) {
                 // Background overlay - tap to close
+                // Use contentShape to ensure entire area is tappable
                 Color.black.opacity(0.3)
+                    .contentShape(Rectangle())
                     .ignoresSafeArea()
                     .onTapGesture {
                         print("[QuickLauncher] Background tapped, closing drawer")
@@ -319,6 +323,8 @@ struct QuickLauncherView: View {
                 )
                 .transition(.move(edge: .leading))
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .zIndex(999)  // Ensure drawer overlay is above all other content
         }
     }
     }
