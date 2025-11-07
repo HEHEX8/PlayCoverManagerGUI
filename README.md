@@ -42,13 +42,16 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 | **ストレージ形式** | APFS ボリューム（ディスク/パーティション上） | **ASIF ディスクイメージ** (`.asif` ファイル) |
 | **ボリューム作成** | `diskutil apfs addVolume` | `diskutil image create --format ASIF` |
 | **対応 macOS** | macOS Sequoia 15.1+ | **macOS Tahoe 26.0+** のみ |
-| **マッピングファイル** | `.playcover-volume-mapping.tsv` | 不要（各 `.asif` ファイルで管理） |
+| **マッピングファイル** | `playcover-map.txt` (TSV: `VolumeName|BundleID|DisplayName|LastLaunched`) | 不要（`.asif` ファイル名が BundleID） |
+| **起動履歴管理** | TSV ファイルの4列目でフラグ管理 | `map.dat` で最近起動アプリ記録 |
 | **マウント方法** | `mount -t apfs -o nobrowse` | `diskutil image attach` |
 | **ボリューム管理** | 手動マウント/アンマウント必須 | 自動マウント・自動管理 |
 | **IPA インストール** | PlayCover.app に依存 | PlayCover.app に依存（同じ） |
 | **設定保存** | スクリプト内部 + TSV ファイル | UserDefaults + plist |
 | **コンテナロック** | 未実装 | **実装済み**（多重起動防止） |
-| **アプリ起動管理** | PlayCover.app 経由のみ | **直接起動 + プロセス管理** |
+| **アプリ起動** | `open -a [app.app]` で直接起動 | `open [app.app]` で直接起動（同じ） |
+| **起動前マウント** | ボリューム状態確認 + 必要に応じてマウント | 自動マウント（LauncherService 経由） |
+| **プロセス監視** | 未実装 | **実装済み**（NSWorkspace で監視） |
 | **ストレージ移行** | rsync ベース手動コピー | **自動再マウント対応** |
 | **Nuclear Cleanup** | 実装（破壊的削除） | 未実装（安全性重視） |
 
@@ -76,21 +79,56 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
      - ファイル移動が容易（外部ドライブ間のコピーが可能）
    - **トレードオフ**: オリジナル版は容量効率が良いが、GUI 版はファイル管理が直感的
 
-3. **マッピング・管理の違い**
+3. **アプリ起動方法の違い**
+   - **オリジナル版 (lib/04_app.sh:launch_app)**:
+     - 起動前にボリュームマウント状態を確認
+     - 必要に応じて `mount_app_volume` でマウント
+     - `open -a "$app_path"` で `.app` を起動
+     - 起動後、TSV ファイルの4列目を更新（最近起動フラグ）
+   - **GUI 版 (LauncherService.swift:openApp)**:
+     - LauncherService が自動的にマウント管理
+     - `open "$app_path"` で `.app` を直接起動（`-a` フラグなし）
+     - NSWorkspace でプロセス監視（`isAppRunning`）
+     - `map.dat` に最近起動アプリを記録
+   - **共通点**: 両方とも PlayCover.app 経由ではなく、`.app` を直接起動
+
+4. **マッピング・管理の違い**
    - **オリジナル版**: 
-     - `.playcover-volume-mapping.tsv` で `VolumeName|BundleID|DisplayName` を管理
+     - `playcover-map.txt` (TSV形式) で管理：
+       ```
+       VolumeName<TAB>BundleID<TAB>DisplayName<TAB>LastLaunched
+       ```
+     - ロック機構実装（`MAPPING_LOCK_FILE` でディレクトリロック）
      - `diskutil list` で実際のボリュームの存在を確認
      - ボリューム名とマウント状態を手動追跡
    - **GUI 版**:
      - マッピングファイル不要（`.asif` ファイル名が BundleID）
      - ファイルシステムで `.asif` ファイルの存在を確認するだけ
      - マウント状態は `diskutil info` で確認
+     - ContainerLockService でコンテナロック実装
    - **互換性なし**: TSV ファイルから `.asif` ファイルへの自動変換は不可能
 
-4. **設定・状態管理の違い**
-   - オリジナル版: zsh 変数 + TSV ファイル + 環境変数
-   - GUI 版: UserDefaults (plist) + `.asif` ファイルのメタデータ
+5. **設定・状態管理の違い**
+   - **オリジナル版**: 
+     - zsh スクリプト変数（`00_core.sh` 内で定義）
+     - TSV マッピングファイル（ボリューム↔アプリ関連付け）
+     - 環境変数（`PLAYCOVER_BASE`, `DATA_DIR` など）
+   - **GUI 版**: 
+     - UserDefaults (plist) でアプリ設定保存
+     - `.asif` ファイル自体がメタデータ保持
+     - SettingsStore で SwiftUI @Observable 管理
    - **データ移行不可**: 設定形式が全く異なる
+
+6. **Nuclear Cleanup（完全リセット）**
+   - **オリジナル版 (lib/05_cleanup.sh)**:
+     - 隠しメニュー（メインメニューで "X" または "RESET" 入力）
+     - 全ボリューム削除 + PlayCover アンインストール + コンテナ削除
+     - 2段階確認（"yes" + "DELETE ALL"）
+     - 削除前にプレビュー表示
+   - **GUI 版**:
+     - **未実装**（意図的に除外 - 安全性重視）
+     - 個別アンインストールのみ提供
+   - **理由**: GUI で破壊的操作は危険なため実装せず
 
 #### オリジナル版からの移行について
 
