@@ -758,6 +758,7 @@ struct AppUninstallerSheet: View {
     
     enum UninstallPhase {
         case loading        // アプリ一覧読み込み中
+        case confirmingSingle  // 個別アンインストール確認中
         case selection      // アプリ選択
         case uninstalling   // アンインストール中
         case results        // 結果表示
@@ -776,6 +777,8 @@ struct AppUninstallerSheet: View {
             switch currentPhase {
             case .loading:
                 loadingView
+            case .confirmingSingle:
+                confirmingSingleView
             case .selection:
                 selectionView
             case .uninstalling:
@@ -792,12 +795,10 @@ struct AppUninstallerSheet: View {
         .frame(width: 700, height: 600)
         .task {
             await loadApps()
-            // After loading, if preSelectedBundleID is set, apply selection
+            // If preSelectedBundleID is set, go directly to confirmation phase
             if let bundleID = preSelectedBundleID, apps.contains(where: { $0.bundleID == bundleID }) {
                 selectedApps = [bundleID]
-                // Wait for selection to render
-                try? await Task.sleep(for: .milliseconds(100))
-                showUninstallConfirmation = true
+                currentPhase = .confirmingSingle
             }
         }
         .alert("アンインストール確認", isPresented: $showUninstallConfirmation) {
@@ -823,6 +824,91 @@ struct AppUninstallerSheet: View {
             ProgressView()
             Text("アプリ一覧を読み込み中...")
                 .font(.headline)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Confirming Single App View
+    private var confirmingSingleView: some View {
+        VStack(spacing: 24) {
+            // Get the app info
+            if let bundleID = selectedApps.first,
+               let app = apps.first(where: { $0.bundleID == bundleID }) {
+                
+                // App icon and info
+                VStack(spacing: 16) {
+                    if let icon = app.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: 18))
+                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Text(app.appName)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .lineLimit(2)
+                        
+                        Text(app.bundleID)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+                
+                Divider()
+                
+                // Confirmation message
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 48))
+                        .foregroundStyle(.orange)
+                    
+                    Text("このアプリをアンインストールしますか？")
+                        .font(.headline)
+                    
+                    Text("この操作は取り消せません。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Divider()
+                
+                // Size info
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("アプリサイズ:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))
+                    }
+                    HStack {
+                        Text("ディスクイメージ:")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: app.diskImageSize, countStyle: .file))
+                    }
+                    Divider()
+                    HStack {
+                        Text("合計:")
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: app.appSize + app.diskImageSize, countStyle: .file))
+                            .fontWeight(.semibold)
+                    }
+                }
+                .font(.callout)
+                .padding()
+                .background(Color(nsColor: .controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                
+            } else {
+                Text("アプリ情報が見つかりません")
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -1114,7 +1200,16 @@ struct AppUninstallerSheet: View {
             
             Spacer()
             
-            if currentPhase == .selection && !selectedApps.isEmpty {
+            if currentPhase == .confirmingSingle && !selectedApps.isEmpty {
+                Button("アンインストール") {
+                    Task {
+                        await startUninstallation()
+                    }
+                }
+                .tint(.red)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+            } else if currentPhase == .selection && !selectedApps.isEmpty {
                 Button("アンインストール (\(selectedApps.count) 個)") {
                     showUninstallConfirmation = true
                 }
