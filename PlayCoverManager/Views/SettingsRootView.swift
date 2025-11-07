@@ -24,7 +24,7 @@ struct SettingsRootView: View {
                 }
             AboutView()
                 .tabItem {
-                    Label("About", systemImage: "info.circle")
+                    Label("情報", systemImage: "info.circle")
                 }
         }
         .padding(24)
@@ -1387,7 +1387,7 @@ private struct AboutView: View {
                 
                 // Description
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("About")
+                    Text("概要")
                         .font(.headline)
                     
                     Text("PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。")
@@ -1404,7 +1404,7 @@ private struct AboutView: View {
                 
                 // System Requirements
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("System Requirements")
+                    Text("システム要件")
                         .font(.headline)
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -1412,7 +1412,7 @@ private struct AboutView: View {
                             Image(systemName: "desktopcomputer")
                                 .foregroundStyle(.secondary)
                                 .frame(width: 20)
-                            Text("macOS Tahoe 26.0 or later")
+                            Text("macOS Tahoe 26.0 以降")
                                 .font(.callout)
                         }
                         
@@ -1420,7 +1420,7 @@ private struct AboutView: View {
                             Image(systemName: "cpu")
                                 .foregroundStyle(.secondary)
                                 .frame(width: 20)
-                            Text("Apple Silicon / Intel (Universal)")
+                            Text("Apple Silicon / Intel（ユニバーサル）")
                                 .font(.callout)
                         }
                         
@@ -1428,7 +1428,7 @@ private struct AboutView: View {
                             Image(systemName: "square.stack.3d.down.right")
                                 .foregroundStyle(.secondary)
                                 .frame(width: 20)
-                            Text("ASIF Disk Image Format")
+                            Text("ASIF ディスクイメージ形式対応")
                                 .font(.callout)
                         }
                     }
@@ -1439,7 +1439,7 @@ private struct AboutView: View {
                 
                 // Links
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Links")
+                    Text("リンク")
                         .font(.headline)
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -1448,7 +1448,7 @@ private struct AboutView: View {
                                 Image(systemName: "link")
                                     .foregroundStyle(.secondary)
                                     .frame(width: 20)
-                                Text("GitHub Repository")
+                                Text("GitHub リポジトリ")
                                     .font(.callout)
                             }
                         }
@@ -1458,7 +1458,7 @@ private struct AboutView: View {
                                 Image(systemName: "exclamationmark.bubble")
                                     .foregroundStyle(.secondary)
                                     .frame(width: 20)
-                                Text("Report Issues")
+                                Text("問題を報告")
                                     .font(.callout)
                             }
                         }
@@ -1468,7 +1468,7 @@ private struct AboutView: View {
                                 Image(systemName: "gamecontroller")
                                     .foregroundStyle(.secondary)
                                     .frame(width: 20)
-                                Text("PlayCover Project")
+                                Text("PlayCover プロジェクト")
                                     .font(.callout)
                             }
                         }
@@ -1484,7 +1484,7 @@ private struct AboutView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
-                    Text("Licensed under MIT License")
+                    Text("MIT ライセンスで提供")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
