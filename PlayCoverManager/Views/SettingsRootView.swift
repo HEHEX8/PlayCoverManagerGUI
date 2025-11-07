@@ -56,66 +56,135 @@ private struct GeneralSettingsView: View {
     }
 
     var body: some View {
-        Form {
-            Section(header: Text("ストレージ")) {
-                LabeledContent("保存先") {
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(settingsStore.diskImageDirectory?.path ?? "未設定")
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.primary)
-                        if calculatingSize {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else if totalDiskUsage > 0 {
-                            Text("使用中: \(ByteCountFormatter.string(fromByteCount: totalDiskUsage, countStyle: .file))")
-                                .font(.caption2)
+        ScrollView {
+            VStack(spacing: 20) {
+                // Storage Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("ストレージ", systemImage: "externaldrive.fill")
+                        .font(.headline)
+                        .foregroundStyle(.blue)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        // Storage path display
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("保存先")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
+                            
+                            HStack {
+                                Text(settingsStore.diskImageDirectory?.path ?? "未設定")
+                                    .font(.system(.callout, design: .monospaced))
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(2)
+                                    .truncationMode(.middle)
+                                Spacer()
+                                if calculatingSize {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else if totalDiskUsage > 0 {
+                                    Text(ByteCountFormatter.string(fromByteCount: totalDiskUsage, countStyle: .file))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                                }
+                            }
+                            .padding(12)
+                            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
                         }
-                    }
-                }
-                Button("保存先を変更...") {
-                    // Close settings sheet and initiate storage change flow
-                    dismiss()
-                    appViewModel.requestStorageLocationChange()
-                }
-                .help("すべてのコンテナをアンマウントしてから保存先を変更します")
-                
-                Text("保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Section(header: Text("マウント設定")) {
-                Toggle("マウント時に Finder に表示しない (-nobrowse)", isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }))
-                
-                Text("有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Section(header: Text("言語")) {
-                Picker("アプリの言語", selection: Binding(
-                    get: { settingsStore.appLanguage },
-                    set: { newValue in
-                        if newValue != previousLanguage {
-                            settingsStore.appLanguage = newValue
-                            showLanguageChangeAlert = true
+                        
+                        Button {
+                            dismiss()
+                            appViewModel.requestStorageLocationChange()
+                        } label: {
+                            Label("保存先を変更", systemImage: "folder.badge.gearshape")
+                                .font(.system(size: 14, weight: .medium))
                         }
-                    }
-                )) {
-                    ForEach(SettingsStore.AppLanguage.allCases) { language in
-                        Text(language.localizedDescription).tag(language)
+                        .buttonStyle(.bordered)
+                        .help("すべてのコンテナをアンマウントしてから保存先を変更します")
+                        
+                        Text("保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                .pickerStyle(.menu)
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
-                Text("言語を変更すると、アプリを再起動する必要があります。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                // Mount Settings Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("マウント設定", systemImage: "internaldrive")
+                        .font(.headline)
+                        .foregroundStyle(.purple)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Toggle(isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 })) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Finder に表示しない (-nobrowse)")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text("有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .toggleStyle(.switch)
+                    }
+                }
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                
+                // Language Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("言語", systemImage: "globe")
+                        .font(.headline)
+                        .foregroundStyle(.green)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("アプリの言語")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                            
+                            Picker("", selection: Binding(
+                                get: { settingsStore.appLanguage },
+                                set: { newValue in
+                                    if newValue != previousLanguage {
+                                        settingsStore.appLanguage = newValue
+                                        showLanguageChangeAlert = true
+                                    }
+                                }
+                            )) {
+                                ForEach(SettingsStore.AppLanguage.allCases) { language in
+                                    Text(language.localizedDescription).tag(language)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+                        
+                        Text("言語を変更すると、アプリを再起動する必要があります。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
             }
+            .padding(20)
         }
         .onAppear {
-            // Update previous language when view appears
             previousLanguage = settingsStore.appLanguage
             Task {
                 await calculateDiskUsage()
@@ -194,19 +263,62 @@ private struct DataSettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
 
     var body: some View {
-        Form {
-            Section(header: Text("内部データ処理の既定値")) {
-                Picker("既定の処理", selection: Binding<SettingsStore.InternalDataStrategy>(get: { settingsStore.defaultDataHandling }, set: { settingsStore.defaultDataHandling = $0 })) {
-                    ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
-                        Text(strategy.localizedDescription).tag(strategy)
+        ScrollView {
+            VStack(spacing: 20) {
+                // Internal Data Handling Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("内部データ処理の既定値", systemImage: "doc.on.doc")
+                        .font(.headline)
+                        .foregroundStyle(.orange)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("既定の処理")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                            
+                            Picker("", selection: Binding<SettingsStore.InternalDataStrategy>(
+                                get: { settingsStore.defaultDataHandling },
+                                set: { settingsStore.defaultDataHandling = $0 }
+                            )) {
+                                ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
+                                    Text(strategy.localizedDescription).tag(strategy)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+                        
+                        // Description with info icon
+                        HStack(alignment: .top, spacing: 12) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.blue)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("説明")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                
+                                Text("アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。")
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .padding(12)
+                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
                     }
                 }
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                
+                Spacer()
             }
-            Section(header: Text("説明")) {
-                Text("アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+            .padding(20)
         }
     }
 }
@@ -1537,25 +1649,64 @@ private struct MaintenanceSettingsView: View {
     @State private var showingClearCacheConfirmation = false
 
     var body: some View {
-        Form {
-            Section(header: Text("キャッシュ")) {
-                Button("アイコンキャッシュをクリア") {
-                    showingClearCacheConfirmation = true
+        ScrollView {
+            VStack(spacing: 20) {
+                // Cache Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("キャッシュ", systemImage: "folder.badge.minus")
+                        .font(.headline)
+                        .foregroundStyle(.blue)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Button {
+                            showingClearCacheConfirmation = true
+                        } label: {
+                            Label("アイコンキャッシュをクリア", systemImage: "trash")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Text("アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                Text("アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Section(header: Text("リセット")) {
-                Button("設定をリセット") {
-                    showingResetConfirmation = true
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                
+                // Reset Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("リセット", systemImage: "arrow.counterclockwise.circle.fill")
+                        .font(.headline)
+                        .foregroundStyle(.red)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Button {
+                            showingResetConfirmation = true
+                        } label: {
+                            Label("設定をリセット", systemImage: "exclamationmark.triangle.fill")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.red)
+                        
+                        Text("すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .foregroundStyle(.red)
-                Text("すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                
+                Spacer()
             }
+            .padding(20)
         }
         .alert("設定をリセットしますか？", isPresented: $showingResetConfirmation) {
             Button("キャンセル", role: .cancel) { }
@@ -1610,120 +1761,91 @@ private struct AboutView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                // App Icon and Name
-                VStack(spacing: 12) {
+            VStack(spacing: 20) {
+                // App Icon and Name Card
+                VStack(spacing: 16) {
                     if let icon = NSImage(named: "AppIcon") {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: 128, height: 128)
-                            .clipShape(RoundedRectangle(cornerRadius: 24))
-                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            .frame(width: 100, height: 100)
+                            .clipShape(RoundedRectangle(cornerRadius: 22))
+                            .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
                     }
                     
-                    Text("PlayCover Manager")
-                        .font(.title)
-                        .fontWeight(.semibold)
-                    
-                    Text("Version \(appVersion) (Build \(buildNumber))")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    VStack(spacing: 6) {
+                        Text("PlayCover Manager")
+                            .font(.title.bold())
+                        
+                        Text("Version \(appVersion) (Build \(buildNumber))")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .frame(maxWidth: .infinity)
+                .padding(24)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
-                Divider()
-                
-                // Description
+                // Description Card
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("概要")
+                    Label("概要", systemImage: "info.circle.fill")
                         .font(.headline)
+                        .foregroundStyle(.blue)
+                    
+                    Divider()
                     
                     Text("PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。")
-                        .font(.body)
+                        .font(.callout)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     
                     Text("IPA インストール、アプリ起動、アンインストール、ストレージ管理などの機能を提供します。")
-                        .font(.body)
+                        .font(.callout)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
-                Divider()
-                
-                // System Requirements
+                // System Requirements Card
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("システム要件")
+                    Label("システム要件", systemImage: "checkmark.shield.fill")
                         .font(.headline)
+                        .foregroundStyle(.green)
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "desktopcomputer")
-                                .foregroundStyle(.secondary)
-                                .frame(width: 20)
-                            Text("macOS Tahoe 26.0 以降")
-                                .font(.callout)
-                        }
-                        
-                        HStack {
-                            Image(systemName: "cpu")
-                                .foregroundStyle(.secondary)
-                                .frame(width: 20)
-                            Text("Apple Silicon Mac 専用")
-                                .font(.callout)
-                        }
-                        
-                        HStack {
-                            Image(systemName: "square.stack.3d.down.right")
-                                .foregroundStyle(.secondary)
-                                .frame(width: 20)
-                            Text("ASIF ディスクイメージ形式対応")
-                                .font(.callout)
-                        }
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        RequirementRow(icon: "desktopcomputer", text: "macOS Tahoe 26.0 以降")
+                        RequirementRow(icon: "cpu", text: "Apple Silicon Mac 専用")
+                        RequirementRow(icon: "square.stack.3d.down.right", text: "ASIF ディスクイメージ形式対応")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
-                Divider()
-                
-                // Links
+                // Links Card
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("リンク")
+                    Label("リンク", systemImage: "link.circle.fill")
                         .font(.headline)
+                        .foregroundStyle(.purple)
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Link(destination: URL(string: "https://github.com/HEHEX8/PlayCoverManagerGUI")!) {
-                            HStack {
-                                Image(systemName: "link")
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 20)
-                                Text("GitHub リポジトリ")
-                                    .font(.callout)
-                            }
-                        }
-                        
-                        Link(destination: URL(string: "https://github.com/HEHEX8/PlayCoverManagerGUI/issues")!) {
-                            HStack {
-                                Image(systemName: "exclamationmark.bubble")
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 20)
-                                Text("問題を報告")
-                                    .font(.callout)
-                            }
-                        }
-                        
-                        Link(destination: URL(string: "https://github.com/PlayCover/PlayCover")!) {
-                            HStack {
-                                Image(systemName: "gamecontroller")
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 20)
-                                Text("PlayCover プロジェクト")
-                                    .font(.callout)
-                            }
-                        }
+                    Divider()
+                    
+                    VStack(spacing: 8) {
+                        LinkButton(icon: "link", text: "GitHub リポジトリ", url: "https://github.com/HEHEX8/PlayCoverManagerGUI")
+                        LinkButton(icon: "exclamationmark.bubble", text: "問題を報告", url: "https://github.com/HEHEX8/PlayCoverManagerGUI/issues")
+                        LinkButton(icon: "gamecontroller", text: "PlayCover プロジェクト", url: "https://github.com/PlayCover/PlayCover")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Divider()
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Copyright
                 VStack(spacing: 4) {
@@ -1735,10 +1857,54 @@ private struct AboutView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .padding(.vertical, 8)
             }
-            .padding(.vertical)
+            .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// Helper Views for About
+private struct RequirementRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(.green)
+                .frame(width: 24)
+            Text(text)
+                .font(.callout)
+        }
+    }
+}
+
+private struct LinkButton: View {
+    let icon: String
+    let text: String
+    let url: String
+    
+    var body: some View {
+        Link(destination: URL(string: url)!) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(.blue)
+                    .frame(width: 24)
+                Text(text)
+                    .font(.callout)
+                Spacer()
+                Image(systemName: "arrow.up.forward")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(12)
+            .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
     }
 }
 

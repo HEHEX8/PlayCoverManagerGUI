@@ -579,107 +579,157 @@ private struct AppDetailSheet: View {
         case info = "情報"
         
         var id: String { rawValue }
+        
+        var icon: String {
+            switch self {
+            case .basic: return "slider.horizontal.3"
+            case .graphics: return "display"
+            case .controls: return "gamecontroller.fill"
+            case .advanced: return "gearshape.2.fill"
+            case .info: return "info.circle.fill"
+            }
+        }
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header with icon and info
-            HStack(spacing: 16) {
-                if let icon = app.icon {
-                    Image(nsImage: icon)
-                        .resizable()
-                        .frame(width: 80, height: 80)
-                        .clipShape(RoundedRectangle(cornerRadius: 18))
-                } else {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 80, height: 80)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(app.displayName)
-                        .font(.title2)
-                        .fontWeight(.semibold)
-                        .lineLimit(2)
-                    
-                    if let version = app.version {
-                        Text("バージョン \(version)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                    
-                    Text(app.bundleIdentifier)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
-                
-                Spacer()
-                
-                // Quick launch button
-                Button {
-                    dismiss()
-                    viewModel.launch(app: app)
-                } label: {
-                    Label("起動", systemImage: "play.circle.fill")
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .padding(24)
+        ZStack {
+            // Background
+            Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
             
-            Divider()
-            
-            // Tab selector
-            Picker("", selection: $selectedTab) {
-                ForEach(SettingsTab.allCases) { tab in
-                    Text(tab.rawValue).tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            
-            Divider()
-            
-            // Tab content
-            ScrollView {
-                Group {
-                    switch selectedTab {
-                    case .basic:
-                        BasicSettingsView(app: app, viewModel: viewModel)
-                    case .graphics:
-                        GraphicsSettingsView(app: app)
-                    case .controls:
-                        ControlsSettingsView(app: app)
-                    case .advanced:
-                        AdvancedSettingsView(app: app)
-                    case .info:
-                        InfoView(app: app)
+            VStack(spacing: 0) {
+                // Modern header card
+                VStack(spacing: 16) {
+                    HStack(spacing: 16) {
+                        // App icon with shadow
+                        if let icon = app.icon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        } else {
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: 80, height: 80)
+                                .overlay {
+                                    Image(systemName: "app.dashed")
+                                        .font(.system(size: 32))
+                                        .foregroundStyle(.secondary)
+                                }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(app.displayName)
+                                .font(.title2.bold())
+                                .lineLimit(2)
+                            
+                            if let version = app.version {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "tag.fill")
+                                        .font(.caption2)
+                                    Text("バージョン \(version)")
+                                        .font(.subheadline)
+                                }
+                                .foregroundStyle(.secondary)
+                            }
+                            
+                            Text(app.bundleIdentifier)
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        
+                        Spacer()
+                        
+                        // Quick launch button
+                        Button {
+                            dismiss()
+                            viewModel.launch(app: app)
+                        } label: {
+                            Label("起動", systemImage: "play.circle.fill")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                     }
                 }
                 .padding(24)
-            }
-            
-            Divider()
-            
-            // Footer
-            HStack {
-                Button {
-                    NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                } label: {
-                    Label("Finder で表示", systemImage: "folder")
+                .background(.ultraThinMaterial)
+                
+                Divider()
+                
+                // Modern tab selector with icons
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(SettingsTab.allCases) { tab in
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedTab = tab
+                                }
+                            } label: {
+                                Label(tab.rawValue, systemImage: tab.icon)
+                                    .font(.system(size: 13, weight: selectedTab == tab ? .semibold : .regular))
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        selectedTab == tab ?
+                                            AnyView(RoundedRectangle(cornerRadius: 8).fill(.blue)) :
+                                            AnyView(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor).opacity(0.5)))
+                                    )
+                                    .foregroundStyle(selectedTab == tab ? .white : .primary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                }
+                .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
+                
+                Divider()
+                
+                // Tab content with transition
+                ScrollView {
+                    Group {
+                        switch selectedTab {
+                        case .basic:
+                            BasicSettingsView(app: app, viewModel: viewModel)
+                        case .graphics:
+                            GraphicsSettingsView(app: app)
+                        case .controls:
+                            ControlsSettingsView(app: app)
+                        case .advanced:
+                            AdvancedSettingsView(app: app)
+                        case .info:
+                            InfoView(app: app)
+                        }
+                    }
+                    .padding(24)
                 }
                 
-                Spacer()
+                Divider()
                 
-                Button("閉じる") {
-                    dismiss()
+                // Footer
+                HStack {
+                    Button {
+                        NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                    } label: {
+                        Label("Finder で表示", systemImage: "folder")
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Spacer()
+                    
+                    Button("閉じる") {
+                        dismiss()
+                    }
+                    .keyboardShortcut(.cancelAction)
                 }
-                .keyboardShortcut(.cancelAction)
+                .padding(16)
+                .background(.ultraThinMaterial)
             }
-            .padding()
         }
         .frame(width: 700, height: 600)
     }
@@ -715,64 +765,87 @@ private struct EmptyAppListView: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
-            Image(systemName: isSearchEmpty ? "magnifyingglass" : "tray")
-                .font(.system(size: 64))
-                .foregroundStyle(.secondary)
+        ZStack {
+            // Background
+            Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
             
-            Text(isSearchEmpty ? "検索結果が見つかりません" : "インストール済みアプリがありません")
-                .font(.title2)
-                .foregroundStyle(.primary)
-            
-            if isSearchEmpty {
-                // Search empty state
-                VStack(spacing: 8) {
-                    Text("\"\(searchText)\" に一致するアプリが見つかりませんでした。")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+            VStack(spacing: 32) {
+                // Icon and title card
+                VStack(spacing: 24) {
+                    Image(systemName: isSearchEmpty ? "magnifyingglass" : "tray")
+                        .font(.system(size: 80))
+                        .foregroundStyle(isSearchEmpty ? .blue : .secondary)
                     
-                    Text("別のキーワードで検索してみてください。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 12) {
+                        Text(isSearchEmpty ? "検索結果が見つかりません" : "インストール済みアプリがありません")
+                            .font(.title.bold())
+                        
+                        if isSearchEmpty {
+                            // Search empty state
+                            VStack(spacing: 8) {
+                                Text("\"\(searchText)\" に一致するアプリが見つかりませんでした。")
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("別のキーワードで検索してみてください。")
+                                    .font(.callout)
+                                    .foregroundStyle(.tertiary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: 450)
+                        } else {
+                            // No apps installed state
+                            VStack(spacing: 8) {
+                                Text("IPA ファイルをインストールすると、ここに表示されます。")
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text("下のボタンから IPA をインストールしてください。")
+                                    .font(.callout)
+                                    .foregroundStyle(.tertiary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: 450)
+                        }
+                    }
                 }
-                .frame(maxWidth: 400)
-            } else {
-                // No apps installed state
-                VStack(spacing: 8) {
-                    Text("IPA ファイルをインストールすると、ここに表示されます。")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("下のボタンから IPA をインストールしてください。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: 400)
+                .padding(40)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
                 
-                HStack(spacing: 12) {
-                    Button {
-                        showingInstaller = true
-                    } label: {
-                        Label("IPA をインストール", systemImage: "square.and.arrow.down")
+                // Action buttons (only for non-search empty state)
+                if !isSearchEmpty {
+                    VStack(spacing: 16) {
+                        Button {
+                            showingInstaller = true
+                        } label: {
+                            Label("IPA をインストール", systemImage: "square.and.arrow.down")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(minWidth: 200)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .keyboardShortcut(.defaultAction)
+                        
+                        Button {
+                            refreshAction()
+                        } label: {
+                            Label("再読み込み", systemImage: "arrow.clockwise")
+                                .font(.system(size: 15, weight: .medium))
+                                .frame(minWidth: 200)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .keyboardShortcut("r", modifiers: [.command])
                     }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
-                    
-                    Button {
-                        refreshAction()
-                    } label: {
-                        Label("再読み込み", systemImage: "arrow.clockwise")
-                    }
-                    .keyboardShortcut("r", modifiers: [.command])
                 }
             }
+            .frame(maxWidth: 600)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
         .sheet(isPresented: $showingInstaller) {
             IPAInstallerSheetWrapper()
         }
