@@ -1265,6 +1265,24 @@ private struct RecentAppLaunchButton: View {
                 }
                 .frame(width: 56, height: 56)
                 .zIndex(999)  // Ensure icons render above all other content
+                .background(
+                    GeometryReader { iconGeo in
+                        Color.clear.onChange(of: app.bundleIdentifier) { oldValue, newValue in
+                            // Detect app change and trigger rich transition
+                            if !oldValue.isEmpty && oldValue != newValue {
+                                // Save CURRENT displayed icon as old icon (before it updates)
+                                oldIcon = currentIcon
+                                // Pass icon-specific geometry to get live position
+                                performAppSwitchAnimation(iconGeometry: iconGeo)
+                            }
+                            previousAppID = newValue
+                            // Update current icon after animation starts
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                currentIcon = app.icon
+                            }
+                        }
+                    }
+                )
                 
                 // App info with modern styling
                 VStack(alignment: .leading, spacing: 6) {
@@ -1320,24 +1338,6 @@ private struct RecentAppLaunchButton: View {
             }
         }
         .keyboardShortcut(.defaultAction)
-        .background(
-            GeometryReader { geo in
-                Color.clear.onChange(of: app.bundleIdentifier) { oldValue, newValue in
-                    // Detect app change and trigger rich transition
-                    if !oldValue.isEmpty && oldValue != newValue {
-                        // Save CURRENT displayed icon as old icon (before it updates)
-                        oldIcon = currentIcon
-                        // Pass geometry to get live position
-                        performAppSwitchAnimation(iconGeometry: geo)
-                    }
-                    previousAppID = newValue
-                    // Update current icon after animation starts
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        currentIcon = app.icon
-                    }
-                }
-            }
-        )
         .onAppear {
             previousAppID = app.bundleIdentifier
             currentIcon = app.icon
