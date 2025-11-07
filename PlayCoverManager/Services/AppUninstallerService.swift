@@ -165,38 +165,8 @@ class AppUninstallerService {
     }
     
     private func findDiskImageName(for bundleID: String) -> String {
-        let containerPath = PlayCoverPaths.containerURL(for: bundleID)
-        
-        // Check if it's currently mounted and get mount device
-        do {
-            let mountOutput = try processRunner.runSync("/sbin/mount", [])
-            let lines = mountOutput.split(separator: "\n")
-            
-            for line in lines {
-                if line.contains(containerPath.path) {
-                    // Extract device name from mount output
-                    // Format: /dev/diskXsY on /path/to/mount (apfs, ...)
-                    if let deviceMatch = line.split(separator: " ").first {
-                        // Get volume name from diskutil
-                        if let diskutilOutput = try? processRunner.runSync("/usr/sbin/diskutil", ["info", String(deviceMatch)]),
-                           let volumeLine = diskutilOutput.split(separator: "\n").first(where: { $0.contains("Volume Name:") }) {
-                            let volumeName = volumeLine.split(separator: ":").last?.trimmingCharacters(in: .whitespaces) ?? ""
-                            return "\(volumeName).asif"
-                        }
-                    }
-                }
-            }
-        } catch {
-            // Fallback: try to guess from bundle ID
-        }
-        
-        // Fallback: generate from bundle ID last segment
-        let segments = bundleID.split(separator: ".")
-        if let lastSegment = segments.last {
-            let volumeName = String(lastSegment).replacingOccurrences(of: "[^a-zA-Z0-9]", with: "", options: .regularExpression)
-            return "\(volumeName).asif"
-        }
-        
+        // Disk image is always named after the bundle ID (this is how we create it)
+        // Format: bundleID.asif (e.g., "com.example.app.asif")
         return "\(bundleID).asif"
     }
     
