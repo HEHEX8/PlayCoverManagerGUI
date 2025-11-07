@@ -109,9 +109,10 @@ class IPAInstallerService {
         let systemLanguage = primaryLanguage.split(separator: "-").first.map(String.init) ?? "en"
         
         // Extract Info.plist and localized strings using wildcards (FAST - no listing needed)
-        // Use wildcards to extract: Payload/*.app/Info.plist, system language .lproj, and app icon
+        // Use wildcards to extract: Payload/*.app/Info.plist, en.lproj (fallback), system language .lproj, and app icon
         var extractPatterns = [
             "Payload/*.app/Info.plist",
+            "Payload/*.app/en.lproj/InfoPlist.strings",  // English fallback
             "Payload/*.app/AppIcon60x60@2x.png",  // Most common iOS app icon
             "Payload/*.app/AppIcon76x76@2x~ipad.png"  // iPad icon
         ]
@@ -120,11 +121,16 @@ class IPAInstallerService {
         }
         
         // Extract with wildcards - unzip handles pattern matching internally (much faster)
-        // -j flag flattens directory structure, so files are extracted directly to tempDir
-        _ = try? await processRunner.run("/usr/bin/unzip", ["-q", "-j", ipaURL.path] + extractPatterns + ["-d", tempDir.path])
+        // Note: Without -j to preserve directory structure for multiple InfoPlist.strings files
+        _ = try? await processRunner.run("/usr/bin/unzip", ["-q", ipaURL.path] + extractPatterns + ["-d", tempDir.path])
         
-        // Info.plist is now directly in tempDir (flattened with -j)
-        let infoPlistURL = tempDir.appendingPathComponent("Info.plist")
+        // Find the .app directory
+        let payloadURL = tempDir.appendingPathComponent("Payload")
+        guard let appURL = try? FileManager.default.contentsOfDirectory(at: payloadURL, includingPropertiesForKeys: nil).first(where: { $0.pathExtension == "app" }) else {
+            throw AppError.installation("IPA 内に .app が見つかりません", message: "")
+        }
+        
+        let infoPlistURL = appURL.appendingPathComponent("Info.plist")
         guard FileManager.default.fileExists(atPath: infoPlistURL.path) else {
             throw AppError.installation("IPA 内に Info.plist が見つかりません", message: "")
         }
@@ -143,19 +149,30 @@ class IPAInstallerService {
         // Extract version
         let version = (plist["CFBundleShortVersionString"] as? String) ?? (plist["CFBundleVersion"] as? String) ?? "Unknown"
         
-        // Extract app name (English)
-        var appNameEnglish = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String)
-        guard let appNameEn = appNameEnglish else {
+        // Try to get English app name first (from en.lproj)
+        var appNameEnglish = ""
+        let enLprojURL = appURL.appendingPathComponent("en.lproj/InfoPlist.strings")
+        if FileManager.default.fileExists(atPath: enLprojURL.path),
+           let stringsData = try? Data(contentsOf: enLprojURL),
+           let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+            appNameEnglish = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
+        }
+        
+        // Fallback to Info.plist if no English localization
+        if appNameEnglish.isEmpty {
+            appNameEnglish = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String) ?? ""
+        }
+        
+        guard !appNameEnglish.isEmpty else {
             throw AppError.installation("アプリ名の取得に失敗しました", message: "")
         }
-        appNameEnglish = appNameEn
         
-        // Try to extract localized app name (system language first, then Japanese fallback)
-        var appName: String = appNameEn
+        // Try to extract localized app name for configured language
+        var appName: String = appNameEnglish  // Default to English
         
-        // Try system language first (if not en)
+        // Try configured language first (if not en)
         if systemLanguage != "en" {
-            let langStringsURL = tempDir.appendingPathComponent("InfoPlist.strings")
+            let langStringsURL = appURL.appendingPathComponent("\(systemLanguage).lproj/InfoPlist.strings")
             if FileManager.default.fileExists(atPath: langStringsURL.path),
                let stringsData = try? Data(contentsOf: langStringsURL),
                let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
@@ -167,14 +184,14 @@ class IPAInstallerService {
             }
         }
         
-        // If system language didn't work, appName stays as English (appNameEn)
-        // No fallback to Japanese - English is the universal fallback
+        // If configured language didn't work, appName stays as English
+        // This ensures English fallback instead of potentially Japanese Info.plist defaults
         
-        // Try to load extracted icon (already extracted with Info.plist in one command)
+        // Try to load extracted icon
         var icon: NSImage? = nil
         let possibleIconNames = ["AppIcon60x60@2x.png", "AppIcon76x76@2x~ipad.png"]
         for iconName in possibleIconNames {
-            let iconURL = tempDir.appendingPathComponent(iconName)
+            let iconURL = appURL.appendingPathComponent(iconName)
             if FileManager.default.fileExists(atPath: iconURL.path),
                let imageData = try? Data(contentsOf: iconURL) {
                 icon = NSImage(data: imageData)

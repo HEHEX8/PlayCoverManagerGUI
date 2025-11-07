@@ -92,24 +92,15 @@ final class LauncherService {
             return localizedName
         }
         
-        // Fallback to English if current language not found
+        // CRITICAL: Fallback to English if current language not found
+        // This ensures we show English names instead of potentially Japanese Info.plist defaults
         if languageCode != "en" {
             if let englishName = getLocalizedName(from: url, languageCode: "en") {
                 return englishName
             }
         }
         
-        // Try bundle's localizedInfoDictionary as fallback
-        if let localizedDict = bundle.localizedInfoDictionary {
-            if let displayName = localizedDict["CFBundleDisplayName"] as? String, !displayName.isEmpty {
-                return displayName
-            }
-            if let name = localizedDict["CFBundleName"] as? String, !name.isEmpty {
-                return name
-            }
-        }
-        
-        // Try main Info.plist
+        // Last resort: Try main Info.plist (may contain default language, often English but could be any language)
         if let info = bundle.infoDictionary {
             if let displayName = info["CFBundleDisplayName"] as? String, !displayName.isEmpty {
                 return displayName
@@ -119,7 +110,7 @@ final class LauncherService {
             }
         }
         
-        // Fallback: Use filename
+        // Final fallback: Use filename
         return url.deletingPathExtension().lastPathComponent
     }
     
