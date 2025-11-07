@@ -53,18 +53,7 @@ struct KeyboardNavigableAlert: View {
             // Buttons
             HStack(spacing: 12) {
                 ForEach(Array(buttons.enumerated()), id: \.offset) { index, button in
-                    Button(button.title) {
-                        button.action()
-                    }
-                    .buttonStyle(button.style == .borderedProminent || button.style == .destructive ? .borderedProminent : .bordered)
-                    .tint(button.style == .destructive ? .red : (selectedButtonIndex == index ? .blue : .gray))
-                    .overlay {
-                        if selectedButtonIndex == index {
-                            RoundedRectangle(cornerRadius: 6)
-                                .strokeBorder(Color.blue, lineWidth: 2)
-                        }
-                    }
-                    .keyboardShortcut(button.keyEquivalent)
+                    makeButton(for: button, at: index)
                 }
             }
         }
@@ -74,6 +63,26 @@ struct KeyboardNavigableAlert: View {
         .shadow(color: .black.opacity(0.3), radius: 20)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
+    }
+    
+    @ViewBuilder
+    private func makeButton(for button: AlertButton, at index: Int) -> some View {
+        let isSelected = selectedButtonIndex == index
+        let buttonStyle: SwiftUI.ButtonStyle = (button.style == .borderedProminent || button.style == .destructive) ? .borderedProminent : .bordered
+        let tintColor: Color = button.style == .destructive ? .red : (isSelected ? .blue : .gray)
+        
+        Button(button.title) {
+            button.action()
+        }
+        .buttonStyle(buttonStyle)
+        .tint(tintColor)
+        .overlay {
+            if isSelected {
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(Color.blue, lineWidth: 2)
+            }
+        }
+        .applyKeyboardShortcut(button.keyEquivalent)
     }
     
     private func setupKeyboardMonitor() {
@@ -155,17 +164,6 @@ struct AlertButton {
         case none
         case `default`
         case cancel
-        
-        var swiftUIEquivalent: SwiftUI.KeyEquivalent? {
-            switch self {
-            case .none:
-                return nil
-            case .default:
-                return .defaultAction
-            case .cancel:
-                return .cancelAction
-            }
-        }
     }
 }
 
@@ -220,29 +218,18 @@ extension View {
     }
 }
 
-// MARK: - Helper for KeyEquivalent
+// MARK: - Helper Extension
 
-extension AlertButton.KeyEquivalent {
-    fileprivate var swiftUIKeyboardShortcut: SwiftUI.KeyboardShortcut? {
-        switch self {
-        case .none:
-            return nil
-        case .default:
-            return .defaultAction
-        case .cancel:
-            return .cancelAction
-        }
-    }
-}
-
-// Fix for ButtonStyle application
-private extension Button {
+private extension View {
     @ViewBuilder
-    func keyboardShortcut(_ keyEquivalent: AlertButton.KeyEquivalent) -> some View {
-        if let shortcut = keyEquivalent.swiftUIKeyboardShortcut {
-            self.keyboardShortcut(shortcut)
-        } else {
+    func applyKeyboardShortcut(_ keyEquivalent: AlertButton.KeyEquivalent) -> some View {
+        switch keyEquivalent {
+        case .none:
             self
+        case .default:
+            self.keyboardShortcut(.defaultAction)
+        case .cancel:
+            self.keyboardShortcut(.cancelAction)
         }
     }
 }
