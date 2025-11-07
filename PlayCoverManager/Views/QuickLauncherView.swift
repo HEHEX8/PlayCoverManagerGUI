@@ -660,7 +660,15 @@ private struct iOSAppIconView: View {
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
-            .brightness(isHovered || isFocused ? 0.1 : 0)
+            .background {
+                // Hover/focus highlight - behind the icon
+                if isHovered || isFocused {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(Color.accentColor.opacity(0.15))
+                        .blur(radius: 8)
+                        .scaleEffect(1.3)
+                }
+            }
             .shadow(color: .blue.opacity((isHovered || isFocused) ? 0.3 : 0), radius: (isHovered || isFocused) ? 8 : 0, x: 0, y: 0)
             .overlay {
                 // Keyboard focus ring
