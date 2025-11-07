@@ -637,7 +637,6 @@ private struct iOSAppIconView: View {
     @State private var isCancelled = false
     @State private var shakeOffset: CGFloat = 0
     @State private var isDragging = false
-    @State private var isHovered = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -660,18 +659,8 @@ private struct iOSAppIconView: View {
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
-            .background {
-                // Hover/focus highlight - behind the icon
-                if isHovered || isFocused {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(Color.accentColor.opacity(0.15))
-                        .blur(radius: 8)
-                        .scaleEffect(1.3)
-                }
-            }
-            .shadow(color: .blue.opacity((isHovered || isFocused) ? 0.3 : 0), radius: (isHovered || isFocused) ? 8 : 0, x: 0, y: 0)
             .overlay {
-                // Keyboard focus ring
+                // Keyboard focus ring only
                 if isFocused {
                     RoundedRectangle(cornerRadius: 18)
                         .strokeBorder(Color.accentColor, lineWidth: 3)
@@ -723,11 +712,6 @@ private struct iOSAppIconView: View {
         .scaleEffect(max(0.3, shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1))
         .offset(y: shouldAnimate ? (hasAppeared ? 0 : 20) : 0)
         .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry during initial animation
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovered = hovering
-            }
-        }
         .onAppear {
             if shouldAnimate && !hasAppeared {
                 // Staggered fade-in animation (Mac Dock style) - only on first load
