@@ -141,19 +141,20 @@ private struct StorageChangeConfirmationView: View {
     }
     
     private func setupKeyboardMonitor() {
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
+            print("🎯 StorageChangeDialog keyCode: \(event.keyCode), selected: \(self.selectedButton)")
             switch event.keyCode {
             case 53:  // Escape
-                onCancel()
+                self.onCancel()
                 return nil
             case 36:  // Return
-                if selectedButton == 0 { onCancel() } else { onConfirm() }
+                if self.selectedButton == 0 { self.onCancel() } else { self.onConfirm() }
                 return nil
             case 123:  // Left arrow
-                selectedButton = 0
+                self.selectedButton = 0
                 return nil
             case 124:  // Right arrow
-                selectedButton = 1
+                self.selectedButton = 1
                 return nil
             default:
                 return event
@@ -338,19 +339,20 @@ private struct UnmountEjectConfirmationView: View {
     }
     
     private func setupKeyboardMonitor() {
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [self] event in
+            print("🎯 EjectDialog keyCode: \(event.keyCode), selected: \(self.selectedButton)")
             switch event.keyCode {
             case 53:  // Escape
-                onCancel()
+                self.onCancel()
                 return nil
             case 36:  // Return
-                if selectedButton == 0 { onCancel() } else { onConfirm() }
+                if self.selectedButton == 0 { self.onCancel() } else { self.onConfirm() }
                 return nil
             case 123:  // Left arrow
-                selectedButton = 0
+                self.selectedButton = 0
                 return nil
             case 124:  // Right arrow
-                selectedButton = 1
+                self.selectedButton = 1
                 return nil
             default:
                 return event
