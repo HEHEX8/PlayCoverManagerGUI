@@ -22,6 +22,7 @@ struct QuickLauncherView: View {
     @State private var showingUninstaller = false  // For general uninstall (from drawer)
     @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
+    @State private var refreshRotation: Double = 0  // For refresh button rotation animation
     
     // iOS-style grid with fixed size icons
     private let gridColumns = [
@@ -85,12 +86,17 @@ struct QuickLauncherView: View {
                     
                     Spacer()
                     
-                    // Refresh button - modern style
+                    // Refresh button - modern style with rotation animation
                     ModernToolbarButton(
                         icon: "arrow.clockwise",
                         color: .primary,
-                        help: "アプリ一覧を更新 (⌘R)"
+                        help: "アプリ一覧を更新 (⌘R)",
+                        rotation: refreshRotation
                     ) {
+                        // Trigger rotation animation
+                        withAnimation(.easeInOut(duration: 0.5)) {
+                            refreshRotation += 360
+                        }
                         Task { await viewModel.refresh() }
                     }
                     .keyboardShortcut("r", modifiers: [.command])
@@ -365,6 +371,7 @@ private struct ModernToolbarButton: View {
     let icon: String
     let color: Color
     let help: String
+    var rotation: Double = 0  // Optional rotation angle for animations
     let action: () -> Void
     
     @State private var isHovered = false
@@ -374,6 +381,7 @@ private struct ModernToolbarButton: View {
             Image(systemName: icon)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(color)
+                .rotationEffect(.degrees(rotation))
                 .frame(width: 44, height: 44)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
