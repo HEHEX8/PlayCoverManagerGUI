@@ -16,7 +16,8 @@
             "value": "アプリ一覧を読み込み中..."
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "このアプリをアンインストールしますか？": {
       "extractionState": "manual",
@@ -33,7 +34,8 @@
             "value": "このアプリをアンインストールしますか？"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "この操作は取り消せません。": {
       "extractionState": "manual",
@@ -50,7 +52,8 @@
             "value": "この操作は取り消せません。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリサイズ:": {
       "extractionState": "manual",
@@ -67,7 +70,8 @@
             "value": "アプリサイズ:"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ディスクイメージ:": {
       "extractionState": "manual",
@@ -84,7 +88,8 @@
             "value": "ディスクイメージ:"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "合計:": {
       "extractionState": "manual",
@@ -101,7 +106,8 @@
             "value": "合計:"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アンインストール": {
       "extractionState": "manual",
@@ -118,7 +124,8 @@
             "value": "アンインストール"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "キャンセル": {
       "extractionState": "manual",
@@ -135,7 +142,8 @@
             "value": "キャンセル"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "閉じる": {
       "extractionState": "manual",
@@ -152,7 +160,8 @@
             "value": "閉じる"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "戻る": {
       "extractionState": "manual",
@@ -169,7 +178,8 @@
             "value": "戻る"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "次へ": {
       "extractionState": "manual",
@@ -186,7 +196,8 @@
             "value": "次へ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリアンインストーラー": {
       "extractionState": "manual",
@@ -203,7 +214,8 @@
             "value": "アプリアンインストーラー"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "%lld 個のアプリをアンインストールしますか？": {
       "extractionState": "manual",
@@ -220,7 +232,8 @@
             "value": "%lld 個のアプリをアンインストールしますか？"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリ情報が見つかりません": {
       "extractionState": "manual",
@@ -237,7 +250,8 @@
             "value": "アプリ情報が見つかりません"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アンインストール可能なアプリがありません": {
       "extractionState": "manual",
@@ -254,7 +268,8 @@
             "value": "アンインストール可能なアプリがありません"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "インストール済みアプリ (%lld 個)": {
       "extractionState": "manual",
@@ -271,7 +286,8 @@
             "value": "インストール済みアプリ (%lld 個)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アンインストール中...": {
       "extractionState": "manual",
@@ -288,7 +304,8 @@
             "value": "アンインストール中..."
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アンインストール結果": {
       "extractionState": "manual",
@@ -305,7 +322,8 @@
             "value": "アンインストール結果"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "成功": {
       "extractionState": "manual",
@@ -322,7 +340,8 @@
             "value": "成功"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "失敗": {
       "extractionState": "manual",
@@ -339,7 +358,8 @@
             "value": "失敗"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "設定": {
       "extractionState": "manual",
@@ -374,7 +394,8 @@
             "value": "概要"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "システム要件": {
       "extractionState": "manual",
@@ -391,7 +412,8 @@
             "value": "システム要件"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "リンク": {
       "extractionState": "manual",
@@ -408,7 +430,8 @@
             "value": "リンク"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "macOS Tahoe 26.0 以降": {
       "extractionState": "manual",
@@ -476,7 +499,8 @@
             "value": "このアプリは macOS Tahoe 26.0 以降が必要です"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "お使いの macOS バージョン: %@": {
       "extractionState": "manual",
@@ -493,7 +517,8 @@
             "value": "お使いの macOS バージョン: %@"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe (バージョン 26) 以降でのみ動作します。": {
       "extractionState": "manual",
@@ -510,7 +535,8 @@
             "value": "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe (バージョン 26) 以降でのみ動作します。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "macOS をアップデート": {
       "extractionState": "manual",
@@ -544,7 +570,8 @@
             "value": "終了"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "メニュー": {
       "extractionState": "manual",
@@ -561,7 +588,8 @@
             "value": "メニュー"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "IPA をインストール": {
       "extractionState": "manual",
@@ -595,7 +623,8 @@
             "value": "アプリをアンインストール"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "検索": {
       "extractionState": "manual",
@@ -612,7 +641,8 @@
             "value": "検索"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリが見つかりません": {
       "extractionState": "manual",
@@ -629,7 +659,8 @@
             "value": "アプリが見つかりません"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "インストール済みアプリがありません": {
       "extractionState": "manual",
@@ -646,7 +677,8 @@
             "value": "インストール済みアプリがありません"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "IPA インストーラー": {
       "extractionState": "manual",
@@ -698,7 +730,8 @@
             "value": "言語"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリの言語": {
       "extractionState": "manual",
@@ -715,7 +748,8 @@
             "value": "アプリの言語"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "言語を変更すると、アプリを再起動する必要があります。": {
       "extractionState": "manual",
@@ -732,7 +766,8 @@
             "value": "言語を変更すると、アプリを再起動する必要があります。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "システム設定に従う": {
       "extractionState": "manual",
@@ -749,7 +784,8 @@
             "value": "システム設定に従う"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "日本語": {
       "extractionState": "manual",
@@ -766,7 +802,8 @@
             "value": "日本語"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ストレージ": {
       "extractionState": "manual",
@@ -783,7 +820,8 @@
             "value": "ストレージ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "マウント設定": {
       "extractionState": "manual",
@@ -800,7 +838,8 @@
             "value": "マウント設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "保存先": {
       "extractionState": "manual",
@@ -817,7 +856,8 @@
             "value": "保存先"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "未設定": {
       "extractionState": "manual",
@@ -834,7 +874,8 @@
             "value": "未設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "使用中: %@": {
       "extractionState": "manual",
@@ -851,7 +892,8 @@
             "value": "使用中: %@"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "保存先を変更...": {
       "extractionState": "manual",
@@ -868,7 +910,8 @@
             "value": "保存先を変更..."
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "初期設定ウィザードを開いて保存先を変更します": {
       "extractionState": "manual",
@@ -885,7 +928,8 @@
             "value": "初期設定ウィザードを開いて保存先を変更します"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。": {
       "extractionState": "manual",
@@ -902,7 +946,8 @@
             "value": "保存先を変更すると、PlayCover コンテナのマウント状態を確認し、必要に応じて再マウントします。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "マウント時に Finder に表示しない (-nobrowse)": {
       "extractionState": "manual",
@@ -919,7 +964,8 @@
             "value": "マウント時に Finder に表示しない (-nobrowse)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。": {
       "extractionState": "manual",
@@ -936,7 +982,8 @@
             "value": "有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "データ処理": {
       "extractionState": "manual",
@@ -953,7 +1000,8 @@
             "value": "データ処理"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データのデフォルト処理": {
       "extractionState": "manual",
@@ -970,7 +1018,8 @@
             "value": "内部データのデフォルト処理"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。": {
       "extractionState": "manual",
@@ -987,7 +1036,8 @@
             "value": "アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データを破棄してからマウント": {
       "extractionState": "manual",
@@ -1004,7 +1054,8 @@
             "value": "内部データを破棄してからマウント"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データを統合してから削除しマウント": {
       "extractionState": "manual",
@@ -1021,7 +1072,8 @@
             "value": "内部データを統合してから削除しマウント"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "何もせずにマウント": {
       "extractionState": "manual",
@@ -1038,7 +1090,8 @@
             "value": "何もせずにマウント"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "メンテナンス": {
       "extractionState": "manual",
@@ -1055,7 +1108,8 @@
             "value": "メンテナンス"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "キャッシュ": {
       "extractionState": "manual",
@@ -1072,7 +1126,8 @@
             "value": "キャッシュ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アイコンキャッシュをクリア": {
       "extractionState": "manual",
@@ -1089,7 +1144,8 @@
             "value": "アイコンキャッシュをクリア"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。": {
       "extractionState": "manual",
@@ -1106,7 +1162,8 @@
             "value": "アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。": {
       "extractionState": "manual",
@@ -1123,7 +1180,8 @@
             "value": "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "リセット": {
       "extractionState": "manual",
@@ -1140,7 +1198,8 @@
             "value": "リセット"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "設定をリセット": {
       "extractionState": "manual",
@@ -1157,7 +1216,8 @@
             "value": "設定をリセット"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。": {
       "extractionState": "manual",
@@ -1174,7 +1234,8 @@
             "value": "すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリが再起動され、初期設定ウィザードが表示されます。": {
       "extractionState": "manual",
@@ -1191,7 +1252,8 @@
             "value": "アプリが再起動され、初期設定ウィザードが表示されます。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "一般": {
       "extractionState": "manual",
@@ -1208,7 +1270,8 @@
             "value": "一般"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。": {
       "extractionState": "manual",
@@ -1310,7 +1373,8 @@
             "value": "アンインストール (%lld 個)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "インストール中": {
       "extractionState": "manual",
@@ -1327,7 +1391,8 @@
             "value": "インストール中"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "インストール完了": {
       "extractionState": "manual",
@@ -1344,7 +1409,8 @@
             "value": "インストール完了"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "IPA ファイルを選択してください": {
       "extractionState": "manual",
@@ -1395,7 +1461,8 @@
             "value": "言語を変更しました"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "言語の変更を完全に反映するには、アプリを再起動する必要があります。": {
       "extractionState": "manual",
@@ -1412,7 +1479,8 @@
             "value": "言語の変更を完全に反映するには、アプリを再起動する必要があります。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "今すぐ再起動": {
       "extractionState": "manual",
@@ -1429,7 +1497,8 @@
             "value": "今すぐ再起動"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "後で再起動": {
       "extractionState": "manual",
@@ -1446,7 +1515,8 @@
             "value": "後で再起動"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリを検索": {
       "extractionState": "manual",
@@ -1463,7 +1533,8 @@
             "value": "アプリを検索"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "Finder で表示": {
       "extractionState": "manual",
@@ -1497,7 +1568,8 @@
             "value": "再読み込み"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "起動": {
       "extractionState": "manual",
@@ -1514,7 +1586,8 @@
             "value": "起動"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "終了しています…": {
       "extractionState": "manual",
@@ -1531,7 +1604,8 @@
             "value": "終了しています…"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "確認": {
       "extractionState": "manual",
@@ -1548,7 +1622,8 @@
             "value": "確認"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "作成": {
       "extractionState": "manual",
@@ -1565,7 +1640,8 @@
             "value": "作成"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "完了": {
       "extractionState": "manual",
@@ -1582,7 +1658,8 @@
             "value": "完了"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "実行": {
       "extractionState": "manual",
@@ -1599,7 +1676,8 @@
             "value": "実行"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "処理中...": {
       "extractionState": "manual",
@@ -1652,7 +1730,8 @@
             "value": "準備中..."
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "何もしない": {
       "extractionState": "manual",
@@ -1669,7 +1748,8 @@
             "value": "何もしない"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "別の IPA を追加": {
       "extractionState": "manual",
@@ -1686,7 +1766,8 @@
             "value": "別の IPA を追加"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリ一覧を更新 (⌘R)": {
       "extractionState": "manual",
@@ -1703,7 +1784,8 @@
             "value": "アプリ一覧を更新 (⌘R)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "IPA をインストール (⌘I)": {
       "extractionState": "manual",
@@ -1772,7 +1854,8 @@
             "value": "すべてアンマウント (⌘⇧U)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリをアンインストール (⌘D)": {
       "extractionState": "manual",
@@ -1789,7 +1872,8 @@
             "value": "アプリをアンインストール (⌘D)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "検索結果が見つかりません": {
       "extractionState": "manual",
@@ -1806,7 +1890,8 @@
             "value": "検索結果が見つかりません"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "IPA ファイルをインストールすると、ここに表示されます。": {
       "extractionState": "manual",
@@ -1840,7 +1925,8 @@
             "value": "下のボタンから IPA をインストールしてください。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "別のキーワードで検索してみてください。": {
       "extractionState": "manual",
@@ -1857,7 +1943,8 @@
             "value": "別のキーワードで検索してみてください。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "基本設定": {
       "extractionState": "manual",
@@ -1874,7 +1961,8 @@
             "value": "基本設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "グラフィックス設定": {
       "extractionState": "manual",
@@ -1891,7 +1979,8 @@
             "value": "グラフィックス設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "コントロール設定": {
       "extractionState": "manual",
@@ -1908,7 +1997,8 @@
             "value": "コントロール設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "詳細設定": {
       "extractionState": "manual",
@@ -1925,7 +2015,8 @@
             "value": "詳細設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データ処理方法": {
       "extractionState": "manual",
@@ -1942,7 +2033,8 @@
             "value": "内部データ処理方法"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データ処理の既定値": {
       "extractionState": "manual",
@@ -1959,7 +2051,8 @@
             "value": "内部データ処理の既定値"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "Finder に表示しない (nobrowse)": {
       "extractionState": "manual",
@@ -2012,7 +2105,8 @@
             "value": "このアプリのディスクイメージを Finder で非表示にするかどうかを設定します。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "起動時に内部データが見つかった場合の処理方法を設定します。": {
       "extractionState": "manual",
@@ -2029,7 +2123,8 @@
             "value": "起動時に内部データが見つかった場合の処理方法を設定します。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "グローバル設定に戻す": {
       "extractionState": "manual",
@@ -2046,7 +2141,8 @@
             "value": "グローバル設定に戻す"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "グローバル設定を使用": {
       "extractionState": "manual",
@@ -2063,7 +2159,8 @@
             "value": "グローバル設定を使用"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "設定を開く": {
       "extractionState": "manual",
@@ -2080,7 +2177,8 @@
             "value": "設定を開く"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "設定をリセットしますか？": {
       "extractionState": "manual",
@@ -2097,7 +2195,8 @@
             "value": "設定をリセットしますか？"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "設定バージョン": {
       "extractionState": "manual",
@@ -2114,7 +2213,8 @@
             "value": "設定バージョン"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "設定ファイル": {
       "extractionState": "manual",
@@ -2131,7 +2231,8 @@
             "value": "設定ファイル"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "iOS デバイスモデル": {
       "extractionState": "manual",
@@ -2165,7 +2266,8 @@
             "value": "解像度"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "幅": {
       "extractionState": "manual",
@@ -2182,7 +2284,8 @@
             "value": "幅"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "高さ": {
       "extractionState": "manual",
@@ -2199,7 +2302,8 @@
             "value": "高さ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アスペクト比": {
       "extractionState": "manual",
@@ -2216,7 +2320,8 @@
             "value": "アスペクト比"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "表示オプション": {
       "extractionState": "manual",
@@ -2233,7 +2338,8 @@
             "value": "表示オプション"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ノッチを表示": {
       "extractionState": "manual",
@@ -2250,7 +2356,8 @@
             "value": "ノッチを表示"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "画面値を反転": {
       "extractionState": "manual",
@@ -2267,7 +2374,8 @@
             "value": "画面値を反転"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "キーマッピングを有効化": {
       "extractionState": "manual",
@@ -2284,7 +2392,8 @@
             "value": "キーマッピングを有効化"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "画面上のタッチ操作をキーボード/マウスに割り当てます。": {
       "extractionState": "manual",
@@ -2301,7 +2410,8 @@
             "value": "画面上のタッチ操作をキーボード/マウスに割り当てます。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "テキスト入力時にキーマッピングを無効化": {
       "extractionState": "manual",
@@ -2318,7 +2428,8 @@
             "value": "テキスト入力時にキーマッピングを無効化"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "スクロールホイールを有効化": {
       "extractionState": "manual",
@@ -2335,7 +2446,8 @@
             "value": "スクロールホイールを有効化"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内蔵マウスを無効化": {
       "extractionState": "manual",
@@ -2352,7 +2464,8 @@
             "value": "内蔵マウスを無効化"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ウィンドウ修正方法": {
       "extractionState": "manual",
@@ -2369,7 +2482,8 @@
             "value": "ウィンドウ修正方法"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ウィンドウ表示の問題を修正します。動作しない場合は別の方法を試してください。": {
       "extractionState": "manual",
@@ -2386,7 +2500,8 @@
             "value": "ウィンドウ表示の問題を修正します。動作しない場合は別の方法を試してください。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "方法 1": {
       "extractionState": "manual",
@@ -2403,7 +2518,8 @@
             "value": "方法 1"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "方法 2": {
       "extractionState": "manual",
@@ -2420,7 +2536,8 @@
             "value": "方法 2"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "タイトルバーを非表示": {
       "extractionState": "manual",
@@ -2437,7 +2554,8 @@
             "value": "タイトルバーを非表示"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "フローティングウィンドウ": {
       "extractionState": "manual",
@@ -2454,7 +2572,8 @@
             "value": "フローティングウィンドウ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "PlayChain を有効化": {
       "extractionState": "manual",
@@ -2539,7 +2658,8 @@
             "value": "一部のアプリで必要な jailbreak 検出を回避します。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "Introspection を注入": {
       "extractionState": "manual",
@@ -2590,7 +2710,8 @@
             "value": "ディスプレイスリープを無効化"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリ実行中にディスプレイが自動的にスリープするのを防ぎます。": {
       "extractionState": "manual",
@@ -2607,7 +2728,8 @@
             "value": "アプリ実行中にディスプレイが自動的にスリープするのを防ぎます。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "作業ディレクトリをルートに設定": {
       "extractionState": "manual",
@@ -2624,7 +2746,8 @@
             "value": "作業ディレクトリをルートに設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "インストールする IPA ファイルを選択してください": {
       "extractionState": "manual",
@@ -2641,7 +2764,8 @@
             "value": "インストールする IPA ファイルを選択してください"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "IPA ファイルを解析中...": {
       "extractionState": "manual",
@@ -2675,7 +2799,8 @@
             "value": "インストール開始"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "インストール結果": {
       "extractionState": "manual",
@@ -2692,7 +2817,8 @@
             "value": "インストール結果"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "新規インストール": {
       "extractionState": "manual",
@@ -2709,7 +2835,8 @@
             "value": "新規インストール"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アップグレード": {
       "extractionState": "manual",
@@ -2726,7 +2853,8 @@
             "value": "アップグレード"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ダウングレード": {
       "extractionState": "manual",
@@ -2743,7 +2871,8 @@
             "value": "ダウングレード"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "再インストール": {
       "extractionState": "manual",
@@ -2760,7 +2889,8 @@
             "value": "再インストール"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "上書き・その他": {
       "extractionState": "manual",
@@ -2777,7 +2907,8 @@
             "value": "上書き・その他"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリ情報": {
       "extractionState": "manual",
@@ -2794,7 +2925,8 @@
             "value": "アプリ情報"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリ情報を取得しています…": {
       "extractionState": "manual",
@@ -2811,7 +2943,8 @@
             "value": "アプリ情報を取得しています…"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "バージョン:": {
       "extractionState": "manual",
@@ -2846,7 +2979,8 @@
             "value": "ファイル名"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "パス": {
       "extractionState": "manual",
@@ -2863,7 +2997,8 @@
             "value": "パス"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ファイルサイズ:": {
       "extractionState": "manual",
@@ -2880,7 +3015,8 @@
             "value": "ファイルサイズ:"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "詳細": {
       "extractionState": "manual",
@@ -2897,7 +3033,8 @@
             "value": "詳細"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "詳細と設定": {
       "extractionState": "manual",
@@ -2914,7 +3051,8 @@
             "value": "詳細と設定"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ディスクイメージが存在しません": {
       "extractionState": "manual",
@@ -2931,7 +3069,8 @@
             "value": "ディスクイメージが存在しません"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データが見つかりました": {
       "extractionState": "manual",
@@ -2948,7 +3087,8 @@
             "value": "内部データが見つかりました"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データを破棄": {
       "extractionState": "manual",
@@ -2965,7 +3105,8 @@
             "value": "内部データを破棄"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "内部データを統合": {
       "extractionState": "manual",
@@ -2982,7 +3123,8 @@
             "value": "内部データを統合"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "既定の処理": {
       "extractionState": "manual",
@@ -2999,7 +3141,8 @@
             "value": "既定の処理"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "セットアップを準備しています…": {
       "extractionState": "manual",
@@ -3016,7 +3159,8 @@
             "value": "セットアップを準備しています…"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "セットアップ完了": {
       "extractionState": "manual",
@@ -3033,7 +3177,8 @@
             "value": "セットアップ完了"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ディスクイメージの保存先を選択してください": {
       "extractionState": "manual",
@@ -3050,7 +3195,8 @@
             "value": "ディスクイメージの保存先を選択してください"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ディスクイメージの準備": {
       "extractionState": "manual",
@@ -3067,7 +3213,8 @@
             "value": "ディスクイメージの準備"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "保存先の選択": {
       "extractionState": "manual",
@@ -3084,7 +3231,8 @@
             "value": "保存先の選択"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "保存先を選択": {
       "extractionState": "manual",
@@ -3101,7 +3249,8 @@
             "value": "保存先を選択"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "保存先を変更": {
       "extractionState": "manual",
@@ -3136,7 +3285,8 @@
             "value": "外部ストレージの使用を推奨"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "PlayCover 用のディスクイメージを作成します": {
       "extractionState": "manual",
@@ -3170,7 +3320,8 @@
             "value": "実行すると、ディスクイメージの作成とマウントを行います。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "PlayCover の検出": {
       "extractionState": "manual",
@@ -3272,7 +3423,8 @@
             "value": "このアプリを新しくインストールします。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "既存のアプリを新しいバージョンにアップグレードします。": {
       "extractionState": "manual",
@@ -3289,7 +3441,8 @@
             "value": "既存のアプリを新しいバージョンにアップグレードします。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "既存のアプリを古いバージョンにダウングレードします。": {
       "extractionState": "manual",
@@ -3306,7 +3459,8 @@
             "value": "既存のアプリを古いバージョンにダウングレードします。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "同じバージョンで上書きインストールします。": {
       "extractionState": "manual",
@@ -3323,7 +3477,8 @@
             "value": "同じバージョンで上書きインストールします。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "すべての IPA の解析に失敗しました": {
       "extractionState": "manual",
@@ -3340,7 +3495,8 @@
             "value": "すべての IPA の解析に失敗しました"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アンインストール中": {
       "extractionState": "manual",
@@ -3375,7 +3531,8 @@
             "value": "アンインストール完了"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "すべてのコンテナをアンマウントしてから保存先を変更します": {
       "extractionState": "manual",
@@ -3392,7 +3549,8 @@
             "value": "すべてのコンテナをアンマウントしてから保存先を変更します"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。": {
       "extractionState": "manual",
@@ -3409,7 +3567,8 @@
             "value": "保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "キャッシュをクリアしました": {
       "extractionState": "manual",
@@ -3426,7 +3585,8 @@
             "value": "キャッシュをクリアしました"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "キャッシュをクリアしますか?": {
       "extractionState": "manual",
@@ -3443,7 +3603,8 @@
             "value": "キャッシュをクリアしますか?"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "クリア": {
       "extractionState": "manual",
@@ -3460,7 +3621,8 @@
             "value": "クリア"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "前回起動したアプリ": {
       "extractionState": "manual",
@@ -3477,7 +3639,8 @@
             "value": "前回起動したアプリ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリフォルダを開く": {
       "extractionState": "manual",
@@ -3494,7 +3657,8 @@
             "value": "アプリフォルダを開く"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アプリを再起動すると、アイコンが再読み込みされます。": {
       "extractionState": "manual",
@@ -3511,7 +3675,8 @@
             "value": "アプリを再起動すると、アイコンが再読み込みされます。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "未作成（デフォルト値を使用中）": {
       "extractionState": "manual",
@@ -3528,7 +3693,8 @@
             "value": "未作成（デフォルト値を使用中）"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "有効": {
       "extractionState": "manual",
@@ -3545,7 +3711,8 @@
             "value": "有効"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "無効": {
       "extractionState": "manual",
@@ -3562,7 +3729,8 @@
             "value": "無効"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "パスが存在しません": {
       "extractionState": "manual",
@@ -3579,7 +3747,8 @@
             "value": "パスが存在しません"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "基本": {
       "extractionState": "manual",
@@ -3596,7 +3765,8 @@
             "value": "基本"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "情報": {
       "extractionState": "manual",
@@ -3613,7 +3783,8 @@
             "value": "情報"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "説明": {
       "extractionState": "manual",
@@ -3630,7 +3801,8 @@
             "value": "説明"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "コントロール": {
       "extractionState": "manual",
@@ -3647,7 +3819,8 @@
             "value": "コントロール"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "グラフィックス": {
       "extractionState": "manual",
@@ -3664,7 +3837,8 @@
             "value": "グラフィックス"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "問題を報告": {
       "extractionState": "manual",
@@ -3681,7 +3855,8 @@
             "value": "問題を報告"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "入力オプション": {
       "extractionState": "manual",
@@ -3698,7 +3873,8 @@
             "value": "入力オプション"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "バージョン \\(version)": {
       "extractionState": "manual",
@@ -3715,7 +3891,8 @@
             "value": "バージョン \\(version)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(apps.count) 個": {
       "extractionState": "manual",
@@ -3732,7 +3909,8 @@
             "value": "\\(apps.count) 個"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "インストール済みアプリ (\\(apps.count) 個)": {
       "extractionState": "manual",
@@ -3749,7 +3927,8 @@
             "value": "インストール済みアプリ (\\(apps.count) 個)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "アンインストール (\\(selectedApps.count) 個)": {
       "extractionState": "manual",
@@ -3766,7 +3945,8 @@
             "value": "アンインストール (\\(selectedApps.count) 個)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(analyzedIPAs.count) 個のアプリをインストールしますか？": {
       "extractionState": "manual",
@@ -3783,7 +3963,8 @@
             "value": "\\(analyzedIPAs.count) 個のアプリをインストールしますか？"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(selectedAppInfos.count) 個のアプリをアンインストールしますか？": {
       "extractionState": "manual",
@@ -3800,7 +3981,8 @@
             "value": "\\(selectedAppInfos.count) 個のアプリをアンインストールしますか？"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(app.displayName) 用の ASIF ディスクイメージを作成しますか？": {
       "extractionState": "manual",
@@ -3817,7 +3999,8 @@
             "value": "\\(app.displayName) 用の ASIF ディスクイメージを作成しますか？"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？": {
       "extractionState": "manual",
@@ -3834,7 +4017,8 @@
             "value": "\\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(completed) / \\(totalItems) 完了": {
       "extractionState": "manual",
@@ -3851,7 +4035,8 @@
             "value": "\\(completed) / \\(totalItems) 完了"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(newInstalls) 個": {
       "extractionState": "manual",
@@ -3868,7 +4053,8 @@
             "value": "\\(newInstalls) 個"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(upgrades) 個": {
       "extractionState": "manual",
@@ -3885,7 +4071,8 @@
             "value": "\\(upgrades) 個"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "\\(others) 個": {
       "extractionState": "manual",
@@ -3902,7 +4089,8 @@
             "value": "\\(others) 個"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "+\\(analyzedIPAs.count - 6) 個のアプリ": {
       "extractionState": "manual",
@@ -3919,7 +4107,8 @@
             "value": "+\\(analyzedIPAs.count - 6) 個のアプリ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "+\\(selectedAppInfos.count - 6) 個のアプリ": {
       "extractionState": "manual",
@@ -3936,7 +4125,8 @@
             "value": "+\\(selectedAppInfos.count - 6) 個のアプリ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "合計: \\(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))": {
       "extractionState": "manual",
@@ -3953,7 +4143,8 @@
             "value": "合計: \\(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "合計サイズ:": {
       "extractionState": "manual",
@@ -3970,7 +4161,8 @@
             "value": "合計サイズ:"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "現在のグローバル設定: \\(settingsStore.defaultDataHandling.localizedDescription)": {
       "extractionState": "manual",
@@ -3987,7 +4179,8 @@
             "value": "現在のグローバル設定: \\(settingsStore.defaultDataHandling.localizedDescription)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     " に一致するアプリが見つかりませんでした。": {
       "extractionState": "manual",
@@ -4004,7 +4197,8 @@
             "value": " に一致するアプリが見つかりませんでした。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ドライブが接続されていないか、パスが無効です。\\n別の保存先を選択してください。": {
       "extractionState": "manual",
@@ -4021,7 +4215,8 @@
             "value": "ドライブが接続されていないか、パスが無効です。\\n別の保存先を選択してください。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "ディスクイメージは大容量になる場合があります。\\n十分な空き容量のあるドライブを選択してください。": {
       "extractionState": "manual",
@@ -4038,7 +4233,8 @@
             "value": "ディスクイメージは大容量になる場合があります。\\n十分な空き容量のあるドライブを選択してください。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "PlayCover Manager は PlayCover を補完するアプリです。\\n\\nディスクイメージの管理と IPA インストールを簡単にします。": {
       "extractionState": "manual",
@@ -4072,7 +4268,8 @@
             "value": "自動（ディスプレイに基づく）"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "小型ディスプレイ向け": {
       "extractionState": "manual",
@@ -4089,7 +4286,8 @@
             "value": "小型ディスプレイ向け"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "iPhone 専用アプリ向け": {
       "extractionState": "manual",
@@ -4123,7 +4321,8 @@
             "value": "マウス感度: \\(Int(settings.sensitivity))"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "マウスカーソルの移動速度を調整します。": {
       "extractionState": "manual",
@@ -4140,7 +4339,8 @@
             "value": "マウスカーソルの移動速度を調整します。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "（既定）": {
       "extractionState": "manual",
@@ -4157,7 +4357,8 @@
             "value": "（既定）"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "×": {
       "extractionState": "manual",
@@ -4192,7 +4393,8 @@
             "value": "「完了」ボタンをクリックして PlayCover Manager を起動します。"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "その他のオプション": {
       "extractionState": "manual",
@@ -4209,7 +4411,8 @@
             "value": "その他のオプション"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "エラー: \\(error.localizedDescription)": {
       "extractionState": "manual",
@@ -4226,7 +4429,8 @@
             "value": "エラー: \\(error.localizedDescription)"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "システム設定を開く": {
       "extractionState": "manual",
@@ -4243,7 +4447,8 @@
             "value": "システム設定を開く"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "データ": {
       "extractionState": "manual",
@@ -4260,7 +4465,8 @@
             "value": "データ"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "再試行": {
       "extractionState": "manual",
@@ -4277,7 +4483,8 @@
             "value": "再試行"
           }
         }
-      }
+      },
+      "shouldTranslate": false
     },
     "現在のグローバル設定: \\(settingsStore.nobrowseEnabled ? ": {
       "extractionState": "manual",
@@ -4294,7 +4501,8 @@
             "value": "現在のグローバル設定: \\(settingsStore.nobrowseEnabled ? "
           }
         }
-      }
+      },
+      "shouldTranslate": false
     }
   },
   "version": "1.0"
