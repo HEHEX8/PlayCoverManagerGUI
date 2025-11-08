@@ -890,8 +890,6 @@ private struct AppDetailSheet: View {
     
     enum SettingsTab: String, CaseIterable, Identifiable {
         case basic = "基本"
-        case graphics = "グラフィックス"
-        case advanced = "詳細"
         case info = "情報"
         
         var id: String { rawValue }
@@ -899,8 +897,6 @@ private struct AppDetailSheet: View {
         var icon: String {
             switch self {
             case .basic: return "slider.horizontal.3"
-            case .graphics: return "display"
-            case .advanced: return "gearshape.2.fill"
             case .info: return "info.circle.fill"
             }
         }
@@ -1011,10 +1007,6 @@ private struct AppDetailSheet: View {
                         switch selectedTab {
                         case .basic:
                             BasicSettingsView(app: app, viewModel: viewModel)
-                        case .graphics:
-                            GraphicsSettingsView(app: app)
-                        case .advanced:
-                            AdvancedSettingsView(app: app)
                         case .info:
                             InfoView(app: app)
                         }
@@ -1566,8 +1558,8 @@ private struct BasicSettingsView: View {
     
     enum NobrowseOverride: String, CaseIterable, Identifiable {
         case useGlobal = "グローバル設定を使用"
-        case enabled = "有効"
-        case disabled = "無効"
+        case enabled = "Finderに表示しない"
+        case disabled = "Finderに表示する"
         
         var id: String { rawValue }
     }
@@ -1606,7 +1598,7 @@ private struct BasicSettingsView: View {
             
             // Nobrowse setting
             VStack(alignment: .leading, spacing: 8) {
-                Text("Finder に表示しない (nobrowse)")
+                Text("Finder での表示設定")
                     .font(.subheadline)
                     .fontWeight(.medium)
                 
@@ -1620,12 +1612,12 @@ private struct BasicSettingsView: View {
                     saveNobrowseSetting(newValue)
                 }
                 
-                Text("このアプリのディスクイメージを Finder で非表示にするかどうかを設定します。")
+                Text("このアプリのディスクイメージを Finder に表示するかどうかを設定します。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
                 if nobrowseOverride == .useGlobal {
-                    Text("現在のグローバル設定: \(settingsStore.nobrowseEnabled ? "有効" : "無効")")
+                    Text("現在のグローバル設定: \(settingsStore.nobrowseEnabled ? "Finderに表示しない" : "Finderに表示する")")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -1721,80 +1713,6 @@ private struct BasicSettingsView: View {
         perAppSettings.removeSettings(for: app.bundleIdentifier)
         nobrowseOverride = .useGlobal
         dataHandlingOverride = .useGlobal
-    }
-}
-
-// MARK: - Graphics Settings Tab
-
-private struct GraphicsSettingsView: View {
-    let app: PlayCoverApp
-    @State private var settings: PlayCoverAppSettings
-    
-    init(app: PlayCoverApp) {
-        self.app = app
-        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("グラフィックス設定")
-                .font(.headline)
-            
-            // All PlayCover-specific settings have been removed from this tab
-            // These settings depend on PlayCover's internal implementation
-            
-            Text("PlayCover関連の設定項目は全て削除されました。")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            
-            Text("これらの設定はPlayCoverの内部実装に依存しており、PlayCoverの更新で動作しなくなる可能性があるため削除されました。")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    private func saveSettings() {
-        try? PlayCoverAppSettingsStore.save(settings, for: app.bundleIdentifier)
-    }
-}
-
-// MARK: - Advanced Settings Tab
-
-private struct AdvancedSettingsView: View {
-    let app: PlayCoverApp
-    @State private var settings: PlayCoverAppSettings
-    
-    init(app: PlayCoverApp) {
-        self.app = app
-        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("詳細設定")
-                .font(.headline)
-            
-            // All PlayCover-specific settings have been removed from this tab
-            // These settings depend on PlayCover's internal implementation
-            
-            Text("PlayCover関連の設定項目は全て削除されました。")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            
-            Text("これらの設定はPlayCoverの内部実装に依存しており、PlayCoverの更新で動作しなくなる可能性があるため削除されました。")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    private func saveSettings() {
-        try? PlayCoverAppSettingsStore.save(settings, for: app.bundleIdentifier)
     }
 }
 
