@@ -10,7 +10,7 @@
 [![Platform](https://img.shields.io/badge/Platform-macOS%2026.0+-lightgrey.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-### [📥 Download Latest Release (v1.0.0)](https://github.com/HEHEX8/PlayCoverManagerGUI/releases/download/v1.0.0/PlayCoverManager.dmg)
+### [📥 Download Latest Release](https://github.com/HEHEX8/PlayCoverManagerGUI/releases/latest/download/PlayCoverManager.dmg)
 
 [English](#english) | [日本語](#日本語)
 
