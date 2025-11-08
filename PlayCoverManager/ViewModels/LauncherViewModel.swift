@@ -39,6 +39,7 @@ final class LauncherViewModel {
         case success(unmountedCount: Int, ejectedDrive: String?)
         case error(title: String, message: String)
         case forceUnmountOffering(failedCount: Int, applyToPlayCoverContainer: Bool)
+        case forceEjectOffering(volumeDisplayName: String, devicePath: String)
     }
     var unmountFlowState: UnmountFlowState = .idle
     
@@ -361,6 +362,16 @@ final class LauncherViewModel {
         pendingEjectConfirmed = false
     }
     
+    func confirmForceEject() {
+        // Will be set by performUnmountAllAndQuit when needed
+        pendingForceEjectConfirmed = true
+    }
+    
+    func cancelForceEject() {
+        // Skip force eject and show success
+        pendingForceEjectConfirmed = false
+    }
+    
     func completeUnmount() {
         unmountFlowState = .idle
         NSApplication.shared.terminate(nil)
@@ -386,6 +397,7 @@ final class LauncherViewModel {
     }
     
     private var pendingEjectConfirmed: Bool?
+    private var pendingForceEjectConfirmed: Bool?
     
     func getPerAppSettings() -> PerAppSettingsStore {
         return perAppSettings
@@ -600,57 +612,47 @@ final class LauncherViewModel {
                             ejectedDrive = displayName
                         } catch {
                             
-                            // Parse error for user-friendly information
-                            var errorMessage: String
-                            var volumeInfoText: String? = nil
+                            // Eject failed - offer force eject option
+                            await MainActor.run {
+                                unmountFlowState = .forceEjectOffering(
+                                    volumeDisplayName: displayName,
+                                    devicePath: devicePath
+                                )
+                                pendingForceEjectConfirmed = nil  // Reset confirmation state
+                            }
                             
-                            if let processError = error as? ProcessRunnerError,
-                               case .commandFailed(_, _, let stderr) = processError {
-                                // Try to parse stderr for volume and process info
-                                if let parsed = await diskImageService.parseEjectError(stderr) {
-                                    var details: [String] = []
-                                    
-                                    if !parsed.volumeNames.isEmpty {
-                                        let volNames = parsed.volumeNames.joined(separator: ", ")
-                                        details.append("ボリューム: \(volNames)")
-                                    }
-                                    
-                                    if let process = parsed.blockingProcess {
-                                        details.append("使用中のプロセス: \(process)")
-                                        
-                                        // Add explanation if diskimagesiod is blocking
-                                        if process.contains("diskimagesiod") {
-                                            details.append("\n⚠️ システムプロセスがディスクイメージを処理中です。")
-                                            details.append("少し待ってから、Finderで手動でイジェクトしてください。")
-                                        }
-                                    }
-                                    
-                                    volumeInfoText = details.joined(separator: "\n")
+                            // Wait for user decision
+                            while await MainActor.run(body: { pendingForceEjectConfirmed }) == nil {
+                                try? await Task.sleep(for: .milliseconds(100))
+                            }
+                            
+                            let shouldForceEject = await MainActor.run { pendingForceEjectConfirmed == true }
+                            
+                            if shouldForceEject {
+                                // Attempt force eject
+                                await MainActor.run {
+                                    unmountFlowState = .processing(status: "強制イジェクト中…")
                                 }
                                 
-                                if stderr.contains("at least one volume could not be unmounted") {
-                                    errorMessage = "ドライブ上のボリュームが使用中のため、イジェクトできませんでした。"
-                                } else {
-                                    errorMessage = "イジェクトに失敗しました。"
+                                do {
+                                    try await diskImageService.ejectDrive(devicePath: devicePath, force: true)
+                                    ejectedDrive = displayName
+                                    
+                                    // Success - continue to show result
+                                } catch {
+                                    // Force eject also failed - show error
+                                    await MainActor.run {
+                                        unmountFlowState = .error(
+                                            title: "強制イジェクトに失敗",
+                                            message: "ドライブを強制イジェクトできませんでした。\n\nFinderから手動でイジェクトしてください。"
+                                        )
+                                    }
+                                    return  // Exit early
                                 }
                             } else {
-                                errorMessage = error.localizedDescription
+                                // User cancelled force eject - continue to show success without eject
+                                ejectedDrive = nil
                             }
-                            
-                            // Show error in overlay
-                            var fullMessage = errorMessage
-                            if let volInfo = volumeInfoText {
-                                fullMessage += "\n\n\(volInfo)"
-                            }
-                            fullMessage += "\n\nFinderから手動でイジェクトしてください。"
-                            
-                            await MainActor.run {
-                                unmountFlowState = .error(
-                                    title: "ドライブのイジェクトに失敗",
-                                    message: fullMessage
-                                )
-                            }
-                            return  // Exit early, don't continue to success
                         }
                     } else {
                         
@@ -791,12 +793,108 @@ final class LauncherViewModel {
         }
         
         
-        // Show result
+        // If all unmounts succeeded, check for external drive and offer eject
         if failedCount == 0 {
+            // Check if storage directory is on external drive
+            let storageDir = settings.diskImageDirectory
+            let isExternal = (try? await diskImageService.isOnExternalDrive(path: storageDir)) ?? false
+            
+            // Also check if path is under /Volumes/ (external media)
+            let isUnderVolumes = storageDir.hasPrefix("/Volumes/") && storageDir != "/Volumes/Macintosh HD"
+            let shouldOfferEject = isExternal || isUnderVolumes
+            
+            var ejectedDrive: String? = nil
+            
+            if shouldOfferEject {
+                // Get volume info for display
+                let volumeInfo = try? await diskImageService.getVolumeInfo(for: storageDir)
+                let displayName = volumeInfo?.displayName ?? storageDir.lastPathComponent
+                
+                // Show eject confirmation
+                await MainActor.run {
+                    unmountFlowState = .ejectConfirming(volumeDisplayName: displayName)
+                    pendingEjectConfirmed = nil  // Reset confirmation state
+                }
+                
+                // Wait for user decision
+                while await MainActor.run(body: { pendingEjectConfirmed }) == nil {
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+                
+                let shouldEject = await MainActor.run { pendingEjectConfirmed == true }
+                
+                if shouldEject {
+                    await MainActor.run {
+                        unmountFlowState = .processing(status: "外部ドライブを取り外し可能な状態にしています…")
+                    }
+                    
+                    if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
+                        do {
+                            try await diskImageService.ejectDrive(devicePath: devicePath)
+                            ejectedDrive = displayName
+                        } catch {
+                            // Eject failed - offer force eject option
+                            await MainActor.run {
+                                unmountFlowState = .forceEjectOffering(
+                                    volumeDisplayName: displayName,
+                                    devicePath: devicePath
+                                )
+                                pendingForceEjectConfirmed = nil  // Reset confirmation state
+                            }
+                            
+                            // Wait for user decision
+                            while await MainActor.run(body: { pendingForceEjectConfirmed }) == nil {
+                                try? await Task.sleep(for: .milliseconds(100))
+                            }
+                            
+                            let shouldForceEject = await MainActor.run { pendingForceEjectConfirmed == true }
+                            
+                            if shouldForceEject {
+                                // Attempt force eject
+                                await MainActor.run {
+                                    unmountFlowState = .processing(status: "強制イジェクト中…")
+                                }
+                                
+                                do {
+                                    try await diskImageService.ejectDrive(devicePath: devicePath, force: true)
+                                    ejectedDrive = displayName
+                                } catch {
+                                    // Force eject also failed - show error
+                                    await MainActor.run {
+                                        unmountFlowState = .error(
+                                            title: "強制イジェクトに失敗",
+                                            message: "ドライブを強制イジェクトできませんでした。\n\nFinderから手動でイジェクトしてください。"
+                                        )
+                                    }
+                                    return  // Exit early
+                                }
+                            } else {
+                                // User cancelled force eject - continue to show success without eject
+                                ejectedDrive = nil
+                            }
+                        }
+                    } else {
+                        // Could not get device path - show error
+                        await MainActor.run {
+                            unmountFlowState = .error(
+                                title: "デバイスパスの取得に失敗",
+                                message: "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。"
+                            )
+                        }
+                        return  // Exit early
+                    }
+                } else {
+                    // User chose not to eject
+                    ejectedDrive = nil
+                }
+            }
+            
+            // Show success
             await MainActor.run {
-                unmountFlowState = .success(unmountedCount: successCount, ejectedDrive: nil)
+                unmountFlowState = .success(unmountedCount: successCount, ejectedDrive: ejectedDrive)
             }
         } else {
+            // Some unmounts failed
             await MainActor.run {
                 unmountFlowState = .error(
                     title: "強制アンマウントに失敗",

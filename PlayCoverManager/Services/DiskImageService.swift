@@ -460,8 +460,13 @@ final class DiskImageService {
     
     /// Eject a drive
     /// - Parameter devicePath: Device path (e.g., /dev/disk2)
-    func ejectDrive(devicePath: String) async throws {
-        _ = try await processRunner.run("/usr/sbin/diskutil", ["eject", devicePath])
+    func ejectDrive(devicePath: String, force: Bool = false) async throws {
+        var args = ["eject"]
+        if force {
+            args.append("-force")
+        }
+        args.append(devicePath)
+        _ = try await processRunner.run("/usr/sbin/diskutil", args)
     }
     
     /// Count mounted volumes under a specific path
