@@ -1133,11 +1133,11 @@ private struct AppDetailSheet: View {
                     VStack {
                         switch selectedTab {
                         case .overview:
-                            OverviewView(app: app)
+                            OverviewView(app: app, viewModel: viewModel)
                         case .basic:
                             BasicSettingsView(app: app, viewModel: viewModel)
                         case .info:
-                            InfoView(app: app)
+                            InfoView(app: app, viewModel: viewModel)
                         case .analysis:
                             AnalysisView(app: app)
                         }
@@ -1681,11 +1681,13 @@ private struct RippleLayer: View {
 
 private struct OverviewView: View {
     let app: PlayCoverApp
+    @Bindable var viewModel: LauncherViewModel
     @State private var infoPlist: [String: Any]?
     @State private var storageInfo: StorageInfo?
     
-    init(app: PlayCoverApp) {
+    init(app: PlayCoverApp, viewModel: LauncherViewModel) {
         self.app = app
+        self.viewModel = viewModel
     }
     
     var body: some View {
@@ -1901,7 +1903,17 @@ private struct OverviewView: View {
         let containerSize: String
         let containerPath: String
         
-        if FileManager.default.fileExists(atPath: containerURL.path) {
+        // Check if disk image is mounted and use mount point for size calculation
+        if let diskImageState = try? DiskImageHelper.checkDiskImageState(
+            for: app.bundleIdentifier,
+            containerURL: containerURL,
+            diskImageService: viewModel.diskImageService
+        ), diskImageState.isMounted, let volumePath = diskImageState.descriptor.volumePath {
+            // Use mounted volume path for accurate size
+            containerSize = calculateDirectorySize(at: volumePath) ?? "不明"
+            containerPath = "\(volumePath.path) (マウント中)"
+        } else if FileManager.default.fileExists(atPath: containerURL.path) {
+            // Use container directory
             containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
             containerPath = containerURL.path
         } else {
@@ -2223,10 +2235,12 @@ private struct BasicSettingsView: View {
 
 private struct InfoView: View {
     let app: PlayCoverApp
+    @Bindable var viewModel: LauncherViewModel
     @State private var infoPlist: [String: Any]?
     
-    init(app: PlayCoverApp) {
+    init(app: PlayCoverApp, viewModel: LauncherViewModel) {
         self.app = app
+        self.viewModel = viewModel
     }
     
     var body: some View {
@@ -2500,7 +2514,17 @@ private struct InfoView: View {
         let containerSize: String
         let containerPath: String
         
-        if FileManager.default.fileExists(atPath: containerURL.path) {
+        // Check if disk image is mounted and use mount point for size calculation
+        if let diskImageState = try? DiskImageHelper.checkDiskImageState(
+            for: app.bundleIdentifier,
+            containerURL: containerURL,
+            diskImageService: viewModel.diskImageService
+        ), diskImageState.isMounted, let volumePath = diskImageState.descriptor.volumePath {
+            // Use mounted volume path for accurate size
+            containerSize = calculateDirectorySize(at: volumePath) ?? "不明"
+            containerPath = "\(volumePath.path) (マウント中)"
+        } else if FileManager.default.fileExists(atPath: containerURL.path) {
+            // Use container directory
             containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
             containerPath = containerURL.path
         } else {
