@@ -17,6 +17,9 @@ struct PlayCoverManagerApp: App {
     @State private var showingUnsupportedOSAlert = false
 
     init() {
+        // Suppress unnecessary system logs
+        setenv("OS_ACTIVITY_MODE", "disable", 1)
+        
         // macOS バージョンチェック（macOS Tahoe 26.0 以降が必要）
         if !Self.isCompatibleOS() {
             _showingUnsupportedOSAlert = State(initialValue: true)

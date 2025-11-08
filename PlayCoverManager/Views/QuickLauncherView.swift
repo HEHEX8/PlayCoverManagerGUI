@@ -863,7 +863,7 @@ private struct iOSAppIconView: View {
                 // Find the executable in the app bundle
                 guard let bundle = Bundle(url: app.appURL),
                       let executableName = bundle.infoDictionary?["CFBundleExecutable"] as? String else {
-                    print("Failed to find executable name")
+                    NSLog("Failed to find executable name for \(app.bundleIdentifier)")
                     return
                 }
                 
@@ -871,25 +871,50 @@ private struct iOSAppIconView: View {
                 
                 // Check if executable exists
                 guard FileManager.default.fileExists(atPath: executablePath) else {
-                    print("Executable not found at: \(executablePath)")
+                    NSLog("Executable not found at: \(executablePath)")
                     return
                 }
                 
-                // Launch Terminal with the executable
-                let script = """
-                tell application "Terminal"
-                    activate
-                    do script "cd '\(app.appURL.path)' && '\(executablePath)'; echo '\\n--- プロセス終了 ---'; read -p '任意のキーを押して閉じる...'"
-                end tell
+                // Create a temporary shell script to launch in Terminal
+                let tempDir = FileManager.default.temporaryDirectory
+                let scriptURL = tempDir.appendingPathComponent("launch_debug_\(UUID().uuidString).command")
+                
+                // Escape paths properly for shell
+                let escapedAppPath = app.appURL.path.replacingOccurrences(of: "'", with: "'\\''")
+                let escapedExecPath = executablePath.replacingOccurrences(of: "'", with: "'\\''")
+                
+                let scriptContent = """
+                #!/bin/bash
+                cd '\(escapedAppPath)'
+                echo "=== デバッグコンソール ==="
+                echo "アプリ: \(app.displayName)"
+                echo "実行ファイル: \(executableName)"
+                echo "========================"
+                echo ""
+                
+                '\(escapedExecPath)'
+                
+                EXIT_CODE=$?
+                echo ""
+                echo "========================"
+                echo "プロセス終了 (終了コード: $EXIT_CODE)"
+                echo "========================"
+                echo ""
+                read -p "任意のキーを押してウィンドウを閉じる... " -n1 -s
+                
+                # Clean up the script file
+                rm -f '\(scriptURL.path.replacingOccurrences(of: "'", with: "'\\''"))'
                 """
                 
-                var error: NSDictionary?
-                if let scriptObject = NSAppleScript(source: script) {
-                    scriptObject.executeAndReturnError(&error)
-                    if let error = error {
-                        print("AppleScript error: \(error)")
-                    }
-                }
+                try scriptContent.write(to: scriptURL, atomically: true, encoding: .utf8)
+                
+                // Make script executable
+                try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: scriptURL.path)
+                
+                // Open the script with Terminal (this doesn't require AppleScript permissions)
+                NSWorkspace.shared.open(scriptURL)
+            } catch {
+                NSLog("Failed to launch debug console: \(error)")
             }
         }
     }
