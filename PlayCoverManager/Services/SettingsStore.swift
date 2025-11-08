@@ -11,7 +11,6 @@ final class SettingsStore {
         static let defaultDataHandling = "defaultDataHandling"
         static let imageFormat = "diskImageFormat"
         static let appLanguage = "appLanguage"
-        static let defaultDiskImageSize = "defaultDiskImageSize"
     }
 
     enum AppLanguage: String, CaseIterable, Identifiable {
@@ -147,15 +146,11 @@ final class SettingsStore {
         }
     }
     
-    /// Default disk image size in GB (default: 100GB)
-    var defaultDiskImageSizeGB: Int = 100 {
-        didSet {
-            UserDefaults.standard.set(defaultDiskImageSizeGB, forKey: Keys.defaultDiskImageSize)
-        }
-    }
-
     // ASIF format is hardcoded - no user selection needed
     let diskImageFormat: DiskImageFormat = .asif
+    
+    // Fixed disk image size: 1TB for all (cannot be resized after creation)
+    let defaultDiskImageSizeGB: Int = 1000
 
     init(userDefaults: UserDefaults = .standard) {
         if let path = userDefaults.string(forKey: Keys.diskImageDirectory) {
@@ -180,15 +175,6 @@ final class SettingsStore {
             appLanguage = language
         } else {
             appLanguage = .system
-        }
-        
-        // Load default disk image size (minimum 100GB)
-        let savedSize = userDefaults.integer(forKey: Keys.defaultDiskImageSize)
-        if savedSize >= 100 {
-            defaultDiskImageSizeGB = savedSize
-        } else {
-            defaultDiskImageSizeGB = 100 // Default: 100GB (minimum)
-            userDefaults.set(defaultDiskImageSizeGB, forKey: Keys.defaultDiskImageSize)
         }
         
         // Apply language on init

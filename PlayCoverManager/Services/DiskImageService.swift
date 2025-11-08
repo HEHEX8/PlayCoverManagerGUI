@@ -107,17 +107,13 @@ final class DiskImageService {
         
         let volName = volumeName ?? bundleIdentifier
         
-        // Determine size based on priority:
-        // 1. customSizeGB parameter (if provided)
-        // 2. PlayCover container gets 10TB (stores all IPAs)
-        // 3. Default from settings
+        // Fixed 1TB size for all disk images (ASIF cannot be resized after creation)
+        // Use customSizeGB only if explicitly provided (for special cases)
         let imageSize: String
         if let customSize = customSizeGB {
             imageSize = "\(customSize)G"
-        } else if bundleIdentifier == "io.playcover.PlayCover" {
-            imageSize = "10T"  // 10 TB for PlayCover container
         } else {
-            imageSize = "\(settings.defaultDiskImageSizeGB)G"
+            imageSize = "1T"  // 1 TB for all containers (unified size)
         }
         
         // Create ASIF disk image using diskutil (macOS Tahoe 26.0+ only)

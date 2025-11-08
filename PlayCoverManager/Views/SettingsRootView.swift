@@ -146,46 +146,7 @@ private struct GeneralSettingsView: View {
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
-                // Disk Image Size Card
-                VStack(alignment: .leading, spacing: 16) {
-                    Label("ディスクイメージ設定", systemImage: "externaldrive.badge.plus")
-                        .font(.headline)
-                        .foregroundStyle(.orange)
-                    
-                    Divider()
-                    
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("デフォルト容量")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.secondary)
-                            
-                            HStack(spacing: 12) {
-                                TextField("", value: Binding(
-                                    get: { settingsStore.defaultDiskImageSizeGB },
-                                    set: { settingsStore.defaultDiskImageSizeGB = max(100, min(10000, $0)) }
-                                ), format: .number)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 100)
-                                
-                                Text("GB")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                
-                                Spacer()
-                            }
-                        }
-                        
-                        Text("新しく作成されるディスクイメージの初期容量です（最低100GB）。PlayCoverコンテナは常に10TBで作成されます。\nASIF形式はスパースファイルのため、実際の使用量に応じて容量が増えます。\n\n⚠️ 注意: ASIFイメージは作成後のリサイズができません。十分な容量を確保してください。")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
-                
+
                 // Language Card
                 VStack(alignment: .leading, spacing: 16) {
                     Label("言語", systemImage: "globe")
