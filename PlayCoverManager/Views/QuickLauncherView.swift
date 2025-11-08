@@ -863,7 +863,7 @@ private struct iOSAppIconView: View {
                 // Mount disk image if needed using common helper
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 let diskImageService = DiskImageService()
-                let perAppSettings = viewModel.getPerAppSettings()
+                let perAppSettings = PerAppSettingsStore()
                 let settingsStore = SettingsStore()
                 
                 // Check state and mount if needed
@@ -878,9 +878,9 @@ private struct iOSAppIconView: View {
                     return
                 }
                 
-                // Check for internal data if not mounted
+                // Check for internal data if not mounted (simple check without viewModel)
                 if !state.isMounted {
-                    let internalItems = try viewModel.detectInternalData(at: containerURL)
+                    let internalItems = try detectInternalDataLocal(at: containerURL)
                     if !internalItems.isEmpty {
                         NSLog("Internal data detected but debug console launch doesn't handle data migration yet")
                         // TODO: Show alert to user that they need to launch normally first
@@ -957,6 +957,24 @@ private struct iOSAppIconView: View {
                 NSLog("Failed to launch debug console: \(error)")
             }
         }
+    }
+    
+    private func detectInternalDataLocal(at url: URL) throws -> [URL] {
+        let fileManager = FileManager.default
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            return []
+        }
+        let contents = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isSymbolicLinkKey], options: [.skipsHiddenFiles])
+        let excludedNames: Set<String> = [".DS_Store", "Desktop.ini", "Thumbs.db", "TemporaryItems"]
+        let filtered = contents.filter { item in
+            if excludedNames.contains(item.lastPathComponent) { return false }
+            if let values = try? item.resourceValues(forKeys: [.isSymbolicLinkKey]), values.isSymbolicLink == true {
+                return false
+            }
+            return true
+        }
+        return filtered
     }
     
     // "Nani yanen!" shake animation function
