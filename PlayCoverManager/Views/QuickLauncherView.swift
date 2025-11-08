@@ -1009,7 +1009,7 @@ private struct AppDetailSheet: View {
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedTab: SettingsTab = .basic
+    @State private var selectedTab: SettingsTab = .overview
     
     enum SettingsTab: String, CaseIterable, Identifiable {
         case basic = "基本"
@@ -1130,6 +1130,8 @@ private struct AppDetailSheet: View {
                 ScrollView {
                     VStack {
                         switch selectedTab {
+                        case .overview:
+                            OverviewView(app: app)
                         case .basic:
                             BasicSettingsView(app: app, viewModel: viewModel)
                         case .info:
@@ -1669,6 +1671,378 @@ private struct RippleLayer: View {
                 .scaleEffect(ripple.scale * 0.3)
                 .blur(radius: 10)
                 .opacity(ripple.opacity)
+        }
+    }
+}
+
+// MARK: - Overview Tab
+
+private struct OverviewView: View {
+    let app: PlayCoverApp
+    @State private var infoPlist: [String: Any]?
+    @State private var storageInfo: StorageInfo?
+    
+    init(app: PlayCoverApp) {
+        self.app = app
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("アプリ概要")
+                .font(.headline)
+            
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // App Card
+                    HStack(spacing: 16) {
+                        if let icon = app.icon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 18))
+                                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(app.displayName)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            
+                            if let version = app.version {
+                                Text("バージョン \(version)")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            if let minOS = infoPlist?["MinimumOSVersion"] as? String {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "iphone")
+                                        .font(.caption)
+                                    Text("iOS \(minOS)+")
+                                        .font(.caption)
+                                }
+                                .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding()
+                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                    .cornerRadius(12)
+                    
+                    // Quick Stats
+                    HStack(spacing: 12) {
+                        // Storage stat
+                        StatCard(
+                            icon: "internaldrive",
+                            title: "合計容量",
+                            value: storageInfo?.totalSize ?? "計算中...",
+                            color: .blue
+                        )
+                        
+                        // Device compatibility
+                        if let deviceFamily = getDeviceFamily() {
+                            StatCard(
+                                icon: "apps.iphone",
+                                title: "対応デバイス",
+                                value: deviceFamily,
+                                color: .green
+                            )
+                        }
+                    }
+                    
+                    // Storage Breakdown
+                    if let storage = storageInfo {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("ストレージ内訳")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            
+                            VStack(spacing: 8) {
+                                StorageRow(label: "アプリ本体", size: storage.appSize, color: .blue)
+                                StorageRow(label: "コンテナ", size: storage.containerSize, color: .orange)
+                            }
+                            .padding(12)
+                            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                            .cornerRadius(8)
+                        }
+                    }
+                    
+                    // Quick Info
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("基本情報")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        
+                        VStack(alignment: .leading, spacing: 6) {
+                            QuickInfoRow(icon: "checkmark.seal.fill", label: "Bundle ID", value: app.bundleIdentifier)
+                            
+                            if let executableName = infoPlist?["CFBundleExecutable"] as? String {
+                                QuickInfoRow(icon: "gearshape.fill", label: "実行ファイル", value: executableName)
+                            }
+                            
+                            if let capabilities = getCapabilitiesCount() {
+                                QuickInfoRow(icon: "lock.shield.fill", label: "権限要求", value: "\(capabilities) 個")
+                            }
+                        }
+                        .padding(12)
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                        .cornerRadius(8)
+                    }
+                    
+                    // Quick Actions
+                    VStack(spacing: 8) {
+                        Button {
+                            NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                        } label: {
+                            HStack {
+                                Image(systemName: "folder")
+                                Text("Finder でアプリを表示")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button {
+                            let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                            if FileManager.default.fileExists(atPath: containerURL.path) {
+                                NSWorkspace.shared.activateFileViewerSelecting([containerURL])
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "externaldrive")
+                                Text("Finder でコンテナを表示")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+                .padding()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            loadData()
+        }
+    }
+    
+    private func loadData() {
+        // Load Info.plist
+        if let bundle = Bundle(url: app.appURL),
+           let info = bundle.infoDictionary {
+            infoPlist = info
+        }
+        
+        // Calculate storage
+        storageInfo = getStorageInfo()
+    }
+    
+    private func getDeviceFamily() -> String? {
+        guard let deviceFamily = infoPlist?["UIDeviceFamily"] as? [Int] else { return nil }
+        
+        let devices = deviceFamily.compactMap { family -> String? in
+            switch family {
+            case 1: return "iPhone"
+            case 2: return "iPad"
+            default: return nil
+            }
+        }
+        
+        return devices.isEmpty ? nil : devices.joined(separator: " / ")
+    }
+    
+    private func getCapabilitiesCount() -> Int? {
+        let permissionKeys = [
+            "NSCameraUsageDescription",
+            "NSPhotoLibraryUsageDescription",
+            "NSMicrophoneUsageDescription",
+            "NSLocationWhenInUseUsageDescription",
+            "NSLocationAlwaysUsageDescription",
+            "NSContactsUsageDescription",
+            "NSCalendarsUsageDescription",
+            "NSRemindersUsageDescription",
+            "NSMotionUsageDescription",
+            "NSBluetoothAlwaysUsageDescription",
+            "NSSiriUsageDescription",
+            "NSFaceIDUsageDescription"
+        ]
+        
+        var count = 0
+        for key in permissionKeys {
+            if infoPlist?[key] != nil {
+                count += 1
+            }
+        }
+        
+        if let backgroundModes = infoPlist?["UIBackgroundModes"] as? [String] {
+            count += backgroundModes.count
+        }
+        
+        return count > 0 ? count : nil
+    }
+    
+    private func getStorageInfo() -> StorageInfo? {
+        let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+        
+        guard let appSize = calculateDirectorySize(at: app.appURL) else {
+            return nil
+        }
+        
+        let containerSize: String
+        let containerPath: String
+        
+        if FileManager.default.fileExists(atPath: containerURL.path) {
+            containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
+            containerPath = containerURL.path
+        } else {
+            containerSize = "未作成"
+            containerPath = "\(containerURL.path) (未作成)"
+        }
+        
+        let totalSize: String
+        if containerSize != "未作成", containerSize != "不明",
+           let appBytes = parseByteCount(appSize),
+           let containerBytes = parseByteCount(containerSize) {
+            let total = appBytes + containerBytes
+            totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+        } else {
+            totalSize = appSize
+        }
+        
+        return StorageInfo(
+            appPath: app.appURL.path,
+            appSize: appSize,
+            containerPath: containerPath,
+            containerSize: containerSize,
+            totalSize: totalSize
+        )
+    }
+    
+    private func calculateDirectorySize(at url: URL) -> String? {
+        guard let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) else {
+            return nil
+        }
+        
+        var totalSize: Int64 = 0
+        for case let fileURL as URL in enumerator {
+            guard let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+                  let fileSize = resourceValues.fileSize else {
+                continue
+            }
+            totalSize += Int64(fileSize)
+        }
+        
+        return ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
+    }
+    
+    private func parseByteCount(_ sizeString: String) -> Int64? {
+        let components = sizeString.components(separatedBy: " ")
+        guard components.count == 2,
+              let value = Double(components[0].replacingOccurrences(of: ",", with: "")) else {
+            return nil
+        }
+        
+        let multiplier: Int64
+        switch components[1].uppercased() {
+        case "BYTES", "バイト": multiplier = 1
+        case "KB": multiplier = 1000
+        case "MB": multiplier = 1000 * 1000
+        case "GB": multiplier = 1000 * 1000 * 1000
+        case "TB": multiplier = 1000 * 1000 * 1000 * 1000
+        default: return nil
+        }
+        
+        return Int64(value * Double(multiplier))
+    }
+}
+
+// MARK: - Overview Supporting Views
+
+private struct StatCard: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(color)
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            Text(value)
+                .font(.title3)
+                .fontWeight(.semibold)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .cornerRadius(8)
+    }
+}
+
+private struct StorageRow: View {
+    let label: String
+    let size: String
+    let color: Color
+    
+    var body: some View {
+        HStack {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+            
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            Spacer()
+            
+            Text(size)
+                .font(.caption)
+                .fontWeight(.medium)
+        }
+    }
+}
+
+private struct QuickInfoRow: View {
+    let icon: String
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.caption)
+                .foregroundStyle(.blue)
+                .frame(width: 16)
+            
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 90, alignment: .leading)
+            
+            Text(value)
+                .font(.caption)
+                .fontWeight(.medium)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .textSelection(.enabled)
         }
     }
 }
