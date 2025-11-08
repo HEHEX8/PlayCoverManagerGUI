@@ -2032,7 +2032,7 @@ private struct LinkButton: View {
 }
 
 // MARK: - Disk Image Resize Sheet
-struct DiskImageResizeSheet: View {
+fileprivate struct DiskImageResizeSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
