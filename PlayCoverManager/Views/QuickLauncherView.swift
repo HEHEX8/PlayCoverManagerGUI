@@ -1043,7 +1043,7 @@ private struct AppDetailSheet: View {
                 
                 // Tab content with transition
                 ScrollView {
-                    Group {
+                    VStack {
                         switch selectedTab {
                         case .basic:
                             BasicSettingsView(app: app, viewModel: viewModel)
