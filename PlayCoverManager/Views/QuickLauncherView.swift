@@ -1912,16 +1912,58 @@ private struct InfoView: View {
                         }
                     }
                     
-                    // File Info Section
-                    infoSection(title: "ファイル情報") {
-                        infoRow(label: "パス", value: app.appURL.path)
-                        if let fileSize = getAppSize() {
-                            infoRow(label: "サイズ", value: fileSize)
+                    // Storage Info Section
+                    if let storageInfo = getStorageInfo() {
+                        infoSection(title: "ストレージ情報") {
+                            // App bundle
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("アプリ本体")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                infoRow(label: "所在地", value: storageInfo.appPath)
+                                infoRow(label: "使用容量", value: storageInfo.appSize)
+                                Button("Finder で表示") {
+                                    NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                                }
+                                .buttonStyle(.link)
+                                .controlSize(.small)
+                            }
+                            
+                            Divider()
+                                .padding(.vertical, 4)
+                            
+                            // Container
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("アプリコンテナ")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                infoRow(label: "所在地", value: storageInfo.containerPath)
+                                infoRow(label: "使用容量", value: storageInfo.containerSize)
+                                Button("Finder で表示") {
+                                    let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                                    if FileManager.default.fileExists(atPath: containerURL.path) {
+                                        NSWorkspace.shared.activateFileViewerSelecting([containerURL])
+                                    }
+                                }
+                                .buttonStyle(.link)
+                                .controlSize(.small)
+                            }
+                            
+                            Divider()
+                                .padding(.vertical, 4)
+                            
+                            // Total
+                            HStack {
+                                Text("合計使用容量:")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                Spacer()
+                                Text(storageInfo.totalSize)
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.blue)
+                            }
                         }
-                        Button("Finder で表示") {
-                            NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                        }
-                        .buttonStyle(.link)
                     }
                 }
                 .padding()
@@ -2050,7 +2092,11 @@ private struct InfoView: View {
     }
     
     private func getAppSize() -> String? {
-        guard let enumerator = FileManager.default.enumerator(at: app.appURL, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) else {
+        return calculateDirectorySize(at: app.appURL)
+    }
+    
+    private func calculateDirectorySize(at url: URL) -> String? {
+        guard let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) else {
             return nil
         }
         
@@ -2065,6 +2111,77 @@ private struct InfoView: View {
         
         return ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
     }
+    
+    private func getStorageInfo() -> StorageInfo? {
+        let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+        
+        // Get app size
+        guard let appSize = calculateDirectorySize(at: app.appURL) else {
+            return nil
+        }
+        
+        // Get container size
+        let containerSize: String
+        let containerPath: String
+        
+        if FileManager.default.fileExists(atPath: containerURL.path) {
+            containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
+            containerPath = containerURL.path
+        } else {
+            containerSize = "未作成"
+            containerPath = "\(containerURL.path) (未作成)"
+        }
+        
+        // Calculate total (only if container exists and has valid size)
+        let totalSize: String
+        if containerSize != "未作成", containerSize != "不明",
+           let appBytes = parseByteCount(appSize),
+           let containerBytes = parseByteCount(containerSize) {
+            let total = appBytes + containerBytes
+            totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+        } else {
+            totalSize = appSize
+        }
+        
+        return StorageInfo(
+            appPath: app.appURL.path,
+            appSize: appSize,
+            containerPath: containerPath,
+            containerSize: containerSize,
+            totalSize: totalSize
+        )
+    }
+    
+    private func parseByteCount(_ sizeString: String) -> Int64? {
+        // Simple parser for byte count strings like "123.4 MB"
+        let components = sizeString.components(separatedBy: " ")
+        guard components.count == 2,
+              let value = Double(components[0].replacingOccurrences(of: ",", with: "")) else {
+            return nil
+        }
+        
+        let multiplier: Int64
+        switch components[1].uppercased() {
+        case "BYTES", "バイト": multiplier = 1
+        case "KB": multiplier = 1000
+        case "MB": multiplier = 1000 * 1000
+        case "GB": multiplier = 1000 * 1000 * 1000
+        case "TB": multiplier = 1000 * 1000 * 1000 * 1000
+        default: return nil
+        }
+        
+        return Int64(value * Double(multiplier))
+    }
+}
+
+// MARK: - Storage Info
+
+struct StorageInfo {
+    let appPath: String
+    let appSize: String
+    let containerPath: String
+    let containerSize: String
+    let totalSize: String
 }
 
 // MARK: - Analysis Tab
