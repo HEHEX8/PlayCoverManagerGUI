@@ -164,7 +164,7 @@ private struct GeneralSettingsView: View {
                             HStack(spacing: 12) {
                                 TextField("", value: Binding(
                                     get: { settingsStore.defaultDiskImageSizeGB },
-                                    set: { settingsStore.defaultDiskImageSizeGB = max(1, min(10000, $0)) }
+                                    set: { settingsStore.defaultDiskImageSizeGB = max(100, min(10000, $0)) }
                                 ), format: .number)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 100)
@@ -177,7 +177,7 @@ private struct GeneralSettingsView: View {
                             }
                         }
                         
-                        Text("新しく作成されるディスクイメージの初期容量です。PlayCoverコンテナは常に10TBで作成されます。\nASIF形式はスパースファイルのため、実際の使用量に応じて容量が増えます。")
+                        Text("新しく作成されるディスクイメージの初期容量です（最低100GB）。PlayCoverコンテナは常に10TBで作成されます。\nASIF形式はスパースファイルのため、実際の使用量に応じて容量が増えます。\n\n⚠️ 注意: ASIFイメージは作成後のリサイズができません。十分な容量を確保してください。")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

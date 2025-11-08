@@ -182,12 +182,12 @@ final class SettingsStore {
             appLanguage = .system
         }
         
-        // Load default disk image size
+        // Load default disk image size (minimum 100GB)
         let savedSize = userDefaults.integer(forKey: Keys.defaultDiskImageSize)
-        if savedSize > 0 {
+        if savedSize >= 100 {
             defaultDiskImageSizeGB = savedSize
         } else {
-            defaultDiskImageSizeGB = 100 // Default: 100GB
+            defaultDiskImageSizeGB = 100 // Default: 100GB (minimum)
             userDefaults.set(defaultDiskImageSizeGB, forKey: Keys.defaultDiskImageSize)
         }
         
