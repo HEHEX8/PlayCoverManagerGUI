@@ -148,8 +148,15 @@ final class SetupWizardViewModel {
         defer { isBusy = false }
         do {
             _ = try await diskImageService.ensureDiskImageExists(for: bundleID, volumeName: bundleID)
-            let nobrowse = settings.nobrowseEnabled
-            try await diskImageService.mountDiskImage(for: bundleID, at: mountPoint, nobrowse: nobrowse)
+            // Use common helper for mounting
+            let perAppSettings = PerAppSettingsStore()
+            try await DiskImageHelper.mountDiskImageIfNeeded(
+                for: bundleID,
+                containerURL: mountPoint,
+                diskImageService: diskImageService,
+                perAppSettings: perAppSettings,
+                globalSettings: settings
+            )
             
             // Create Applications directory structure in the mounted volume
             let applicationsDir = mountPoint.appendingPathComponent("Applications", isDirectory: true)

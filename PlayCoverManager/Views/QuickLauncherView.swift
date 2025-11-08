@@ -860,19 +860,26 @@ private struct iOSAppIconView: View {
     private func launchInDebugConsole(app: PlayCoverApp) {
         Task {
             do {
-                // Mount disk image if needed (same logic as normal launch)
+                // Mount disk image if needed using common helper
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 let diskImageService = DiskImageService()
-                let descriptor = try diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: containerURL)
+                let perAppSettings = viewModel.getPerAppSettings()
+                let settingsStore = SettingsStore()
                 
-                // Check if disk image exists
-                guard FileManager.default.fileExists(atPath: descriptor.imageURL.path) else {
+                // Check state and mount if needed
+                let state = try DiskImageHelper.checkDiskImageState(
+                    for: app.bundleIdentifier,
+                    containerURL: containerURL,
+                    diskImageService: diskImageService
+                )
+                
+                guard state.imageExists else {
                     NSLog("Disk image not found for \(app.bundleIdentifier)")
                     return
                 }
                 
                 // Check for internal data if not mounted
-                if !descriptor.isMounted {
+                if !state.isMounted {
                     let internalItems = try viewModel.detectInternalData(at: containerURL)
                     if !internalItems.isEmpty {
                         NSLog("Internal data detected but debug console launch doesn't handle data migration yet")
@@ -881,12 +888,15 @@ private struct iOSAppIconView: View {
                     }
                 }
                 
-                // Mount if not already mounted
-                if !descriptor.isMounted {
-                    let settings = viewModel.getPerAppSettings()
-                    let settingsStore = SettingsStore()
-                    let nobrowse = settings.getNobrowse(for: app.bundleIdentifier, globalDefault: settingsStore.nobrowseEnabled)
-                    try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: nobrowse)
+                // Mount if needed
+                if !state.isMounted {
+                    try await DiskImageHelper.mountDiskImageIfNeeded(
+                        for: app.bundleIdentifier,
+                        containerURL: containerURL,
+                        diskImageService: diskImageService,
+                        perAppSettings: perAppSettings,
+                        globalSettings: settingsStore
+                    )
                 }
                 
                 // Find the executable in the app bundle

@@ -111,8 +111,9 @@ final class AppViewModel {
 
     private func ensureContainerMounted(for playCoverPaths: PlayCoverPaths, diskImageURL: URL) async throws {
         let mountPoint = playCoverPaths.containerRootURL
-        let nobrowse = settings.nobrowseEnabled
         do {
+            // Use PlayCover's own mount method (not our helper since this is PlayCover's container)
+            let nobrowse = settings.nobrowseEnabled
             try await environmentService.ensureMount(of: diskImageURL, mountPoint: mountPoint, nobrowse: nobrowse)
         } catch {
             throw AppError.diskImage("PlayCover コンテナのマウントに失敗", message: error.localizedDescription, underlying: error)

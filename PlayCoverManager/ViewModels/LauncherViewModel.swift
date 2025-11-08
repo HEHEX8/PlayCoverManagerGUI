@@ -161,14 +161,22 @@ final class LauncherViewModel {
         }
         do {
             let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-            let descriptor = try diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: containerURL)
-            guard fileManager.fileExists(atPath: descriptor.imageURL.path) else {
+            
+            // Check disk image state
+            let state = try DiskImageHelper.checkDiskImageState(
+                for: app.bundleIdentifier,
+                containerURL: containerURL,
+                diskImageService: diskImageService
+            )
+            
+            guard state.imageExists else {
                 pendingLaunchContext = LaunchContext(app: app, containerURL: containerURL)
                 pendingImageCreation = app
                 return
             }
 
-            if !resume && !descriptor.isMounted {
+            // Check for internal data if not mounted and not resuming
+            if !resume && !state.isMounted {
                 let internalItems = try detectInternalData(at: containerURL)
                 if !internalItems.isEmpty {
                     pendingLaunchContext = LaunchContext(app: app, containerURL: containerURL)
@@ -177,10 +185,15 @@ final class LauncherViewModel {
                 }
             }
 
-            if !descriptor.isMounted {
-                // Use per-app nobrowse setting if available, otherwise use global default
-                let nobrowse = perAppSettings.getNobrowse(for: app.bundleIdentifier, globalDefault: settings.nobrowseEnabled)
-                try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: nobrowse)
+            // Mount if needed
+            if !state.isMounted {
+                try await DiskImageHelper.mountDiskImageIfNeeded(
+                    for: app.bundleIdentifier,
+                    containerURL: containerURL,
+                    diskImageService: diskImageService,
+                    perAppSettings: perAppSettings,
+                    globalSettings: settings
+                )
             }
 
             // Swift 6.2: Acquire lock on container before launching (actor method)
@@ -464,28 +477,14 @@ final class LauncherViewModel {
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         
-        // Swift 6.2: Release lock first (actor method)
-        await lockService.unlockContainer(for: bundleID)
-        
-        // Check if container is mounted
-        let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
-        guard let descriptor = descriptor, descriptor.isMounted else {
-            return
-        }
-        
-        
-        // Swift 6.2: Check if any other process has a lock (actor method)
-        // With two-step unmount (unmount then eject), the lock check won't interfere
-        // because we unmount the volume first, releasing any file handles we opened
-        if !(await lockService.canLockContainer(for: bundleID, at: containerURL)) {
-            // Another process (possibly PlayCover) is using this container
-            // Don't unmount
-            return
-        }
-        
         do {
-            // Two-step eject: unmount volume, then detach device
-            try await diskImageService.ejectDiskImage(for: containerURL)
+            try await DiskImageHelper.unmountDiskImageSafely(
+                for: bundleID,
+                containerURL: containerURL,
+                diskImageService: diskImageService,
+                lockService: lockService,
+                force: false
+            )
         } catch {
             // Silently fail - will retry on next refresh
             // System processes (cfprefsd, etc.) may still be holding file handles
