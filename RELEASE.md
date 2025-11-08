@@ -125,21 +125,9 @@ macOS Tahoe 26.0+ 用 PlayCover アプリ統合管理ツールの最初のリリ
 
 ### 📥 インストール方法
 
-#### 方法 1: DMG から (推奨)
-
 1. `PlayCoverManager.dmg` をダウンロード
 2. DMG をマウントして「アプリケーション」フォルダへドラッグ
 3. 初回起動: 右クリック → 「開く」
-
-#### 方法 2: Homebrew
-
-```bash
-# Tap を追加（初回のみ）
-brew tap HEHEX8/playcover-manager
-
-# インストール
-brew install --cask playcover-manager
-```
 
 ### 🔗 リンク
 
@@ -161,56 +149,10 @@ brew install --cask playcover-manager
 4. **Assets** セクションに `PlayCoverManager.dmg` をアップロード
 5. 「Publish release」をクリック
 
-### 6. Homebrew Cask の更新
-
-リリース後、Homebrew Cask ファイルを更新します：
-
-```bash
-# SHA256ハッシュを取得（前の手順で取得済み）
-SHA256=$(shasum -a 256 build/PlayCoverManager.dmg | awk '{print $1}')
-
-# playcover-manager.rb を更新
-# version と sha256 を更新
-```
-
-**playcover-manager.rb**:
-```ruby
-cask "playcover-manager" do
-  version "1.0.0"  # ← 更新
-  sha256 "abc123..." # ← 実際のSHA256に更新
-  
-  url "https://github.com/HEHEX8/PlayCoverManagerGUI/releases/download/v#{version}/PlayCoverManager.dmg"
-  # ... 以下同じ
-end
-```
-
-### 7. Tap リポジトリの更新（オプション）
-
-個人 Homebrew Tap を作成する場合：
-
-```bash
-# 新しいリポジトリを作成
-# 名前: homebrew-playcover-manager
-
-# Cask ファイルをプッシュ
-mkdir -p Casks
-cp playcover-manager.rb Casks/
-git add Casks/playcover-manager.rb
-git commit -m "Add PlayCover Manager v1.0.0"
-git push origin main
-```
-
-ユーザーは以下でインストール可能：
-```bash
-brew tap HEHEX8/playcover-manager
-brew install --cask playcover-manager
-```
-
 ## リリース後の確認事項
 
 - [ ] GitHub Release ページでダウンロード可能か確認
 - [ ] DMG をダウンロードしてインストールテスト
-- [ ] Homebrew Cask でのインストールテスト（Tap 作成後）
 - [ ] README.md のリンクが正しいか確認
 - [ ] Issue が報告された場合は対応
 

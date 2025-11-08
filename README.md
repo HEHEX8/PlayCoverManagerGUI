@@ -70,19 +70,7 @@ IPA インストール • アプリ起動 • ストレージ管理 • アン�
 2. DMG をマウントして「アプリケーション」フォルダへドラッグ
 3. 初回起動: 右クリック → 「開く」（署名なしアプリのため）
 
-### 方法 2: Homebrew
-
-```bash
-# Tap を追加（初回のみ）
-brew tap HEHEX8/playcover-manager
-
-# インストール
-brew install --cask playcover-manager
-```
-
-**注意**: Homebrew Tap は初回リリース後に利用可能になります。
-
-### 方法 3: ソースからビルド
+### 方法 2: ソースからビルド
 
 ```bash
 git clone https://github.com/HEHEX8/PlayCoverManagerGUI.git
