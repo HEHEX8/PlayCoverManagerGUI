@@ -862,9 +862,9 @@ private struct iOSAppIconView: View {
             do {
                 // Mount disk image if needed using common helper
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-                let diskImageService = DiskImageService()
-                let perAppSettings = PerAppSettingsStore()
                 let settingsStore = SettingsStore()
+                let diskImageService = DiskImageService(settings: settingsStore)
+                let perAppSettings = PerAppSettingsStore()
                 
                 // Check state and mount if needed
                 let state = try DiskImageHelper.checkDiskImageState(
