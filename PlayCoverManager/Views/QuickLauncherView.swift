@@ -1012,6 +1012,7 @@ private struct AppDetailSheet: View {
     @State private var selectedTab: SettingsTab = .overview
     
     enum SettingsTab: String, CaseIterable, Identifiable {
+        case overview = "概要"
         case basic = "基本"
         case info = "情報"
         case analysis = "解析"
@@ -1020,6 +1021,7 @@ private struct AppDetailSheet: View {
         
         var icon: String {
             switch self {
+            case .overview: return "doc.text.fill"
             case .basic: return "slider.horizontal.3"
             case .info: return "info.circle.fill"
             case .analysis: return "chart.bar.doc.horizontal"
