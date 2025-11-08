@@ -931,6 +931,7 @@ private struct AppDetailSheet: View {
     enum SettingsTab: String, CaseIterable, Identifiable {
         case basic = "基本"
         case info = "情報"
+        case analysis = "解析"
         
         var id: String { rawValue }
         
@@ -938,6 +939,7 @@ private struct AppDetailSheet: View {
             switch self {
             case .basic: return "slider.horizontal.3"
             case .info: return "info.circle.fill"
+            case .analysis: return "chart.bar.doc.horizontal"
             }
         }
     }
