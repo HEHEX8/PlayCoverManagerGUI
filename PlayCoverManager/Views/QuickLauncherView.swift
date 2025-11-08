@@ -860,6 +860,35 @@ private struct iOSAppIconView: View {
     private func launchInDebugConsole(app: PlayCoverApp) {
         Task {
             do {
+                // Mount disk image if needed (same logic as normal launch)
+                let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                let diskImageService = DiskImageService()
+                let descriptor = try diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: containerURL)
+                
+                // Check if disk image exists
+                guard FileManager.default.fileExists(atPath: descriptor.imageURL.path) else {
+                    NSLog("Disk image not found for \(app.bundleIdentifier)")
+                    return
+                }
+                
+                // Check for internal data if not mounted
+                if !descriptor.isMounted {
+                    let internalItems = try viewModel.detectInternalData(at: containerURL)
+                    if !internalItems.isEmpty {
+                        NSLog("Internal data detected but debug console launch doesn't handle data migration yet")
+                        // TODO: Show alert to user that they need to launch normally first
+                        return
+                    }
+                }
+                
+                // Mount if not already mounted
+                if !descriptor.isMounted {
+                    let settings = viewModel.getPerAppSettings()
+                    let settingsStore = SettingsStore()
+                    let nobrowse = settings.getNobrowse(for: app.bundleIdentifier, globalDefault: settingsStore.nobrowseEnabled)
+                    try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: nobrowse)
+                }
+                
                 // Find the executable in the app bundle
                 guard let bundle = Bundle(url: app.appURL),
                       let executableName = bundle.infoDictionary?["CFBundleExecutable"] as? String else {
@@ -889,6 +918,7 @@ private struct iOSAppIconView: View {
                 echo "=== デバッグコンソール ==="
                 echo "アプリ: \(app.displayName)"
                 echo "実行ファイル: \(executableName)"
+                echo "コンテナ: マウント済み"
                 echo "========================"
                 echo ""
                 

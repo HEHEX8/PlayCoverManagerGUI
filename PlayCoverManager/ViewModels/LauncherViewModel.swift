@@ -308,7 +308,7 @@ final class LauncherViewModel {
         try removeItems(internalItems)
     }
 
-    private func detectInternalData(at url: URL) throws -> [URL] {
+    func detectInternalData(at url: URL) throws -> [URL] {
         var isDirectory: ObjCBool = false
         guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue else {
             return []
