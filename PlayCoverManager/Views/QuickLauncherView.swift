@@ -837,6 +837,9 @@ private struct iOSAppIconView: View {
                     }
                 }
             }
+            Button("デバッグコンソールで起動") {
+                launchInDebugConsole(app: app)
+            }
             Divider()
             Button("詳細と設定") { rightClickAction() }
             Divider()
@@ -851,6 +854,43 @@ private struct iOSAppIconView: View {
                 uninstallAction()
             }
             .foregroundStyle(.red)
+        }
+    }
+    
+    private func launchInDebugConsole(app: PlayCoverApp) {
+        Task {
+            do {
+                // Find the executable in the app bundle
+                guard let bundle = Bundle(url: app.appURL),
+                      let executableName = bundle.infoDictionary?["CFBundleExecutable"] as? String else {
+                    print("Failed to find executable name")
+                    return
+                }
+                
+                let executablePath = app.appURL.appendingPathComponent(executableName).path
+                
+                // Check if executable exists
+                guard FileManager.default.fileExists(atPath: executablePath) else {
+                    print("Executable not found at: \(executablePath)")
+                    return
+                }
+                
+                // Launch Terminal with the executable
+                let script = """
+                tell application "Terminal"
+                    activate
+                    do script "cd '\(app.appURL.path)' && '\(executablePath)'; echo '\\n--- プロセス終了 ---'; read -p '任意のキーを押して閉じる...'"
+                end tell
+                """
+                
+                var error: NSDictionary?
+                if let scriptObject = NSAppleScript(source: script) {
+                    scriptObject.executeAndReturnError(&error)
+                    if let error = error {
+                        print("AppleScript error: \(error)")
+                    }
+                }
+            }
         }
     }
     
@@ -2039,9 +2079,9 @@ private struct AnalysisView: View {
                         // File Types
                         if !result.fileTypes.isEmpty {
                             analysisSection(title: "ファイル種別", icon: "doc.fill") {
-                                ForEach(result.fileTypes.sorted(by: { $0.count > $1.count }), id: \.extension) { fileType in
+                                ForEach(result.fileTypes.sorted(by: { $0.count > $1.count }), id: \.fileExtension) { fileType in
                                     HStack {
-                                        Text(fileType.extension.isEmpty ? "(拡張子なし)" : ".\(fileType.extension)")
+                                        Text(fileType.fileExtension.isEmpty ? "(拡張子なし)" : ".\(fileType.fileExtension)")
                                             .font(.caption)
                                             .frame(width: 80, alignment: .leading)
                                         Text("\(fileType.count) 個")
@@ -2163,7 +2203,7 @@ struct BinaryInfo {
 }
 
 struct FileTypeInfo {
-    var extension: String
+    var fileExtension: String
     var count: Int
     var totalSize: String
 }
@@ -2236,7 +2276,7 @@ actor AppAnalyzer {
         // Convert file types
         let fileTypes = fileTypeMap.map { ext, info in
             FileTypeInfo(
-                extension: ext,
+                fileExtension: ext,
                 count: info.count,
                 totalSize: ByteCountFormatter.string(fromByteCount: info.bytes, countStyle: .file)
             )
