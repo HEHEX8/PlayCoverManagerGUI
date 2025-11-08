@@ -891,7 +891,6 @@ private struct AppDetailSheet: View {
     enum SettingsTab: String, CaseIterable, Identifiable {
         case basic = "基本"
         case graphics = "グラフィックス"
-        case controls = "コントロール"
         case advanced = "詳細"
         case info = "情報"
         
@@ -901,7 +900,6 @@ private struct AppDetailSheet: View {
             switch self {
             case .basic: return "slider.horizontal.3"
             case .graphics: return "display"
-            case .controls: return "gamecontroller.fill"
             case .advanced: return "gearshape.2.fill"
             case .info: return "info.circle.fill"
             }
@@ -1015,8 +1013,6 @@ private struct AppDetailSheet: View {
                             BasicSettingsView(app: app, viewModel: viewModel)
                         case .graphics:
                             GraphicsSettingsView(app: app)
-                        case .controls:
-                            ControlsSettingsView(app: app)
                         case .advanced:
                             AdvancedSettingsView(app: app)
                         case .info:
@@ -1744,83 +1740,8 @@ private struct GraphicsSettingsView: View {
             Text("グラフィックス設定")
                 .font(.headline)
             
-            // iOS Device Model
-            VStack(alignment: .leading, spacing: 8) {
-                Text("iOS デバイスモデル")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Picker("", selection: $settings.iosDeviceModel) {
-                    ForEach(PlayCoverAppSettings.IOSDeviceModel.allCases) { model in
-                        VStack(alignment: .leading) {
-                            Text(model.displayName)
-                            Text(model.description)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .tag(model.rawValue)
-                    }
-                }
-                .pickerStyle(.menu)
-                .onChange(of: settings.iosDeviceModel) { _, _ in saveSettings() }
-                
-                if let model = PlayCoverAppSettings.IOSDeviceModel(rawValue: settings.iosDeviceModel) {
-                    Text(model.description)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            
-            Divider()
-            
-            // Resolution
-            VStack(alignment: .leading, spacing: 8) {
-                Text("解像度")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Picker("", selection: $settings.resolution) {
-                    ForEach(PlayCoverAppSettings.Resolution.allCases) { resolution in
-                        Text(resolution.displayName).tag(resolution.rawValue)
-                    }
-                }
-                .pickerStyle(.menu)
-                .onChange(of: settings.resolution) { _, _ in saveSettings() }
-                
-                // Custom resolution fields
-                if settings.resolution == PlayCoverAppSettings.Resolution.custom.rawValue {
-                    HStack {
-                        TextField("幅", value: $settings.windowWidth, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 100)
-                            .onChange(of: settings.windowWidth) { _, _ in saveSettings() }
-                        
-                        Text("×")
-                        
-                        TextField("高さ", value: $settings.windowHeight, format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 100)
-                            .onChange(of: settings.windowHeight) { _, _ in saveSettings() }
-                    }
-                }
-            }
-            
-            Divider()
-            
-            // Aspect Ratio
-            VStack(alignment: .leading, spacing: 8) {
-                Text("アスペクト比")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Picker("", selection: $settings.aspectRatio) {
-                    ForEach(PlayCoverAppSettings.AspectRatio.allCases) { ratio in
-                        Text(ratio.displayName).tag(ratio.rawValue)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: settings.aspectRatio) { _, _ in saveSettings() }
-            }
+            // Note: iOS Device Model, Resolution, and Aspect Ratio settings have been removed
+            // These settings are PlayCover-specific and may break with PlayCover updates
             
             Divider()
             
@@ -1863,76 +1784,6 @@ private struct GraphicsSettingsView: View {
     }
 }
 
-// MARK: - Controls Settings Tab
-
-private struct ControlsSettingsView: View {
-    let app: PlayCoverApp
-    @State private var settings: PlayCoverAppSettings
-    
-    init(app: PlayCoverApp) {
-        self.app = app
-        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("コントロール設定")
-                .font(.headline)
-            
-            // Keymapping
-            VStack(alignment: .leading, spacing: 8) {
-                Toggle("キーマッピングを有効化", isOn: $settings.keymapping)
-                    .onChange(of: settings.keymapping) { _, _ in saveSettings() }
-                
-                Text("画面上のタッチ操作をキーボード/マウスに割り当てます。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Divider()
-            
-            // Mouse Sensitivity
-            VStack(alignment: .leading, spacing: 8) {
-                Text("マウス感度: \(Int(settings.sensitivity))")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Slider(value: $settings.sensitivity, in: 0...100, step: 1)
-                    .onChange(of: settings.sensitivity) { _, _ in saveSettings() }
-                
-                Text("マウスカーソルの移動速度を調整します。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Divider()
-            
-            // Input Options
-            VStack(alignment: .leading, spacing: 8) {
-                Text("入力オプション")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Toggle("テキスト入力時にキーマッピングを無効化", isOn: $settings.noKMOnInput)
-                    .onChange(of: settings.noKMOnInput) { _, _ in saveSettings() }
-                
-                Toggle("スクロールホイールを有効化", isOn: $settings.enableScrollWheel)
-                    .onChange(of: settings.enableScrollWheel) { _, _ in saveSettings() }
-                
-                Toggle("内蔵マウスを無効化", isOn: $settings.disableBuiltinMouse)
-                    .onChange(of: settings.disableBuiltinMouse) { _, _ in saveSettings() }
-            }
-            
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    private func saveSettings() {
-        try? PlayCoverAppSettingsStore.save(settings, for: app.bundleIdentifier)
-    }
-}
-
 // MARK: - Advanced Settings Tab
 
 private struct AdvancedSettingsView: View {
@@ -1949,33 +1800,8 @@ private struct AdvancedSettingsView: View {
             Text("詳細設定")
                 .font(.headline)
             
-            // PlayChain
-            VStack(alignment: .leading, spacing: 8) {
-                Toggle("PlayChain を有効化", isOn: $settings.playChain)
-                    .onChange(of: settings.playChain) { _, _ in saveSettings() }
-                
-                Text("PlayCover の実行時パッチ機能を有効にします。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                if settings.playChain {
-                    Toggle("PlayChain デバッグモード", isOn: $settings.playChainDebugging)
-                        .onChange(of: settings.playChainDebugging) { _, _ in saveSettings() }
-                        .padding(.leading)
-                }
-            }
-            
-            Divider()
-            
-            // Bypass
-            VStack(alignment: .leading, spacing: 8) {
-                Toggle("Jailbreak 検出回避", isOn: $settings.bypass)
-                    .onChange(of: settings.bypass) { _, _ in saveSettings() }
-                
-                Text("一部のアプリで必要な jailbreak 検出を回避します。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            // Note: PlayChain and Bypass settings have been removed
+            // These settings are PlayCover-specific and may break with PlayCover updates
             
             Divider()
             

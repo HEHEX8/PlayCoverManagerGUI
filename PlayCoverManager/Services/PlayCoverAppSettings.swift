@@ -2,21 +2,25 @@ import Foundation
 import AppKit
 
 /// PlayCover-compatible app settings
-/// This struct is fully compatible with PlayCover's AppSettings.swift
+/// This struct maintains compatibility with PlayCover's AppSettings.swift
 /// Settings are stored in: ~/Library/Containers/io.playcover.PlayCover/App Settings/<bundleID>.plist
+/// 
+/// NOTE: Most PlayCover-specific settings have been removed from the UI to avoid
+/// compatibility issues when PlayCover updates. We keep the struct properties for
+/// backward compatibility with existing settings files.
 struct PlayCoverAppSettings: Codable {
     // MARK: - Metadata
     var bundleIdentifier: String = ""
     var version = "3.0.0"
     
-    // MARK: - Keymapping / Controls
+    // MARK: - Keymapping / Controls (UI removed - PlayCover-specific)
     var keymapping = true
     var sensitivity: Float = 50
     var noKMOnInput = true
     var enableScrollWheel = true
     var disableBuiltinMouse = false
     
-    // MARK: - Graphics / Display
+    // MARK: - Graphics / Display (UI removed - PlayCover-specific)
     var iosDeviceModel = "iPad13,8"  // M1 iPad Pro 12.9"
     var windowWidth = 1920
     var windowHeight = 1080
@@ -31,7 +35,7 @@ struct PlayCoverAppSettings: Codable {
     var resizableAspectRatioWidth = 0
     var resizableAspectRatioHeight = 0
     
-    // MARK: - System / Advanced
+    // MARK: - System / Advanced (PlayChain and Bypass UI removed)
     var disableTimeout = false
     var bypass = false
     var playChain = true
