@@ -62,6 +62,14 @@ struct UnmountOverlayView: View {
                     onCancel: { viewModel.dismissUnmountError() }
                 )
                 .id("forceOffering")
+                
+            case .forceEjectOffering(let volumeName, _):
+                ForceEjectOfferingView(
+                    volumeName: volumeName,
+                    onForce: { viewModel.confirmForceEject() },
+                    onCancel: { viewModel.cancelForceEject() }
+                )
+                .id("forceEjectOffering")
             }
         }
         .animation(.none, value: viewModel.unmountFlowState)  // Disable implicit animations
@@ -435,6 +443,63 @@ private struct ForceUnmountOfferingView: View {
                     .keyboardShortcut(.cancelAction)
                 
                 Button("強制アンマウント") {
+                    onForce()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(32)
+        .frame(minWidth: 500)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.3), radius: 20)
+    }
+}
+
+// MARK: - Force Eject Offering View
+
+private struct ForceEjectOfferingView: View {
+    let volumeName: String
+    let onForce: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.orange)
+            
+            Text("ドライブのイジェクトに失敗")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            VStack(spacing: 12) {
+                Text("「\(volumeName)」をイジェクトできませんでした。")
+                    .multilineTextAlignment(.center)
+                
+                Text("ドライブ上のボリュームが使用中の可能性があります。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                
+                Text("強制的にイジェクトを試行しますか？")
+                    .font(.callout)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.orange)
+                    .padding(.top, 8)
+                
+                Text("⚠️ 強制イジェクトはデータ損失のリスクがあります")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+            .frame(maxWidth: 450)
+            
+            HStack(spacing: 12) {
+                Button("キャンセル", action: onCancel)
+                    .keyboardShortcut(.cancelAction)
+                
+                Button("強制イジェクト") {
                     onForce()
                 }
                 .buttonStyle(.borderedProminent)
