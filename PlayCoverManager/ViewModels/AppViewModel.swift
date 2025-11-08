@@ -35,13 +35,15 @@ final class AppViewModel {
     }
 
     func onAppear() {
-        Task { await runStartupChecks() }
+        // Swift 6.2: Task.immediate for immediate UI response
+        Task.immediate { await runStartupChecks() }
     }
 
     func retry() {
         phase = .checking
         statusMessage = "環境を再確認しています…"
-        Task { await runStartupChecks() }
+        // Swift 6.2: Task.immediate starts synchronously until first await
+        Task.immediate { await runStartupChecks() }
     }
 
     private func runStartupChecks() async {

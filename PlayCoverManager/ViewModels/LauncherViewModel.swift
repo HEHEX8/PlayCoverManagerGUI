@@ -99,8 +99,10 @@ final class LauncherViewModel {
         // Also include PlayCover's container
         containerURLs.append(playCoverPaths.containerRootURL)
         
-        // Cleanup stale locks
-        lockService.cleanupStaleLocks(in: containerURLs)
+        // Swift 6.2: Call actor method asynchronously
+        Task.immediate {
+            await lockService.cleanupStaleLocks(in: containerURLs)
+        }
     }
 
     func refresh() async {
@@ -145,7 +147,8 @@ final class LauncherViewModel {
     }
 
     func launch(app: PlayCoverApp) {
-        Task { await performLaunch(app: app, resume: false) }
+        // Swift 6.2: Task.immediate for instant UI feedback
+        Task.immediate { await performLaunch(app: app, resume: false) }
     }
 
     private func performLaunch(app: PlayCoverApp, resume: Bool) async {
@@ -180,15 +183,15 @@ final class LauncherViewModel {
                 try await diskImageService.mountDiskImage(for: app.bundleIdentifier, at: containerURL, nobrowse: nobrowse)
             }
 
-            // Acquire lock on container before launching
-            _ = lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
+            // Swift 6.2: Acquire lock on container before launching (actor method)
+            _ = await lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
             
             try await launcherService.openApp(app)
             pendingLaunchContext = nil
             
             // Refresh after a short delay to allow the app to start
-            // This updates the "running" indicator
-            Task {
+            // Swift 6.2: Task.immediate for responsive UI update
+            Task.immediate {
                 try? await Task.sleep(for: .seconds(0.5))
                 await refresh()
             }
@@ -202,7 +205,8 @@ final class LauncherViewModel {
     func confirmImageCreation() {
         guard let context = pendingLaunchContext, let app = pendingImageCreation else { return }
         pendingImageCreation = nil
-        Task {
+        // Swift 6.2: Task.immediate for immediate disk image creation start
+        Task.immediate {
             await createImageAndResume(app: app, context: context)
         }
     }
@@ -223,7 +227,8 @@ final class LauncherViewModel {
         do {
             _ = try await diskImageService.ensureDiskImageExists(for: app.bundleIdentifier, volumeName: app.bundleIdentifier)
             pendingLaunchContext = nil
-            Task { await performLaunch(app: app, resume: true) }
+            // Swift 6.2: Task.immediate for immediate launch after image creation
+            Task.immediate { await performLaunch(app: app, resume: true) }
         } catch let error as AppError {
             self.error = error
         } catch {
@@ -234,7 +239,8 @@ final class LauncherViewModel {
     func applyDataHandling(strategy: SettingsStore.InternalDataStrategy) {
         guard let request = pendingDataHandling, let context = pendingLaunchContext else { return }
         pendingDataHandling = nil
-        Task {
+        // Swift 6.2: Task.immediate for responsive data handling
+        Task.immediate {
             await handleInternalData(strategy: strategy, request: request, context: context)
         }
     }
@@ -260,7 +266,8 @@ final class LauncherViewModel {
                 break
             }
             pendingLaunchContext = nil
-            Task { await performLaunch(app: request.app, resume: true) }
+            // Swift 6.2: Task.immediate for immediate app launch after data handling
+            Task.immediate { await performLaunch(app: request.app, resume: true) }
         } catch let error as AppError {
             self.error = error
         } catch {
@@ -284,7 +291,8 @@ final class LauncherViewModel {
         try fileManager.createDirectory(at: tempBase, withIntermediateDirectories: true)
         let tempMount = try await diskImageService.mountTemporarily(for: bundleIdentifier, temporaryMountBase: tempBase)
         defer {
-            Task {
+            // Swift 6.2: Task.immediate for prompt cleanup
+            Task.immediate {
                 // Eject disk image (unmounts and detaches in one operation)
                 try? await diskImageService.ejectDiskImage(for: tempMount)
             }
@@ -343,7 +351,8 @@ final class LauncherViewModel {
         guard case .confirming = unmountFlowState else { return }
         guard let applyToPlayCoverContainer = pendingUnmountTask else { return }
         
-        Task { await performUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer) }
+        // Swift 6.2: Task.immediate for immediate unmount start
+        Task.immediate { await performUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer) }
     }
     
     func cancelUnmount() {
@@ -426,7 +435,8 @@ final class LauncherViewModel {
             }
             
             // Handle app termination on MainActor
-            Task { @MainActor [weak self] in
+            // Swift 6.2: Task.immediate for immediate UI update on app termination
+            Task.immediate { @MainActor [weak self] in
                 guard let self = self else {
                     return
                 }
@@ -454,8 +464,8 @@ final class LauncherViewModel {
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         
-        // Release lock first
-        lockService.unlockContainer(for: bundleID)
+        // Swift 6.2: Release lock first (actor method)
+        await lockService.unlockContainer(for: bundleID)
         
         // Check if container is mounted
         let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
@@ -464,10 +474,10 @@ final class LauncherViewModel {
         }
         
         
-        // Check if any other process has a lock on this container
+        // Swift 6.2: Check if any other process has a lock (actor method)
         // With two-step unmount (unmount then eject), the lock check won't interfere
         // because we unmount the volume first, releasing any file handles we opened
-        if !lockService.canLockContainer(for: bundleID, at: containerURL) {
+        if !(await lockService.canLockContainer(for: bundleID, at: containerURL)) {
             // Another process (possibly PlayCover) is using this container
             // Don't unmount
             return
@@ -684,7 +694,8 @@ final class LauncherViewModel {
     }
     
     func performForceUnmountAll(applyToPlayCoverContainer: Bool) {
-        Task {
+        // Swift 6.2: Task.immediate for responsive force unmount
+        Task.immediate {
             if isStorageChangeFlow {
                 await performForceUnmountForStorageChange()
             } else {
@@ -954,7 +965,8 @@ final class LauncherViewModel {
         guard case .storageChangeConfirming = unmountFlowState else { return }
         
         isStorageChangeFlow = true  // Mark as storage change flow
-        Task { await performUnmountForStorageChange() }
+        // Swift 6.2: Task.immediate for immediate unmount operation
+        Task.immediate { await performUnmountForStorageChange() }
     }
     
     /// Cancel storage location change

@@ -67,8 +67,8 @@ final class SetupWizardViewModel {
         self.detectedPlayCoverPaths = initialPlayCoverPaths
         if context.missingPlayCover {
             currentStep = .installPlayCover
-            // Try to detect PlayCover immediately on init
-            Task { @MainActor in
+            // Swift 6.2: Task.immediate for instant PlayCover detection
+            Task.immediate { @MainActor in
                 if let paths = try? environmentService.detectPlayCover() {
                     self.detectedPlayCoverPaths = paths
                 }
@@ -108,7 +108,8 @@ final class SetupWizardViewModel {
     func continueAction(playCoverPaths: PlayCoverPaths?) {
         switch currentStep {
         case .installPlayCover:
-            Task { await verifyPlayCoverExists() }
+            // Swift 6.2: Task.immediate for responsive verification
+            Task.immediate { await verifyPlayCoverExists() }
         case .selectStorage:
             guard storageURL != nil else {
                 error = AppError.environment("保存先が選択されていません", message: "ディスクイメージ保存先を選択してください")
@@ -122,7 +123,8 @@ final class SetupWizardViewModel {
                 return
             }
             detectedPlayCoverPaths = paths
-            Task { await prepareDiskImage(bundleID: paths.bundleIdentifier, mountPoint: paths.containerRootURL) }
+            // Swift 6.2: Task.immediate for immediate disk image preparation
+            Task.immediate { await prepareDiskImage(bundleID: paths.bundleIdentifier, mountPoint: paths.containerRootURL) }
         case .finished:
             onCompletion?()
         }

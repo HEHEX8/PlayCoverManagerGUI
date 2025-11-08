@@ -1,37 +1,34 @@
 import Foundation
 
-/// Service to manage file locks on containers to prevent unmounting while apps are running
-/// Not isolated to MainActor since file operations can be called from any context
-final class ContainerLockService {
+/// Swift 6.2: Actor-based service for managing file locks on containers
+/// Provides thread-safe lock management using Swift's actor model
+actor ContainerLockService {
     private let fileManager: FileManager
     
-    // Track locks by bundle identifier
+    // Track locks by bundle identifier (actor-isolated state)
     private var activeLocks: [String: FileHandle] = [:]
-    private let lockQueue = DispatchQueue(label: "com.playcover.lockservice", attributes: .concurrent)
     
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
     }
     
-    deinit {
+    // Swift 6.2: isolated deinit runs on actor's executor
+    isolated deinit {
         // Release all locks on cleanup
-        // Safe to call synchronously in deinit
-        lockQueue.sync {
-            releaseAllLocksUnsafe()
-        }
+        // Safe to access actor-isolated state in isolated deinit
+        releaseAllLocksUnsafe()
     }
     
-    /// Lock a container by creating a lock file
+    /// Swift 6.2: Actor-isolated lock method (no manual queue sync needed)
     /// - Parameters:
     ///   - bundleID: The bundle identifier of the app
     ///   - containerURL: The container directory URL
     /// - Returns: true if lock was successfully acquired, false if already locked
     func lockContainer(for bundleID: String, at containerURL: URL) -> Bool {
-        return lockQueue.sync(flags: .barrier) {
-            // If already locked, return true
-            if activeLocks[bundleID] != nil {
-                return true
-            }
+        // If already locked, return true
+        if activeLocks[bundleID] != nil {
+            return true
+        }
             
             // Create lock file path
             let lockFileURL = containerURL.appendingPathComponent(".playcover_lock")
@@ -68,39 +65,34 @@ final class ContainerLockService {
                 // Failed to create lock
                 return false
             }
-        }
     }
     
-    /// Unlock a container by releasing the lock file
+    /// Swift 6.2: Actor-isolated unlock (automatic serialization)
     /// - Parameter bundleID: The bundle identifier of the app
     func unlockContainer(for bundleID: String) {
-        lockQueue.sync(flags: .barrier) {
-            guard let fileHandle = activeLocks[bundleID] else {
-                return
-            }
-            
-            // Release lock
-            let fd = fileHandle.fileDescriptor
-            flock(fd, LOCK_UN)
-            
-            // Close file handle
-            try? fileHandle.close()
-            
-            // Remove from active locks
-            activeLocks.removeValue(forKey: bundleID)
+        guard let fileHandle = activeLocks[bundleID] else {
+            return
         }
+        
+        // Release lock
+        let fd = fileHandle.fileDescriptor
+        flock(fd, LOCK_UN)
+        
+        // Close file handle
+        try? fileHandle.close()
+        
+        // Remove from active locks
+        activeLocks.removeValue(forKey: bundleID)
     }
     
-    /// Check if a container is locked
+    /// Swift 6.2: Actor-isolated lock check (thread-safe by default)
     /// - Parameter bundleID: The bundle identifier of the app
     /// - Returns: true if locked by this instance
     func isLocked(for bundleID: String) -> Bool {
-        return lockQueue.sync {
-            return activeLocks[bundleID] != nil
-        }
+        return activeLocks[bundleID] != nil
     }
     
-    /// Try to acquire a lock on a container (test without holding)
+    /// Swift 6.2: Actor-isolated lock test method
     /// - Parameters:
     ///   - bundleID: The bundle identifier of the app
     ///   - containerURL: The container directory URL
@@ -141,7 +133,7 @@ final class ContainerLockService {
         }
     }
     
-    /// Release all locks (called on deinit) - unsafe version without queue sync
+    /// Swift 6.2: Actor-isolated cleanup (safe to call in isolated deinit)
     private func releaseAllLocksUnsafe() {
         for (_, fileHandle) in activeLocks {
             let fd = fileHandle.fileDescriptor

@@ -16,6 +16,10 @@ struct DiskImageDescriptor: Identifiable, Equatable {
     let sizeOnDisk: UInt64?
 }
 
+/// Swift 6.2 Optimizations:
+/// - Service architecture follows Swift 6.2 best practices for non-actor services
+/// - Methods are designed to work with caller's execution context
+/// - Heavy I/O operations can be wrapped with @concurrent when needed
 final class DiskImageService {
     private let fileManager: FileManager
     private let processRunner: ProcessRunner
