@@ -2295,7 +2295,7 @@ fileprivate struct DiskImageResizeSheet: View {
                 }
                 
                 // Get app name from installed apps
-                let appName = appViewModel.installedApps.first(where: { $0.playCoverPaths.bundleIdentifier == bundleID })?.displayInfo.name ?? bundleID
+                let appName = appViewModel.launcherViewModel?.apps.first(where: { $0.bundleIdentifier == bundleID })?.displayName ?? bundleID
                 
                 // Get current size
                 let resourceValues = try? url.resourceValues(forKeys: [.fileSizeKey])
@@ -2303,7 +2303,7 @@ fileprivate struct DiskImageResizeSheet: View {
                 let currentSizeGB = max(1, Int(Double(currentSizeBytes) / 1_000_000_000))
                 
                 // Check if mounted
-                let containerURL = appViewModel.installedApps.first(where: { $0.playCoverPaths.bundleIdentifier == bundleID })?.playCoverPaths.container
+                let containerURL = PlayCoverPaths.containerURL(for: bundleID)
                 let isMounted: Bool
                 if let containerURL = containerURL {
                     isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
