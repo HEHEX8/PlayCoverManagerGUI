@@ -1009,6 +1009,8 @@ private struct AppDetailSheet: View {
                             BasicSettingsView(app: app, viewModel: viewModel)
                         case .info:
                             InfoView(app: app)
+                        case .analysis:
+                            AnalysisView(app: app)
                         }
                     }
                     .padding(24)
@@ -1937,6 +1939,436 @@ private struct InfoView: View {
         }
         
         return ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
+    }
+}
+
+// MARK: - Analysis Tab
+
+private struct AnalysisView: View {
+    let app: PlayCoverApp
+    @State private var analyzing = false
+    @State private var analysisResult: AppAnalysisResult?
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("アプリ解析")
+                    .font(.headline)
+                
+                Spacer()
+                
+                if analyzing {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
+                
+                Button(analyzing ? "解析中..." : "再解析") {
+                    Task { await performAnalysis() }
+                }
+                .disabled(analyzing)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
+            
+            if let result = analysisResult {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Bundle Structure
+                        analysisSection(title: "バンドル構造", icon: "folder.fill") {
+                            infoRow(label: "総ファイル数", value: "\(result.totalFiles) 個")
+                            infoRow(label: "総サイズ", value: result.totalSize)
+                            infoRow(label: "最大ファイル", value: result.largestFile.name)
+                            infoRow(label: "最大ファイルサイズ", value: result.largestFile.size)
+                        }
+                        
+                        // Localization
+                        if !result.localizations.isEmpty {
+                            analysisSection(title: "対応言語 (\(result.localizations.count))", icon: "globe") {
+                                ForEach(result.localizations.sorted(), id: \.self) { lang in
+                                    Text("• \(getLanguageName(lang))")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        
+                        // Frameworks & Libraries
+                        if !result.frameworks.isEmpty {
+                            analysisSection(title: "フレームワーク (\(result.frameworks.count))", icon: "shippingbox.fill") {
+                                ForEach(result.frameworks.sorted(), id: \.self) { framework in
+                                    Text("• \(framework)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        
+                        // Code Signature
+                        analysisSection(title: "コード署名", icon: "signature") {
+                            infoRow(label: "署名状態", value: result.codeSignature.isSigned ? "署名済み" : "未署名")
+                            if let teamId = result.codeSignature.teamIdentifier {
+                                infoRow(label: "Team ID", value: teamId)
+                            }
+                            if let signDate = result.codeSignature.signDate {
+                                infoRow(label: "署名日", value: signDate)
+                            }
+                        }
+                        
+                        // Entitlements
+                        if !result.entitlements.isEmpty {
+                            analysisSection(title: "Entitlements (\(result.entitlements.count))", icon: "key.fill") {
+                                ForEach(result.entitlements.sorted(), id: \.self) { entitlement in
+                                    Text("• \(entitlement)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        
+                        // Binary Info
+                        if let binary = result.binaryInfo {
+                            analysisSection(title: "バイナリ情報", icon: "cpu") {
+                                infoRow(label: "アーキテクチャ", value: binary.architectures.joined(separator: ", "))
+                                infoRow(label: "バイナリサイズ", value: binary.size)
+                                if let minOS = binary.minOSVersion {
+                                    infoRow(label: "最小OS", value: minOS)
+                                }
+                            }
+                        }
+                        
+                        // File Types
+                        if !result.fileTypes.isEmpty {
+                            analysisSection(title: "ファイル種別", icon: "doc.fill") {
+                                ForEach(result.fileTypes.sorted(by: { $0.count > $1.count }), id: \.extension) { fileType in
+                                    HStack {
+                                        Text(fileType.extension.isEmpty ? "(拡張子なし)" : ".\(fileType.extension)")
+                                            .font(.caption)
+                                            .frame(width: 80, alignment: .leading)
+                                        Text("\(fileType.count) 個")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Spacer()
+                                        Text(fileType.totalSize)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding()
+                }
+            } else {
+                VStack(spacing: 16) {
+                    Image(systemName: "magnifyingglass.circle")
+                        .font(.system(size: 64))
+                        .foregroundStyle(.secondary)
+                    
+                    Text("アプリを解析して詳細情報を表示します")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    Button("解析開始") {
+                        Task { await performAnalysis() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            if analysisResult == nil {
+                Task { await performAnalysis() }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func analysisSection<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.subheadline)
+                    .foregroundStyle(.blue)
+                
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                content()
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            .cornerRadius(8)
+        }
+    }
+    
+    private func infoRow(label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("\(label):")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 120, alignment: .trailing)
+            
+            Text(value)
+                .font(.caption)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+    
+    private func performAnalysis() async {
+        analyzing = true
+        defer { analyzing = false }
+        
+        let analyzer = AppAnalyzer()
+        analysisResult = await analyzer.analyze(appURL: app.appURL)
+    }
+    
+    private func getLanguageName(_ code: String) -> String {
+        let locale = Locale(identifier: "ja")
+        return locale.localizedString(forIdentifier: code) ?? code
+    }
+}
+
+// MARK: - App Analysis Models
+
+struct AppAnalysisResult {
+    var totalFiles: Int
+    var totalSize: String
+    var largestFile: (name: String, size: String)
+    var localizations: [String]
+    var frameworks: [String]
+    var codeSignature: CodeSignatureInfo
+    var entitlements: [String]
+    var binaryInfo: BinaryInfo?
+    var fileTypes: [FileTypeInfo]
+}
+
+struct CodeSignatureInfo {
+    var isSigned: Bool
+    var teamIdentifier: String?
+    var signDate: String?
+}
+
+struct BinaryInfo {
+    var architectures: [String]
+    var size: String
+    var minOSVersion: String?
+}
+
+struct FileTypeInfo {
+    var extension: String
+    var count: Int
+    var totalSize: String
+}
+
+// MARK: - App Analyzer
+
+actor AppAnalyzer {
+    func analyze(appURL: URL) async -> AppAnalysisResult {
+        var totalFiles = 0
+        var totalBytes: Int64 = 0
+        var largestFile: (url: URL, size: Int64) = (appURL, 0)
+        var localizations: Set<String> = []
+        var frameworks: Set<String> = []
+        var fileTypeMap: [String: (count: Int, bytes: Int64)] = [:]
+        
+        let fileManager = FileManager.default
+        
+        // Enumerate all files
+        if let enumerator = fileManager.enumerator(
+            at: appURL,
+            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        ) {
+            for case let fileURL as URL in enumerator {
+                guard let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey]),
+                      let isDirectory = resourceValues.isDirectory else {
+                    continue
+                }
+                
+                if !isDirectory {
+                    totalFiles += 1
+                    
+                    if let fileSize = resourceValues.fileSize {
+                        let bytes = Int64(fileSize)
+                        totalBytes += bytes
+                        
+                        if bytes > largestFile.size {
+                            largestFile = (fileURL, bytes)
+                        }
+                        
+                        // Track file types
+                        let ext = fileURL.pathExtension.lowercased()
+                        let current = fileTypeMap[ext] ?? (0, 0)
+                        fileTypeMap[ext] = (current.count + 1, current.bytes + bytes)
+                    }
+                }
+                
+                // Check for localization
+                if fileURL.pathExtension == "lproj" {
+                    let langCode = fileURL.deletingPathExtension().lastPathComponent
+                    localizations.insert(langCode)
+                }
+                
+                // Check for frameworks
+                if fileURL.pathExtension == "framework" {
+                    frameworks.insert(fileURL.deletingPathExtension().lastPathComponent)
+                }
+            }
+        }
+        
+        // Get code signature info
+        let codeSignature = await getCodeSignature(appURL: appURL)
+        
+        // Get entitlements
+        let entitlements = await getEntitlements(appURL: appURL)
+        
+        // Get binary info
+        let binaryInfo = await getBinaryInfo(appURL: appURL)
+        
+        // Convert file types
+        let fileTypes = fileTypeMap.map { ext, info in
+            FileTypeInfo(
+                extension: ext,
+                count: info.count,
+                totalSize: ByteCountFormatter.string(fromByteCount: info.bytes, countStyle: .file)
+            )
+        }
+        
+        return AppAnalysisResult(
+            totalFiles: totalFiles,
+            totalSize: ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file),
+            largestFile: (
+                name: largestFile.url.lastPathComponent,
+                size: ByteCountFormatter.string(fromByteCount: largestFile.size, countStyle: .file)
+            ),
+            localizations: Array(localizations),
+            frameworks: Array(frameworks),
+            codeSignature: codeSignature,
+            entitlements: entitlements,
+            binaryInfo: binaryInfo,
+            fileTypes: fileTypes
+        )
+    }
+    
+    private func getCodeSignature(appURL: URL) async -> CodeSignatureInfo {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        process.arguments = ["-dv", "--verbose=4", appURL.path]
+        
+        let pipe = Pipe()
+        process.standardError = pipe
+        
+        var isSigned = false
+        var teamId: String?
+        var signDate: String?
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8) {
+                isSigned = output.contains("Signature=")
+                
+                // Extract team identifier
+                if let range = output.range(of: "TeamIdentifier=([A-Z0-9]+)", options: .regularExpression) {
+                    let match = String(output[range])
+                    teamId = match.components(separatedBy: "=").last
+                }
+                
+                // Extract signing time
+                if let range = output.range(of: "Signing Time=([^\n]+)", options: .regularExpression) {
+                    let match = String(output[range])
+                    signDate = match.components(separatedBy: "=").last?.trimmingCharacters(in: .whitespaces)
+                }
+            }
+        } catch {
+            // Failed to check signature
+        }
+        
+        return CodeSignatureInfo(isSigned: isSigned, teamIdentifier: teamId, signDate: signDate)
+    }
+    
+    private func getEntitlements(appURL: URL) async -> [String] {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        process.arguments = ["-d", "--entitlements", ":-", appURL.path]
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        
+        var entitlements: [String] = []
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+                entitlements = plist.keys.sorted()
+            }
+        } catch {
+            // Failed to read entitlements
+        }
+        
+        return entitlements
+    }
+    
+    private func getBinaryInfo(appURL: URL) async -> BinaryInfo? {
+        guard let bundle = Bundle(url: appURL),
+              let executablePath = bundle.executablePath else {
+            return nil
+        }
+        
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/file")
+        process.arguments = [executablePath]
+        
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        
+        var architectures: [String] = []
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8) {
+                if output.contains("arm64") { architectures.append("ARM64") }
+                if output.contains("x86_64") { architectures.append("x86_64") }
+            }
+        } catch {
+            // Failed to check binary
+        }
+        
+        // Get file size
+        let fileURL = URL(fileURLWithPath: executablePath)
+        guard let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+              let fileSize = resourceValues.fileSize else {
+            return nil
+        }
+        
+        // Get minimum OS version
+        var minOS: String?
+        if let infoPlist = bundle.infoDictionary,
+           let minOSVersion = infoPlist["MinimumOSVersion"] as? String {
+            minOS = "iOS \(minOSVersion)"
+        }
+        
+        return BinaryInfo(
+            architectures: architectures,
+            size: ByteCountFormatter.string(fromByteCount: Int64(fileSize), countStyle: .file),
+            minOSVersion: minOS
+        )
     }
 }
 
