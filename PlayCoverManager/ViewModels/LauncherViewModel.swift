@@ -807,11 +807,19 @@ final class LauncherViewModel {
         // If all unmounts succeeded, check for external drive and offer eject
         if failedCount == 0 {
             // Check if storage directory is on external drive
-            let storageDir = settings.diskImageDirectory
-            let isExternal = (try? await diskImageService.isOnExternalDrive(path: storageDir)) ?? false
+            guard let storageDir = settings.diskImageDirectory else {
+                // No storage directory, just show success
+                await MainActor.run {
+                    unmountFlowState = .success(unmountedCount: successCount, ejectedDrive: nil)
+                }
+                return
+            }
+            
+            let isExternal = (try? await diskImageService.isExternalDrive(storageDir)) ?? false
             
             // Also check if path is under /Volumes/ (external media)
-            let isUnderVolumes = storageDir.hasPrefix("/Volumes/") && storageDir != "/Volumes/Macintosh HD"
+            let storagePath = storageDir.path
+            let isUnderVolumes = storagePath.hasPrefix("/Volumes/") && storagePath != "/Volumes/Macintosh HD"
             let shouldOfferEject = isExternal || isUnderVolumes
             
             var ejectedDrive: String? = nil
