@@ -1740,37 +1740,14 @@ private struct GraphicsSettingsView: View {
             Text("グラフィックス設定")
                 .font(.headline)
             
-            // Note: iOS Device Model, Resolution, and Aspect Ratio settings have been removed
-            // These settings are PlayCover-specific and may break with PlayCover updates
+            // All PlayCover-specific settings have been removed from this tab
+            // These settings depend on PlayCover's internal implementation
             
-            Divider()
+            Text("PlayCover関連の設定項目は全て削除されました。")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             
-            // Display Options
-            VStack(alignment: .leading, spacing: 8) {
-                Text("表示オプション")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Toggle("ノッチを表示", isOn: $settings.notch)
-                    .onChange(of: settings.notch) { _, _ in saveSettings() }
-                
-                Toggle("タイトルバーを非表示", isOn: $settings.hideTitleBar)
-                    .onChange(of: settings.hideTitleBar) { _, _ in saveSettings() }
-                
-                Toggle("フローティングウィンドウ", isOn: $settings.floatingWindow)
-                    .onChange(of: settings.floatingWindow) { _, _ in saveSettings() }
-                
-                Toggle("Metal HUD を表示", isOn: $settings.metalHUD)
-                    .onChange(of: settings.metalHUD) { _, _ in saveSettings() }
-            }
-            
-            Divider()
-            
-            // Display Sleep
-            Toggle("ディスプレイスリープを無効化", isOn: $settings.disableTimeout)
-                .onChange(of: settings.disableTimeout) { _, _ in saveSettings() }
-            
-            Text("アプリ実行中にディスプレイが自動的にスリープするのを防ぎます。")
+            Text("これらの設定はPlayCoverの内部実装に依存しており、PlayCoverの更新で動作しなくなる可能性があるため削除されました。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             
@@ -1800,47 +1777,16 @@ private struct AdvancedSettingsView: View {
             Text("詳細設定")
                 .font(.headline)
             
-            // Note: PlayChain and Bypass settings have been removed
-            // These settings are PlayCover-specific and may break with PlayCover updates
+            // All PlayCover-specific settings have been removed from this tab
+            // These settings depend on PlayCover's internal implementation
             
-            Divider()
+            Text("PlayCover関連の設定項目は全て削除されました。")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
             
-            // Window Fix Method
-            VStack(alignment: .leading, spacing: 8) {
-                Text("ウィンドウ修正方法")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Picker("", selection: $settings.windowFixMethod) {
-                    ForEach(PlayCoverAppSettings.WindowFixMethod.allCases) { method in
-                        Text(method.displayName).tag(method.rawValue)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: settings.windowFixMethod) { _, _ in saveSettings() }
-                
-                Text("ウィンドウ表示の問題を修正します。動作しない場合は別の方法を試してください。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Divider()
-            
-            // Other Advanced Options
-            VStack(alignment: .leading, spacing: 8) {
-                Text("その他のオプション")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Toggle("作業ディレクトリをルートに設定", isOn: $settings.rootWorkDir)
-                    .onChange(of: settings.rootWorkDir) { _, _ in saveSettings() }
-                
-                Toggle("画面値を反転", isOn: $settings.inverseScreenValues)
-                    .onChange(of: settings.inverseScreenValues) { _, _ in saveSettings() }
-                
-                Toggle("Introspection を注入", isOn: $settings.injectIntrospection)
-                    .onChange(of: settings.injectIntrospection) { _, _ in saveSettings() }
-            }
+            Text("これらの設定はPlayCoverの内部実装に依存しており、PlayCoverの更新で動作しなくなる可能性があるため削除されました。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             
             Spacer()
         }
