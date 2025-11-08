@@ -519,34 +519,7 @@ final class DiskImageService {
     ///   - bundleIdentifier: Bundle identifier of the app
     ///   - newSizeGB: New size in GB
     /// - Throws: Error if resize fails
-    func resizeDiskImage(for bundleIdentifier: String, newSizeGB: Int) async throws {
-        let imageURL = try diskImageURL(for: bundleIdentifier)
-        guard fileManager.fileExists(atPath: imageURL.path) else {
-            throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
-        }
-        
-        // Use hdiutil to resize the disk image
-        // Note: Image must be unmounted before resizing
-        let args = ["resize", "-size", "\(newSizeGB)G", imageURL.path]
-        do {
-            _ = try await processRunner.run("/usr/bin/hdiutil", args)
-        } catch let error as ProcessRunnerError {
-            if case .commandFailed(_, _, let stderr) = error {
-                if stderr.contains("mounted") || stderr.contains("in use") {
-                    throw AppError.diskImage(
-                        "ディスクイメージがマウント中です",
-                        message: "リサイズする前にアンマウントしてください。\n\nパス: \(imageURL.path)"
-                    )
-                }
-            }
-            throw AppError.diskImage(
-                "ディスクイメージのリサイズに失敗",
-                message: "パス: \(imageURL.path)\nエラー: \(error.localizedDescription)",
-                underlying: error
-            )
-        }
-    }
-    
+
     /// Get current size of a disk image
     /// - Parameter bundleIdentifier: Bundle identifier of the app
     /// - Returns: Current size in bytes, or nil if image doesn't exist
