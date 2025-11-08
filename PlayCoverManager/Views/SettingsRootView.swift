@@ -2304,12 +2304,7 @@ fileprivate struct DiskImageResizeSheet: View {
                 
                 // Check if mounted
                 let containerURL = PlayCoverPaths.containerURL(for: bundleID)
-                let isMounted: Bool
-                if let containerURL = containerURL {
-                    isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
-                } else {
-                    isMounted = false
-                }
+                let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
                 
                 items.append(DataSettingsView.DiskImageItem(
                     bundleID: bundleID,
