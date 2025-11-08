@@ -294,11 +294,10 @@ class IPAInstallerService {
             return imageURL
         }
         
-        // Create ASIF disk image
+        // Create ASIF disk image (uses default size from settings)
         try await diskImageService.createDiskImage(
             at: imageURL,
-            volumeName: info.volumeName,
-            size: "50G"
+            volumeName: info.volumeName
         )
         
         await MainActor.run {

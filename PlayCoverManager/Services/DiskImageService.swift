@@ -67,7 +67,7 @@ final class DiskImageService {
                                    sizeOnDisk: exists ? (try? imageURL.totalAllocatedSize()) : nil)
     }
 
-    func ensureDiskImageExists(for bundleIdentifier: String, volumeName: String? = nil) async throws -> URL {
+    func ensureDiskImageExists(for bundleIdentifier: String, volumeName: String? = nil, customSizeGB: Int? = nil) async throws -> URL {
         let imageURL = try diskImageURL(for: bundleIdentifier)
         if fileManager.fileExists(atPath: imageURL.path) {
             return imageURL
@@ -103,14 +103,17 @@ final class DiskImageService {
         
         let volName = volumeName ?? bundleIdentifier
         
-        // Determine size based on container type
-        // PlayCover container needs large capacity as it stores all IPAs (grows indefinitely)
-        // Other app containers use standard 50GB size
+        // Determine size based on priority:
+        // 1. customSizeGB parameter (if provided)
+        // 2. PlayCover container gets 10TB (stores all IPAs)
+        // 3. Default from settings
         let imageSize: String
-        if bundleIdentifier == "io.playcover.PlayCover" {
+        if let customSize = customSizeGB {
+            imageSize = "\(customSize)G"
+        } else if bundleIdentifier == "io.playcover.PlayCover" {
             imageSize = "10T"  // 10 TB for PlayCover container
         } else {
-            imageSize = "50G"  // 50 GB for other app containers
+            imageSize = "\(settings.defaultDiskImageSizeGB)G"
         }
         
         // Create ASIF disk image using diskutil (macOS Tahoe 26.0+ only)
@@ -178,15 +181,25 @@ final class DiskImageService {
     }
     
     // Convenience methods for IPAInstallerService compatibility
-    func createDiskImage(at imageURL: URL, volumeName: String, size: String) async throws {
+    func createDiskImage(at imageURL: URL, volumeName: String, size: String? = nil, sizeGB: Int? = nil) async throws {
         let parentDir = imageURL.deletingLastPathComponent()
         try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
+        
+        // Determine size: explicit size string > sizeGB parameter > default from settings
+        let finalSize: String
+        if let size = size {
+            finalSize = size
+        } else if let sizeGB = sizeGB {
+            finalSize = "\(sizeGB)G"
+        } else {
+            finalSize = "\(settings.defaultDiskImageSizeGB)G"
+        }
         
         // Create ASIF disk image using diskutil (macOS Tahoe 26.0+ only)
         let args = [
             "image", "create", "blank",
             "--format", "ASIF",
-            "--size", size,
+            "--size", finalSize,
             "--volumeName", volumeName,
             imageURL.path
         ]
@@ -490,6 +503,50 @@ final class DiskImageService {
         } catch {
             return 0
         }
+    }
+    
+    /// Resize an ASIF disk image
+    /// - Parameters:
+    ///   - bundleIdentifier: Bundle identifier of the app
+    ///   - newSizeGB: New size in GB
+    /// - Throws: Error if resize fails
+    func resizeDiskImage(for bundleIdentifier: String, newSizeGB: Int) async throws {
+        let imageURL = try diskImageURL(for: bundleIdentifier)
+        guard fileManager.fileExists(atPath: imageURL.path) else {
+            throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
+        }
+        
+        // Use hdiutil to resize the disk image
+        // Note: Image must be unmounted before resizing
+        let args = ["resize", "-size", "\(newSizeGB)G", imageURL.path]
+        do {
+            _ = try await processRunner.run("/usr/bin/hdiutil", args)
+        } catch let error as ProcessRunnerError {
+            if case .commandFailed(_, _, let stderr) = error {
+                if stderr.contains("mounted") || stderr.contains("in use") {
+                    throw AppError.diskImage(
+                        "ディスクイメージがマウント中です",
+                        message: "リサイズする前にアンマウントしてください。\n\nパス: \(imageURL.path)"
+                    )
+                }
+            }
+            throw AppError.diskImage(
+                "ディスクイメージのリサイズに失敗",
+                message: "パス: \(imageURL.path)\nエラー: \(error.localizedDescription)",
+                underlying: error
+            )
+        }
+    }
+    
+    /// Get current size of a disk image
+    /// - Parameter bundleIdentifier: Bundle identifier of the app
+    /// - Returns: Current size in bytes, or nil if image doesn't exist
+    func getDiskImageSize(for bundleIdentifier: String) throws -> UInt64? {
+        let imageURL = try diskImageURL(for: bundleIdentifier)
+        guard fileManager.fileExists(atPath: imageURL.path) else {
+            return nil
+        }
+        return try? imageURL.totalAllocatedSize()
     }
     
     /// Parse eject error to extract user-friendly information
