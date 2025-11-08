@@ -10,6 +10,8 @@
 [![Platform](https://img.shields.io/badge/Platform-macOS%2026.0+-lightgrey.svg)](https://www.apple.com/macos/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+### [📥 Download Latest Release (v1.0.0)](https://github.com/HEHEX8/PlayCoverManagerGUI/releases/download/v1.0.0/PlayCoverManager.dmg)
+
 [English](#english) | [日本語](#日本語)
 
 </div>
@@ -45,13 +47,16 @@ PlayCover Manager is a GUI application for managing iOS apps installed via PlayC
 
 ### Download from Releases
 
-1. Download `PlayCoverManager.dmg` from [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)
-2. Open DMG and drag to Applications folder
-3. First launch (unsigned app):
+**[📥 Download PlayCoverManager.dmg (Latest)](https://github.com/HEHEX8/PlayCoverManagerGUI/releases/latest/download/PlayCoverManager.dmg)**
+
+1. Open DMG and drag to Applications folder
+2. First launch (unsigned app):
    - Try to open the app (you'll see a warning)
    - Go to **System Settings → Privacy & Security**
    - Scroll down and click **"Open Anyway"**
    - Enter password and open
+
+> For older versions, see [All Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)
 
 ### Build from Source
 
@@ -159,13 +164,16 @@ PlayCover ManagerはmacOS上でPlayCover経由でインストールしたiOSア�
 
 ### Releasesからダウンロード
 
-1. [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)から`PlayCoverManager.dmg`をダウンロード
-2. DMGを開いてアプリケーションフォルダへドラッグ
-3. 初回起動（署名なしアプリのため）：
+**[📥 PlayCoverManager.dmgをダウンロード（最新版）](https://github.com/HEHEX8/PlayCoverManagerGUI/releases/latest/download/PlayCoverManager.dmg)**
+
+1. DMGを開いてアプリケーションフォルダへドラッグ
+2. 初回起動（署名なしアプリのため）：
    - アプリを開こうとする（警告が表示される）
    - **システム設定 → プライバシーとセキュリティ** を開く
    - 下にスクロールして**「このまま開く」**をクリック
    - パスワードを入力して開く
+
+> 過去のバージョンは[全リリース一覧](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)を参照
 
 ### ソースからビルド
 
