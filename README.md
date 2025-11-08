@@ -47,7 +47,11 @@ PlayCover Manager is a GUI application for managing iOS apps installed via PlayC
 
 1. Download `PlayCoverManager.dmg` from [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)
 2. Open DMG and drag to Applications folder
-3. First launch: Right-click → "Open" (unsigned app)
+3. First launch (unsigned app):
+   - Try to open the app (you'll see a warning)
+   - Go to **System Settings → Privacy & Security**
+   - Scroll down and click **"Open Anyway"**
+   - Enter password and open
 
 ### Build from Source
 
@@ -157,7 +161,11 @@ PlayCover ManagerはmacOS上でPlayCover経由でインストールしたiOSア�
 
 1. [Releases](https://github.com/HEHEX8/PlayCoverManagerGUI/releases)から`PlayCoverManager.dmg`をダウンロード
 2. DMGを開いてアプリケーションフォルダへドラッグ
-3. 初回起動：右クリック→「開く」（署名なしアプリのため）
+3. 初回起動（署名なしアプリのため）：
+   - アプリを開こうとする（警告が表示される）
+   - **システム設定 → プライバシーとセキュリティ** を開く
+   - 下にスクロールして**「このまま開く」**をクリック
+   - パスワードを入力して開く
 
 ### ソースからビルド
 
