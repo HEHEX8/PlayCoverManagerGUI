@@ -1720,11 +1720,10 @@ private struct BasicSettingsView: View {
 
 private struct InfoView: View {
     let app: PlayCoverApp
-    @State private var settings: PlayCoverAppSettings
+    @State private var infoPlist: [String: Any]?
     
     init(app: PlayCoverApp) {
         self.app = app
-        self._settings = State(initialValue: PlayCoverAppSettingsStore.load(for: app.bundleIdentifier))
     }
     
     var body: some View {
@@ -1732,57 +1731,212 @@ private struct InfoView: View {
             Text("アプリ情報")
                 .font(.headline)
             
-            Form {
-                LabeledContent("Bundle ID") {
-                    Text(app.bundleIdentifier)
-                        .font(.system(.body, design: .monospaced))
-                        .textSelection(.enabled)
-                        .lineLimit(3)
-                        .truncationMode(.middle)
-                }
-                
-                if let version = app.version {
-                    LabeledContent("バージョン") {
-                        Text(version)
-                            .textSelection(.enabled)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Basic Info Section
+                    infoSection(title: "基本情報") {
+                        infoRow(label: "アプリ名", value: app.displayName)
+                        if let standardName = app.standardName, standardName != app.displayName {
+                            infoRow(label: "英語名", value: standardName)
+                        }
+                        infoRow(label: "Bundle ID", value: app.bundleIdentifier)
+                        if let version = app.version {
+                            infoRow(label: "バージョン", value: version)
+                        }
+                        if let buildVersion = infoPlist?["CFBundleVersion"] as? String, buildVersion != app.version {
+                            infoRow(label: "ビルド番号", value: buildVersion)
+                        }
                     }
-                }
-                
-                LabeledContent("パス") {
-                    Text(app.appURL.path)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
-                        .lineLimit(3)
-                        .truncationMode(.middle)
-                }
-                
-                Divider()
-                
-                LabeledContent("設定バージョン") {
-                    Text(settings.version)
-                        .textSelection(.enabled)
-                }
-                
-                if PlayCoverAppSettingsStore.exists(for: app.bundleIdentifier) {
-                    LabeledContent("設定ファイル") {
+                    
+                    // Technical Info Section
+                    infoSection(title: "技術情報") {
+                        if let executableName = infoPlist?["CFBundleExecutable"] as? String {
+                            infoRow(label: "実行ファイル", value: executableName)
+                        }
+                        if let minOSVersion = infoPlist?["MinimumOSVersion"] as? String {
+                            infoRow(label: "最小iOS", value: minOSVersion)
+                        }
+                        if let targetDevice = getTargetDeviceFamily() {
+                            infoRow(label: "対応デバイス", value: targetDevice)
+                        }
+                        if let packageType = infoPlist?["CFBundlePackageType"] as? String {
+                            infoRow(label: "パッケージ種別", value: packageType)
+                        }
+                    }
+                    
+                    // Capabilities Section
+                    if let capabilities = getCapabilities() {
+                        infoSection(title: "機能・権限") {
+                            ForEach(Array(capabilities.enumerated()), id: \.offset) { _, capability in
+                                Text("• \(capability)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    
+                    // Developer Info Section
+                    infoSection(title: "開発者情報") {
+                        if let copyright = infoPlist?["NSHumanReadableCopyright"] as? String {
+                            infoRow(label: "著作権", value: copyright)
+                        }
+                        if let teamId = getTeamIdentifier() {
+                            infoRow(label: "Team ID", value: teamId)
+                        }
+                    }
+                    
+                    // File Info Section
+                    infoSection(title: "ファイル情報") {
+                        infoRow(label: "パス", value: app.appURL.path)
+                        if let fileSize = getAppSize() {
+                            infoRow(label: "サイズ", value: fileSize)
+                        }
                         Button("Finder で表示") {
-                            let url = PlayCoverAppSettingsStore.settingsURL(for: app.bundleIdentifier)
-                            NSWorkspace.shared.activateFileViewerSelecting([url])
+                            NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
                         }
                         .buttonStyle(.link)
                     }
-                } else {
-                    LabeledContent("設定ファイル") {
-                        Text("未作成（デフォルト値を使用中）")
-                            .foregroundStyle(.secondary)
-                    }
                 }
+                .padding()
             }
-            .formStyle(.grouped)
-            
-            Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            loadInfoPlist()
+        }
+    }
+    
+    private func loadInfoPlist() {
+        guard let bundle = Bundle(url: app.appURL),
+              let info = bundle.infoDictionary else { return }
+        infoPlist = info
+    }
+    
+    @ViewBuilder
+    private func infoSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                content()
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            .cornerRadius(8)
+        }
+    }
+    
+    private func infoRow(label: String, value: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("\(label):")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(width: 100, alignment: .trailing)
+            
+            Text(value)
+                .font(.caption)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+    
+    private func getTargetDeviceFamily() -> String? {
+        guard let deviceFamily = infoPlist?["UIDeviceFamily"] as? [Int] else { return nil }
+        
+        let devices = deviceFamily.compactMap { family -> String? in
+            switch family {
+            case 1: return "iPhone"
+            case 2: return "iPad"
+            case 3: return "Apple TV"
+            case 4: return "Apple Watch"
+            default: return nil
+            }
+        }
+        
+        return devices.isEmpty ? nil : devices.joined(separator: ", ")
+    }
+    
+    private func getCapabilities() -> [String]? {
+        var capabilities: [String] = []
+        
+        // Check for common permissions
+        let permissionKeys: [String: String] = [
+            "NSCameraUsageDescription": "カメラ",
+            "NSPhotoLibraryUsageDescription": "写真ライブラリ",
+            "NSMicrophoneUsageDescription": "マイク",
+            "NSLocationWhenInUseUsageDescription": "位置情報（使用中）",
+            "NSLocationAlwaysUsageDescription": "位置情報（常に）",
+            "NSContactsUsageDescription": "連絡先",
+            "NSCalendarsUsageDescription": "カレンダー",
+            "NSRemindersUsageDescription": "リマインダー",
+            "NSMotionUsageDescription": "モーションセンサー",
+            "NSBluetoothAlwaysUsageDescription": "Bluetooth",
+            "NSSiriUsageDescription": "Siri",
+            "NSFaceIDUsageDescription": "Face ID"
+        ]
+        
+        for (key, name) in permissionKeys {
+            if infoPlist?[key] != nil {
+                capabilities.append(name)
+            }
+        }
+        
+        // Check for background modes
+        if let backgroundModes = infoPlist?["UIBackgroundModes"] as? [String] {
+            for mode in backgroundModes {
+                switch mode {
+                case "audio": capabilities.append("バックグラウンド音声")
+                case "location": capabilities.append("バックグラウンド位置情報")
+                case "voip": capabilities.append("VoIP")
+                case "fetch": capabilities.append("バックグラウンド取得")
+                case "remote-notification": capabilities.append("リモート通知")
+                default: break
+                }
+            }
+        }
+        
+        return capabilities.isEmpty ? nil : capabilities
+    }
+    
+    private func getTeamIdentifier() -> String? {
+        // Try to read team ID from embedded.mobileprovision or code signature
+        let provisionPath = app.appURL.appendingPathComponent("embedded.mobileprovision")
+        guard FileManager.default.fileExists(atPath: provisionPath.path),
+              let provisionData = try? Data(contentsOf: provisionPath),
+              let provisionString = String(data: provisionData, encoding: .ascii) else {
+            return nil
+        }
+        
+        // Simple regex to extract team identifier (this is a simplified approach)
+        if let range = provisionString.range(of: "<key>TeamIdentifier</key>\\s*<array>\\s*<string>([A-Z0-9]+)</string>", options: .regularExpression) {
+            let match = String(provisionString[range])
+            if let idRange = match.range(of: "[A-Z0-9]{10}", options: .regularExpression) {
+                return String(match[idRange])
+            }
+        }
+        
+        return nil
+    }
+    
+    private func getAppSize() -> String? {
+        guard let enumerator = FileManager.default.enumerator(at: app.appURL, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) else {
+            return nil
+        }
+        
+        var totalSize: Int64 = 0
+        for case let fileURL as URL in enumerator {
+            guard let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+                  let fileSize = resourceValues.fileSize else {
+                continue
+            }
+            totalSize += Int64(fileSize)
+        }
+        
+        return ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)
     }
 }
 
