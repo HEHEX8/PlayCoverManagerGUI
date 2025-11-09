@@ -2338,136 +2338,134 @@ private struct InfoContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Basic Info Section
-                    infoSection(title: "基本情報") {
-                        infoRow(label: "アプリ名", value: app.displayName)
-                        if let standardName = app.standardName, standardName != app.displayName {
-                            infoRow(label: "英語名", value: standardName)
-                        }
-                        infoRow(label: "Bundle ID", value: app.bundleIdentifier)
-                        if let version = app.version {
-                            infoRow(label: "バージョン", value: version)
-                        }
-                        if let buildVersion = infoPlist?["CFBundleVersion"] as? String, buildVersion != app.version {
-                            infoRow(label: "ビルド番号", value: buildVersion)
-                        }
-                    }
-                    
-                    // Technical Info Section
-                    infoSection(title: "技術情報") {
-                        if let executableName = infoPlist?["CFBundleExecutable"] as? String {
-                            infoRow(label: "実行ファイル", value: executableName)
-                        }
-                        if let minOSVersion = infoPlist?["MinimumOSVersion"] as? String {
-                            infoRow(label: "最小iOS", value: minOSVersion)
-                        }
-                        if let targetDevice = getTargetDeviceFamily() {
-                            infoRow(label: "対応デバイス", value: targetDevice)
-                        }
-                        if let packageType = infoPlist?["CFBundlePackageType"] as? String {
-                            infoRow(label: "パッケージ種別", value: packageType)
-                        }
-                    }
-                    
-                    // Capabilities Section
-                    if let capabilities = getCapabilities() {
-                        infoSection(title: "機能・権限") {
-                            ForEach(Array(capabilities.enumerated()), id: \.offset) { _, capability in
-                                Text("• \(capability)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    
-                    // Developer Info Section
-                    infoSection(title: "開発者情報") {
-                        if let copyright = infoPlist?["NSHumanReadableCopyright"] as? String {
-                            infoRow(label: "著作権", value: copyright)
-                        }
-                        if let teamId = getTeamIdentifier() {
-                            infoRow(label: "Team ID", value: teamId)
-                        }
-                    }
-                    
-                    // Storage Info Section
-                    if let storageInfo = getStorageInfo() {
-                        infoSection(title: "ストレージ情報") {
-                            // App bundle
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("アプリ本体")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                infoRow(label: "所在地", value: storageInfo.appPath)
-                                infoRow(label: "使用容量", value: storageInfo.appSize)
-                                Button("Finder で表示") {
-                                    NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                                }
-                                .buttonStyle(.link)
-                                .controlSize(.small)
-                            }
-                            
-                            Divider()
-                                .padding(.vertical, 4)
-                            
-                            // Disk image
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("ディスクイメージ")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                infoRow(label: "所在地", value: storageInfo.containerPath)
-                                infoRow(label: "ファイルサイズ", value: storageInfo.containerSize)
-                                infoRow(label: "マウント状態", value: storageInfo.isMounted ? "マウント中" : "アンマウント中")
-                                Button("Finder で表示") {
-                                    NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: storageInfo.containerPath)])
-                                }
-                                .buttonStyle(.link)
-                                .controlSize(.small)
-                            }
-                            
-                            // Internal data usage (reference only, when unmounted)
-                            if let internalSize = storageInfo.internalDataSize {
-                                Divider()
-                                    .padding(.vertical, 4)
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("内部データ (参考情報)")
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                        .foregroundStyle(.secondary)
-                                    infoRow(label: "使用量", value: internalSize)
-                                        .foregroundStyle(.secondary)
-                                    Text("※ イメージ内のデータ使用量（合計に含まれません）")
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .padding(.top, 2)
-                                }
-                            }
-                            
-                            Divider()
-                                .padding(.vertical, 4)
-                            
-                            // Total
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack {
-                                    Text("合計使用容量:")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                    Spacer()
-                                    Text(storageInfo.totalSize)
-                                        .font(.caption)
-                                        .fontWeight(.bold)
-                                        .foregroundStyle(.blue)
-                                }
-                                Text("※ アプリ本体 + ディスクイメージファイル")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
+            infoSection(title: "基本情報") {
+                infoRow(label: "アプリ名", value: app.displayName)
+                if let standardName = app.standardName, standardName != app.displayName {
+                    infoRow(label: "英語名", value: standardName)
+                }
+                infoRow(label: "Bundle ID", value: app.bundleIdentifier)
+                if let version = app.version {
+                    infoRow(label: "バージョン", value: version)
+                }
+                if let buildVersion = infoPlist?["CFBundleVersion"] as? String, buildVersion != app.version {
+                    infoRow(label: "ビルド番号", value: buildVersion)
+                }
+            }
+            
+            // Technical Info Section
+            infoSection(title: "技術情報") {
+                if let executableName = infoPlist?["CFBundleExecutable"] as? String {
+                    infoRow(label: "実行ファイル", value: executableName)
+                }
+                if let minOSVersion = infoPlist?["MinimumOSVersion"] as? String {
+                    infoRow(label: "最小iOS", value: minOSVersion)
+                }
+                if let targetDevice = getTargetDeviceFamily() {
+                    infoRow(label: "対応デバイス", value: targetDevice)
+                }
+                if let packageType = infoPlist?["CFBundlePackageType"] as? String {
+                    infoRow(label: "パッケージ種別", value: packageType)
+                }
+            }
+            
+            // Capabilities Section
+            if let capabilities = getCapabilities() {
+                infoSection(title: "機能・権限") {
+                    ForEach(Array(capabilities.enumerated()), id: \.offset) { _, capability in
+                        Text("• \(capability)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            .padding()
+            
+            // Developer Info Section
+            infoSection(title: "開発者情報") {
+                if let copyright = infoPlist?["NSHumanReadableCopyright"] as? String {
+                    infoRow(label: "著作権", value: copyright)
+                }
+                if let teamId = getTeamIdentifier() {
+                    infoRow(label: "Team ID", value: teamId)
+                }
+            }
+            
+            // Storage Info Section
+            if let storageInfo = getStorageInfo() {
+                infoSection(title: "ストレージ情報") {
+                    // App bundle
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("アプリ本体")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                        infoRow(label: "所在地", value: storageInfo.appPath)
+                        infoRow(label: "使用容量", value: storageInfo.appSize)
+                        Button("Finder で表示") {
+                            NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                        }
+                        .buttonStyle(.link)
+                        .controlSize(.small)
+                    }
+                    
+                    Divider()
+                        .padding(.vertical, 4)
+                    
+                    // Disk image
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ディスクイメージ")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                        infoRow(label: "所在地", value: storageInfo.containerPath)
+                        infoRow(label: "ファイルサイズ", value: storageInfo.containerSize)
+                        infoRow(label: "マウント状態", value: storageInfo.isMounted ? "マウント中" : "アンマウント中")
+                        Button("Finder で表示") {
+                            NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: storageInfo.containerPath)])
+                        }
+                        .buttonStyle(.link)
+                        .controlSize(.small)
+                    }
+                    
+                    // Internal data usage (reference only, when unmounted)
+                    if let internalSize = storageInfo.internalDataSize {
+                        Divider()
+                            .padding(.vertical, 4)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("内部データ (参考情報)")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                            infoRow(label: "使用量", value: internalSize)
+                                .foregroundStyle(.secondary)
+                            Text("※ イメージ内のデータ使用量（合計に含まれません）")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 2)
+                        }
+                    }
+                    
+                    Divider()
+                        .padding(.vertical, 4)
+                    
+                    // Total
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("合計使用容量:")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                            Spacer()
+                            Text(storageInfo.totalSize)
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.blue)
+                        }
+                        Text("※ アプリ本体 + ディスクイメージファイル")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
         }
+        .padding()
     }
     
     @ViewBuilder
