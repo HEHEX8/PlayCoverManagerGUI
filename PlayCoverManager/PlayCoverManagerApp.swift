@@ -190,7 +190,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Start async unmount and return later
         Task { @MainActor [weak self] in
             guard let self = self else { return }
-            viewModel.terminationFlowState = .unmounting(status: "ディスクイメージをアンマウントしています…")
+            viewModel.terminationFlowState = .unmounting(status: String(localized: "ディスクイメージをアンマウントしています…"))
             
             // Try to unmount all containers
             let result = await viewModel.unmountAllContainersForTermination()

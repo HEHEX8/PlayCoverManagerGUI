@@ -9,12 +9,12 @@ enum Logger {
     
     // MARK: - Log Categories
     
-    private static let lifecycle = OSLog(subsystem: subsystem, category: "Lifecycle")
-    private static let unmount = OSLog(subsystem: subsystem, category: "Unmount")
-    private static let diskImage = OSLog(subsystem: subsystem, category: "DiskImage")
-    private static let general = OSLog(subsystem: subsystem, category: "General")
-    private static let performance = OSLog(subsystem: subsystem, category: "Performance")
-    private static let installation = OSLog(subsystem: subsystem, category: "Installation")
+    private nonisolated(unsafe) static let lifecycle = OSLog(subsystem: subsystem, category: "Lifecycle")
+    private nonisolated(unsafe) static let unmount = OSLog(subsystem: subsystem, category: "Unmount")
+    private nonisolated(unsafe) static let diskImage = OSLog(subsystem: subsystem, category: "DiskImage")
+    private nonisolated(unsafe) static let general = OSLog(subsystem: subsystem, category: "General")
+    private nonisolated(unsafe) static let performance = OSLog(subsystem: subsystem, category: "Performance")
+    private nonisolated(unsafe) static let installation = OSLog(subsystem: subsystem, category: "Installation")
     
     // MARK: - Logging Methods
     
