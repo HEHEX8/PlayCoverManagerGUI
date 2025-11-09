@@ -225,4 +225,67 @@ final class AppViewModel {
             NSLog("Failed to unmount PlayCover container: \(error)")
         }
     }
+    
+    /// Unmount all containers for app termination
+    /// Returns result with success status, failed count, and running apps
+    @MainActor
+    func unmountAllContainersForTermination() async -> (success: Bool, failedCount: Int, runningApps: [String]) {
+        guard let launcherVM = launcherViewModel,
+              let playCoverPaths = playCoverPaths else {
+            return (success: true, failedCount: 0, runningApps: [])
+        }
+        
+        var failedCount = 0
+        var runningApps: [String] = []
+        
+        // Step 1: Check for running apps
+        for app in launcherVM.apps {
+            if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
+                runningApps.append(app.bundleIdentifier)
+                failedCount += 1
+            }
+        }
+        
+        // If there are running apps, don't proceed
+        if !runningApps.isEmpty {
+            return (success: false, failedCount: failedCount, runningApps: runningApps)
+        }
+        
+        // Step 2: Unmount all app containers
+        for app in launcherVM.apps {
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            
+            // Check if mounted
+            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+            guard let descriptor = descriptor, descriptor.isMounted else {
+                continue
+            }
+            
+            // Synchronize preferences
+            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+            
+            do {
+                try await diskImageService.ejectDiskImage(for: container, force: true)
+            } catch {
+                failedCount += 1
+                NSLog("Failed to unmount container for \(app.bundleIdentifier): \(error)")
+            }
+        }
+        
+        // Step 3: Unmount PlayCover's own container
+        let playCoverContainer = playCoverPaths.containerRootURL
+        let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
+        
+        if isMounted {
+            do {
+                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
+                NSLog("Successfully unmounted PlayCover container")
+            } catch {
+                failedCount += 1
+                NSLog("Failed to unmount PlayCover container: \(error)")
+            }
+        }
+        
+        return (success: failedCount == 0, failedCount: failedCount, runningApps: runningApps)
+    }
 }

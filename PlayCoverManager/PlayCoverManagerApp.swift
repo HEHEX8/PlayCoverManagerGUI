@@ -171,6 +171,7 @@ private struct UnsupportedOSView: View {
 // MARK: - App Delegate
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppViewModel?
+    private var forceTerminateTimer: Timer?
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
@@ -181,15 +182,82 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return .terminateNow
         }
         
+        // Set up 5-second timeout for force termination
+        forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+            self?.showForceTerminateDialog()
+        }
+        
         // Start async unmount and return later
         Task { @MainActor in
-            // Unmount PlayCover's own disk image
-            await viewModel.unmountPlayCoverContainer()
+            // Try to unmount all containers
+            let result = await viewModel.unmountAllContainersForTermination()
             
-            // Now terminate
-            NSApplication.shared.reply(toApplicationShouldTerminate: true)
+            // Cancel timeout timer
+            self.forceTerminateTimer?.invalidate()
+            self.forceTerminateTimer = nil
+            
+            if result.success {
+                // All unmounted successfully
+                NSApplication.shared.reply(toApplicationShouldTerminate: true)
+            } else {
+                // Some failed - show dialog
+                await self.showUnmountFailureDialog(failedCount: result.failedCount, runningApps: result.runningApps)
+            }
         }
         
         return .terminateLater
+    }
+    
+    @MainActor
+    private func showForceTerminateDialog() {
+        let alert = NSAlert()
+        alert.messageText = "アンマウント処理がタイムアウトしました"
+        alert.informativeText = "ディスクイメージのアンマウントに時間がかかっています。\n\n強制終了しますか？（データが失われる可能性があります）"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "待機")
+        alert.addButton(withTitle: "強制終了")
+        
+        let response = alert.runModal()
+        if response == .alertSecondButtonReturn {
+            // Force terminate
+            exit(0)
+        } else {
+            // Continue waiting - extend timer
+            forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+                self?.showForceTerminateDialog()
+            }
+        }
+    }
+    
+    @MainActor
+    private func showUnmountFailureDialog(failedCount: Int, runningApps: [String]) async {
+        let alert = NSAlert()
+        alert.messageText = "一部のディスクイメージをアンマウントできません"
+        
+        var message = "\(failedCount) 個のディスクイメージをアンマウントできませんでした。\n\n"
+        
+        if !runningApps.isEmpty {
+            message += "実行中のアプリ:\n"
+            for appID in runningApps {
+                message += "• \(appID)\n"
+            }
+            message += "\nアプリを終了してから再度お試しください。"
+        } else {
+            message += "一部のディスクイメージが使用中です。"
+        }
+        
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "キャンセル")
+        alert.addButton(withTitle: "強制終了")
+        
+        let response = alert.runModal()
+        if response == .alertSecondButtonReturn {
+            // Force terminate without unmounting
+            NSApplication.shared.reply(toApplicationShouldTerminate: true)
+        } else {
+            // Cancel termination
+            NSApplication.shared.reply(toApplicationShouldTerminate: false)
+        }
     }
 }
