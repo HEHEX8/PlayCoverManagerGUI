@@ -523,52 +523,37 @@ final class LauncherViewModel {
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         
-        // DEBUG: To view these logs, open Console.app and filter by "[DEBUG]"
-        // or run: log stream --predicate 'eventMessage CONTAINS "[DEBUG]"' --level debug
-        NSLog("[DEBUG] Attempting to unmount container for: \(bundleID)")
+        NSLog("[UNMOUNT] Attempting to unmount container for: \(bundleID)")
         
-        // Check what processes are using the volume before unmounting
-        if let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL),
-           descriptor.isMounted {
-            NSLog("[DEBUG] Container is mounted at: \(containerURL.path)")
-            
-            // Use lsof to check what's using the volume
-            let lsofOutput = try? ProcessRunner().runSync("/usr/sbin/lsof", ["+D", containerURL.path])
-            if let output = lsofOutput, !output.isEmpty {
-                let lines = output.split(separator: "\n")
-                NSLog("[DEBUG] Processes using volume (\(lines.count - 1) processes):")
-                for (index, line) in lines.enumerated() {
-                    if index == 0 { continue } // Skip header
-                    NSLog("[DEBUG]   \(line)")
-                }
-            } else {
-                NSLog("[DEBUG] No processes found using the volume")
-            }
-        } else {
-            NSLog("[DEBUG] Container is not mounted")
+        // Check if mounted
+        let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
+        guard let descriptor = descriptor, descriptor.isMounted else {
+            NSLog("[UNMOUNT] Container not mounted, nothing to do")
             return
         }
         
-        // Release our lock first
+        NSLog("[UNMOUNT] Container is mounted, proceeding with unmount")
+        
+        // Synchronize preferences to ensure settings are saved
+        CFPreferencesAppSynchronize(bundleID as CFString)
+        
+        // Release our lock
         await lockService.unlockContainer(for: bundleID)
-        NSLog("[DEBUG] Released our lock for \(bundleID)")
         
-        // Use 2-stage unmount with app termination:
-        // 1. Try normal eject
-        // 2. If fails, terminate app normally (SIGTERM) and retry
-        // 3. If still fails, force terminate app (SIGKILL) and force eject
-        let result = await DiskImageHelper.unmountWithTwoStageEject(
-            containerURL: containerURL,
-            diskImageService: diskImageService,
-            bundleID: bundleID,
-            launcherService: launcherService
-        )
+        // Check if another process has a lock
+        let canLock = await lockService.canLockContainer(for: bundleID, at: containerURL)
+        if !canLock {
+            NSLog("[UNMOUNT] Another process has a lock, skipping unmount")
+            return
+        }
         
-        switch result {
-        case .success:
-            NSLog("[DEBUG] Successfully unmounted container for: \(bundleID)")
-        case .failed(let error):
-            NSLog("[DEBUG] Failed to unmount container for \(bundleID): \(error)")
+        // Try unmount with force flag to handle cfprefsd and other system daemons
+        // This is safe after app termination since CFPreferencesAppSynchronize ensures data is written
+        do {
+            try await diskImageService.ejectDiskImage(for: containerURL, force: true)
+            NSLog("[UNMOUNT] Successfully unmounted container for: \(bundleID)")
+        } catch {
+            NSLog("[UNMOUNT] Failed to unmount container for \(bundleID): \(error)")
         }
     }
 
