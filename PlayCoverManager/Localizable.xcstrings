@@ -2347,7 +2347,16 @@
         }
       }
     },
-    "PlayCover Manager は PlayCover を補完するアプリです。\n\nディスクイメージの管理と IPA インストールを簡単にします。": {},
+    "PlayCover Manager は PlayCover を補完するアプリです。\n\nディスクイメージの管理と IPA インストールを簡単にします。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Manager is a companion app for PlayCover.\n\nIt simplifies disk image management and IPA installation."
+          }
+        }
+      }
+    },
     "PlayCover Manager は PlayCover を補完するアプリです。\\n\\nディスクイメージの管理と IPA インストールを簡単にします。": {
       "extractionState": "manual",
       "localizations": {
@@ -6666,7 +6675,16 @@
         }
       }
     },
-    "すべてのディスクイメージをアンマウントし、アプリを終了します。\n\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。": {},
+    "すべてのディスクイメージをアンマウントし、アプリを終了します。\n\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unmount all disk images and exit the app.\n\nFor external drives, make sure you can safely remove the entire drive."
+          }
+        }
+      }
+    },
     "すべてのディスクイメージをアンマウントし、アプリを終了します。\\n\\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。": {
       "extractionState": "manual",
       "localizations": {
@@ -6956,7 +6974,16 @@
         }
       }
     },
-    "データの保存先が外部ドライブまたはネットワークドライブ（%@）にあります。\n\nドライブをイジェクトしますか？": {},
+    "データの保存先が外部ドライブまたはネットワークドライブ（%@）にあります。\n\nドライブをイジェクトしますか？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The data storage location is on an external or network drive (%@).\n\nWould you like to eject the drive?"
+          }
+        }
+      }
+    },
     "データ処理": {
       "extractionState": "manual",
       "localizations": {
@@ -7130,7 +7157,16 @@
         }
       }
     },
-    "ディスクイメージのアンマウントに時間がかかっています。\n\n強制終了しますか？（データが失われる可能性があります）": {},
+    "ディスクイメージのアンマウントに時間がかかっています。\n\n強制終了しますか？（データが失われる可能性があります）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unmounting disk images is taking a long time.\n\nForce quit? (Data may be lost)"
+          }
+        }
+      }
+    },
     "ディスクイメージのアンマウントに時間がかかっています。\\n\\n強制終了しますか？（データが失われる可能性があります）": {
       "extractionState": "manual",
       "localizations": {
@@ -7292,7 +7328,16 @@
         }
       }
     },
-    "ディスクイメージは大容量になる場合があります。\n十分な空き容量のあるドライブを選択してください。": {},
+    "ディスクイメージは大容量になる場合があります。\n十分な空き容量のあるドライブを選択してください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disk images can become very large.\nPlease select a drive with sufficient free space."
+          }
+        }
+      }
+    },
     "ディスクイメージは大容量になる場合があります。\\n十分な空き容量のあるドライブを選択してください。": {
       "extractionState": "manual",
       "localizations": {
@@ -7661,7 +7706,16 @@
         }
       }
     },
-    "ドライブが接続されていないか、パスが無効です。\n別の保存先を選択してください。": {},
+    "ドライブが接続されていないか、パスが無効です。\n別の保存先を選択してください。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The drive is not connected or the path is invalid.\nPlease select a different storage location."
+          }
+        }
+      }
+    },
     "ドライブが接続されていないか、パスが無効です。\\n別の保存先を選択してください。": {
       "extractionState": "manual",
       "localizations": {
