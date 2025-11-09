@@ -22,7 +22,6 @@ struct QuickLauncherView: View {
     @State private var showingUninstaller = false  // For general uninstall (from drawer)
     @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
-    @State private var refreshRotation: Double = 0  // For refresh button rotation animation
     @State private var focusedAppIndex: Int?  // For keyboard navigation
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     @State private var eventMonitor: Any?  // For monitoring keyboard events
@@ -209,23 +208,6 @@ struct QuickLauncherView: View {
                     
                     Spacer()
                     
-                    // Refresh button - modern style with engine rev animation 🏎️
-                    ModernToolbarButton(
-                        icon: "arrow.clockwise",
-                        color: .primary,
-                        help: "アプリ一覧を更新 (⌘R)",
-                        rotation: refreshRotation
-                    ) {
-                        // Trigger sharp rotation animation - snappy engine rev! 🏎️
-                        // Higher stiffness = sharper acceleration (more responsive)
-                        // Lower damping = more aggressive snap with slight overshoot
-                        withAnimation(.interpolatingSpring(stiffness: 120, damping: 12)) {
-                            refreshRotation += 360  // Single sharp rotation
-                        }
-                        Task { await viewModel.refresh() }
-                    }
-                    .keyboardShortcut("r", modifiers: [.command])
-                    
                     // Unmount button - modern style
                     ModernToolbarButton(
                         icon: "eject.fill",
@@ -246,9 +228,7 @@ struct QuickLauncherView: View {
                 VStack(spacing: 0) {
                     // Main app grid
                     if viewModel.filteredApps.isEmpty {
-                        EmptyAppListView(searchText: viewModel.searchText) {
-                            Task { await viewModel.refresh() }
-                        }
+                        EmptyAppListView(searchText: viewModel.searchText)
                     } else {
                         ScrollView {
                             LazyVGrid(columns: gridColumns, spacing: 32) {
@@ -325,9 +305,7 @@ struct QuickLauncherView: View {
             } else {
                 // No recent app - show regular grid
                 if viewModel.filteredApps.isEmpty {
-                    EmptyAppListView(searchText: viewModel.searchText) {
-                        Task { await viewModel.refresh() }
-                    }
+                    EmptyAppListView(searchText: viewModel.searchText)
                 } else {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 32) {
@@ -551,13 +529,6 @@ struct QuickLauncherView: View {
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
             isDrawerOpen.toggle()
         }
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshApps"))) { _ in
-        // Trigger sharp rotation animation
-        withAnimation(.interpolatingSpring(stiffness: 120, damping: 12)) {
-            refreshRotation += 360
-        }
-        Task { await viewModel.refresh() }
     }
     .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UnmountAll"))) { _ in
         viewModel.unmountAll(applyToPlayCoverContainer: true)
@@ -1197,7 +1168,6 @@ private struct AppIconView: View {
 
 private struct EmptyAppListView: View {
     let searchText: String
-    let refreshAction: () -> Void
     @State private var showingInstaller = false
     
     // Check if this is a search result empty state or truly no apps
@@ -1259,29 +1229,16 @@ private struct EmptyAppListView: View {
                 
                 // Action buttons (only for non-search empty state)
                 if !isSearchEmpty {
-                    VStack(spacing: 16) {
-                        Button {
-                            showingInstaller = true
-                        } label: {
-                            Label("IPA をインストール", systemImage: "square.and.arrow.down")
-                                .font(.system(size: 16, weight: .semibold))
-                                .frame(minWidth: 200)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        .keyboardShortcut(.defaultAction)
-                        
-                        Button {
-                            refreshAction()
-                        } label: {
-                            Label("再読み込み", systemImage: "arrow.clockwise")
-                                .font(.system(size: 15, weight: .medium))
-                                .frame(minWidth: 200)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
-                        .keyboardShortcut("r", modifiers: [.command])
+                    Button {
+                        showingInstaller = true
+                    } label: {
+                        Label("IPA をインストール", systemImage: "square.and.arrow.down")
+                            .font(.system(size: 16, weight: .semibold))
+                            .frame(minWidth: 200)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
                 }
             }
             .frame(maxWidth: 600)
@@ -2985,7 +2942,7 @@ actor AppAnalyzer {
         let binaryInfo = await getBinaryInfo(appURL: appURL)
         
         // Convert file types
-        let fileTypes = fileTypeMap.map { ext, info in
+        let fileTypes = Array(fileTypeMap).map { ext, info in
             FileTypeInfo(
                 fileExtension: ext,
                 count: info.count,

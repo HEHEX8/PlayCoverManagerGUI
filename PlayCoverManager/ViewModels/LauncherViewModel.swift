@@ -61,8 +61,8 @@ final class LauncherViewModel {
     private var previouslyRunningApps: Set<String> = []
     
     // KVO observation for runningApplications (more efficient than notifications)
-    // nonisolated(unsafe) allows access from deinit
-    nonisolated(unsafe) private var runningAppsObservation: NSKeyValueObservation?
+    // nonisolated allows access from deinit (NSKeyValueObservation is thread-safe)
+    nonisolated private var runningAppsObservation: NSKeyValueObservation?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -113,33 +113,33 @@ final class LauncherViewModel {
         runningAppsObservation = workspace.observe(\.runningApplications, options: [.old, .new]) { [weak self] workspace, change in
             guard let self = self else { return }
             
-            // Get current running apps (filter to our managed apps only)
-            let currentRunning = Set(
-                workspace.runningApplications
-                    .compactMap { $0.bundleIdentifier }
-                    .filter { bundleID in self.apps.contains(where: { $0.bundleIdentifier == bundleID }) }
-            )
-            
-            // Detect newly launched apps
-            let launched = currentRunning.subtracting(self.previouslyRunningApps)
-            for bundleID in launched {
-                NSLog("[LIFECYCLE] KVO detected launch: \(bundleID)")
-                Task { @MainActor in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
+                // Get current running apps (filter to our managed apps only)
+                let currentRunning = Set(
+                    workspace.runningApplications
+                        .compactMap { $0.bundleIdentifier }
+                        .filter { bundleID in self.apps.contains(where: { $0.bundleIdentifier == bundleID }) }
+                )
+                
+                // Detect newly launched apps
+                let launched = currentRunning.subtracting(self.previouslyRunningApps)
+                for bundleID in launched {
+                    NSLog("[LIFECYCLE] KVO detected launch: \(bundleID)")
                     await self.handleAppLaunched(bundleID: bundleID)
                 }
-            }
-            
-            // Detect terminated apps
-            let terminated = self.previouslyRunningApps.subtracting(currentRunning)
-            for bundleID in terminated {
-                NSLog("[LIFECYCLE] KVO detected termination: \(bundleID)")
-                Task { @MainActor in
+                
+                // Detect terminated apps
+                let terminated = self.previouslyRunningApps.subtracting(currentRunning)
+                for bundleID in terminated {
+                    NSLog("[LIFECYCLE] KVO detected termination: \(bundleID)")
                     await self.handleAppTerminated(bundleID: bundleID)
                 }
+                
+                // Update tracking set
+                self.previouslyRunningApps = currentRunning
             }
-            
-            // Update tracking set
-            self.previouslyRunningApps = currentRunning
         }
     }
     

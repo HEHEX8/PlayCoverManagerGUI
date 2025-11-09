@@ -182,13 +182,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Set up 5-second timeout for force termination
         forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.handleTimeout()
             }
         }
         
         // Start async unmount and return later
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self = self else { return }
             viewModel.terminationFlowState = .unmounting(status: "ディスクイメージをアンマウントしています…")
             
             // Try to unmount all containers
@@ -221,7 +222,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func extendTimeout() {
         forceTerminateTimer?.invalidate()
         forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.handleTimeout()
             }
         }
