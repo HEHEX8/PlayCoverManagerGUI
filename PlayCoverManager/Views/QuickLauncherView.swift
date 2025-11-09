@@ -1766,22 +1766,30 @@ private struct OverviewView: View {
                             VStack(spacing: 8) {
                                 StorageRow(label: "アプリ本体", size: storage.appSize, color: .blue)
                                 StorageRow(
-                                    label: storage.isMounted ? "コンテナ (マウント中)" : "コンテナ",
+                                    label: storage.isMounted ? "ディスクイメージ (マウント中)" : "ディスクイメージ",
                                     size: storage.containerSize,
                                     color: .orange
                                 )
                                 if let internalSize = storage.internalDataSize {
-                                    StorageRow(label: "  └ 内部使用容量", size: internalSize, color: .gray)
-                                        .font(.caption)
+                                    Divider()
+                                    StorageRow(label: "内部データ使用量 (参考)", size: internalSize, color: .gray)
+                                        .opacity(0.7)
                                 }
                             }
                             .padding(12)
                             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                             .cornerRadius(8)
                             
-                            Text("※ 合計 = アプリ本体 + ディスクイメージ")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("※ 合計 = アプリ本体 + ディスクイメージファイル")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                if storage.internalDataSize != nil {
+                                    Text("※ 内部データ使用量は合計に含まれません")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                         }
                     }
                     
@@ -2345,17 +2353,13 @@ private struct InfoView: View {
                             Divider()
                                 .padding(.vertical, 4)
                             
-                            // Container (disk image)
+                            // Disk image
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("コンテナ (ディスクイメージ)")
+                                Text("ディスクイメージ")
                                     .font(.caption)
                                     .fontWeight(.medium)
                                 infoRow(label: "所在地", value: storageInfo.containerPath)
-                                infoRow(label: "イメージ容量", value: storageInfo.containerSize)
-                                if let internalSize = storageInfo.internalDataSize {
-                                    infoRow(label: "内部使用容量", value: internalSize)
-                                        .foregroundStyle(.secondary)
-                                }
+                                infoRow(label: "ファイルサイズ", value: storageInfo.containerSize)
                                 infoRow(label: "マウント状態", value: storageInfo.isMounted ? "マウント中" : "アンマウント中")
                                 Button("Finder で表示") {
                                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: storageInfo.containerPath)])
@@ -2364,23 +2368,44 @@ private struct InfoView: View {
                                 .controlSize(.small)
                             }
                             
+                            // Internal data usage (reference only, when unmounted)
+                            if let internalSize = storageInfo.internalDataSize {
+                                Divider()
+                                    .padding(.vertical, 4)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("内部データ (参考情報)")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.secondary)
+                                    infoRow(label: "使用量", value: internalSize)
+                                        .foregroundStyle(.secondary)
+                                    Text("※ イメージ内のデータ使用量（合計に含まれません）")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                        .padding(.top, 2)
+                                }
+                            }
+                            
                             Divider()
                                 .padding(.vertical, 4)
                             
                             // Total
-                            HStack {
-                                Text("合計使用容量:")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                Spacer()
-                                Text(storageInfo.totalSize)
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.blue)
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    Text("合計使用容量:")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                    Spacer()
+                                    Text(storageInfo.totalSize)
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.blue)
+                                }
+                                Text("※ アプリ本体 + ディスクイメージファイル")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
                             }
-                            Text("※ アプリ本体 + ディスクイメージ")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
                         }
                     }
                 }
