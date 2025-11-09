@@ -9,7 +9,7 @@ enum Logger {
     // MARK: - Logging Methods
     
     /// Log lifecycle-related events (app launch, termination, etc.)
-    static func lifecycle(_ message: String) {
+    nonisolated static func lifecycle(_ message: String) {
         #if DEBUG
         let log = OSLog(subsystem: subsystem, category: "Lifecycle")
         os_log("%{public}@", log: log, type: .info, message)
@@ -17,7 +17,7 @@ enum Logger {
     }
     
     /// Log unmount-related events
-    static func unmount(_ message: String) {
+    nonisolated static func unmount(_ message: String) {
         #if DEBUG
         let log = OSLog(subsystem: subsystem, category: "Unmount")
         os_log("%{public}@", log: log, type: .info, message)
@@ -25,7 +25,7 @@ enum Logger {
     }
     
     /// Log disk image operations
-    static func diskImage(_ message: String) {
+    nonisolated static func diskImage(_ message: String) {
         #if DEBUG
         let log = OSLog(subsystem: subsystem, category: "DiskImage")
         os_log("%{public}@", log: log, type: .debug, message)
@@ -33,7 +33,7 @@ enum Logger {
     }
     
     /// Log installation/uninstallation operations
-    static func installation(_ message: String) {
+    nonisolated static func installation(_ message: String) {
         #if DEBUG
         let log = OSLog(subsystem: subsystem, category: "Installation")
         os_log("%{public}@", log: log, type: .info, message)
@@ -41,7 +41,7 @@ enum Logger {
     }
     
     /// Log performance metrics
-    static func performance(_ message: String) {
+    nonisolated static func performance(_ message: String) {
         #if DEBUG
         let log = OSLog(subsystem: subsystem, category: "Performance")
         os_log("%{public}@", log: log, type: .debug, message)
@@ -49,7 +49,7 @@ enum Logger {
     }
     
     /// Log general debug information
-    static func debug(_ message: String) {
+    nonisolated static func debug(_ message: String) {
         #if DEBUG
         let log = OSLog(subsystem: subsystem, category: "General")
         os_log("%{public}@", log: log, type: .debug, message)
@@ -57,13 +57,13 @@ enum Logger {
     }
     
     /// Log errors (always logged, even in release builds)
-    static func error(_ message: String) {
+    nonisolated static func error(_ message: String) {
         let log = OSLog(subsystem: subsystem, category: "General")
         os_log("%{public}@", log: log, type: .error, message)
     }
     
     /// Log warnings (always logged, even in release builds)
-    static func warning(_ message: String) {
+    nonisolated static func warning(_ message: String) {
         let log = OSLog(subsystem: subsystem, category: "General")
         os_log("%{public}@", log: log, type: .fault, message)
     }
@@ -71,7 +71,7 @@ enum Logger {
     // MARK: - Performance Measurement
     
     /// Measure execution time of a block and log the result
-    static func measure<T>(_ label: String, _ block: () throws -> T) rethrows -> T {
+    nonisolated static func measure<T>(_ label: String, _ block: () throws -> T) rethrows -> T {
         #if DEBUG
         let startTime = CFAbsoluteTimeGetCurrent()
         defer {
@@ -83,7 +83,7 @@ enum Logger {
     }
     
     /// Measure execution time of an async block and log the result
-    static func measureAsync<T>(_ label: String, _ block: () async throws -> T) async rethrows -> T {
+    nonisolated static func measureAsync<T>(_ label: String, _ block: () async throws -> T) async rethrows -> T {
         #if DEBUG
         let startTime = CFAbsoluteTimeGetCurrent()
         defer {
