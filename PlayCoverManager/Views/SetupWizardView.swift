@@ -150,7 +150,7 @@ struct SetupWizardView: View {
         case .finished:
             return "完了"
         case .prepareDiskImage:
-            return viewModel.isBusy ? "処理中…" : "実行"
+            return viewModel.isBusy ? "処理中(和点)" : "実行"
         default:
             return "次へ"
         }

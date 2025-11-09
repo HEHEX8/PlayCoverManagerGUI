@@ -99,7 +99,7 @@ struct PlayCoverManagerApp: App {
             
             // Settings menu
             CommandGroup(replacing: .appSettings) {
-                Button("設定...") {
+                Button("設定(メニュー)") {
                     NotificationCenter.default.post(name: NSNotification.Name("ShowSettings"), object: nil)
                 }
                 .keyboardShortcut(",", modifiers: [.command])

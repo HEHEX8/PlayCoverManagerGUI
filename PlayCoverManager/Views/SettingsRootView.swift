@@ -466,7 +466,7 @@ struct IPAInstallerSheet: View {
                 // Details
                 VStack(spacing: 8) {
                     HStack {
-                        Text("バージョン:")
+                        Text("バージョン(ラベル)")
                             .foregroundStyle(.secondary)
                         Spacer()
                         if let existing = info.existingVersion {
@@ -478,7 +478,7 @@ struct IPAInstallerSheet: View {
                         }
                     }
                     HStack {
-                        Text("ファイルサイズ:")
+                        Text("ファイルサイズ(ラベル)")
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
@@ -1154,7 +1154,7 @@ struct AppUninstallerSheet: View {
                         Text(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))
                     }
                     HStack {
-                        Text("ディスクイメージ:")
+                        Text("ディスクイメージ(ラベル)")
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text(ByteCountFormatter.string(fromByteCount: app.diskImageSize, countStyle: .file))
@@ -1234,7 +1234,7 @@ struct AppUninstallerSheet: View {
                         Text(ByteCountFormatter.string(fromByteCount: totalAppSize, countStyle: .file))
                     }
                     HStack {
-                        Text("ディスクイメージ:")
+                        Text("ディスクイメージ(ラベル)")
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text(ByteCountFormatter.string(fromByteCount: totalDiskImageSize, countStyle: .file))
@@ -1927,6 +1927,11 @@ private struct LinkButton: View {
         }
         .buttonStyle(.plain)
     }
+}
+
+
+
+   }
 }
 
 

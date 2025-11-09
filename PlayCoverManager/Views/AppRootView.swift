@@ -325,7 +325,7 @@ struct TerminationFlowView: View {
                                     .foregroundStyle(.secondary)
                             }
                             
-                            Text("アプリを終了してから再度お試しください。")
+                            Text("アプリを終了してから再度お試しください(句点付き)")
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 8)

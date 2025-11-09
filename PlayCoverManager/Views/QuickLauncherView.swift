@@ -2898,14 +2898,17 @@ actor AppAnalyzer {
         let fileManager = FileManager.default
         
         // Enumerate all files with streaming (memory efficient)
-        // Note: Convert enumerator to array to work with Swift 6 concurrency
+        // Note: Collect enumerator objects to array synchronously for Swift 6 compatibility
         if let enumerator = fileManager.enumerator(
             at: appURL,
             includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
             options: [.skipsHiddenFiles]
         ) {
-            // Convert enumerator contents to array for async context compatibility
-            let allObjects = enumerator.allObjects
+            // Convert enumerator contents to array in a synchronous way for async context compatibility
+            var allObjects: [Any] = []
+            for obj in enumerator {
+                allObjects.append(obj)
+            }
             
             // Process all files
             for case let fileURL as URL in allObjects {
