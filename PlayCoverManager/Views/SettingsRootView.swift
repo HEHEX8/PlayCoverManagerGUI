@@ -1858,9 +1858,9 @@ private struct AboutView: View {
                     Divider()
                     
                     VStack(spacing: 8) {
-                        LinkButton(icon: "link", text: "GitHub リポジトリ", url: "https://github.com/HEHEX8/PlayCoverManagerGUI")
-                        LinkButton(icon: "exclamationmark.bubble", text: "問題を報告", url: "https://github.com/HEHEX8/PlayCoverManagerGUI/issues")
-                        LinkButton(icon: "gamecontroller", text: "PlayCover プロジェクト", url: "https://github.com/PlayCover/PlayCover")
+                        LinkButton(icon: "link", text: String(localized: "GitHub リポジトリ"), url: "https://github.com/HEHEX8/PlayCoverManagerGUI")
+                        LinkButton(icon: "exclamationmark.bubble", text: String(localized: "問題を報告"), url: "https://github.com/HEHEX8/PlayCoverManagerGUI/issues")
+                        LinkButton(icon: "gamecontroller", text: String(localized: "PlayCover プロジェクト"), url: "https://github.com/PlayCover/PlayCover")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

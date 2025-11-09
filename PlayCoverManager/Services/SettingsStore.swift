@@ -34,15 +34,15 @@ final class SettingsStore {
         var localizedDescription: String {
             switch self {
             case .system:
-                return "システム設定に従う"
+                return String(localized: "システム設定に従う")
             case .japanese:
-                return "日本語"
+                return String(localized: "日本語")
             case .english:
                 return "English"
             case .chinese:
-                return "简体中文"
+                return String(localized: "简体中文")
             case .chineseTraditional:
-                return "繁體中文"
+                return String(localized: "繁體中文")
             case .korean:
                 return "한국어"
             case .french:
@@ -107,11 +107,11 @@ final class SettingsStore {
         var localizedDescription: String {
             switch self {
             case .discard:
-                return "内部データを破棄してからマウント"
+                return String(localized: "内部データを破棄してからマウント")
             case .mergeThenDelete:
-                return "内部データを統合してから削除しマウント"
+                return String(localized: "内部データを統合してから削除しマウント")
             case .leave:
-                return "何もせずにマウント"
+                return String(localized: "何もせずにマウント")
             }
         }
 

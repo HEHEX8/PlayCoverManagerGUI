@@ -64,7 +64,7 @@ struct PlayCoverManagerApp: App {
                 }
                 .keyboardShortcut("i", modifiers: [.command])
                 
-                Button("アプリをアンインストール") {
+                Button(String(localized: "アプリをアンインストール")) {
                     NotificationCenter.default.post(name: NSNotification.Name("ShowUninstaller"), object: nil)
                 }
                 .keyboardShortcut("d", modifiers: [.command])

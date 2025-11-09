@@ -3191,8 +3191,8 @@ private struct DrawerPanel: View {
                             .foregroundStyle(.red)
                             .frame(width: 32, height: 32)
                     ),
-                    title: "アプリをアンインストール",
-                    help: "アプリをアンインストール (⌘D)"
+                    title: String(localized: "アプリをアンインストール"),
+                    help: String(localized: "アプリをアンインストール (⌘D)")
                 ) {
                     showingUninstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
