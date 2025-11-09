@@ -605,14 +605,15 @@ struct IPAInstallerSheet: View {
                         .multilineTextAlignment(.center)
                 }
                 
-                // Overall progress bar
+                // Overall progress bar (indeterminate animation)
                 if let service = installerService {
                     let totalItems = analyzedIPAs.count
                     let completed = service.installedApps.count + service.failedApps.count
-                    let progressValue = totalItems > 0 ? Double(completed) / Double(totalItems) : 0
                     
                     VStack(spacing: 8) {
-                        ProgressView(value: progressValue)
+                        // Indeterminate progress bar (animated)
+                        ProgressView()
+                            .progressViewStyle(.linear)
                             .frame(width: 400)
                         
                         Text("\(completed) / \(totalItems) 完了")

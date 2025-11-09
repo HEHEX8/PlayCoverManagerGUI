@@ -28,6 +28,8 @@ class IPAInstallerService {
     var installedApps: [String] = []
     var installedAppDetails: [InstalledAppDetail] = []  // Detailed info for results screen
     var failedApps: [String] = []
+    var retryCount: Int = 0  // Current retry attempt
+    var maxRetries: Int = 3  // Maximum number of retries for PlayCover crashes
     
     // Result detail for installed apps (with icon from .app bundle)
     struct InstalledAppDetail: Identifiable {
@@ -351,20 +353,39 @@ class IPAInstallerService {
             currentStatus = String(localized: "PlayCover でインストール中")
         }
         
-        // Open IPA with PlayCover
-        let openTask = Process()
-        openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        openTask.arguments = ["-a", "PlayCover", ipaURL.path]
-        
-        try openTask.run()
-        openTask.waitUntilExit()
-        
-        guard openTask.terminationStatus == 0 else {
-            throw AppError.installation(String(localized: "PlayCover の起動に失敗しました"), message: "")
+        // Retry loop for PlayCover crashes
+        var shouldRetry = true
+        while shouldRetry {
+            // Open IPA with PlayCover
+            let openTask = Process()
+            openTask.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+            openTask.arguments = ["-a", "PlayCover", ipaURL.path]
+            
+            try openTask.run()
+            openTask.waitUntilExit()
+            
+            guard openTask.terminationStatus == 0 else {
+                throw AppError.installation(String(localized: "PlayCover の起動に失敗しました"), message: "")
+            }
+            
+            // Monitor installation progress
+            do {
+                try await monitorInstallationProgress(bundleID: info.bundleID, appName: info.appName)
+                shouldRetry = false  // Success - exit retry loop
+            } catch let error as AppError {
+                if error.category == .installationRetry {
+                    // Automatic retry triggered by crash detection
+                    shouldRetry = true
+                    continue
+                } else {
+                    // Other errors - propagate
+                    throw error
+                }
+            } catch {
+                // Unknown errors - propagate
+                throw error
+            }
         }
-        
-        // Monitor installation progress
-        try await monitorInstallationProgress(bundleID: info.bundleID, appName: info.appName)
     }
     
     // MARK: - Installation Progress Monitoring
@@ -420,10 +441,34 @@ class IPAInstallerService {
                 try await Task.sleep(nanoseconds: 1_000_000_000)
                 
                 if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { currentStatus = String(localized: "完了（PlayCover終了後）") }
+                    await MainActor.run { 
+                        currentStatus = String(localized: "完了（PlayCover終了後）")
+                        retryCount = 0  // Reset retry count on success
+                    }
                     return
                 } else {
-                    throw AppError.installation(String(localized: "PlayCover が終了しました"), message: "インストールが完了していません")
+                    // PlayCover crashed before installation completed - auto retry
+                    let currentRetry = await MainActor.run { retryCount }
+                    let maxRetries = await MainActor.run { self.maxRetries }
+                    
+                    if currentRetry < maxRetries {
+                        await MainActor.run { 
+                            retryCount += 1
+                            currentStatus = String(localized: "PlayCoverがクラッシュしました - 再試行中 (\(retryCount)/\(maxRetries))")
+                        }
+                        
+                        Logger.installation("PlayCover crashed, retrying (\(currentRetry + 1)/\(maxRetries))")
+                        
+                        // Wait a bit before retrying
+                        try await Task.sleep(nanoseconds: 2_000_000_000)
+                        
+                        // Retry by calling installIPAToPlayCover again (recursive call within monitoring)
+                        // This will restart PlayCover and monitoring
+                        throw AppError.installationRetry  // Special error type to trigger retry
+                    } else {
+                        await MainActor.run { retryCount = 0 }  // Reset for next installation
+                        throw AppError.installation(String(localized: "PlayCover が終了しました"), message: "\(maxRetries)回の再試行後もインストールが完了しませんでした")
+                    }
                 }
             }
             
