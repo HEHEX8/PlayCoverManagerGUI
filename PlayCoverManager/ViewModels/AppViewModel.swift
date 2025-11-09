@@ -11,6 +11,15 @@ final class AppViewModel {
     var setupViewModel: SetupWizardViewModel?
     var isBusy: Bool = false
     var progress: Double? = nil
+    
+    // Termination flow state
+    enum TerminationFlowState: Equatable {
+        case idle
+        case unmounting(status: String)
+        case timeout
+        case failed(failedCount: Int, runningApps: [String])
+    }
+    var terminationFlowState: TerminationFlowState = .idle
 
     private let fileManager: FileManager
     private let settings: SettingsStore
@@ -204,6 +213,24 @@ final class AppViewModel {
     func terminateApplication() {
         phase = .terminating
         NSApplication.shared.terminate(nil)
+    }
+    
+    func cancelTermination() {
+        terminationFlowState = .idle
+        NSApplication.shared.reply(toApplicationShouldTerminate: false)
+    }
+    
+    func forceTerminate() {
+        terminationFlowState = .idle
+        NSApplication.shared.reply(toApplicationShouldTerminate: true)
+    }
+    
+    func continueWaiting() {
+        terminationFlowState = .unmounting(status: "アンマウント処理を続行しています…")
+        // Extend timeout by 5 seconds
+        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+            appDelegate.extendTimeout()
+        }
     }
     
     /// Unmount PlayCover's own container when app terminates

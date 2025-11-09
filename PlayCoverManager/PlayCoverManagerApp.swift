@@ -182,11 +182,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Set up 5-second timeout for force termination
         forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
-            self?.showForceTerminateDialog()
+            Task { @MainActor in
+                self?.handleTimeout()
+            }
         }
         
         // Start async unmount and return later
         Task { @MainActor in
+            viewModel.terminationFlowState = .unmounting(status: "ディスクイメージをアンマウントしています…")
+            
             // Try to unmount all containers
             let result = await viewModel.unmountAllContainersForTermination()
             
@@ -196,10 +200,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             if result.success {
                 // All unmounted successfully
+                viewModel.terminationFlowState = .idle
                 NSApplication.shared.reply(toApplicationShouldTerminate: true)
             } else {
-                // Some failed - show dialog
-                await self.showUnmountFailureDialog(failedCount: result.failedCount, runningApps: result.runningApps)
+                // Some failed - show UI
+                viewModel.terminationFlowState = .failed(failedCount: result.failedCount, runningApps: result.runningApps)
             }
         }
         
@@ -207,55 +212,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @MainActor
-    private func showForceTerminateDialog() {
-        let alert = NSAlert()
-        alert.messageText = "アンマウント処理がタイムアウトしました"
-        alert.informativeText = "ディスクイメージのアンマウントに時間がかかっています。\n\n強制終了しますか？（データが失われる可能性があります）"
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "待機")
-        alert.addButton(withTitle: "強制終了")
-        
-        let response = alert.runModal()
-        if response == .alertSecondButtonReturn {
-            // Force terminate
-            exit(0)
-        } else {
-            // Continue waiting - extend timer
-            forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
-                self?.showForceTerminateDialog()
-            }
-        }
+    private func handleTimeout() {
+        guard let viewModel = Self.shared else { return }
+        viewModel.terminationFlowState = .timeout
     }
     
     @MainActor
-    private func showUnmountFailureDialog(failedCount: Int, runningApps: [String]) async {
-        let alert = NSAlert()
-        alert.messageText = "一部のディスクイメージをアンマウントできません"
-        
-        var message = "\(failedCount) 個のディスクイメージをアンマウントできませんでした。\n\n"
-        
-        if !runningApps.isEmpty {
-            message += "実行中のアプリ:\n"
-            for appID in runningApps {
-                message += "• \(appID)\n"
+    func extendTimeout() {
+        forceTerminateTimer?.invalidate()
+        forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+            Task { @MainActor in
+                self?.handleTimeout()
             }
-            message += "\nアプリを終了してから再度お試しください。"
-        } else {
-            message += "一部のディスクイメージが使用中です。"
-        }
-        
-        alert.informativeText = message
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "キャンセル")
-        alert.addButton(withTitle: "強制終了")
-        
-        let response = alert.runModal()
-        if response == .alertSecondButtonReturn {
-            // Force terminate without unmounting
-            NSApplication.shared.reply(toApplicationShouldTerminate: true)
-        } else {
-            // Cancel termination
-            NSApplication.shared.reply(toApplicationShouldTerminate: false)
         }
     }
 }
