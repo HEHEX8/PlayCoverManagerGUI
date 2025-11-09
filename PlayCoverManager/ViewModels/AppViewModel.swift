@@ -222,7 +222,7 @@ final class AppViewModel {
     
     func forceTerminate() {
         terminationFlowState = .idle
-        NSLog("[DEBUG] Force terminating application with exit(0)")
+        Logger.debug("[DEBUG] Force terminating application with exit(0)")
         // Use exit(0) to actually force terminate the app
         // This bypasses any further unmount attempts
         exit(0)
@@ -250,9 +250,9 @@ final class AppViewModel {
         do {
             // Unmount PlayCover's container with force
             try await diskImageService.ejectDiskImage(for: containerURL, force: true)
-            NSLog("Successfully unmounted PlayCover container")
+            Logger.unmount("Successfully unmounted PlayCover container")
         } catch {
-            NSLog("Failed to unmount PlayCover container: \(error)")
+            Logger.error("Failed to unmount PlayCover container: \(error)")
         }
     }
     
@@ -301,10 +301,10 @@ final class AppViewModel {
             
             switch result {
             case .success:
-                NSLog("Successfully unmounted container for \(app.bundleIdentifier)")
+                Logger.unmount("Successfully unmounted container for \(app.bundleIdentifier)")
             case .failed(let error):
                 failedCount += 1
-                NSLog("Failed to unmount container for \(app.bundleIdentifier): \(error)")
+                Logger.error("Failed to unmount container for \(app.bundleIdentifier): \(error)")
             }
         }
         
@@ -322,10 +322,10 @@ final class AppViewModel {
             
             switch result {
             case .success:
-                NSLog("Successfully unmounted PlayCover container")
+                Logger.unmount("Successfully unmounted PlayCover container")
             case .failed(let error):
                 failedCount += 1
-                NSLog("Failed to unmount PlayCover container: \(error)")
+                Logger.error("Failed to unmount PlayCover container: \(error)")
             }
         }
         

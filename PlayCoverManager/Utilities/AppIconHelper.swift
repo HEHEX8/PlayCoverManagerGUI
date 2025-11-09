@@ -30,7 +30,7 @@ enum AppIconHelper {
             let infoPlist = appURL.appendingPathComponent("Info.plist")
             guard FileManager.default.fileExists(atPath: infoPlist.path),
                   let plistData = try? Data(contentsOf: infoPlist),
-                  let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                  let plist = plistData.parsePlist(),
                   let installedBundleID = plist["CFBundleIdentifier"] as? String,
                   installedBundleID == bundleID else {
                 continue

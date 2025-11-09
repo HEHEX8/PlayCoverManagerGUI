@@ -81,7 +81,7 @@ class AppUninstallerService {
             
             do {
                 let plistData = try Data(contentsOf: infoPlist)
-                guard let plist = try PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                guard let plist = plistData.parsePlist(),
                       let bundleID = plist["CFBundleIdentifier"] as? String else {
                     continue
                 }
@@ -99,7 +99,7 @@ class AppUninstallerService {
                     var langLproj = appURL.appendingPathComponent("\(primaryLang).lproj/InfoPlist.strings")
                     if FileManager.default.fileExists(atPath: langLproj.path) {
                         if let stringsData = try? Data(contentsOf: langLproj),
-                           let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                           let stringsDict = stringsData.parsePlist() as? [String: String] {
                             appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
                         }
                     }
@@ -110,7 +110,7 @@ class AppUninstallerService {
                         langLproj = appURL.appendingPathComponent("\(baseLang).lproj/InfoPlist.strings")
                         if FileManager.default.fileExists(atPath: langLproj.path) {
                             if let stringsData = try? Data(contentsOf: langLproj),
-                               let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                               let stringsDict = stringsData.parsePlist() as? [String: String] {
                                 appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
                             }
                         }
@@ -122,7 +122,7 @@ class AppUninstallerService {
                     let enLproj = appURL.appendingPathComponent("en.lproj/InfoPlist.strings")
                     if FileManager.default.fileExists(atPath: enLproj.path) {
                         if let stringsData = try? Data(contentsOf: enLproj),
-                           let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                           let stringsDict = stringsData.parsePlist() as? [String: String] {
                             appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
                         }
                     }
@@ -206,6 +206,7 @@ class AppUninstallerService {
     // MARK: - Uninstallation
     
     nonisolated func uninstallApp(_ app: InstalledAppInfo) async throws {
+        Logger.installation("Starting uninstallation of \(app.appName) (\(app.bundleID))")
         await MainActor.run { 
             currentStatus = "アプリを削除中: \(app.appName)"
         }
@@ -213,8 +214,10 @@ class AppUninstallerService {
         // Check if app is running using NSRunningApplication
         let isRunning = await MainActor.run { launcherService.isAppRunning(bundleID: app.bundleID) }
         if isRunning {
+            Logger.warning("Cannot uninstall running app: \(app.bundleID)")
             throw AppError.installation("アプリが実行中のため、アンインストールできません", message: "アプリを終了してから再度お試しください")
         }
+        Logger.debug("App is not running, proceeding with uninstallation")
         
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = await MainActor.run { PlayCoverPaths.playCoverApplicationsURL(playCoverBundleID: playCoverBundleID) }
@@ -226,7 +229,7 @@ class AppUninstallerService {
             for appURL in appDirs where appURL.pathExtension == "app" {
                 let infoPlist = appURL.appendingPathComponent("Info.plist")
                 if let plistData = try? Data(contentsOf: infoPlist),
-                   let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                   let plist = plistData.parsePlist(),
                    let bundleID = plist["CFBundleIdentifier"] as? String,
                    bundleID == app.bundleID {
                     await MainActor.run { currentStatus = "アプリを削除中..." }

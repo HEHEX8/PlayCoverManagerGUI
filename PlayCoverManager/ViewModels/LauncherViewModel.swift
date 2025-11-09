@@ -99,14 +99,17 @@ final class LauncherViewModel {
     private func setupAppLifecycleMonitoring() {
         let workspace = NSWorkspace.shared
         
+        // Build Set of managed bundle IDs for O(1) lookup (performance optimization)
+        let managedBundleIDs = Set(apps.map { $0.bundleIdentifier })
+        
         // Initialize tracking set with currently running apps
         previouslyRunningApps = Set(
             workspace.runningApplications
                 .compactMap { $0.bundleIdentifier }
-                .filter { bundleID in apps.contains(where: { $0.bundleIdentifier == bundleID }) }
+                .filter { managedBundleIDs.contains($0) }  // O(1) instead of O(n)
         )
         
-        NSLog("[LIFECYCLE] KVO monitoring setup - tracking \(previouslyRunningApps.count) running apps")
+        Logger.lifecycle("KVO monitoring setup - tracking \(previouslyRunningApps.count) running apps")
         
         // Use KVO to observe runningApplications - more efficient than notifications
         // This detects ALL app launches and terminations instantly
@@ -116,24 +119,27 @@ final class LauncherViewModel {
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 
+                // Build Set of managed bundle IDs for O(1) lookup
+                let managedBundleIDs = Set(self.apps.map { $0.bundleIdentifier })
+                
                 // Get current running apps (filter to our managed apps only)
                 let currentRunning = Set(
                     workspace.runningApplications
                         .compactMap { $0.bundleIdentifier }
-                        .filter { bundleID in self.apps.contains(where: { $0.bundleIdentifier == bundleID }) }
+                        .filter { managedBundleIDs.contains($0) }  // O(1) instead of O(n)
                 )
                 
                 // Detect newly launched apps
                 let launched = currentRunning.subtracting(self.previouslyRunningApps)
                 for bundleID in launched {
-                    NSLog("[LIFECYCLE] KVO detected launch: \(bundleID)")
+                    Logger.lifecycle("KVO detected launch: \(bundleID)")
                     await self.handleAppLaunched(bundleID: bundleID)
                 }
                 
                 // Detect terminated apps
                 let terminated = self.previouslyRunningApps.subtracting(currentRunning)
                 for bundleID in terminated {
-                    NSLog("[LIFECYCLE] KVO detected termination: \(bundleID)")
+                    Logger.lifecycle("KVO detected termination: \(bundleID)")
                     await self.handleAppTerminated(bundleID: bundleID)
                 }
                 
@@ -202,11 +208,13 @@ final class LauncherViewModel {
     }
 
     func launch(app: PlayCoverApp) {
+        Logger.lifecycle("Launch requested for: \(app.displayName) (\(app.bundleIdentifier))")
         // Swift 6.2: Task.immediate for instant UI feedback
         Task.immediate { await performLaunch(app: app, resume: false) }
     }
 
     private func performLaunch(app: PlayCoverApp, resume: Bool) async {
+        Logger.lifecycle("Starting launch flow for \(app.bundleIdentifier) (resume: \(resume))")
         isBusy = true
         isShowingStatus = false  // Don't show status overlay for normal launch
         statusMessage = "\(app.displayName) を準備しています…"
@@ -216,15 +224,19 @@ final class LauncherViewModel {
         }
         do {
             let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            Logger.debug("Container URL: \(containerURL.path)")
             
             // Check disk image state
+            Logger.diskImage("Checking disk image state for \(app.bundleIdentifier)")
             let state = try DiskImageHelper.checkDiskImageState(
                 for: app.bundleIdentifier,
                 containerURL: containerURL,
                 diskImageService: diskImageService
             )
+            Logger.diskImage("Disk image exists: \(state.imageExists), mounted: \(state.isMounted)")
             
             guard state.imageExists else {
+                Logger.lifecycle("Disk image not found, requesting creation for \(app.bundleIdentifier)")
                 pendingLaunchContext = LaunchContext(app: app, containerURL: containerURL)
                 pendingImageCreation = app
                 return
@@ -232,8 +244,10 @@ final class LauncherViewModel {
 
             // Check for internal data if not mounted and not resuming
             if !resume && !state.isMounted {
+                Logger.debug("Checking for internal data at \(containerURL.path)")
                 let internalItems = try detectInternalData(at: containerURL)
                 if !internalItems.isEmpty {
+                    Logger.lifecycle("Internal data found (\(internalItems.count) items), requesting user action")
                     pendingLaunchContext = LaunchContext(app: app, containerURL: containerURL)
                     pendingDataHandling = DataHandlingRequest(app: app, existingItems: internalItems)
                     return
@@ -242,19 +256,28 @@ final class LauncherViewModel {
 
             // Mount if needed
             if !state.isMounted {
-                try await DiskImageHelper.mountDiskImageIfNeeded(
-                    for: app.bundleIdentifier,
-                    containerURL: containerURL,
-                    diskImageService: diskImageService,
-                    perAppSettings: perAppSettings,
-                    globalSettings: settings
-                )
+                Logger.diskImage("Mounting disk image for \(app.bundleIdentifier)")
+                try await Logger.measureAsync("Mount disk image") {
+                    try await DiskImageHelper.mountDiskImageIfNeeded(
+                        for: app.bundleIdentifier,
+                        containerURL: containerURL,
+                        diskImageService: diskImageService,
+                        perAppSettings: perAppSettings,
+                        globalSettings: settings
+                    )
+                }
+                Logger.diskImage("Successfully mounted disk image")
+            } else {
+                Logger.diskImage("Disk image already mounted, skipping mount")
             }
 
             // Swift 6.2: Acquire lock on container before launching (actor method)
+            Logger.debug("Acquiring lock for \(app.bundleIdentifier)")
             _ = await lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
             
+            Logger.lifecycle("Launching \(app.displayName)...")
             try await launcherService.openApp(app)
+            Logger.lifecycle("Successfully launched \(app.displayName)")
             pendingLaunchContext = nil
             
             // Refresh after a short delay to allow the app to start
@@ -465,7 +488,8 @@ final class LauncherViewModel {
     /// Workaround for macOS focus loss bug after dismissing overlays/dialogs
     /// Forces the window to regain focus and become key window
     private func restoreWindowFocus() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
             if let window = NSApp.keyWindow ?? NSApp.windows.first {
                 window.makeKey()
                 window.makeFirstResponder(window.contentView)
@@ -483,16 +507,16 @@ final class LauncherViewModel {
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         
-        NSLog("[UNMOUNT] Attempting to unmount container for: \(bundleID)")
+        Logger.unmount("Attempting to unmount container for: \(bundleID)")
         
         // Check if mounted
         let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
         guard let descriptor = descriptor, descriptor.isMounted else {
-            NSLog("[UNMOUNT] Container not mounted, nothing to do")
+            Logger.unmount("Container not mounted, nothing to do")
             return
         }
         
-        NSLog("[UNMOUNT] Container is mounted, proceeding with unmount")
+        Logger.unmount("Container is mounted, proceeding with unmount")
         
         // Synchronize preferences to ensure settings are saved
         CFPreferencesAppSynchronize(bundleID as CFString)
@@ -503,7 +527,7 @@ final class LauncherViewModel {
         // Check if another process has a lock
         let canLock = await lockService.canLockContainer(for: bundleID, at: containerURL)
         if !canLock {
-            NSLog("[UNMOUNT] Another process has a lock, skipping unmount")
+            Logger.unmount("Another process has a lock, skipping unmount")
             return
         }
         
@@ -511,13 +535,14 @@ final class LauncherViewModel {
         // This is safe after app termination since CFPreferencesAppSynchronize ensures data is written
         do {
             try await diskImageService.ejectDiskImage(for: containerURL, force: true)
-            NSLog("[UNMOUNT] Successfully unmounted container for: \(bundleID)")
+            Logger.unmount("Successfully unmounted container for: \(bundleID)")
         } catch {
-            NSLog("[UNMOUNT] Failed to unmount container for \(bundleID): \(error)")
+            Logger.error("Failed to unmount container for \(bundleID): \(error)")
         }
     }
 
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
+        Logger.unmount("Starting unmount all and quit flow (includePlayCover: \(applyToPlayCoverContainer))")
         
         // Set initial processing state
         await MainActor.run {
@@ -533,14 +558,17 @@ final class LauncherViewModel {
         var volumesAfter = 0
         if let storageDir = settings.diskImageDirectory {
             volumesBefore = await diskImageService.countMountedVolumes(under: storageDir)
+            Logger.unmount("Mounted volumes before unmount: \(volumesBefore)")
         }
         
         // Step 1: Unmount all app containers
+        Logger.unmount("Step 1: Unmounting app containers")
         await MainActor.run {
             unmountFlowState = .processing(status: "アプリコンテナをアンマウントしています…")
         }
         
         // Use TaskGroup for parallel unmounting (faster for multiple apps)
+        let unmountStartTime = CFAbsoluteTimeGetCurrent()
         await withTaskGroup(of: (String, Bool).self) { group in
             for app in apps {
                 let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
@@ -576,7 +604,7 @@ final class LauncherViewModel {
             }
             
             // Collect results
-            for await (bundleID, success) in group {
+            for await (_, success) in group {
                 if success {
                     successCount += 1
                 } else {
@@ -584,6 +612,10 @@ final class LauncherViewModel {
                 }
             }
         }
+        
+        let unmountElapsed = CFAbsoluteTimeGetCurrent() - unmountStartTime
+        Logger.performance("Parallel unmount of \(successCount + failedCount) containers: \(String(format: "%.3f", unmountElapsed * 1000))ms")
+        Logger.unmount("Unmount results - Success: \(successCount), Failed: \(failedCount)")
         
         
         // If any app container failed, offer force unmount option

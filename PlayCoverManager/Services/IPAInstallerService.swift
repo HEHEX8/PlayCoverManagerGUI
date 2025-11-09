@@ -143,8 +143,7 @@ class IPAInstallerService {
         }
         
         // Read plist data
-        let plistData = try Data(contentsOf: infoPlistURL)
-        guard let plist = try PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] else {
+        guard let plist = infoPlistURL.readPlist() else {
             throw AppError.installation("Info.plist の読み取りに失敗しました", message: "")
         }
         
@@ -167,7 +166,7 @@ class IPAInstallerService {
         let enLprojURL = appURL.appendingPathComponent("en.lproj/InfoPlist.strings")
         if FileManager.default.fileExists(atPath: enLprojURL.path),
            let stringsData = try? Data(contentsOf: enLprojURL),
-           let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+           let stringsDict = stringsData.parsePlist() as? [String: String] {
             appNameEnglish = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
         }
         
@@ -185,7 +184,7 @@ class IPAInstallerService {
             var langStringsURL = appURL.appendingPathComponent("\(primaryLanguage).lproj/InfoPlist.strings")
             if FileManager.default.fileExists(atPath: langStringsURL.path),
                let stringsData = try? Data(contentsOf: langStringsURL),
-               let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+               let stringsDict = stringsData.parsePlist() as? [String: String] {
                 appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
             }
             
@@ -195,7 +194,7 @@ class IPAInstallerService {
                 langStringsURL = appURL.appendingPathComponent("\(baseLanguageCode).lproj/InfoPlist.strings")
                 if FileManager.default.fileExists(atPath: langStringsURL.path),
                    let stringsData = try? Data(contentsOf: langStringsURL),
-                   let stringsDict = try? PropertyListSerialization.propertyList(from: stringsData, format: nil) as? [String: String] {
+                   let stringsDict = stringsData.parsePlist() as? [String: String] {
                     appName = stringsDict["CFBundleDisplayName"] ?? stringsDict["CFBundleName"] ?? ""
                 }
             }
@@ -239,7 +238,7 @@ class IPAInstallerService {
                 let appInfoPlist = appURL.appendingPathComponent("Info.plist")
                 if FileManager.default.fileExists(atPath: appInfoPlist.path),
                    let appPlistData = try? Data(contentsOf: appInfoPlist),
-                   let appPlist = try? PropertyListSerialization.propertyList(from: appPlistData, format: nil) as? [String: Any],
+                   let appPlist = appPlistData.parsePlist(),
                    let installedBundleID = appPlist["CFBundleIdentifier"] as? String,
                    installedBundleID == bundleID {
                     // Found existing installation
@@ -275,19 +274,23 @@ class IPAInstallerService {
     // MARK: - Volume Creation and Mounting
     
     nonisolated func createAppDiskImage(info: IPAInfo) async throws -> URL {
+        Logger.installation("Creating disk image for \(info.bundleID)")
         await MainActor.run {
             currentStatus = "ディスクイメージ作成中"
         }
         
         guard let diskImageDir = await settingsStore.diskImageDirectory else {
+            Logger.error("Disk image directory not set")
             throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "設定画面から保存先を指定してください。")
         }
         
         let imageName = "\(info.volumeName).asif"
         let imageURL = diskImageDir.appendingPathComponent(imageName)
+        Logger.debug("Disk image path: \(imageURL.path)")
         
         // Check if image already exists
         if FileManager.default.fileExists(atPath: imageURL.path) {
+            Logger.installation("Disk image already exists, reusing")
             await MainActor.run {
                 currentStatus = "既存のディスクイメージを使用"
             }
@@ -295,10 +298,13 @@ class IPAInstallerService {
         }
         
         // Create ASIF disk image (uses default size from settings)
-        try await diskImageService.createDiskImage(
-            at: imageURL,
-            volumeName: info.volumeName
-        )
+        try await Logger.measureAsync("Create disk image for installation") {
+            try await diskImageService.createDiskImage(
+                at: imageURL,
+                volumeName: info.volumeName
+            )
+        }
+        Logger.installation("Successfully created disk image")
         
         await MainActor.run {
             currentStatus = "作成完了"
@@ -430,7 +436,7 @@ class IPAInstallerService {
                 let infoPlist = appURL.appendingPathComponent("Info.plist")
                 guard FileManager.default.fileExists(atPath: infoPlist.path),
                       let plistData = try? Data(contentsOf: infoPlist),
-                      let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                      let plist = plistData.parsePlist(),
                       let installedBundleID = plist["CFBundleIdentifier"] as? String else {
                     continue
                 }
@@ -528,7 +534,7 @@ class IPAInstallerService {
             guard FileManager.default.fileExists(atPath: infoPlist.path) else { continue }
             
             let plistData = try Data(contentsOf: infoPlist)
-            guard let plist = try PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+            guard let plist = plistData.parsePlist(),
                   let installedBundleID = plist["CFBundleIdentifier"] as? String else {
                 continue
             }
@@ -721,7 +727,7 @@ class IPAInstallerService {
             let infoPlist = appURL.appendingPathComponent("Info.plist")
             guard FileManager.default.fileExists(atPath: infoPlist.path),
                   let plistData = try? Data(contentsOf: infoPlist),
-                  let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any],
+                  let plist = plistData.parsePlist(),
                   let installedBundleID = plist["CFBundleIdentifier"] as? String,
                   installedBundleID == bundleID else {
                 continue

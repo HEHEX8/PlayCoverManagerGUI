@@ -49,8 +49,7 @@ final class DiskImageService {
         var volumePath: URL? = nil
         do {
             let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
-            if let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+            if let plist = output.parsePlist(),
                let volumeName = plist["VolumeName"] as? String {
                 // Compare expected volume name with the image file name (without extension)
                 let expected = imageURL.deletingPathExtension().lastPathComponent
@@ -73,17 +72,22 @@ final class DiskImageService {
 
     func ensureDiskImageExists(for bundleIdentifier: String, volumeName: String? = nil, customSizeGB: Int? = nil) async throws -> URL {
         let imageURL = try diskImageURL(for: bundleIdentifier)
+        Logger.diskImage("Checking disk image existence: \(imageURL.path)")
         if fileManager.fileExists(atPath: imageURL.path) {
+            Logger.diskImage("Disk image already exists")
             return imageURL
         }
+        Logger.diskImage("Disk image not found, creating new image")
         
         // Verify parent directory is accessible and writable
         let parentDir = imageURL.deletingLastPathComponent()
+        Logger.debug("Verifying parent directory: \(parentDir.path)")
         
         // Try to create directory - this will fail if we don't have access
         do {
             try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
         } catch let error as NSError {
+            Logger.error("Failed to create parent directory: \(error)")
             if error.domain == NSCocoaErrorDomain && (error.code == NSFileWriteNoPermissionError || error.code == NSFileNoSuchFileError) {
                 throw AppError.permissionDenied(
                     "保存先へのアクセス権限がありません",
@@ -95,10 +99,13 @@ final class DiskImageService {
         
         // Test write permission by creating a temp file
         let testFile = parentDir.appendingPathComponent(".playcover_test_\(UUID().uuidString)")
+        Logger.debug("Testing write permission with temp file")
         do {
             try "test".write(to: testFile, atomically: true, encoding: .utf8)
             try fileManager.removeItem(at: testFile)
+            Logger.debug("Write permission test passed")
         } catch {
+            Logger.error("Write permission test failed: \(error)")
             throw AppError.permissionDenied(
                 "保存先に書き込み権限がありません",
                 message: "ディレクトリは作成できましたが、ファイルの書き込みテストに失敗しました。\n\n対処方法：\n• 設定画面で別の保存先を選択してください\n• 外部ドライブの場合、マウントされているか確認してください\n• ドライブが読み取り専用でないか確認してください\n\nパス: \(parentDir.path)\nエラー: \(error.localizedDescription)"
@@ -117,6 +124,7 @@ final class DiskImageService {
         }
         
         // Create ASIF disk image using diskutil (macOS Tahoe 26.0+ only)
+        Logger.diskImage("Creating ASIF disk image: size=\(imageSize), volume=\(volName)")
         let args = [
             "image", "create", "blank",
             "--format", "ASIF",
@@ -124,13 +132,18 @@ final class DiskImageService {
             "--volumeName", volName,
             imageURL.path
         ]
-        _ = try await processRunner.run("/usr/sbin/diskutil", args)
+        _ = try await Logger.measureAsync("Create disk image") {
+            try await processRunner.run("/usr/sbin/diskutil", args)
+        }
+        Logger.diskImage("Successfully created disk image at \(imageURL.path)")
         return imageURL
     }
 
     func mountDiskImage(for bundleIdentifier: String, at mountPoint: URL, nobrowse: Bool) async throws {
+        Logger.diskImage("Mounting disk image for \(bundleIdentifier) at \(mountPoint.path)")
         let imageURL = try diskImageURL(for: bundleIdentifier)
         guard fileManager.fileExists(atPath: imageURL.path) else {
+            Logger.error("Disk image not found: \(imageURL.path)")
             throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
         }
         try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
@@ -139,10 +152,14 @@ final class DiskImageService {
         var args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path]
         if nobrowse {
             args.append("--nobrowse")
+            Logger.debug("Mount with nobrowse option")
         }
         
         do {
-            _ = try await processRunner.run("/usr/sbin/diskutil", args)
+            _ = try await Logger.measureAsync("Mount disk image") {
+                try await processRunner.run("/usr/sbin/diskutil", args)
+            }
+            Logger.diskImage("Successfully mounted disk image")
         } catch let error as ProcessRunnerError {
             if case .commandFailed(_, let exitCode, let stderr) = error, exitCode == 1 && stderr.contains("アクセス権がありません") {
                 throw AppError.permissionDenied(
@@ -233,8 +250,7 @@ final class DiskImageService {
     func isMounted(at url: URL) throws -> Bool {
         do {
             let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", url.path])
-            if let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+            if let plist = output.parsePlist(),
                let _ = plist["VolumeName"] as? String {
                 return true
             }
@@ -255,8 +271,7 @@ final class DiskImageService {
         while currentPath.path != "/" {
             let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
             if let output = output,
-               let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+               let plist = output.parsePlist() {
                 
                 // Check if it's removable media
                 if let isInternal = plist["Internal"] as? Bool {
@@ -283,8 +298,7 @@ final class DiskImageService {
         while currentPath.path != "/" {
             let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
             if let output = output,
-               let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let plist = output.parsePlist(),
                let node = plist["DeviceNode"] as? String {
                 deviceNode = node
                 break
@@ -328,8 +342,7 @@ final class DiskImageService {
         while currentPath.path != "/" {
             let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
             if let output = output,
-               let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let plist = output.parsePlist(),
                let volumeName = plist["VolumeName"] as? String {
                 
                 // Get device identifier (e.g., "disk5s2")
@@ -351,8 +364,7 @@ final class DiskImageService {
                     
                     // Query parent disk for media name
                     if let parentOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", parentDisk]),
-                       let parentData = parentOutput.data(using: .utf8),
-                       let parentPlist = try? PropertyListSerialization.propertyList(from: parentData, options: [], format: nil) as? [String: Any] {
+                       let parentPlist = parentOutput.parsePlist() {
                         mediaName = parentPlist["MediaName"] as? String
                         
                         // Also try IORegistryEntryName as fallback
@@ -389,22 +401,21 @@ final class DiskImageService {
     ///   - volumePath: The path of the volume on the disk image
     ///   - force: If true, force unmount even if files are in use (dangerous, use with caution)
     func ejectDiskImage(for volumePath: URL, force: Bool = false) async throws {
-        NSLog("[DEBUG] DiskImageService: ejectDiskImage called for: \(volumePath.path)")
+        Logger.diskImage("ejectDiskImage called for: \(volumePath.path)")
         
         // Get device identifier for the volume
         let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", volumePath.path])
-        guard let infoData = infoOutput?.data(using: .utf8),
-              let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any],
+        guard let infoPlist = infoOutput?.parsePlist(),
               let deviceId = infoPlist["DeviceIdentifier"] as? String else {
-            NSLog("[DEBUG] DiskImageService: Failed to get device identifier")
+            Logger.error("Failed to get device identifier")
             throw AppError.diskImage("デバイスIDの取得に失敗", message: volumePath.path, underlying: nil)
         }
         
-        NSLog("[DEBUG] DiskImageService: Device ID: \(deviceId)")
+        Logger.diskImage("Device ID: \(deviceId)")
         
         // Get the parent disk image device (e.g., disk4 from disk4s1)
         let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: [.regularExpression])
-        NSLog("[DEBUG] DiskImageService: Parent device: \(parentDevice), force: \(force)")
+        Logger.diskImage("Parent device: \(parentDevice), force: \(force)")
         
         // Eject the parent device (unmounts all volumes and detaches device)
         do {
@@ -412,11 +423,11 @@ final class DiskImageService {
             if force {
                 args.append("-force")
             }
-            NSLog("[DEBUG] DiskImageService: Running: diskutil \(args.joined(separator: " "))")
+            Logger.diskImage("Running: diskutil \(args.joined(separator: " "))")
             let output = try await processRunner.run("/usr/sbin/diskutil", args)
-            NSLog("[DEBUG] DiskImageService: Eject succeeded: \(output)")
+            Logger.diskImage("Eject succeeded: \(output)")
         } catch {
-            NSLog("[DEBUG] DiskImageService: Eject failed: \(error)")
+            Logger.error("Eject failed: \(error)")
             throw error
         }
     }
@@ -424,8 +435,7 @@ final class DiskImageService {
     func detachAllDiskImages() async throws -> Int {
         // Get list of all disks
         let output = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist"])
-        guard let data = output.data(using: .utf8),
-              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+        guard let plist = output.parsePlist(),
               let allDisks = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
             return 0
         }
@@ -441,8 +451,7 @@ final class DiskImageService {
                 
                 // Get detailed info to confirm it's a disk image
                 let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", deviceId])
-                if let infoData = infoOutput?.data(using: .utf8),
-                   let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any] {
+                if let infoPlist = infoOutput?.parsePlist() {
                     
                     // Check for Virtual/DiskImage indicators
                     let isVirtual = infoPlist["Virtual"] as? Bool ?? false
@@ -484,8 +493,7 @@ final class DiskImageService {
         do {
             // Get list of all mounted volumes using diskutil
             let output = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist"])
-            guard let data = output.data(using: .utf8),
-                  let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+            guard let plist = output.parsePlist(),
                   let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
                 return 0
             }
@@ -564,16 +572,14 @@ final class DiskImageService {
         if let diskID = diskIdentifier {
             do {
                 let output = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", diskID])
-                if let data = output.data(using: .utf8),
-                   let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                if let plist = output.parsePlist(),
                    let volumeName = plist["VolumeName"] as? String {
                     volumeNames.append(volumeName)
                 }
                 
                 // Also check for partitions on this disk
                 let listOutput = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist", diskID])
-                if let listData = listOutput.data(using: .utf8),
-                   let listPlist = try? PropertyListSerialization.propertyList(from: listData, options: [], format: nil) as? [String: Any],
+                if let listPlist = listOutput.parsePlist(),
                    let allDisks = listPlist["AllDisksAndPartitions"] as? [[String: Any]] {
                     for disk in allDisks {
                         if let partitions = disk["Partitions"] as? [[String: Any]] {
