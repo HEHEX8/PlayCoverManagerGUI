@@ -451,24 +451,28 @@ final class LauncherViewModel {
                     NSLog("[DEBUG] No processes found using the volume")
                 }
                 
-                // Synchronize preferences to write any pending changes
+                // Synchronize preferences to write any pending changes before force eject
+                NSLog("[DEBUG] Synchronizing preferences to ensure all changes are written")
                 CFPreferencesAppSynchronize(bundleID as CFString)
             } else {
                 NSLog("[DEBUG] Container is not mounted")
             }
             
+            // Use force eject after app termination to handle cfprefsd and other system daemons
+            // that may still hold references to the container volume.
+            // This is safe because CFPreferencesAppSynchronize() ensures settings are written.
+            NSLog("[DEBUG] Using force eject to unmount container (cfprefsd workaround)")
             try await DiskImageHelper.unmountDiskImageSafely(
                 for: bundleID,
                 containerURL: containerURL,
                 diskImageService: diskImageService,
                 lockService: lockService,
-                force: false
+                force: true
             )
             NSLog("[DEBUG] Successfully unmounted container for: \(bundleID)")
         } catch {
             NSLog("[DEBUG] Failed to unmount container for \(bundleID): \(error)")
-            // Silently fail - will retry on next refresh
-            // System processes (cfprefsd, etc.) may still be holding file handles
+            // Even force eject can fail in rare cases
         }
     }
 
@@ -510,11 +514,12 @@ final class LauncherViewModel {
                 continue
             }
             
-            // Synchronize preferences
+            // Synchronize preferences to ensure all changes are written
             CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
             
             do {
-                try await diskImageService.ejectDiskImage(for: container)
+                // Use force eject to handle cfprefsd and other system processes
+                try await diskImageService.ejectDiskImage(for: container, force: true)
                 successCount += 1
             } catch {
                 failedCount += 1
