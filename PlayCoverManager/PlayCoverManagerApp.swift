@@ -54,10 +54,6 @@ struct PlayCoverManagerApp: App {
                     .environment(appViewModel)
                     .environment(settingsStore)
                     .environment(perAppSettingsStore)
-                    .onAppear {
-                        // Configure app to terminate when last window is closed
-                        NSApp.delegate?.applicationShouldTerminateAfterLastWindowClosed = { _ in true }
-                    }
             }
         }
         .commands {
