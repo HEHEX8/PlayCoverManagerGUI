@@ -2880,6 +2880,14 @@ struct FileTypeInfo {
 
 actor AppAnalyzer {
     func analyze(appURL: URL) async -> AppAnalysisResult {
+        // Run file enumeration in detached task to avoid async context issues
+        // and enable memory-efficient streaming
+        return await Task.detached(priority: .utility) {
+            await self.analyzeInternal(appURL: appURL)
+        }.value
+    }
+    
+    private func analyzeInternal(appURL: URL) async -> AppAnalysisResult {
         var totalFiles = 0
         var totalBytes: Int64 = 0
         var largestFile: (url: URL, size: Int64) = (appURL, 0)
@@ -2889,15 +2897,14 @@ actor AppAnalyzer {
         
         let fileManager = FileManager.default
         
-        // Enumerate all files
+        // Enumerate all files with streaming (memory efficient)
         if let enumerator = fileManager.enumerator(
             at: appURL,
             includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
             options: [.skipsHiddenFiles]
         ) {
-            // Convert to array to avoid async iteration issues
-            let allURLs = enumerator.allObjects.compactMap { $0 as? URL }
-            for fileURL in allURLs {
+            // Stream through files without loading all into memory
+            for case let fileURL as URL in enumerator {
                 guard let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey]),
                       let isDirectory = resourceValues.isDirectory else {
                     continue

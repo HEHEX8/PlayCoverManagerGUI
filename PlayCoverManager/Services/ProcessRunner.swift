@@ -13,9 +13,19 @@ enum ProcessRunnerError: Error {
 }
 
 final class ProcessRunner: Sendable {
+    // Dedicated serial queue for process execution with optimal QoS
+    // .utility is appropriate for disk I/O operations (diskutil, hdiutil)
+    // Serial queue prevents overwhelming the system with concurrent processes
+    private static let processQueue = DispatchQueue(
+        label: "com.playcover.processrunner",
+        qos: .utility,
+        attributes: [],
+        autoreleaseFrequency: .workItem
+    )
+    
     func run(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
+            Self.processQueue.async {
                 let process = Process()
                 process.launchPath = launchPath
                 process.arguments = arguments

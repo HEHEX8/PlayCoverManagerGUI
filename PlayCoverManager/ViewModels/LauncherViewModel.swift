@@ -44,27 +44,25 @@ final class LauncherViewModel {
     var unmountFlowState: UnmountFlowState = .idle
     
     // Track if current unmount is for storage change (vs quit)
-    private var isStorageChangeFlow: Bool = false
+    @ObservationIgnored private var isStorageChangeFlow: Bool = false
 
-    private let playCoverPaths: PlayCoverPaths
-    let diskImageService: DiskImageService  // Internal access for view layer
-    private let launcherService: LauncherService
-    private let settings: SettingsStore
-    private let perAppSettings: PerAppSettingsStore
-    private let fileManager: FileManager
-    private let lockService: ContainerLockService
-    private let processRunner: ProcessRunner
+    // Services and dependencies - not tracked by Observable (no UI impact)
+    @ObservationIgnored private let playCoverPaths: PlayCoverPaths
+    @ObservationIgnored let diskImageService: DiskImageService  // Internal access for view layer
+    @ObservationIgnored private let launcherService: LauncherService
+    @ObservationIgnored private let settings: SettingsStore
+    @ObservationIgnored private let perAppSettings: PerAppSettingsStore
+    @ObservationIgnored private let fileManager: FileManager
+    @ObservationIgnored private let lockService: ContainerLockService
+    @ObservationIgnored private let processRunner: ProcessRunner
 
-    private var pendingLaunchContext: LaunchContext?
-    
-    // Track running apps for termination detection
-    private var previouslyRunningApps: Set<String> = []
+    // Internal state - not tracked by Observable
+    @ObservationIgnored private var pendingLaunchContext: LaunchContext?
+    @ObservationIgnored private var previouslyRunningApps: Set<String> = []
     
     // KVO observation for runningApplications (more efficient than notifications)
     // @ObservationIgnored prevents Observable macro from tracking this property
-    // This allows nonisolated access in deinit
-    @ObservationIgnored
-    private var runningAppsObservation: NSKeyValueObservation?
+    @ObservationIgnored private var runningAppsObservation: NSKeyValueObservation?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -542,34 +540,48 @@ final class LauncherViewModel {
             unmountFlowState = .processing(status: "アプリコンテナをアンマウントしています…")
         }
         
-        for app in apps {
-            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-            
-            // Check if app is currently running
-            if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
-                failedCount += 1
-                continue
+        // Use TaskGroup for parallel unmounting (faster for multiple apps)
+        await withTaskGroup(of: (String, Bool).self) { group in
+            for app in apps {
+                let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                
+                // Check if app is currently running
+                if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
+                    failedCount += 1
+                    continue
+                }
+                
+                // Check if container is actually mounted
+                let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+                guard let descriptor = descriptor, descriptor.isMounted else {
+                    continue
+                }
+                
+                // Add parallel unmount task
+                group.addTask {
+                    let result = await DiskImageHelper.unmountWithTwoStageEject(
+                        containerURL: container,
+                        diskImageService: self.diskImageService,
+                        bundleID: app.bundleIdentifier,
+                        launcherService: self.launcherService
+                    )
+                    
+                    switch result {
+                    case .success:
+                        return (app.bundleIdentifier, true)
+                    case .failed:
+                        return (app.bundleIdentifier, false)
+                    }
+                }
             }
             
-            // Check if container is actually mounted
-            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
-            guard let descriptor = descriptor, descriptor.isMounted else {
-                continue
-            }
-            
-            // Use 2-stage unmount: try normal eject, then terminate app if needed
-            let result = await DiskImageHelper.unmountWithTwoStageEject(
-                containerURL: container,
-                diskImageService: diskImageService,
-                bundleID: app.bundleIdentifier,
-                launcherService: launcherService
-            )
-            
-            switch result {
-            case .success:
-                successCount += 1
-            case .failed:
-                failedCount += 1
+            // Collect results
+            for await (bundleID, success) in group {
+                if success {
+                    successCount += 1
+                } else {
+                    failedCount += 1
+                }
             }
         }
         

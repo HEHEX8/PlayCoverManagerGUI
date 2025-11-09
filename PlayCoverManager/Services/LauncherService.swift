@@ -43,9 +43,11 @@ final class LauncherService {
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
         
-        // Configure icon cache
+        // Configure icon cache with optimal settings
         iconCache.countLimit = 100  // Maximum 100 icons
         iconCache.totalCostLimit = 50 * 1024 * 1024  // 50MB limit
+        iconCache.evictsObjectsWithDiscardedContent = true  // Auto-evict on memory pressure
+        iconCache.name = "PlayCoverManager.IconCache"  // For debugging and instruments
     }
 
     func fetchInstalledApps(at applicationsRoot: URL) throws -> [PlayCoverApp] {
