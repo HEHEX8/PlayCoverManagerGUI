@@ -124,7 +124,7 @@ final class SettingsStore {
         case asif = "asif"
         
         var fileExtension: String { "asif" }
-        var localizedDescription: String { "ASIF（macOS Tahoe 専用）" }
+        var localizedDescription: String { String(localized: "ASIF（macOS Tahoe 専用）") }
     }
 
     var diskImageDirectory: URL? = nil {

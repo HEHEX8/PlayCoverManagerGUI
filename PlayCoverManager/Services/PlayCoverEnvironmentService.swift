@@ -17,8 +17,8 @@ final class PlayCoverEnvironmentService {
         guard osVersion.majorVersion >= 26 else {
             let versionString = "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
             throw AppError.environment(
-                "macOS のバージョンが古すぎます",
-                message: "このアプリは macOS Tahoe 26.0 以降が必要です。\n\n現在のバージョン: macOS \(versionString)\n必要なバージョン: macOS Tahoe 26.0 以降\n\nシステムをアップデートしてから再度お試しください。"
+                String(localized: "macOS のバージョンが古すぎます"),
+                message: String(localized: "このアプリは macOS Tahoe 26.0 以降が必要です。\n\n現在のバージョン: macOS \(versionString)\n必要なバージョン: macOS Tahoe 26.0 以降\n\nシステムをアップデートしてから再度お試しください。")
             )
         }
     }
@@ -26,16 +26,16 @@ final class PlayCoverEnvironmentService {
     func detectPlayCover() throws -> PlayCoverPaths {
         let appURL = PlayCoverPaths.defaultApplicationURL
         guard fileManager.fileExists(atPath: appURL.path) else {
-            throw AppError.environment("PlayCover.app が見つかりません", message: "PlayCover を /Applications にインストールしてください。")
+            throw AppError.environment(String(localized: "PlayCover.app が見つかりません"), message: "PlayCover を /Applications にインストールしてください。")
         }
 
         let infoPlistURL = appURL.appendingPathComponent("Contents/Info.plist")
         guard let plistData = try? Data(contentsOf: infoPlistURL) else {
-            throw AppError.environment("PlayCover の Info.plist を読み込めません", message: "PlayCover.app を確認してください。")
+            throw AppError.environment(String(localized: "PlayCover の Info.plist を読み込めません"), message: "PlayCover.app を確認してください。")
         }
         guard let plist = plistData.parsePlist(),
               let bundleIdentifier = plist["CFBundleIdentifier"] as? String else {
-            throw AppError.environment("PlayCover の Bundle ID を取得できません", message: "PlayCover.app を再インストールしてください。")
+            throw AppError.environment(String(localized: "PlayCover の Bundle ID を取得できません"), message: "PlayCover.app を再インストールしてください。")
         }
 
         let containerURL = PlayCoverPaths.playCoverContainerURL()

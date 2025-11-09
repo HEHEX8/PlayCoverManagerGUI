@@ -208,14 +208,14 @@ class AppUninstallerService {
     nonisolated func uninstallApp(_ app: InstalledAppInfo) async throws {
         Logger.installation("Starting uninstallation of \(app.appName) (\(app.bundleID))")
         await MainActor.run { 
-            currentStatus = "アプリを削除中: \(app.appName)"
+            currentStatus = String(localized: "アプリを削除中: \(app.appName)")
         }
         
         // Check if app is running using NSRunningApplication
         let isRunning = await MainActor.run { launcherService.isAppRunning(bundleID: app.bundleID) }
         if isRunning {
             Logger.warning("Cannot uninstall running app: \(app.bundleID)")
-            throw AppError.installation("アプリが実行中のため、アンインストールできません", message: "アプリを終了してから再度お試しください")
+            throw AppError.installation(String(localized: "アプリが実行中のため、アンインストールできません"), message: "アプリを終了してから再度お試しください")
         }
         Logger.debug("App is not running, proceeding with uninstallation")
         
@@ -224,7 +224,7 @@ class AppUninstallerService {
         
         // Step 1: Remove app from PlayCover Applications/
         // Find actual app by bundle ID (app name might differ from bundle ID)
-        await MainActor.run { currentStatus = "アプリを検索中..." }
+        await MainActor.run { currentStatus = String(localized: "アプリを検索中...") }
         if let appDirs = try? FileManager.default.contentsOfDirectory(at: applicationsDir, includingPropertiesForKeys: nil) {
             for appURL in appDirs where appURL.pathExtension == "app" {
                 let infoPlist = appURL.appendingPathComponent("Info.plist")
@@ -232,7 +232,7 @@ class AppUninstallerService {
                    let plist = plistData.parsePlist(),
                    let bundleID = plist["CFBundleIdentifier"] as? String,
                    bundleID == app.bundleID {
-                    await MainActor.run { currentStatus = "アプリを削除中..." }
+                    await MainActor.run { currentStatus = String(localized: "アプリを削除中...") }
                     try FileManager.default.removeItem(at: appURL)
                     break
                 }
@@ -240,7 +240,7 @@ class AppUninstallerService {
         }
         
         // Step 2: Remove app settings
-        await MainActor.run { currentStatus = "設定ファイルを削除中..." }
+        await MainActor.run { currentStatus = String(localized: "設定ファイルを削除中...") }
         let settingsFile = await MainActor.run { PlayCoverPaths.appSettingsURL(playCoverBundleID: playCoverBundleID, appBundleID: app.bundleID) }
         try? FileManager.default.removeItem(at: settingsFile)
         
@@ -261,7 +261,7 @@ class AppUninstallerService {
         try? FileManager.default.removeItem(at: playChainEncrypted)
         
         // Step 4.6: Remove external caches (various locations)
-        await MainActor.run { currentStatus = "キャッシュを削除中..." }
+        await MainActor.run { currentStatus = String(localized: "キャッシュを削除中...") }
         let libraryURL = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library")
         let cacheDirs = [
             "Application Scripts",
@@ -284,14 +284,14 @@ class AppUninstallerService {
         // Step 5: Unmount and remove container (this is what we mounted during installation)
         let internalContainer = await MainActor.run { PlayCoverPaths.containerURL(for: app.bundleID) }
         
-        await MainActor.run { currentStatus = "コンテナ確認中..." }
+        await MainActor.run { currentStatus = String(localized: "コンテナ確認中...") }
         
         // Check if it's a mount point
         do {
             let mountOutput = try await processRunner.run("/sbin/mount", [])
             if mountOutput.contains(internalContainer.path) {
                 // It's mounted - eject the disk image (unmounts and detaches in one operation)
-                await MainActor.run { currentStatus = "ディスクイメージをアンマウント中..." }
+                await MainActor.run { currentStatus = String(localized: "ディスクイメージをアンマウント中...") }
                 try await diskImageService.ejectDiskImage(for: internalContainer)
                 
                 // After unmounting, the mount point directory should be removed automatically by the system
@@ -304,7 +304,7 @@ class AppUninstallerService {
             } else if FileManager.default.fileExists(atPath: internalContainer.path) {
                 // Not mounted but directory exists - this shouldn't happen in normal cases
                 // but remove it anyway (might be leftover from previous failed uninstall)
-                await MainActor.run { currentStatus = "残存ディレクトリを削除中..." }
+                await MainActor.run { currentStatus = String(localized: "残存ディレクトリを削除中...") }
                 try? FileManager.default.removeItem(at: internalContainer)
             }
         } catch {
@@ -314,12 +314,12 @@ class AppUninstallerService {
         
         // Step 6: Delete disk image file (this is what we created during installation)
         if FileManager.default.fileExists(atPath: app.diskImageURL.path) {
-            await MainActor.run { currentStatus = "ディスクイメージを削除中..." }
+            await MainActor.run { currentStatus = String(localized: "ディスクイメージを削除中...") }
             try FileManager.default.removeItem(at: app.diskImageURL)
         }
         
         // Step 7: Remove from BundleID Cache (PlayCover's app registry)
-        await MainActor.run { currentStatus = "キャッシュを更新中..." }
+        await MainActor.run { currentStatus = String(localized: "キャッシュを更新中...") }
         let bundleIDCacheURL = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(playCoverBundleID)/CACHE")
         
@@ -337,11 +337,11 @@ class AppUninstallerService {
         
         // Step 8: Remove per-app settings
         await MainActor.run { 
-            currentStatus = "アプリ設定を削除中..."
+            currentStatus = String(localized: "アプリ設定を削除中...")
             perAppSettingsStore.removeSettings(for: app.bundleID)
         }
         
-        await MainActor.run { currentStatus = "✅ \(app.appName) をアンインストールしました" }
+        await MainActor.run { currentStatus = String(localized: "✅ \(app.appName) をアンインストールしました") }
     }
     
     nonisolated func uninstallApps(_ apps: [InstalledAppInfo]) async throws {
@@ -380,7 +380,7 @@ class AppUninstallerService {
         
         await MainActor.run {
             currentProgress = 1.0
-            currentStatus = "完了"
+            currentStatus = String(localized: "完了")
         }
     }
     

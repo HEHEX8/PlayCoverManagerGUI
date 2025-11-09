@@ -169,7 +169,7 @@ struct QuickLauncherView: View {
                     ModernToolbarButton(
                         icon: "line.3.horizontal",
                         color: .primary,
-                        help: "メニュー (⌘M)"
+                        help: String(localized: "メニュー (⌘M)")
                     ) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isDrawerOpen.toggle()
@@ -183,7 +183,7 @@ struct QuickLauncherView: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.secondary)
                         
-                        TextField("アプリを検索", text: $viewModel.searchText)
+                        TextField(String(localized: "アプリを検索"), text: $viewModel.searchText)
                             .textFieldStyle(.plain)
                             .disabled(isDrawerOpen)
                             .focused($isSearchFieldFocused)
@@ -213,7 +213,7 @@ struct QuickLauncherView: View {
                     ModernToolbarButton(
                         icon: "eject.fill",
                         color: .red,
-                        help: "すべてアンマウント (⌘⇧U)"
+                        help: String(localized: "すべてアンマウント (⌘⇧U)")
                     ) {
                         viewModel.unmountAll(applyToPlayCoverContainer: true)
                     }
@@ -444,8 +444,8 @@ struct QuickLauncherView: View {
             get: { viewModel.pendingImageCreation != nil },
             set: { if !$0 { viewModel.cancelImageCreation() } }
         ),
-        title: "ディスクイメージが存在しません",
-        message: "\(viewModel.pendingImageCreation?.displayName ?? "") 用の ASIF ディスクイメージを作成しますか？",
+        title: String(localized: "ディスクイメージが存在しません"),
+        message: "\(viewModel.pendingImageCreation?.displayName ?? "String(localized: ") 用の ASIF ディスクイメージを作成しますか？"),
         buttons: [
             AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
                 viewModel.cancelImageCreation()
@@ -896,10 +896,10 @@ private struct iOSAppIconView: View {
                 let scriptContent = """
                 #!/bin/bash
                 cd '\(escapedAppPath)'
-                echo "=== デバッグコンソール ==="
-                echo "アプリ: \(app.displayName)"
-                echo "実行ファイル: \(executableName)"
-                echo "コンテナ: マウント済み"
+                echo String(localized: "=== デバッグコンソール ===")
+                echo String(localized: "アプリ: \(app.displayName)")
+                echo String(localized: "実行ファイル: \(executableName)")
+                echo String(localized: "コンテナ: マウント済み")
                 echo "========================"
                 echo ""
                 
@@ -908,10 +908,10 @@ private struct iOSAppIconView: View {
                 EXIT_CODE=$?
                 echo ""
                 echo "========================"
-                echo "プロセス終了 (終了コード: $EXIT_CODE)"
+                echo String(localized: "プロセス終了 (終了コード: $EXIT_CODE)")
                 echo "========================"
                 echo ""
-                read -p "任意のキーを押してウィンドウを閉じる... " -n1 -s
+                read -p String(localized: "任意のキーを押してウィンドウを閉じる... ") -n1 -s
                 
                 # Clean up the script file
                 rm -f '\(scriptURL.path.replacingOccurrences(of: "'", with: "'\\''"))'
@@ -983,11 +983,19 @@ private struct AppDetailSheet: View {
     @State private var selectedTab: SettingsTab = .overview
     
     enum SettingsTab: String, CaseIterable, Identifiable {
-        case overview = "概要"
-        case settings = "設定"
-        case details = "詳細"
+        case overview
+        case settings
+        case details
         
         var id: String { rawValue }
+        
+        var localizedTitle: String {
+            switch self {
+            case .overview: return String(localized: "概要")
+            case .settings: return String(localized: "設定")
+            case .details: return String(localized: "詳細")
+            }
+        }
         
         var icon: String {
             switch self {
@@ -999,9 +1007,9 @@ private struct AppDetailSheet: View {
         
         var description: String {
             switch self {
-            case .overview: return "アプリの基本情報とストレージ"
-            case .settings: return "アプリ固有の設定"
-            case .details: return "技術情報と解析"
+            case .overview: return String(localized: "アプリの基本情報とストレージ")
+            case .settings: return String(localized: "アプリ固有の設定")
+            case .details: return String(localized: "技術情報と解析")
             }
         }
     }
@@ -1084,7 +1092,7 @@ private struct AppDetailSheet: View {
                                     selectedTab = tab
                                 }
                             } label: {
-                                Label(tab.rawValue, systemImage: tab.icon)
+                                Label(tab.localizedTitle, systemImage: tab.icon)
                                     .font(.system(size: 13, weight: selectedTab == tab ? .semibold : .regular))
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
@@ -1137,7 +1145,7 @@ private struct AppDetailSheet: View {
                         dismiss()
                     }
                     .keyboardShortcut(.cancelAction)
-                    .help("アプリ設定を閉じる (Esc)")
+                    .help(String(localized: "アプリ設定を閉じる (Esc)"))
                 }
                 .padding(16)
                 .background(.ultraThinMaterial)
@@ -1701,8 +1709,8 @@ private struct OverviewView: View {
                         // Storage stat
                         StatCard(
                             icon: "internaldrive",
-                            title: "合計容量",
-                            value: storageInfo?.totalSize ?? "計算中...",
+                            title: String(localized: "合計容量"),
+                            value: storageInfo?.totalSize ?? String(localized: "計算中..."),
                             color: .blue
                         )
                         
@@ -1710,7 +1718,7 @@ private struct OverviewView: View {
                         if let deviceFamily = getDeviceFamily() {
                             StatCard(
                                 icon: "apps.iphone",
-                                title: "対応デバイス",
+                                title: String(localized: "対応デバイス"),
                                 value: deviceFamily,
                                 color: .green
                             )
@@ -1725,15 +1733,15 @@ private struct OverviewView: View {
                                 .fontWeight(.semibold)
                             
                             VStack(spacing: 8) {
-                                StorageRow(label: "アプリ本体", size: storage.appSize, color: .blue)
+                                StorageRow(label: String(localized: "アプリ本体"), size: storage.appSize, color: .blue)
                                 StorageRow(
-                                    label: storage.isMounted ? "ディスクイメージ (マウント中)" : "ディスクイメージ",
+                                    label: storage.isMounted ? String(localized: "ディスクイメージ (マウント中)") : "ディスクイメージ",
                                     size: storage.containerSize,
                                     color: .orange
                                 )
                                 if let internalSize = storage.internalDataSize {
                                     Divider()
-                                    StorageRow(label: "内部データ使用量 (参考)", size: internalSize, color: .gray)
+                                    StorageRow(label: String(localized: "内部データ使用量 (参考)"), size: internalSize, color: .gray)
                                         .opacity(0.7)
                                 }
                             }
@@ -1764,11 +1772,11 @@ private struct OverviewView: View {
                             QuickInfoRow(icon: "checkmark.seal.fill", label: "Bundle ID", value: app.bundleIdentifier)
                             
                             if let executableName = infoPlist?["CFBundleExecutable"] as? String {
-                                QuickInfoRow(icon: "gearshape.fill", label: "実行ファイル", value: executableName)
+                                QuickInfoRow(icon: "gearshape.fill", label: String(localized: "実行ファイル"), value: executableName)
                             }
                             
                             if let capabilities = getCapabilitiesCount() {
-                                QuickInfoRow(icon: "lock.shield.fill", label: "権限要求", value: "\(capabilities) 個")
+                                QuickInfoRow(icon: "lock.shield.fill", label: String(localized: "権限要求"), value: "\(capabilities) 個")
                             }
                         }
                         .padding(12)
@@ -1895,9 +1903,9 @@ private struct OverviewView: View {
         if let sizeOnDisk = diskImageState.descriptor.sizeOnDisk {
             diskImageSize = ByteCountFormatter.string(fromByteCount: Int64(sizeOnDisk), countStyle: .file)
         } else if diskImageState.imageExists {
-            diskImageSize = calculateDirectorySize(at: diskImageState.descriptor.imageURL) ?? "不明"
+            diskImageSize = calculateDirectorySize(at: diskImageState.descriptor.imageURL) ?? String(localized: "不明")
         } else {
-            diskImageSize = "未作成"
+            diskImageSize = String(localized: "未作成")
         }
         
         // Calculate internal data size only when not mounted
@@ -1912,7 +1920,7 @@ private struct OverviewView: View {
         
         // Total = app + disk image file size
         let totalSize: String
-        if diskImageSize != "未作成",
+        if diskImageSize != String(localized: "未作成"),
            let appBytes = parseByteCount(appSize),
            let imageBytes = parseByteCount(diskImageSize) {
             let total = appBytes + imageBytes
@@ -2064,20 +2072,37 @@ private struct SettingsView: View {
     @State private var dataHandlingOverride: DataHandlingOverride = .useGlobal
     
     enum NobrowseOverride: String, CaseIterable, Identifiable {
-        case useGlobal = "グローバル設定を使用"
-        case enabled = "Finderに表示しない"
-        case disabled = "Finderに表示する"
+        case useGlobal
+        case enabled
+        case disabled
         
         var id: String { rawValue }
+        
+        var localizedTitle: String {
+            switch self {
+            case .useGlobal: return String(localized: "グローバル設定を使用")
+            case .enabled: return String(localized: "Finderに表示しない")
+            case .disabled: return String(localized: "Finderに表示する")
+            }
+        }
     }
     
     enum DataHandlingOverride: String, CaseIterable, Identifiable {
-        case useGlobal = "グローバル設定を使用"
-        case discard = "内部データを破棄"
-        case mergeThenDelete = "内部データを統合"
-        case leave = "何もしない"
+        case useGlobal
+        case discard
+        case mergeThenDelete
+        case leave
         
         var id: String { rawValue }
+        
+        var localizedTitle: String {
+            switch self {
+            case .useGlobal: return String(localized: "グローバル設定を使用")
+            case .discard: return String(localized: "内部データを破棄")
+            case .mergeThenDelete: return String(localized: "内部データを統合")
+            case .leave: return String(localized: "何もしない")
+            }
+        }
         
         var strategy: SettingsStore.InternalDataStrategy? {
             switch self {
@@ -2111,7 +2136,7 @@ private struct SettingsView: View {
                 
                 Picker("", selection: $nobrowseOverride) {
                     ForEach(NobrowseOverride.allCases) { option in
-                        Text(option.rawValue).tag(option)
+                        Text(option.localizedTitle).tag(option)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -2140,7 +2165,7 @@ private struct SettingsView: View {
                 
                 Picker("", selection: $dataHandlingOverride) {
                     ForEach(DataHandlingOverride.allCases) { option in
-                        Text(option.rawValue).tag(option)
+                        Text(option.localizedTitle).tag(option)
                     }
                 }
                 .pickerStyle(.menu)
@@ -2232,10 +2257,17 @@ private struct DetailsView: View {
     @State private var selectedSection: DetailSection = .info
     
     enum DetailSection: String, CaseIterable, Identifiable {
-        case info = "技術情報"
-        case analysis = "解析"
+        case info
+        case analysis
         
         var id: String { rawValue }
+        
+        var localizedTitle: String {
+            switch self {
+            case .info: return String(localized: "技術情報")
+            case .analysis: return String(localized: "解析")
+            }
+        }
         
         var icon: String {
             switch self {
@@ -2258,7 +2290,7 @@ private struct DetailsView: View {
             // Sub-section selector
             Picker("", selection: $selectedSection) {
                 ForEach(DetailSection.allCases) { section in
-                    Label(section.rawValue, systemImage: section.icon).tag(section)
+                    Label(section.localizedTitle, systemImage: section.icon).tag(section)
                 }
             }
             .pickerStyle(.segmented)
@@ -2295,39 +2327,39 @@ private struct InfoContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Basic Info Section
-            infoSection(title: "基本情報") {
-                infoRow(label: "アプリ名", value: app.displayName)
+            infoSection(title: String(localized: "基本情報")) {
+                infoRow(label: String(localized: "アプリ名"), value: app.displayName)
                 if let standardName = app.standardName, standardName != app.displayName {
-                    infoRow(label: "英語名", value: standardName)
+                    infoRow(label: String(localized: "英語名"), value: standardName)
                 }
                 infoRow(label: "Bundle ID", value: app.bundleIdentifier)
                 if let version = app.version {
-                    infoRow(label: "バージョン", value: version)
+                    infoRow(label: String(localized: "バージョン"), value: version)
                 }
                 if let buildVersion = infoPlist?["CFBundleVersion"] as? String, buildVersion != app.version {
-                    infoRow(label: "ビルド番号", value: buildVersion)
+                    infoRow(label: String(localized: "ビルド番号"), value: buildVersion)
                 }
             }
             
             // Technical Info Section
-            infoSection(title: "技術情報") {
+            infoSection(title: String(localized: "技術情報")) {
                 if let executableName = infoPlist?["CFBundleExecutable"] as? String {
-                    infoRow(label: "実行ファイル", value: executableName)
+                    infoRow(label: String(localized: "実行ファイル"), value: executableName)
                 }
                 if let minOSVersion = infoPlist?["MinimumOSVersion"] as? String {
-                    infoRow(label: "最小iOS", value: minOSVersion)
+                    infoRow(label: String(localized: "最小iOS"), value: minOSVersion)
                 }
                 if let targetDevice = getTargetDeviceFamily() {
-                    infoRow(label: "対応デバイス", value: targetDevice)
+                    infoRow(label: String(localized: "対応デバイス"), value: targetDevice)
                 }
                 if let packageType = infoPlist?["CFBundlePackageType"] as? String {
-                    infoRow(label: "パッケージ種別", value: packageType)
+                    infoRow(label: String(localized: "パッケージ種別"), value: packageType)
                 }
             }
             
             // Capabilities Section
             if let capabilities = getCapabilities() {
-                infoSection(title: "機能・権限") {
+                infoSection(title: String(localized: "機能・権限")) {
                     ForEach(Array(capabilities.enumerated()), id: \.offset) { _, capability in
                         Text("• \(capability)")
                             .font(.caption)
@@ -2337,9 +2369,9 @@ private struct InfoContentView: View {
             }
             
             // Developer Info Section
-            infoSection(title: "開発者情報") {
+            infoSection(title: String(localized: "開発者情報")) {
                 if let copyright = infoPlist?["NSHumanReadableCopyright"] as? String {
-                    infoRow(label: "著作権", value: copyright)
+                    infoRow(label: String(localized: "著作権"), value: copyright)
                 }
                 if let teamId = getTeamIdentifier() {
                     infoRow(label: "Team ID", value: teamId)
@@ -2348,14 +2380,14 @@ private struct InfoContentView: View {
             
             // Storage Info Section
             if let storageInfo = getStorageInfo() {
-                infoSection(title: "ストレージ情報") {
+                infoSection(title: String(localized: "ストレージ情報")) {
                     // App bundle
                     VStack(alignment: .leading, spacing: 4) {
                         Text("アプリ本体")
                             .font(.caption)
                             .fontWeight(.medium)
-                        infoRow(label: "所在地", value: storageInfo.appPath)
-                        infoRow(label: "使用容量", value: storageInfo.appSize)
+                        infoRow(label: String(localized: "所在地"), value: storageInfo.appPath)
+                        infoRow(label: String(localized: "使用容量"), value: storageInfo.appSize)
                         Button("Finder で表示") {
                             NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
                         }
@@ -2371,9 +2403,9 @@ private struct InfoContentView: View {
                         Text("ディスクイメージ")
                             .font(.caption)
                             .fontWeight(.medium)
-                        infoRow(label: "所在地", value: storageInfo.containerPath)
-                        infoRow(label: "ファイルサイズ", value: storageInfo.containerSize)
-                        infoRow(label: "マウント状態", value: storageInfo.isMounted ? "マウント中" : "アンマウント中")
+                        infoRow(label: String(localized: "所在地"), value: storageInfo.containerPath)
+                        infoRow(label: String(localized: "ファイルサイズ"), value: storageInfo.containerSize)
+                        infoRow(label: String(localized: "マウント状態"), value: storageInfo.isMounted ? "マウント中" : "アンマウント中")
                         Button("Finder で表示") {
                             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: storageInfo.containerPath)])
                         }
@@ -2391,7 +2423,7 @@ private struct InfoContentView: View {
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
-                            infoRow(label: "使用量", value: internalSize)
+                            infoRow(label: String(localized: "使用量"), value: internalSize)
                                 .foregroundStyle(.secondary)
                             Text("※ イメージ内のデータ使用量（合計に含まれません）")
                                 .font(.caption2)
@@ -2478,15 +2510,15 @@ private struct InfoContentView: View {
         
         // Check for common permissions
         let permissionKeys: [String: String] = [
-            "NSCameraUsageDescription": "カメラ",
-            "NSPhotoLibraryUsageDescription": "写真ライブラリ",
-            "NSMicrophoneUsageDescription": "マイク",
-            "NSLocationWhenInUseUsageDescription": "位置情報（使用中）",
-            "NSLocationAlwaysUsageDescription": "位置情報（常に）",
-            "NSContactsUsageDescription": "連絡先",
-            "NSCalendarsUsageDescription": "カレンダー",
-            "NSRemindersUsageDescription": "リマインダー",
-            "NSMotionUsageDescription": "モーションセンサー",
+            "NSCameraUsageDescription": String(localized: "カメラ"),
+            "NSPhotoLibraryUsageDescription": String(localized: "写真ライブラリ"),
+            "NSMicrophoneUsageDescription": String(localized: "マイク"),
+            "NSLocationWhenInUseUsageDescription": String(localized: "位置情報（使用中）"),
+            "NSLocationAlwaysUsageDescription": String(localized: "位置情報（常に）"),
+            "NSContactsUsageDescription": String(localized: "連絡先"),
+            "NSCalendarsUsageDescription": String(localized: "カレンダー"),
+            "NSRemindersUsageDescription": String(localized: "リマインダー"),
+            "NSMotionUsageDescription": String(localized: "モーションセンサー"),
             "NSBluetoothAlwaysUsageDescription": "Bluetooth",
             "NSSiriUsageDescription": "Siri",
             "NSFaceIDUsageDescription": "Face ID"
@@ -2502,11 +2534,11 @@ private struct InfoContentView: View {
         if let backgroundModes = infoPlist?["UIBackgroundModes"] as? [String] {
             for mode in backgroundModes {
                 switch mode {
-                case "audio": capabilities.append("バックグラウンド音声")
-                case "location": capabilities.append("バックグラウンド位置情報")
+                case "audio": capabilities.append(String(localized: "バックグラウンド音声"))
+                case "location": capabilities.append(String(localized: "バックグラウンド位置情報"))
                 case "voip": capabilities.append("VoIP")
-                case "fetch": capabilities.append("バックグラウンド取得")
-                case "remote-notification": capabilities.append("リモート通知")
+                case "fetch": capabilities.append(String(localized: "バックグラウンド取得"))
+                case "remote-notification": capabilities.append(String(localized: "リモート通知"))
                 default: break
                 }
             }
@@ -2578,9 +2610,9 @@ private struct InfoContentView: View {
         if let sizeOnDisk = diskImageState.descriptor.sizeOnDisk {
             diskImageSize = ByteCountFormatter.string(fromByteCount: Int64(sizeOnDisk), countStyle: .file)
         } else if diskImageState.imageExists {
-            diskImageSize = calculateDirectorySize(at: diskImageState.descriptor.imageURL) ?? "不明"
+            diskImageSize = calculateDirectorySize(at: diskImageState.descriptor.imageURL) ?? String(localized: "不明")
         } else {
-            diskImageSize = "未作成"
+            diskImageSize = String(localized: "未作成")
         }
         
         // Calculate internal data size only when not mounted
@@ -2595,7 +2627,7 @@ private struct InfoContentView: View {
         
         // Total = app + disk image file size
         let totalSize: String
-        if diskImageSize != "未作成",
+        if diskImageSize != String(localized: "未作成"),
            let appBytes = parseByteCount(appSize),
            let imageBytes = parseByteCount(diskImageSize) {
             let total = appBytes + imageBytes
@@ -2682,16 +2714,16 @@ private struct AnalysisContentView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         // Bundle Structure
-                        analysisSection(title: "バンドル構造", icon: "folder.fill") {
-                            infoRow(label: "総ファイル数", value: "\(result.totalFiles) 個")
-                            infoRow(label: "総サイズ", value: result.totalSize)
-                            infoRow(label: "最大ファイル", value: result.largestFile.name)
-                            infoRow(label: "最大ファイルサイズ", value: result.largestFile.size)
+                        analysisSection(title: String(localized: "バンドル構造"), icon: "folder.fill") {
+                            infoRow(label: String(localized: "総ファイル数"), value: "\(result.totalFiles) 個")
+                            infoRow(label: String(localized: "総サイズ"), value: result.totalSize)
+                            infoRow(label: String(localized: "最大ファイル"), value: result.largestFile.name)
+                            infoRow(label: String(localized: "最大ファイルサイズ"), value: result.largestFile.size)
                         }
                         
                         // Localization
                         if !result.localizations.isEmpty {
-                            analysisSection(title: "対応言語 (\(result.localizations.count))", icon: "globe") {
+                            analysisSection(title: String(localized: "対応言語 (\(result.localizations.count))"), icon: "globe") {
                                 ForEach(result.localizations.sorted(), id: \.self) { lang in
                                     Text("• \(getLanguageName(lang))")
                                         .font(.caption)
@@ -2702,7 +2734,7 @@ private struct AnalysisContentView: View {
                         
                         // Frameworks & Libraries
                         if !result.frameworks.isEmpty {
-                            analysisSection(title: "フレームワーク (\(result.frameworks.count))", icon: "shippingbox.fill") {
+                            analysisSection(title: String(localized: "フレームワーク (\(result.frameworks.count))"), icon: "shippingbox.fill") {
                                 ForEach(result.frameworks.sorted(), id: \.self) { framework in
                                     Text("• \(framework)")
                                         .font(.caption)
@@ -2712,13 +2744,13 @@ private struct AnalysisContentView: View {
                         }
                         
                         // Code Signature
-                        analysisSection(title: "コード署名", icon: "signature") {
-                            infoRow(label: "署名状態", value: result.codeSignature.isSigned ? "署名済み" : "未署名")
+                        analysisSection(title: String(localized: "コード署名"), icon: "signature") {
+                            infoRow(label: String(localized: "署名状態"), value: result.codeSignature.isSigned ? "署名済み" : "未署名")
                             if let teamId = result.codeSignature.teamIdentifier {
                                 infoRow(label: "Team ID", value: teamId)
                             }
                             if let signDate = result.codeSignature.signDate {
-                                infoRow(label: "署名日", value: signDate)
+                                infoRow(label: String(localized: "署名日"), value: signDate)
                             }
                         }
                         
@@ -2735,18 +2767,18 @@ private struct AnalysisContentView: View {
                         
                         // Binary Info
                         if let binary = result.binaryInfo {
-                            analysisSection(title: "バイナリ情報", icon: "cpu") {
-                                infoRow(label: "アーキテクチャ", value: binary.architectures.joined(separator: ", "))
-                                infoRow(label: "バイナリサイズ", value: binary.size)
+                            analysisSection(title: String(localized: "バイナリ情報"), icon: "cpu") {
+                                infoRow(label: String(localized: "アーキテクチャ"), value: binary.architectures.joined(separator: ", "))
+                                infoRow(label: String(localized: "バイナリサイズ"), value: binary.size)
                                 if let minOS = binary.minOSVersion {
-                                    infoRow(label: "最小OS", value: minOS)
+                                    infoRow(label: String(localized: "最小OS"), value: minOS)
                                 }
                             }
                         }
                         
                         // File Types
                         if !result.fileTypes.isEmpty {
-                            analysisSection(title: "ファイル種別", icon: "doc.fill") {
+                            analysisSection(title: String(localized: "ファイル種別"), icon: "doc.fill") {
                                 ForEach(result.fileTypes.sorted(by: { $0.count > $1.count }), id: \.fileExtension) { fileType in
                                     HStack {
                                         Text(fileType.fileExtension.isEmpty ? "(拡張子なし)" : ".\(fileType.fileExtension)")
@@ -3153,7 +3185,7 @@ private struct DrawerPanel: View {
                         }
                     ),
                     title: "PlayCover.app",
-                    help: "PlayCover を開く (⌘⇧P)"
+                    help: String(localized: "PlayCover を開く (⌘⇧P)")
                 ) {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3173,8 +3205,8 @@ private struct DrawerPanel: View {
                             .foregroundStyle(.blue)
                             .frame(width: 32, height: 32)
                     ),
-                    title: "IPA をインストール",
-                    help: "IPA をインストール (⌘I)"
+                    title: String(localized: "IPA をインストール"),
+                    help: String(localized: "IPA をインストール (⌘I)")
                 ) {
                     showingInstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3212,8 +3244,8 @@ private struct DrawerPanel: View {
                             .foregroundStyle(.secondary)
                             .frame(width: 32, height: 32)
                     ),
-                    title: "設定",
-                    help: "設定 (ショートカット)"
+                    title: String(localized: "設定"),
+                    help: String(localized: "設定 (ショートカット)")
                 ) {
                     showingSettings = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3284,19 +3316,19 @@ private struct KeyboardShortcutGuide: View {
     
     let shortcuts: [ShortcutItem] = [
         // Global commands
-        ShortcutItem(keys: "⌘,", description: "設定を開く", category: "グローバル"),
-        ShortcutItem(keys: "⌘I", description: "IPA をインストール", category: "グローバル"),
-        ShortcutItem(keys: "⌘D", description: "アプリをアンインストール", category: "グローバル"),
-        ShortcutItem(keys: "⌘M", description: "メニューを開く/閉じる", category: "グローバル"),
-        ShortcutItem(keys: "⌘R", description: "アプリ一覧を更新", category: "グローバル"),
-        ShortcutItem(keys: "⌘⇧U", description: "すべてマウント解除", category: "グローバル"),
-        ShortcutItem(keys: "⌘⇧P", description: "PlayCover.app を開く", category: "グローバル"),
-        ShortcutItem(keys: "⌘/", description: "このヘルプを表示", category: "グローバル"),
+        ShortcutItem(keys: "⌘,", description: String(localized: "設定を開く"), category: "グローバル"),
+        ShortcutItem(keys: "⌘I", description: String(localized: "IPA をインストール"), category: "グローバル"),
+        ShortcutItem(keys: "⌘D", description: String(localized: "アプリをアンインストール"), category: "グローバル"),
+        ShortcutItem(keys: "⌘M", description: String(localized: "メニューを開く/閉じる"), category: "グローバル"),
+        ShortcutItem(keys: "⌘R", description: String(localized: "アプリ一覧を更新"), category: "グローバル"),
+        ShortcutItem(keys: "⌘⇧U", description: String(localized: "すべてマウント解除"), category: "グローバル"),
+        ShortcutItem(keys: "⌘⇧P", description: String(localized: "PlayCover.app を開く"), category: "グローバル"),
+        ShortcutItem(keys: "⌘/", description: String(localized: "このヘルプを表示"), category: "グローバル"),
         
         // Navigation
-        ShortcutItem(keys: "↑↓←→", description: "アプリ間を移動", category: "ナビゲーション"),
-        ShortcutItem(keys: "Enter / Space", description: "フォーカスされたアプリを起動", category: "ナビゲーション"),
-        ShortcutItem(keys: "Escape", description: "フォーカスをクリア", category: "ナビゲーション"),
+        ShortcutItem(keys: "↑↓←→", description: String(localized: "アプリ間を移動"), category: "ナビゲーション"),
+        ShortcutItem(keys: "Enter / Space", description: String(localized: "フォーカスされたアプリを起動"), category: "ナビゲーション"),
+        ShortcutItem(keys: "Escape", description: String(localized: "フォーカスをクリア"), category: "ナビゲーション"),
     ]
     
     var body: some View {
@@ -3322,7 +3354,7 @@ private struct KeyboardShortcutGuide: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("閉じる (Esc)")
+                .help(String(localized: "閉じる (Esc)"))
             }
             .padding(24)
             .background(.ultraThinMaterial)
@@ -3332,7 +3364,7 @@ private struct KeyboardShortcutGuide: View {
             // Shortcuts list
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(["グローバル", "ナビゲーション"], id: \.self) { category in
+                    ForEach([String(localized: "グローバル"), "ナビゲーション"], id: \.self) { category in
                         VStack(alignment: .leading, spacing: 12) {
                             Text(category)
                                 .font(.headline)
@@ -3507,11 +3539,11 @@ private struct DataHandlingAlertView: View {
     private func strategyDescription(for strategy: SettingsStore.InternalDataStrategy) -> String {
         switch strategy {
         case .discard:
-            return "内部データを破棄してから新しくマウントします"
+            return String(localized: "内部データを破棄してから新しくマウントします")
         case .mergeThenDelete:
-            return "内部データをコンテナに統合してから削除してマウントします"
+            return String(localized: "内部データをコンテナに統合してから削除してマウントします")
         case .leave:
-            return "内部データはそのまま残してマウントします"
+            return String(localized: "内部データはそのまま残してマウントします")
         }
     }
     

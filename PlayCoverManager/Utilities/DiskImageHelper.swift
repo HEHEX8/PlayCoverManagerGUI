@@ -61,7 +61,7 @@ final class DiskImageHelper {
         )
         
         guard state.imageExists else {
-            throw AppError.diskImage("ディスクイメージが見つかりません", message: "先にディスクイメージを作成してください。")
+            throw AppError.diskImage(String(localized: "ディスクイメージが見つかりません"), message: "先にディスクイメージを作成してください。")
         }
         
         // Check for internal data if not mounted
@@ -103,7 +103,7 @@ final class DiskImageHelper {
         )
         
         guard state.imageExists else {
-            throw AppError.diskImage("ディスクイメージが見つかりません", message: "Bundle ID: \(bundleID)")
+            throw AppError.diskImage(String(localized: "ディスクイメージが見つかりません"), message: "Bundle ID: \(bundleID)")
         }
         
         if !state.isMounted {

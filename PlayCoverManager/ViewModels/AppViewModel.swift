@@ -5,7 +5,7 @@ import AppKit
 @Observable
 final class AppViewModel {
     var phase: AppPhase = .checking
-    var statusMessage: String = "環境を確認しています…"
+    var statusMessage: String = String(localized: "環境を確認しています…")
     var playCoverPaths: PlayCoverPaths?
     var launcherViewModel: LauncherViewModel?
     var setupViewModel: SetupWizardViewModel?
@@ -50,7 +50,7 @@ final class AppViewModel {
 
     func retry() {
         phase = .checking
-        statusMessage = "環境を再確認しています…"
+        statusMessage = String(localized: "環境を再確認しています…")
         // Swift 6.2: Task.immediate starts synchronously until first await
         Task.immediate { await runStartupChecks() }
     }
@@ -64,7 +64,7 @@ final class AppViewModel {
             self.playCoverPaths = playCoverPaths
 
             guard let baseDirectory = settings.diskImageDirectory else {
-                statusMessage = "初期セットアップが必要です"
+                statusMessage = String(localized: "初期セットアップが必要です")
                 let context = AppPhase.SetupContext(missingPlayCover: false, missingDiskImage: true, diskImageMountRequired: true)
                 await presentSetup(context: context)
                 return
@@ -76,13 +76,13 @@ final class AppViewModel {
             guard fileManager.fileExists(atPath: baseDirectory.path) else {
                 // Drive is not accessible - show error with options
                 throw AppError.diskImage(
-                    "ディスクイメージ保存先にアクセスできません",
-                    message: "保存先のドライブが接続されていない可能性があります。\n\n保存先: \(baseDirectory.path)"
+                    String(localized: "ディスクイメージ保存先にアクセスできません"),
+                    message: String(localized: "保存先のドライブが接続されていない可能性があります。\n\n保存先: \(baseDirectory.path)")
                 )
             }
 
             if !fileManager.fileExists(atPath: diskImageURL.path) {
-                statusMessage = "PlayCover 用ディスクイメージが存在しません"
+                statusMessage = String(localized: "PlayCover 用ディスクイメージが存在しません")
                 let context = AppPhase.SetupContext(missingPlayCover: false, missingDiskImage: true, diskImageMountRequired: true)
                 await presentSetup(context: context)
                 return
@@ -98,7 +98,7 @@ final class AppViewModel {
                 phase = .error(error)
             }
         } catch {
-            let appError = AppError.unknown("起動時の検証に失敗しました", message: error.localizedDescription, underlying: error)
+            let appError = AppError.unknown(String(localized: "起動時の検証に失敗しました"), message: error.localizedDescription, underlying: error)
             phase = .error(appError)
         }
     }
@@ -125,7 +125,7 @@ final class AppViewModel {
             let nobrowse = settings.nobrowseEnabled
             try await environmentService.ensureMount(of: diskImageURL, mountPoint: mountPoint, nobrowse: nobrowse)
         } catch {
-            throw AppError.diskImage("PlayCover コンテナのマウントに失敗", message: error.localizedDescription, underlying: error)
+            throw AppError.diskImage(String(localized: "PlayCover コンテナのマウントに失敗"), message: error.localizedDescription, underlying: error)
         }
     }
 
@@ -149,7 +149,7 @@ final class AppViewModel {
             launcherViewModel = vm
             phase = .launcher
         } catch {
-            let appError = AppError.diskImage("アプリ一覧の取得に失敗", message: error.localizedDescription, underlying: error)
+            let appError = AppError.diskImage(String(localized: "アプリ一覧の取得に失敗"), message: error.localizedDescription, underlying: error)
             phase = .error(appError)
         }
     }
@@ -229,7 +229,7 @@ final class AppViewModel {
     }
     
     func continueWaiting() {
-        terminationFlowState = .unmounting(status: "アンマウント処理を続行しています…")
+        terminationFlowState = .unmounting(status: String(localized: "アンマウント処理を続行しています…"))
         // Extend timeout by 5 seconds
         if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
             appDelegate.extendTimeout()

@@ -33,7 +33,7 @@ final class DiskImageService {
 
     private func diskImageURL(for bundleIdentifier: String) throws -> URL {
         guard let base = settings.diskImageDirectory else {
-            throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "設定画面から保存先を指定してください。")
+            throw AppError.diskImage(String(localized: "ディスクイメージの保存先が未設定"), message: "設定画面から保存先を指定してください。")
         }
         // ASIF format only (macOS Tahoe 26.0+)
         return base.appendingPathComponent("\(bundleIdentifier).asif")
@@ -90,8 +90,8 @@ final class DiskImageService {
             Logger.error("Failed to create parent directory: \(error)")
             if error.domain == NSCocoaErrorDomain && (error.code == NSFileWriteNoPermissionError || error.code == NSFileNoSuchFileError) {
                 throw AppError.permissionDenied(
-                    "保存先へのアクセス権限がありません",
-                    message: "macOS のセキュリティ設定により、保存先ディレクトリへのアクセスが拒否されました。\n\n対処方法：\n1. システム設定 > プライバシーとセキュリティ > フルディスクアクセス\n2. 「+」ボタンをクリックし、PlayCover Manager を追加\n3. アプリを再起動してください\n\nパス: \(parentDir.path)"
+                    String(localized: "保存先へのアクセス権限がありません"),
+                    message: String(localized: "macOS のセキュリティ設定により、保存先ディレクトリへのアクセスが拒否されました。\n\n対処方法：\n1. システム設定 > プライバシーとセキュリティ > フルディスクアクセス\n2. 「+」ボタンをクリックし、PlayCover Manager を追加\n3. アプリを再起動してください\n\nパス: \(parentDir.path)")
                 )
             }
             throw error
@@ -107,8 +107,8 @@ final class DiskImageService {
         } catch {
             Logger.error("Write permission test failed: \(error)")
             throw AppError.permissionDenied(
-                "保存先に書き込み権限がありません",
-                message: "ディレクトリは作成できましたが、ファイルの書き込みテストに失敗しました。\n\n対処方法：\n• 設定画面で別の保存先を選択してください\n• 外部ドライブの場合、マウントされているか確認してください\n• ドライブが読み取り専用でないか確認してください\n\nパス: \(parentDir.path)\nエラー: \(error.localizedDescription)"
+                String(localized: "保存先に書き込み権限がありません"),
+                message: String(localized: "ディレクトリは作成できましたが、ファイルの書き込みテストに失敗しました。\n\n対処方法：\n• 設定画面で別の保存先を選択してください\n• 外部ドライブの場合、マウントされているか確認してください\n• ドライブが読み取り専用でないか確認してください\n\nパス: \(parentDir.path)\nエラー: \(error.localizedDescription)")
             )
         }
         
@@ -144,7 +144,7 @@ final class DiskImageService {
         let imageURL = try diskImageURL(for: bundleIdentifier)
         guard fileManager.fileExists(atPath: imageURL.path) else {
             Logger.error("Disk image not found: \(imageURL.path)")
-            throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
+            throw AppError.diskImage(String(localized: "ディスクイメージが見つかりません"), message: imageURL.path)
         }
         try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
         
@@ -163,8 +163,8 @@ final class DiskImageService {
         } catch let error as ProcessRunnerError {
             if case .commandFailed(_, let exitCode, let stderr) = error, exitCode == 1 && stderr.contains("アクセス権がありません") {
                 throw AppError.permissionDenied(
-                    "マウント先へのアクセス権限がありません",
-                    message: "~/Library/Containers/ へのマウントには「フルディスクアクセス」権限が必要です。\n\n対処方法：\n1. システム設定を開く（⌘Space で「システム設定」を検索）\n2. プライバシーとセキュリティ > フルディスクアクセス\n3. 「+」ボタンで PlayCover Manager を追加\n4. アプリを再起動してください\n\nマウント先: \(mountPoint.path)"
+                    String(localized: "マウント先へのアクセス権限がありません"),
+                    message: String(localized: "~/Library/Containers/ へのマウントには「フルディスクアクセス」権限が必要です。\n\n対処方法：\n1. システム設定を開く（⌘Space で「システム設定」を検索）\n2. プライバシーとセキュリティ > フルディスクアクセス\n3. 「+」ボタンで PlayCover Manager を追加\n4. アプリを再起動してください\n\nマウント先: \(mountPoint.path)")
                 )
             }
             throw error
@@ -192,7 +192,7 @@ final class DiskImageService {
             do {
                 try await detach(volumeURL: url)
             } catch {
-                throw AppError.diskImage("ディスクイメージのアンマウントに失敗", message: url.path, underlying: error)
+                throw AppError.diskImage(String(localized: "ディスクイメージのアンマウントに失敗"), message: url.path, underlying: error)
             }
         }
     }
@@ -225,7 +225,7 @@ final class DiskImageService {
     
     func mountDiskImage(_ imageURL: URL, at mountPoint: URL, nobrowse: Bool) async throws {
         guard fileManager.fileExists(atPath: imageURL.path) else {
-            throw AppError.diskImage("ディスクイメージが見つかりません", message: imageURL.path)
+            throw AppError.diskImage(String(localized: "ディスクイメージが見つかりません"), message: imageURL.path)
         }
         try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
         
@@ -408,7 +408,7 @@ final class DiskImageService {
         guard let infoPlist = infoOutput?.parsePlist(),
               let deviceId = infoPlist["DeviceIdentifier"] as? String else {
             Logger.error("Failed to get device identifier")
-            throw AppError.diskImage("デバイスIDの取得に失敗", message: volumePath.path, underlying: nil)
+            throw AppError.diskImage(String(localized: "デバイスIDの取得に失敗"), message: volumePath.path, underlying: nil)
         }
         
         Logger.diskImage("Device ID: \(deviceId)")

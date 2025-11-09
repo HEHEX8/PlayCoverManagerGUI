@@ -16,26 +16,26 @@ final class SetupWizardViewModel {
         var title: String {
             switch self {
             case .installPlayCover:
-                return "PlayCover の準備"
+                return String(localized: "PlayCover の準備")
             case .selectStorage:
-                return "ディスクイメージ保存先"
+                return String(localized: "ディスクイメージ保存先")
             case .prepareDiskImage:
-                return "ディスクイメージ作成"
+                return String(localized: "ディスクイメージ作成")
             case .finished:
-                return "完了"
+                return String(localized: "完了")
             }
         }
 
         var description: String {
             switch self {
             case .installPlayCover:
-                return "PlayCover.app が /Applications に存在する必要があります。"
+                return String(localized: "PlayCover.app が /Applications に存在する必要があります。")
             case .selectStorage:
-                return "ASIF ディスクイメージの保存先を選択してください。外部ストレージがおすすめですが強制ではありません。"
+                return String(localized: "ASIF ディスクイメージの保存先を選択してください。外部ストレージがおすすめですが強制ではありません。")
             case .prepareDiskImage:
-                return "io.playcover.PlayCover 用の ASIF イメージを作成しマウントします。"
+                return String(localized: "io.playcover.PlayCover 用の ASIF イメージを作成しマウントします。")
             case .finished:
-                return "セットアップが完了しました。"
+                return String(localized: "セットアップが完了しました。")
             }
         }
     }
@@ -45,7 +45,7 @@ final class SetupWizardViewModel {
     var statusMessage: String = ""
     var error: AppError?
     var storageURL: URL?
-    var completionMessage: String = "セットアップが完了しました。"
+    var completionMessage: String = String(localized: "セットアップが完了しました。")
 
     var onCompletion: (() -> Void)?
 
@@ -96,9 +96,9 @@ final class SetupWizardViewModel {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
-        panel.prompt = "選択"
-        panel.title = "ディスクイメージの保存先"
-        panel.message = "ASIF ディスクイメージを保存するフォルダを選択してください。"
+        panel.prompt = String(localized: "選択")
+        panel.title = String(localized: "ディスクイメージの保存先")
+        panel.message = String(localized: "ASIF ディスクイメージを保存するフォルダを選択してください。")
         if panel.runModal() == .OK, let url = panel.url {
             storageURL = url
             settings.diskImageDirectory = url
@@ -112,14 +112,14 @@ final class SetupWizardViewModel {
             Task.immediate { await verifyPlayCoverExists() }
         case .selectStorage:
             guard storageURL != nil else {
-                error = AppError.environment("保存先が選択されていません", message: "ディスクイメージ保存先を選択してください")
+                error = AppError.environment(String(localized: "保存先が選択されていません"), message: "ディスクイメージ保存先を選択してください")
                 return
             }
             advance()
         case .prepareDiskImage:
             let resolvedPaths = playCoverPaths ?? detectedPlayCoverPaths ?? (try? environmentService.detectPlayCover())
             guard let paths = resolvedPaths else {
-                error = AppError.environment("PlayCover.app が検出できません", message: "PlayCover をインストールして再試行してください")
+                error = AppError.environment(String(localized: "PlayCover.app が検出できません"), message: "PlayCover をインストールして再試行してください")
                 return
             }
             detectedPlayCoverPaths = paths
@@ -138,13 +138,13 @@ final class SetupWizardViewModel {
         } catch let error as AppError {
             self.error = error
         } catch {
-            self.error = AppError.environment("PlayCover の確認に失敗", message: error.localizedDescription, underlying: error)
+            self.error = AppError.environment(String(localized: "PlayCover の確認に失敗"), message: error.localizedDescription, underlying: error)
         }
     }
 
     private func prepareDiskImage(bundleID: String, mountPoint: URL) async {
         isBusy = true
-        statusMessage = "ディスクイメージを作成しています…"
+        statusMessage = String(localized: "ディスクイメージを作成しています…")
         defer { isBusy = false }
         do {
             _ = try await diskImageService.ensureDiskImageExists(for: bundleID, volumeName: bundleID)
@@ -166,7 +166,7 @@ final class SetupWizardViewModel {
         } catch let error as AppError {
             self.error = error
         } catch {
-            self.error = AppError.diskImage("ディスクイメージの準備に失敗", message: error.localizedDescription, underlying: error)
+            self.error = AppError.diskImage(String(localized: "ディスクイメージの準備に失敗"), message: error.localizedDescription, underlying: error)
         }
     }
 

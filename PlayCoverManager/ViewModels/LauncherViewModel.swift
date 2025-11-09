@@ -189,7 +189,7 @@ final class LauncherViewModel {
             // Update running apps set for consistency
             previouslyRunningApps = Set(apps.filter { $0.isRunning }.map { $0.bundleIdentifier })
         } catch {
-            self.error = AppError.environment("アプリ一覧の更新に失敗", message: error.localizedDescription, underlying: error)
+            self.error = AppError.environment(String(localized: "アプリ一覧の更新に失敗"), message: error.localizedDescription, underlying: error)
         }
     }
 
@@ -217,7 +217,7 @@ final class LauncherViewModel {
         Logger.lifecycle("Starting launch flow for \(app.bundleIdentifier) (resume: \(resume))")
         isBusy = true
         isShowingStatus = false  // Don't show status overlay for normal launch
-        statusMessage = "\(app.displayName) を準備しています…"
+        statusMessage = String(localized: "\(app.displayName) を準備しています…")
         defer { 
             isBusy = false
             isShowingStatus = false
@@ -289,7 +289,7 @@ final class LauncherViewModel {
         } catch let error as AppError {
             self.error = error
         } catch {
-            self.error = AppError.diskImage("アプリの起動に失敗", message: error.localizedDescription, underlying: error)
+            self.error = AppError.diskImage(String(localized: "アプリの起動に失敗"), message: error.localizedDescription, underlying: error)
         }
     }
 
@@ -310,7 +310,7 @@ final class LauncherViewModel {
     private func createImageAndResume(app: PlayCoverApp, context: LaunchContext) async {
         isBusy = true
         isShowingStatus = true  // Show status for disk image creation (time-consuming)
-        statusMessage = "\(app.displayName) 用のディスクイメージを作成しています…"
+        statusMessage = String(localized: "\(app.displayName) 用のディスクイメージを作成しています…")
         defer { 
             isBusy = false
             isShowingStatus = false
@@ -323,7 +323,7 @@ final class LauncherViewModel {
         } catch let error as AppError {
             self.error = error
         } catch {
-            self.error = AppError.diskImage("ディスクイメージの作成に失敗", message: error.localizedDescription, underlying: error)
+            self.error = AppError.diskImage(String(localized: "ディスクイメージの作成に失敗"), message: error.localizedDescription, underlying: error)
         }
     }
 
@@ -339,7 +339,7 @@ final class LauncherViewModel {
     private func handleInternalData(strategy: SettingsStore.InternalDataStrategy, request: DataHandlingRequest, context: LaunchContext) async {
         isBusy = true
         isShowingStatus = true  // Show status for data handling (time-consuming)
-        statusMessage = "内部データを処理しています…"
+        statusMessage = String(localized: "内部データを処理しています…")
         defer { 
             isBusy = false
             isShowingStatus = false
@@ -362,7 +362,7 @@ final class LauncherViewModel {
         } catch let error as AppError {
             self.error = error
         } catch {
-            self.error = AppError.diskImage("内部データ処理に失敗", message: error.localizedDescription, underlying: error)
+            self.error = AppError.diskImage(String(localized: "内部データ処理に失敗"), message: error.localizedDescription, underlying: error)
         }
     }
 
@@ -371,7 +371,7 @@ final class LauncherViewModel {
             do {
                 try fileManager.removeItem(at: url)
             } catch {
-                throw AppError.diskImage("内部データの削除に失敗", message: url.lastPathComponent, underlying: error)
+                throw AppError.diskImage(String(localized: "内部データの削除に失敗"), message: url.lastPathComponent, underlying: error)
             }
         }
     }
@@ -425,8 +425,8 @@ final class LauncherViewModel {
         if !runningApps.isEmpty {
             let appsList = runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
             unmountFlowState = .error(
-                title: "実行中のアプリがあります",
-                message: "以下のアプリが実行中です。アンマウントするには先にこれらのアプリを終了してください。\n\n\(appsList)"
+                title: String(localized: "実行中のアプリがあります"),
+                message: String(localized: "以下のアプリが実行中です。アンマウントするには先にこれらのアプリを終了してください。\n\n\(appsList)")
             )
             return
         }
@@ -546,7 +546,7 @@ final class LauncherViewModel {
         
         // Set initial processing state
         await MainActor.run {
-            unmountFlowState = .processing(status: "ディスクイメージをアンマウントしています…")
+            unmountFlowState = .processing(status: String(localized: "ディスクイメージをアンマウントしています…"))
         }
         
         var successCount = 0
@@ -564,7 +564,7 @@ final class LauncherViewModel {
         // Step 1: Unmount all app containers
         Logger.unmount("Step 1: Unmounting app containers")
         await MainActor.run {
-            unmountFlowState = .processing(status: "アプリコンテナをアンマウントしています…")
+            unmountFlowState = .processing(status: String(localized: "アプリコンテナをアンマウントしています…"))
         }
         
         // Use TaskGroup for parallel unmounting (faster for multiple apps)
@@ -629,7 +629,7 @@ final class LauncherViewModel {
         // Step 2: Unmount PlayCover container
         if applyToPlayCoverContainer {
             await MainActor.run {
-                unmountFlowState = .processing(status: "PlayCover コンテナをアンマウントしています…")
+                unmountFlowState = .processing(status: String(localized: "PlayCover コンテナをアンマウントしています…"))
             }
             let playCoverContainer = playCoverPaths.containerRootURL
             
@@ -651,8 +651,8 @@ final class LauncherViewModel {
                     // PlayCover container failed, show error and abort
                     await MainActor.run {
                         unmountFlowState = .error(
-                            title: "PlayCover コンテナのアンマウントに失敗しました",
-                            message: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)"
+                            title: String(localized: "PlayCover コンテナのアンマウントに失敗しました"),
+                            message: String(localized: "PlayCover が実行中の可能性があります。\n\nエラー: \(error.localizedDescription)")
                         )
                     }
                     return
@@ -699,9 +699,9 @@ final class LauncherViewModel {
                 
                 if shouldEject {
                     await MainActor.run {
-                        unmountFlowState = .processing(status: "外部ドライブを取り外し可能な状態にしています…")
+                        unmountFlowState = .processing(status: String(localized: "外部ドライブを取り外し可能な状態にしています…"))
                     }
-                    statusMessage = "外部ドライブを取り外し可能な状態にしています…"
+                    statusMessage = String(localized: "外部ドライブを取り外し可能な状態にしています…")
                     if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
                         
                         do {
@@ -728,7 +728,7 @@ final class LauncherViewModel {
                             if shouldForceEject {
                                 // Attempt force eject
                                 await MainActor.run {
-                                    unmountFlowState = .processing(status: "強制イジェクト中…")
+                                    unmountFlowState = .processing(status: String(localized: "強制イジェクト中…"))
                                 }
                                 
                                 do {
@@ -740,8 +740,8 @@ final class LauncherViewModel {
                                     // Force eject also failed - show error
                                     await MainActor.run {
                                         unmountFlowState = .error(
-                                            title: "強制イジェクトに失敗",
-                                            message: "ドライブを強制イジェクトできませんでした。\n\nFinderから手動でイジェクトしてください。"
+                                            title: String(localized: "強制イジェクトに失敗"),
+                                            message: String(localized: "ドライブを強制イジェクトできませんでした。\n\nFinderから手動でイジェクトしてください。")
                                         )
                                     }
                                     return  // Exit early
@@ -756,8 +756,8 @@ final class LauncherViewModel {
                         // Show error to user
                         await MainActor.run {
                             unmountFlowState = .error(
-                                title: "デバイスパスの取得に失敗",
-                                message: "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。"
+                                title: String(localized: "デバイスパスの取得に失敗"),
+                                message: String(localized: "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。")
                             )
                         }
                         return  // Exit early
@@ -794,7 +794,7 @@ final class LauncherViewModel {
     /// Perform force unmount for storage change (does not quit)
     private func performForceUnmountForStorageChange() async {
         await MainActor.run {
-            unmountFlowState = .processing(status: "強制アンマウント中…")
+            unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
         }
         
         var successCount = 0
@@ -833,8 +833,8 @@ final class LauncherViewModel {
             if failedCount > 0 {
                 // Still failed after force - show error
                 unmountFlowState = .error(
-                    title: "強制アンマウントに失敗",
-                    message: "\(failedCount) 個のコンテナを強制アンマウントできませんでした。\n\nFinderから手動でイジェクトしてから、再度保存先の変更を試してください。"
+                    title: String(localized: "強制アンマウントに失敗"),
+                    message: String(localized: "\(failedCount) 個のコンテナを強制アンマウントできませんでした。\n\nFinderから手動でイジェクトしてから、再度保存先の変更を試してください。")
                 )
                 isStorageChangeFlow = false
             } else {
@@ -852,7 +852,7 @@ final class LauncherViewModel {
     private func performForceUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
         
         await MainActor.run {
-            unmountFlowState = .processing(status: "強制アンマウント中…")
+            unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
         }
         
         var successCount = 0
@@ -931,7 +931,7 @@ final class LauncherViewModel {
                 
                 if shouldEject {
                     await MainActor.run {
-                        unmountFlowState = .processing(status: "外部ドライブを取り外し可能な状態にしています…")
+                        unmountFlowState = .processing(status: String(localized: "外部ドライブを取り外し可能な状態にしています…"))
                     }
                     
                     if let devicePath = try? await diskImageService.getDevicePath(for: storageDir) {
@@ -958,7 +958,7 @@ final class LauncherViewModel {
                             if shouldForceEject {
                                 // Attempt force eject
                                 await MainActor.run {
-                                    unmountFlowState = .processing(status: "強制イジェクト中…")
+                                    unmountFlowState = .processing(status: String(localized: "強制イジェクト中…"))
                                 }
                                 
                                 do {
@@ -968,8 +968,8 @@ final class LauncherViewModel {
                                     // Force eject also failed - show error
                                     await MainActor.run {
                                         unmountFlowState = .error(
-                                            title: "強制イジェクトに失敗",
-                                            message: "ドライブを強制イジェクトできませんでした。\n\nFinderから手動でイジェクトしてください。"
+                                            title: String(localized: "強制イジェクトに失敗"),
+                                            message: String(localized: "ドライブを強制イジェクトできませんでした。\n\nFinderから手動でイジェクトしてください。")
                                         )
                                     }
                                     return  // Exit early
@@ -983,8 +983,8 @@ final class LauncherViewModel {
                         // Could not get device path - show error
                         await MainActor.run {
                             unmountFlowState = .error(
-                                title: "デバイスパスの取得に失敗",
-                                message: "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。"
+                                title: String(localized: "デバイスパスの取得に失敗"),
+                                message: String(localized: "外部ドライブのデバイスパスを取得できませんでした。\n\nFinderから手動でイジェクトしてください。")
                             )
                         }
                         return  // Exit early
@@ -1003,8 +1003,8 @@ final class LauncherViewModel {
             // Some unmounts failed
             await MainActor.run {
                 unmountFlowState = .error(
-                    title: "強制アンマウントに失敗",
-                    message: "\(failedCount) 個のコンテナを強制アンマウントできませんでした。\n\n手動でFinderからイジェクトしてください。"
+                    title: String(localized: "強制アンマウントに失敗"),
+                    message: String(localized: "\(failedCount) 個のコンテナを強制アンマウントできませんでした。\n\n手動でFinderからイジェクトしてください。")
                 )
             }
         }
@@ -1027,8 +1027,8 @@ final class LauncherViewModel {
         if !runningApps.isEmpty {
             let appsList = runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
             unmountFlowState = .error(
-                title: "実行中のアプリがあります",
-                message: "保存先を変更するには、先にこれらのアプリを終了してください。\n\n\(appsList)"
+                title: String(localized: "実行中のアプリがあります"),
+                message: String(localized: "保存先を変更するには、先にこれらのアプリを終了してください。\n\n\(appsList)")
             )
             return
         }
@@ -1074,7 +1074,7 @@ final class LauncherViewModel {
     /// Perform unmount all for storage location change (does not quit)
     private func performUnmountForStorageChange() async {
         await MainActor.run {
-            unmountFlowState = .processing(status: "すべてのディスクイメージをアンマウント中…")
+            unmountFlowState = .processing(status: String(localized: "すべてのディスクイメージをアンマウント中…"))
         }
         
         var successCount = 0

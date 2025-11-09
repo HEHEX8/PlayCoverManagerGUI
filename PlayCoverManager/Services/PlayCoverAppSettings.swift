@@ -117,11 +117,11 @@ extension PlayCoverAppSettings {
         
         var displayName: String {
             switch self {
-            case .auto: return "自動（ディスプレイに基づく）"
+            case .auto: return String(localized: "自動（ディスプレイに基づく）")
             case .hd1080p: return "1080p (1920×1080)"
             case .hd1440p: return "1440p (2560×1440)"
             case .uhd4K: return "4K (3840×2160)"
-            case .custom: return "カスタム"
+            case .custom: return String(localized: "カスタム")
             }
         }
     }
@@ -139,7 +139,7 @@ extension PlayCoverAppSettings {
             case .ratio4_3: return "4:3"
             case .ratio16_9: return "16:9"
             case .ratio16_10: return "16:10"
-            case .custom: return "カスタム"
+            case .custom: return String(localized: "カスタム")
             }
         }
     }
@@ -167,11 +167,11 @@ extension PlayCoverAppSettings {
         
         var description: String {
             switch self {
-            case .iPad13_8: return "ほとんどの Apple Silicon Mac に最適"
-            case .iPad13_4: return "小型ディスプレイ向け"
-            case .iPad8_12: return "MacBook Air での長時間プレイに推奨（低解像度だが安定した 60 FPS）"
-            case .iPad8_1: return "互換性重視"
-            case .iPhone14_2, .iPhone14_3: return "iPhone 専用アプリ向け"
+            case .iPad13_8: return String(localized: "ほとんどの Apple Silicon Mac に最適")
+            case .iPad13_4: return String(localized: "小型ディスプレイ向け")
+            case .iPad8_12: return String(localized: "MacBook Air での長時間プレイに推奨（低解像度だが安定した 60 FPS）")
+            case .iPad8_1: return String(localized: "互換性重視")
+            case .iPhone14_2, .iPhone14_3: return String(localized: "iPhone 専用アプリ向け")
             }
         }
     }
@@ -185,9 +185,9 @@ extension PlayCoverAppSettings {
         
         var displayName: String {
             switch self {
-            case .none: return "なし"
-            case .method1: return "方法 1"
-            case .method2: return "方法 2"
+            case .none: return String(localized: "なし")
+            case .method1: return String(localized: "方法 1")
+            case .method2: return String(localized: "方法 2")
             }
         }
     }

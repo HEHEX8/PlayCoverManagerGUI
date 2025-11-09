@@ -143,16 +143,16 @@ struct SetupWizardView: View {
         switch viewModel.currentStep {
         case .installPlayCover:
             if playCoverPaths != nil || viewModel.detectedPlayCoverPaths != nil {
-                return "次へ"
+                return String(localized: "次へ")
             } else {
-                return "確認"
+                return String(localized: "確認")
             }
         case .finished:
-            return "完了"
+            return String(localized: "完了")
         case .prepareDiskImage:
-            return viewModel.isBusy ? "処理中(和点)" : "実行"
+            return viewModel.isBusy ? String(localized: "処理中(和点)") : "実行"
         default:
-            return "次へ"
+            return String(localized: "次へ")
         }
     }
     
@@ -474,10 +474,10 @@ private struct DiskImageStepView: View {
                             .font(.headline)
                         
                         VStack(spacing: 12) {
-                            InfoRow(icon: "doc.fill", title: "ファイル名", value: "io.playcover.PlayCover.asif")
+                            InfoRow(icon: "doc.fill", title: String(localized: "ファイル名"), value: "io.playcover.PlayCover.asif")
                             
                             if let url = storageURL {
-                                InfoRow(icon: "folder.fill", title: "保存先", value: url.path)
+                                InfoRow(icon: "folder.fill", title: String(localized: "保存先"), value: url.path)
                             }
                         }
                         .padding(20)

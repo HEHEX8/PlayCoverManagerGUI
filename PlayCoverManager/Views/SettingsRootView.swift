@@ -34,7 +34,7 @@ struct SettingsRootView: View {
                 Button("閉じる") {
                     dismiss()
                 }
-                .help("設定を閉じる (Esc)")
+                .help(String(localized: "設定を閉じる (Esc)"))
             }
         }
         .onKeyPress(.escape) {
@@ -109,7 +109,7 @@ private struct GeneralSettingsView: View {
                                 .font(.system(size: 14, weight: .medium))
                         }
                         .buttonStyle(.bordered)
-                        .help("すべてのコンテナをアンマウントしてから保存先を変更します")
+                        .help(String(localized: "すべてのコンテナをアンマウントしてから保存先を変更します"))
                         
                         Text("保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。")
                             .font(.caption)
@@ -197,8 +197,8 @@ private struct GeneralSettingsView: View {
         }
         .keyboardNavigableAlert(
             isPresented: $showLanguageChangeAlert,
-            title: "言語を変更しました",
-            message: "言語の変更を完全に反映するには、アプリを再起動する必要があります。",
+            title: String(localized: "言語を変更しました"),
+            message: String(localized: "言語の変更を完全に反映するには、アプリを再起動する必要があります。"),
             buttons: [
                 AlertButton("後で再起動", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
                     previousLanguage = settingsStore.appLanguage
@@ -892,13 +892,13 @@ struct IPAInstallerSheet: View {
     private func installTypeMessage(for info: IPAInstallerService.IPAInfo) -> String {
         switch info.installType {
         case .newInstall:
-            return "このアプリを新しくインストールします。"
+            return String(localized: "このアプリを新しくインストールします。")
         case .upgrade:
-            return "既存のアプリを新しいバージョンにアップグレードします。"
+            return String(localized: "既存のアプリを新しいバージョンにアップグレードします。")
         case .downgrade:
-            return "既存のアプリを古いバージョンにダウングレードします。"
+            return String(localized: "既存のアプリを古いバージョンにダウングレードします。")
         case .reinstall:
-            return "同じバージョンで上書きインストールします。"
+            return String(localized: "同じバージョンで上書きインストールします。")
         }
     }
     
@@ -943,7 +943,7 @@ struct IPAInstallerSheet: View {
         } else {
             panel.allowedContentTypes = [.data]
         }
-        panel.message = "インストールする IPA ファイルを選択してください"
+        panel.message = String(localized: "インストールする IPA ファイルを選択してください")
         
         if panel.runModal() == .OK {
             let newIPAs = panel.urls.filter { !selectedIPAs.contains($0) }
@@ -970,7 +970,7 @@ struct IPAInstallerSheet: View {
             
             if analyzedIPAs.isEmpty {
                 currentPhase = .selection
-                statusMessage = "すべての IPA の解析に失敗しました"
+                statusMessage = String(localized: "すべての IPA の解析に失敗しました")
             } else {
                 currentPhase = .confirmation
             }
@@ -1005,7 +1005,7 @@ struct IPAInstallerSheet: View {
             try await service.installIPAs(analyzedIPAs)
         } catch {
             await MainActor.run {
-                statusMessage = "エラー: \(error.localizedDescription)"
+                statusMessage = String(localized: "エラー: \(error.localizedDescription)")
             }
         }
         
@@ -1395,7 +1395,7 @@ struct AppUninstallerSheet: View {
                         }
                         
                         // Currently uninstalling (if any)
-                        if !service.currentStatus.isEmpty && service.currentStatus != "完了" && 
+                        if !service.currentStatus.isEmpty && service.currentStatus != String(localized: "完了") && 
                            !service.uninstalledApps.contains(where: { service.currentStatus.contains($0) }) {
                             HStack(spacing: 12) {
                                 ProgressView()
@@ -1719,8 +1719,8 @@ private struct MaintenanceSettingsView: View {
         }
         .keyboardNavigableAlert(
             isPresented: $showingResetConfirmation,
-            title: "設定をリセットしますか？",
-            message: "アプリが再起動され、初期設定ウィザードが表示されます。",
+            title: String(localized: "設定をリセットしますか？"),
+            message: String(localized: "アプリが再起動され、初期設定ウィザードが表示されます。"),
             buttons: [
                 AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
                     showingResetConfirmation = false
@@ -1733,8 +1733,8 @@ private struct MaintenanceSettingsView: View {
         )
         .keyboardNavigableAlert(
             isPresented: $showingClearCacheConfirmation,
-            title: "キャッシュをクリアしますか?",
-            message: "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。",
+            title: String(localized: "キャッシュをクリアしますか?"),
+            message: String(localized: "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。"),
             buttons: [
                 AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
                     showingClearCacheConfirmation = false
@@ -1752,8 +1752,8 @@ private struct MaintenanceSettingsView: View {
         // We'll need to add a method to clear it
         // For now, just show completion
         let alert = NSAlert()
-        alert.messageText = "キャッシュをクリアしました"
-        alert.informativeText = "アプリを再起動すると、アイコンが再読み込みされます。"
+        alert.messageText = String(localized: "キャッシュをクリアしました")
+        alert.informativeText = String(localized: "アプリを再起動すると、アイコンが再読み込みされます。")
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
@@ -1839,9 +1839,9 @@ private struct AboutView: View {
                     Divider()
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        RequirementRow(icon: "desktopcomputer", text: "macOS Tahoe 26.0 以降")
-                        RequirementRow(icon: "cpu", text: "Apple Silicon Mac 専用")
-                        RequirementRow(icon: "square.stack.3d.down.right", text: "ASIF ディスクイメージ形式対応")
+                        RequirementRow(icon: "desktopcomputer", text: String(localized: "macOS Tahoe 26.0 以降"))
+                        RequirementRow(icon: "cpu", text: String(localized: "Apple Silicon Mac 専用"))
+                        RequirementRow(icon: "square.stack.3d.down.right", text: String(localized: "ASIF ディスクイメージ形式対応"))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

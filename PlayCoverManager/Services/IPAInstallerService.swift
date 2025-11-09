@@ -73,10 +73,10 @@ class IPAInstallerService {
         
         var installTypeDescription: String {
             switch installType {
-            case .newInstall: return "新規インストール"
-            case .upgrade: return "アップグレード"
-            case .downgrade: return "ダウングレード"
-            case .reinstall: return "上書き"
+            case .newInstall: return String(localized: "新規インストール")
+            case .upgrade: return String(localized: "アップグレード")
+            case .downgrade: return String(localized: "ダウングレード")
+            case .reinstall: return String(localized: "上書き")
             }
         }
         
@@ -134,22 +134,22 @@ class IPAInstallerService {
         // Find the .app directory
         let payloadURL = tempDir.appendingPathComponent("Payload")
         guard let appURL = try? FileManager.default.contentsOfDirectory(at: payloadURL, includingPropertiesForKeys: nil).first(where: { $0.pathExtension == "app" }) else {
-            throw AppError.installation("IPA 内に .app が見つかりません", message: "")
+            throw AppError.installation(String(localized: "IPA 内に .app が見つかりません"), message: "")
         }
         
         let infoPlistURL = appURL.appendingPathComponent("Info.plist")
         guard FileManager.default.fileExists(atPath: infoPlistURL.path) else {
-            throw AppError.installation("IPA 内に Info.plist が見つかりません", message: "")
+            throw AppError.installation(String(localized: "IPA 内に Info.plist が見つかりません"), message: "")
         }
         
         // Read plist data
         guard let plist = infoPlistURL.readPlist() else {
-            throw AppError.installation("Info.plist の読み取りに失敗しました", message: "")
+            throw AppError.installation(String(localized: "Info.plist の読み取りに失敗しました"), message: "")
         }
         
         // Extract Bundle ID
         guard let bundleID = plist["CFBundleIdentifier"] as? String else {
-            throw AppError.installation("Bundle Identifier の取得に失敗しました", message: "")
+            throw AppError.installation(String(localized: "Bundle Identifier の取得に失敗しました"), message: "")
         }
         
         // Extract version
@@ -158,7 +158,7 @@ class IPAInstallerService {
         // Get Info.plist default name (used as final fallback)
         let infoPlistDefaultName = (plist["CFBundleDisplayName"] as? String) ?? (plist["CFBundleName"] as? String) ?? ""
         guard !infoPlistDefaultName.isEmpty else {
-            throw AppError.installation("アプリ名の取得に失敗しました", message: "")
+            throw AppError.installation(String(localized: "アプリ名の取得に失敗しました"), message: "")
         }
         
         // Try to get English app name (from en.lproj) for middle fallback
@@ -276,12 +276,12 @@ class IPAInstallerService {
     nonisolated func createAppDiskImage(info: IPAInfo) async throws -> URL {
         Logger.installation("Creating disk image for \(info.bundleID)")
         await MainActor.run {
-            currentStatus = "ディスクイメージ作成中"
+            currentStatus = String(localized: "ディスクイメージ作成中")
         }
         
         guard let diskImageDir = await settingsStore.diskImageDirectory else {
             Logger.error("Disk image directory not set")
-            throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "設定画面から保存先を指定してください。")
+            throw AppError.diskImage(String(localized: "ディスクイメージの保存先が未設定"), message: "設定画面から保存先を指定してください。")
         }
         
         let imageName = "\(info.volumeName).asif"
@@ -292,7 +292,7 @@ class IPAInstallerService {
         if FileManager.default.fileExists(atPath: imageURL.path) {
             Logger.installation("Disk image already exists, reusing")
             await MainActor.run {
-                currentStatus = "既存のディスクイメージを使用"
+                currentStatus = String(localized: "既存のディスクイメージを使用")
             }
             return imageURL
         }
@@ -307,14 +307,14 @@ class IPAInstallerService {
         Logger.installation("Successfully created disk image")
         
         await MainActor.run {
-            currentStatus = "作成完了"
+            currentStatus = String(localized: "作成完了")
         }
         return imageURL
     }
     
     nonisolated func mountAppDiskImage(imageURL: URL, bundleID: String) async throws -> URL {
         await MainActor.run {
-            currentStatus = "マウント中"
+            currentStatus = String(localized: "マウント中")
         }
         
         let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
@@ -329,7 +329,7 @@ class IPAInstallerService {
             let mountOutput = try await processRunner.run("/sbin/mount", [])
             if mountOutput.contains(mountPoint.path) {
                 await MainActor.run {
-                    currentStatus = "既にマウント済み"
+                    currentStatus = String(localized: "既にマウント済み")
                 }
                 return mountPoint
             }
@@ -339,7 +339,7 @@ class IPAInstallerService {
         try await diskImageService.mountDiskImage(imageURL, at: mountPoint, nobrowse: true)
         
         await MainActor.run {
-            currentStatus = "マウント完了"
+            currentStatus = String(localized: "マウント完了")
         }
         return mountPoint
     }
@@ -348,7 +348,7 @@ class IPAInstallerService {
     
     nonisolated func installIPAToPlayCover(_ ipaURL: URL, info: IPAInfo) async throws {
         await MainActor.run {
-            currentStatus = "PlayCover でインストール中"
+            currentStatus = String(localized: "PlayCover でインストール中")
         }
         
         // Open IPA with PlayCover
@@ -360,7 +360,7 @@ class IPAInstallerService {
         openTask.waitUntilExit()
         
         guard openTask.terminationStatus == 0 else {
-            throw AppError.installation("PlayCover の起動に失敗しました", message: "")
+            throw AppError.installation(String(localized: "PlayCover の起動に失敗しました"), message: "")
         }
         
         // Monitor installation progress
@@ -371,7 +371,7 @@ class IPAInstallerService {
     
     // Monitor installation completion by watching Applications directory
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        await MainActor.run { currentStatus = "PlayCoverでIPAをインストール中" }
+        await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中") }
         
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
@@ -381,7 +381,7 @@ class IPAInstallerService {
         let initialAppURLs = getAppURLs(in: applicationsDir)
         let initialAppMTimes = getAppModificationTimes(initialAppURLs)
         
-        await MainActor.run { currentStatus = "PlayCoverでIPAをインストール中" }
+        await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中") }
         
         let maxWait = 300 // 5 minutes
         let checkInterval: TimeInterval = 1.0
@@ -416,14 +416,14 @@ class IPAInstallerService {
             
             if !isPlayCoverRunning {
                 // PlayCover crashed or closed - verify installation
-                await MainActor.run { currentStatus = "PlayCover終了検知 - 検証中..." }
+                await MainActor.run { currentStatus = String(localized: "PlayCover終了検知 - 検証中...") }
                 try await Task.sleep(nanoseconds: 1_000_000_000)
                 
                 if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { currentStatus = "完了（PlayCover終了後）" }
+                    await MainActor.run { currentStatus = String(localized: "完了（PlayCover終了後）") }
                     return
                 } else {
-                    throw AppError.installation("PlayCover が終了しました", message: "インストールが完了していません")
+                    throw AppError.installation(String(localized: "PlayCover が終了しました"), message: "インストールが完了していません")
                 }
             }
             
@@ -450,14 +450,14 @@ class IPAInstallerService {
                         // Verify _CodeSignature exists (installation complete)
                         let codeSignatureDir = appURL.appendingPathComponent("_CodeSignature")
                         if FileManager.default.fileExists(atPath: codeSignatureDir.path) {
-                            await MainActor.run { currentStatus = "完了検知 - 最終確認中..." }
+                            await MainActor.run { currentStatus = String(localized: "完了検知 - 最終確認中...") }
                             
                             // Wait for stability
                             try await Task.sleep(nanoseconds: 2_000_000_000)
                             
                             // Re-verify
                             if try await verifyInstallationComplete(bundleID: bundleID) {
-                                await MainActor.run { currentStatus = "完了" }
+                                await MainActor.run { currentStatus = String(localized: "完了") }
                                 
                                 // Don't quit PlayCover - let user close it manually
                                 // Automatically quitting can cause incomplete installations
@@ -470,13 +470,13 @@ class IPAInstallerService {
             
             // Update status every 5 seconds
             if i % 5 == 0 {
-                await MainActor.run { currentStatus = "PlayCoverでIPAをインストール中 (\(i)秒経過)" }
+                await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中 (\(i)秒経過)") }
             }
             
             try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
         }
         
-        throw AppError.installation("タイムアウト", message: "5分以内に完了しませんでした")
+        throw AppError.installation(String(localized: "タイムアウト"), message: "5分以内に完了しませんでした")
     }
     
     // Get all app URLs in directory
@@ -559,7 +559,7 @@ class IPAInstallerService {
         
         for ipaURL in ipaURLs {
             await MainActor.run {
-                currentStatus = "解析中: \(ipaURL.lastPathComponent)"
+                currentStatus = String(localized: "解析中: \(ipaURL.lastPathComponent)")
             }
             
             do {
@@ -568,7 +568,7 @@ class IPAInstallerService {
             } catch {
                 // Skip failed analysis
                 await MainActor.run {
-                    failedApps.append("\(ipaURL.lastPathComponent): 解析失敗 - \(error.localizedDescription)")
+                    failedApps.append(String(localized: "\(ipaURL.lastPathComponent): 解析失敗 - \(error.localizedDescription)"))
                 }
             }
         }
@@ -596,23 +596,23 @@ class IPAInstallerService {
         await MainActor.run {
             currentAppName = info.appName
             currentAppIcon = info.icon
-            currentStatus = "\(info.appName) をインストール中"
+            currentStatus = String(localized: "\(info.appName) をインストール中")
         }
         
         // Check if app is running (for upgrade/reinstall cases)
         if info.installType != .newInstall {
             await MainActor.run {
-                currentStatus = "アプリの実行状態を確認中"
+                currentStatus = String(localized: "アプリの実行状態を確認中")
             }
             let isRunning = await MainActor.run { launcherService.isAppRunning(bundleID: info.bundleID) }
             if isRunning {
-                throw AppError.installation("アプリが実行中のため、インストールできません", message: "アプリを終了してから再度お試しください")
+                throw AppError.installation(String(localized: "アプリが実行中のため、インストールできません"), message: "アプリを終了してから再度お試しください")
             }
         }
         
         // Step 1: Create disk image
         await MainActor.run {
-            currentStatus = "ディスクイメージ作成中"
+            currentStatus = String(localized: "ディスクイメージ作成中")
         }
         do {
             _ = try await createAppDiskImage(info: info)
@@ -622,10 +622,10 @@ class IPAInstallerService {
         
         // Step 2: Mount disk image
         await MainActor.run {
-            currentStatus = "マウント中"
+            currentStatus = String(localized: "マウント中")
         }
         guard let diskImageDir = await settingsStore.diskImageDirectory else {
-            throw AppError.diskImage("ディスクイメージの保存先が未設定", message: "")
+            throw AppError.diskImage(String(localized: "ディスクイメージの保存先が未設定"), message: "")
         }
         let imageURL = diskImageDir.appendingPathComponent("\(info.bundleID).asif")
         
@@ -637,7 +637,7 @@ class IPAInstallerService {
         
         // Step 3: Install via PlayCover
         await MainActor.run {
-            currentStatus = "インストール中"
+            currentStatus = String(localized: "インストール中")
         }
         do {
             try await installIPAToPlayCover(info.ipaURL, info: info)
@@ -646,7 +646,7 @@ class IPAInstallerService {
         }
         
         await MainActor.run {
-            currentStatus = "完了"
+            currentStatus = String(localized: "完了")
         }
     }
     
@@ -699,7 +699,7 @@ class IPAInstallerService {
         
         await MainActor.run {
             currentProgress = 1.0
-            currentStatus = "完了"
+            currentStatus = String(localized: "完了")
             currentAppName = ""  // Clear current app name after all installations complete
             currentAppIcon = nil  // Clear current app icon
             

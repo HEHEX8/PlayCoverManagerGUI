@@ -19,7 +19,7 @@ struct AppRootView: View {
                 } else if let setupVM = appViewModel.setupViewModel {
                     SetupWizardView(viewModel: setupVM, playCoverPaths: nil)
                 } else {
-                    CheckingView(status: "セットアップを準備しています…") {
+                    CheckingView(status: String(localized: "セットアップを準備しています…")) {
                         appViewModel.retry()
                     }
                 }
@@ -28,7 +28,7 @@ struct AppRootView: View {
                     QuickLauncherView(viewModel: launcherVM)
                         .environment(launcherVM)
                 } else {
-                    CheckingView(status: "アプリ情報を取得しています…") {
+                    CheckingView(status: String(localized: "アプリ情報を取得しています…")) {
                         appViewModel.retry()
                     }
                 }
@@ -37,7 +37,7 @@ struct AppRootView: View {
                           onRetry: { appViewModel.retry() },
                           onChangeSettings: { appViewModel.requestStorageLocationChange() })
             case .terminating:
-                ProgressView("終了しています…")
+                ProgressView(String(localized: "終了しています…"))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
