@@ -64,6 +64,10 @@ final class LauncherViewModel {
     // nonisolated(unsafe) allows access from deinit
     nonisolated(unsafe) private var appLaunchObserver: NSObjectProtocol?
     nonisolated(unsafe) private var appTerminateObserver: NSObjectProtocol?
+    
+    // Polling-based fallback for app termination detection
+    // Used as fallback when NSWorkspace notifications don't work for PlayCover apps
+    private var pollingTask: Task<Void, Never>?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -85,14 +89,24 @@ final class LauncherViewModel {
         self.processRunner = processRunner
         self.fileManager = fileManager
         
+        // Initialize running apps set
+        previouslyRunningApps = Set(apps.filter { $0.isRunning }.map { $0.bundleIdentifier })
+        NSLog("[DEBUG] Initialized with \(previouslyRunningApps.count) running apps: \(previouslyRunningApps)")
+        
         // Cleanup stale lock files on startup
         cleanupStaleLockFiles()
         
         // Setup real-time app lifecycle monitoring
         setupAppLifecycleMonitoring()
+        
+        // Start polling-based fallback for termination detection
+        startPollingBasedTerminationDetection()
     }
     
     nonisolated deinit {
+        // Cancel polling task
+        pollingTask?.cancel()
+        
         // Remove notification observers
         if let observer = appLaunchObserver {
             NotificationCenter.default.removeObserver(observer)
@@ -105,6 +119,8 @@ final class LauncherViewModel {
     private func setupAppLifecycleMonitoring() {
         let workspace = NSWorkspace.shared
         
+        NSLog("[DEBUG] Setting up app lifecycle monitoring")
+        
         // Monitor app launches
         appLaunchObserver = workspace.notificationCenter.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification,
@@ -112,11 +128,15 @@ final class LauncherViewModel {
             queue: .main
         ) { [weak self] notification in
             guard let self = self else { return }
+            NSLog("[DEBUG] didLaunchApplicationNotification received")
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                let bundleID = app.bundleIdentifier {
+                NSLog("[DEBUG] Extracted bundleID from notification: \(bundleID)")
                 Task { @MainActor in
                     await self.handleAppLaunched(bundleID: bundleID)
                 }
+            } else {
+                NSLog("[DEBUG] Failed to extract app info from launch notification")
             }
         }
         
@@ -127,38 +147,106 @@ final class LauncherViewModel {
             queue: .main
         ) { [weak self] notification in
             guard let self = self else { return }
+            NSLog("[DEBUG] didTerminateApplicationNotification received")
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                let bundleID = app.bundleIdentifier {
+                NSLog("[DEBUG] Extracted bundleID from notification: \(bundleID)")
                 Task { @MainActor in
                     await self.handleAppTerminated(bundleID: bundleID)
                 }
+            } else {
+                NSLog("[DEBUG] Failed to extract app info from termination notification")
+            }
+        }
+        
+        NSLog("[DEBUG] App lifecycle monitoring setup completed")
+    }
+    
+    /// Start polling-based termination detection as fallback
+    /// NSWorkspace notifications may not work reliably for PlayCover-wrapped iOS apps
+    private func startPollingBasedTerminationDetection() {
+        NSLog("[DEBUG] Starting polling-based termination detection")
+        
+        pollingTask = Task { @MainActor in
+            while !Task.isCancelled {
+                // Check every 2 seconds
+                try? await Task.sleep(for: .seconds(2))
+                
+                guard !Task.isCancelled else { break }
+                
+                // Check for terminated apps
+                await checkForTerminatedApps()
             }
         }
     }
     
+    /// Check if any previously running apps have terminated
+    private func checkForTerminatedApps() async {
+        var terminatedApps: [String] = []
+        
+        for bundleID in previouslyRunningApps {
+            let isRunning = launcherService.isAppRunning(bundleID: bundleID)
+            if !isRunning {
+                NSLog("[DEBUG] Polling detected termination of: \(bundleID)")
+                terminatedApps.append(bundleID)
+            }
+        }
+        
+        // Process terminated apps
+        for bundleID in terminatedApps {
+            previouslyRunningApps.remove(bundleID)
+            
+            // Auto-unmount the container
+            NSLog("[DEBUG] Polling: Calling unmountContainer for \(bundleID)")
+            await unmountContainer(for: bundleID)
+            
+            // Refresh UI
+            await refresh()
+            NSLog("[DEBUG] Polling: Auto-unmount and UI refresh completed for \(bundleID)")
+        }
+    }
+    
     private func handleAppLaunched(bundleID: String) async {
+        NSLog("[DEBUG] handleAppLaunched called for: \(bundleID)")
+        
         // Check if this is one of our managed apps
-        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { return }
+        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else {
+            NSLog("[DEBUG] \(bundleID) is not one of our managed apps, ignoring")
+            return
+        }
+        
+        NSLog("[DEBUG] \(bundleID) is one of our managed apps, updating UI")
         
         // Update running state
         previouslyRunningApps.insert(bundleID)
         
         // Refresh to update UI
         await refresh()
+        NSLog("[DEBUG] UI refresh completed for launch of \(bundleID)")
     }
     
     private func handleAppTerminated(bundleID: String) async {
+        NSLog("[DEBUG] handleAppTerminated called for: \(bundleID)")
+        
         // Check if this is one of our managed apps
-        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { return }
+        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else {
+            NSLog("[DEBUG] \(bundleID) is not one of our managed apps, ignoring")
+            return
+        }
+        
+        NSLog("[DEBUG] \(bundleID) is one of our managed apps, starting auto-unmount")
         
         // Remove from running apps
         previouslyRunningApps.remove(bundleID)
         
         // Auto-unmount the container
+        NSLog("[DEBUG] Calling unmountContainer for \(bundleID)")
         await unmountContainer(for: bundleID)
         
         // Refresh to update UI
+        NSLog("[DEBUG] Refreshing UI after unmount for \(bundleID)")
         await refresh()
+        NSLog("[DEBUG] Auto-unmount and UI refresh completed for \(bundleID)")
     }
     
     private func cleanupStaleLockFiles() {
