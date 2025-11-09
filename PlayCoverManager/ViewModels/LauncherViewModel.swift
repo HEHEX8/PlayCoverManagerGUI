@@ -47,7 +47,7 @@ final class LauncherViewModel {
     private var isStorageChangeFlow: Bool = false
 
     private let playCoverPaths: PlayCoverPaths
-    private let diskImageService: DiskImageService
+    let diskImageService: DiskImageService  // Internal access for view layer
     private let launcherService: LauncherService
     private let settings: SettingsStore
     private let perAppSettings: PerAppSettingsStore
