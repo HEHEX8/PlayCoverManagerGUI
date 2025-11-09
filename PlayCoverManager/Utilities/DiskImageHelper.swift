@@ -166,12 +166,16 @@ final class DiskImageHelper {
         case failed(Error)  // Simplified: both normal and force failed
     }
     
-    /// Try two-stage unmount: normal eject first, then force eject if it fails
+    /// Try two-stage unmount with app termination: 
+    /// 1. Try normal eject
+    /// 2. If fails, terminate app normally (SIGTERM) and retry
+    /// 3. If still fails, force terminate app (SIGKILL) and force eject
     /// Returns result indicating success or failure
     static func unmountWithTwoStageEject(
         containerURL: URL,
         diskImageService: DiskImageService,
-        bundleID: String? = nil
+        bundleID: String? = nil,
+        launcherService: LauncherService? = nil
     ) async -> UnmountResult {
         // Synchronize preferences if bundleID provided
         if let bundleID = bundleID {
@@ -185,17 +189,49 @@ final class DiskImageHelper {
             try await diskImageService.ejectDiskImage(for: containerURL, force: false)
             NSLog("[DEBUG] DiskImageHelper: Stage 1 - Normal eject succeeded")
             return .success
-        } catch {
-            NSLog("[DEBUG] DiskImageHelper: Stage 1 - Normal eject failed: \(error)")
+        } catch let normalError {
+            NSLog("[DEBUG] DiskImageHelper: Stage 1 - Normal eject failed: \(normalError)")
             
-            // Stage 2: Try force eject
-            NSLog("[DEBUG] DiskImageHelper: Stage 2 - Attempting force eject")
+            // Stage 2: If app is provided and running, terminate it normally
+            if let bundleID = bundleID, 
+               let launcherService = launcherService,
+               launcherService.isAppRunning(bundleID: bundleID) {
+                NSLog("[DEBUG] DiskImageHelper: Stage 2 - App \(bundleID) is running, sending SIGTERM")
+                _ = launcherService.terminateApp(bundleID: bundleID)
+                
+                // Wait a bit for graceful shutdown
+                try? await Task.sleep(for: .seconds(2))
+                
+                // Retry normal eject after app termination
+                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Retrying normal eject after SIGTERM")
+                do {
+                    try await diskImageService.ejectDiskImage(for: containerURL, force: false)
+                    NSLog("[DEBUG] DiskImageHelper: Stage 2 - Normal eject succeeded after SIGTERM")
+                    return .success
+                } catch {
+                    NSLog("[DEBUG] DiskImageHelper: Stage 2 - Normal eject still failed after SIGTERM: \(error)")
+                }
+            }
+            
+            // Stage 3: Force terminate app if still running, then force eject
+            if let bundleID = bundleID,
+               let launcherService = launcherService,
+               launcherService.isAppRunning(bundleID: bundleID) {
+                NSLog("[DEBUG] DiskImageHelper: Stage 3 - App \(bundleID) still running, sending SIGKILL")
+                _ = launcherService.forceTerminateApp(bundleID: bundleID)
+                
+                // Wait a bit for forced shutdown
+                try? await Task.sleep(for: .seconds(1))
+            }
+            
+            // Final attempt: Force eject
+            NSLog("[DEBUG] DiskImageHelper: Stage 3 - Attempting force eject")
             do {
                 try await diskImageService.ejectDiskImage(for: containerURL, force: true)
-                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Force eject succeeded")
+                NSLog("[DEBUG] DiskImageHelper: Stage 3 - Force eject succeeded")
                 return .success
             } catch let forceError {
-                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Force eject also failed: \(forceError)")
+                NSLog("[DEBUG] DiskImageHelper: Stage 3 - Force eject also failed: \(forceError)")
                 return .failed(forceError)
             }
         }

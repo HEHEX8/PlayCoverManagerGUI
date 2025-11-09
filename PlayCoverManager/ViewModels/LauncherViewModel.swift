@@ -518,13 +518,15 @@ final class LauncherViewModel {
         await lockService.unlockContainer(for: bundleID)
         NSLog("[DEBUG] Released our lock for \(bundleID)")
         
-        // Use 2-stage unmount: normal first, then force if needed
-        // This tries normal eject first, which is safer and allows cfprefsd to release cleanly
-        // Only falls back to force eject if normal fails
+        // Use 2-stage unmount with app termination:
+        // 1. Try normal eject
+        // 2. If fails, terminate app normally (SIGTERM) and retry
+        // 3. If still fails, force terminate app (SIGKILL) and force eject
         let result = await DiskImageHelper.unmountWithTwoStageEject(
             containerURL: containerURL,
             diskImageService: diskImageService,
-            bundleID: bundleID
+            bundleID: bundleID,
+            launcherService: launcherService
         )
         
         switch result {
@@ -573,11 +575,12 @@ final class LauncherViewModel {
                 continue
             }
             
-            // Use 2-stage unmount: normal first, then force if needed
+            // Use 2-stage unmount: try normal eject, then terminate app if needed
             let result = await DiskImageHelper.unmountWithTwoStageEject(
                 containerURL: container,
                 diskImageService: diskImageService,
-                bundleID: app.bundleIdentifier
+                bundleID: app.bundleIdentifier,
+                launcherService: launcherService
             )
             
             switch result {
@@ -611,7 +614,8 @@ final class LauncherViewModel {
                 let result = await DiskImageHelper.unmountWithTwoStageEject(
                     containerURL: playCoverContainer,
                     diskImageService: diskImageService,
-                    bundleID: nil  // No bundleID for PlayCover itself
+                    bundleID: nil,  // No bundleID for PlayCover itself
+                    launcherService: nil
                 )
                 
                 switch result {

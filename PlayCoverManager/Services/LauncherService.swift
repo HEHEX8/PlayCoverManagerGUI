@@ -220,6 +220,46 @@ final class LauncherService {
         }
     }
     
+    /// Get running app instance
+    /// - Parameter bundleID: The bundle identifier of the app
+    /// - Returns: NSRunningApplication if the app is running
+    public func getRunningApp(bundleID: String) -> NSRunningApplication? {
+        let runningApps = NSWorkspace.shared.runningApplications
+        return runningApps.first { app in
+            app.bundleIdentifier == bundleID && !app.isTerminated
+        }
+    }
+    
+    /// Terminate app normally (SIGTERM)
+    /// - Parameter bundleID: The bundle identifier of the app to terminate
+    /// - Returns: true if terminate signal was sent successfully
+    public func terminateApp(bundleID: String) -> Bool {
+        guard let app = getRunningApp(bundleID: bundleID) else {
+            NSLog("[DEBUG] Cannot terminate \(bundleID): app not running")
+            return false
+        }
+        
+        NSLog("[DEBUG] Sending SIGTERM to \(bundleID) (PID: \(app.processIdentifier))")
+        let success = app.terminate()
+        NSLog("[DEBUG] SIGTERM result for \(bundleID): \(success)")
+        return success
+    }
+    
+    /// Force terminate app (SIGKILL)
+    /// - Parameter bundleID: The bundle identifier of the app to force terminate
+    /// - Returns: true if force terminate signal was sent successfully
+    public func forceTerminateApp(bundleID: String) -> Bool {
+        guard let app = getRunningApp(bundleID: bundleID) else {
+            NSLog("[DEBUG] Cannot force terminate \(bundleID): app not running")
+            return false
+        }
+        
+        NSLog("[DEBUG] Sending SIGKILL to \(bundleID) (PID: \(app.processIdentifier))")
+        let success = app.forceTerminate()
+        NSLog("[DEBUG] SIGKILL result for \(bundleID): \(success)")
+        return success
+    }
+    
     private func readLastLaunchFlag(for bundleID: String) -> Bool {
         guard let data = try? Data(contentsOf: mapDataURL()), let text = String(data: data, encoding: .utf8) else {
             return false

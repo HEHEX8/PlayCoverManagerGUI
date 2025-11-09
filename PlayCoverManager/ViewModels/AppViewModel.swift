@@ -291,11 +291,12 @@ final class AppViewModel {
                 continue
             }
             
-            // Use 2-stage unmount: normal first, then force if needed
+            // Use 2-stage unmount: try normal eject, then terminate app if needed
             let result = await DiskImageHelper.unmountWithTwoStageEject(
                 containerURL: container,
                 diskImageService: diskImageService,
-                bundleID: app.bundleIdentifier
+                bundleID: app.bundleIdentifier,
+                launcherService: launcherService
             )
             
             switch result {
@@ -315,7 +316,8 @@ final class AppViewModel {
             let result = await DiskImageHelper.unmountWithTwoStageEject(
                 containerURL: playCoverContainer,
                 diskImageService: diskImageService,
-                bundleID: nil  // No bundleID for PlayCover itself
+                bundleID: nil,  // No bundleID for PlayCover itself
+                launcherService: nil
             )
             
             switch result {
