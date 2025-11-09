@@ -302,8 +302,31 @@ struct TerminationFlowView: View {
         RunningAppsBlockingView(
             runningAppBundleIDs: runningApps,
             onCancel: onCancel,
-            onForceQuit: onForceTerminate
+            onQuitAllAndRetry: { [self] in
+                // Retry unmount after quitting all apps
+                self.retryUnmount()
+            }
         )
+    }
+    
+    private func retryUnmount() {
+        // Retry the termination flow
+        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
+            Task { @MainActor in
+                if let viewModel = AppDelegate.shared {
+                    viewModel.terminationFlowState = .unmounting(status: String(localized: "ディスクイメージをアンマウントしています…"))
+                    
+                    let result = await viewModel.unmountAllContainersForTermination()
+                    
+                    if result.success {
+                        viewModel.terminationFlowState = .idle
+                        NSApplication.shared.reply(toApplicationShouldTerminate: true)
+                    } else {
+                        viewModel.terminationFlowState = .failed(failedCount: result.failedCount, runningApps: result.runningApps)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -311,7 +334,7 @@ struct TerminationFlowView: View {
 struct RunningAppsBlockingView: View {
     let runningAppBundleIDs: [String]
     let onCancel: () -> Void
-    let onForceQuit: () -> Void
+    let onQuitAllAndRetry: (() -> Void)?  // Optional: retry unmount after quitting all apps
     
     @State private var appInfoList: [RunningAppInfo] = []
     
@@ -391,7 +414,11 @@ struct RunningAppsBlockingView: View {
                 .keyboardShortcut(.cancelAction)
                 
                 Button {
-                    quitAllApps()
+                    if let onQuitAllAndRetry = onQuitAllAndRetry {
+                        quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
+                    } else {
+                        quitAllApps()
+                    }
                 } label: {
                     Text("すべて終了")
                         .font(.system(size: 14, weight: .medium))
@@ -453,8 +480,28 @@ struct RunningAppsBlockingView: View {
             
             // If all apps are closed, automatically proceed
             if appInfoList.isEmpty {
-                onCancel()  // Close dialog and let the system retry
+                // For ⌘Q flow: retry unmount
+                // For ALL unmount flow: just close dialog
+                if let retry = onQuitAllAndRetry {
+                    retry()
+                } else {
+                    onCancel()
+                }
             }
+        }
+    }
+    
+    private func quitAllAppsAndRetry(onRetry: @escaping () -> Void) {
+        let launcherService = LauncherService()
+        
+        // Terminate all running apps
+        for bundleID in runningAppBundleIDs {
+            _ = launcherService.terminateApp(bundleID: bundleID)
+        }
+        
+        // Wait a moment and then retry
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            onRetry()
         }
     }
 }
