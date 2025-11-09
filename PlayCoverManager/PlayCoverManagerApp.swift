@@ -170,10 +170,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var forceTerminateTimer: Timer?
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        return true
+        // ⌘W: Do not terminate, just close the window
+        return false
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // ⌘Q: Unmount all containers before terminating
         guard let viewModel = Self.shared else {
             return .terminateNow
         }

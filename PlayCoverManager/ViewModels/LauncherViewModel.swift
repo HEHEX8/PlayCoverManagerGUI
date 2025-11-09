@@ -61,8 +61,9 @@ final class LauncherViewModel {
     private var previouslyRunningApps: Set<String> = []
     
     // NSWorkspace notification observers for real-time app lifecycle monitoring
-    private var appLaunchObserver: NSObjectProtocol?
-    private var appTerminateObserver: NSObjectProtocol?
+    // nonisolated(unsafe) allows access from deinit
+    nonisolated(unsafe) private var appLaunchObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var appTerminateObserver: NSObjectProtocol?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -91,7 +92,7 @@ final class LauncherViewModel {
         setupAppLifecycleMonitoring()
     }
     
-    deinit {
+    nonisolated deinit {
         // Remove notification observers
         if let observer = appLaunchObserver {
             NotificationCenter.default.removeObserver(observer)
