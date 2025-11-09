@@ -690,10 +690,10 @@ class IPAInstallerService {
             throw InstallationError.playCoverInstallFailed(error.localizedDescription)
         }
         
-        // Step 4: Unmount disk image after installation completes
-        // Installation is complete and app is not running, so explicitly unmount
+        // Step 4: Eject disk image after installation completes
+        // Installation is complete and app is not running, so explicitly eject drive
         await MainActor.run {
-            currentStatus = String(localized: "アンマウント中")
+            currentStatus = String(localized: "ドライブをイジェクト中")
         }
         
         let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
@@ -701,15 +701,15 @@ class IPAInstallerService {
             .appendingPathComponent(info.bundleID, isDirectory: true)
         
         do {
-            try await diskImageService.detach(volumeURL: mountPoint)
+            try await diskImageService.ejectDiskImage(for: mountPoint, force: false)
             await MainActor.run {
-                currentStatus = String(localized: "アンマウント完了")
+                currentStatus = String(localized: "イジェクト完了")
             }
         } catch {
-            // Log error but don't fail installation - unmount failure is not critical
-            Logger.error("Failed to unmount after installation: \(error.localizedDescription)")
+            // Log error but don't fail installation - eject failure is not critical
+            Logger.error("Failed to eject after installation: \(error.localizedDescription)")
             await MainActor.run {
-                currentStatus = String(localized: "完了（アンマウント失敗）")
+                currentStatus = String(localized: "完了（イジェクト失敗）")
             }
         }
         
