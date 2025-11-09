@@ -104,7 +104,7 @@ private struct StorageChangeConfirmationView: View {
                     HStack {
                         Image(systemName: "info.circle.fill")
                             .foregroundStyle(.blue)
-                        Text("マウント中: \(mountedCount) 個のコンテナ")
+                        Text(LocalizedStringKey("マウント中: \(mountedCount) 個のコンテナ"))
                             .font(.callout)
                     }
                     .padding(8)
