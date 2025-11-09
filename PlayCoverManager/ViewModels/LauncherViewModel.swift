@@ -451,15 +451,16 @@ final class LauncherViewModel {
                     NSLog("[DEBUG] No processes found using the volume")
                 }
                 
-                // Force cfprefsd to release preferences cache for this bundle
-                NSLog("[DEBUG] Forcing cfprefsd to release preferences cache for: \(bundleID)")
+                // Force cfprefsd to flush its cache by sending SIGHUP
+                NSLog("[DEBUG] Sending SIGHUP to cfprefsd to flush cache")
                 
-                // Step 1: Synchronize preferences
+                // Synchronize preferences first
                 CFPreferencesAppSynchronize(bundleID as CFString)
                 
-                // Step 2: Force cfprefsd to re-read preferences (triggers cache release)
-                let defaultsOutput = try? ProcessRunner().runSync("/usr/bin/defaults", ["read", bundleID])
-                NSLog("[DEBUG] Forced defaults read completed: \(defaultsOutput != nil ? "success" : "failed")")
+                // Send SIGHUP to cfprefsd to flush all cached preferences
+                // This should release any file handles to the container volume
+                let _ = try? ProcessRunner().runSync("/usr/bin/killall", ["-HUP", "cfprefsd"])
+                NSLog("[DEBUG] Sent SIGHUP to cfprefsd")
             } else {
                 NSLog("[DEBUG] Container is not mounted")
             }
@@ -501,6 +502,10 @@ final class LauncherViewModel {
         await MainActor.run {
             unmountFlowState = .processing(status: "アプリコンテナをアンマウントしています…")
         }
+        
+        // Flush cfprefsd cache once before unmounting all containers
+        let _ = try? ProcessRunner().runSync("/usr/bin/killall", ["-HUP", "cfprefsd"])
+        
         for app in apps {
             let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             
@@ -516,9 +521,8 @@ final class LauncherViewModel {
                 continue
             }
             
-            // Force cfprefsd to release preferences cache
+            // Synchronize preferences
             CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
-            let _ = try? ProcessRunner().runSync("/usr/bin/defaults", ["read", app.bundleIdentifier])
             
             do {
                 try await diskImageService.ejectDiskImage(for: container)
