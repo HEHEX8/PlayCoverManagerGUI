@@ -850,6 +850,10 @@ private struct iOSAppIconView: View {
                 NSWorkspace.shared.open(app.appURL.deletingLastPathComponent())
             }
             Divider()
+            Button("ディスクイメージ診断") {
+                showDiskImageDiagnostics(app: app)
+            }
+            Divider()
             Button("アンインストール", role: .destructive) {
                 uninstallAction()
             }
@@ -955,6 +959,80 @@ private struct iOSAppIconView: View {
                 NSWorkspace.shared.open(scriptURL)
             } catch {
                 NSLog("Failed to launch debug console: \(error)")
+            }
+        }
+    }
+    
+    private func showDiskImageDiagnostics(app: PlayCoverApp) {
+        Task {
+            let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            
+            // Get diagnostics
+            let diagnostics = await viewModel.diskImageService.getDiskImageDiagnostics(
+                for: app.bundleIdentifier,
+                containerURL: containerURL
+            )
+            
+            // Format output
+            var message = "【ディスクイメージ診断】\n\n"
+            message += "アプリ: \(app.displayName)\n"
+            message += "Bundle ID: \(app.bundleIdentifier)\n\n"
+            
+            if let mounted = diagnostics["mounted"] as? Bool {
+                message += "マウント状態: \(mounted ? "マウント中" : "アンマウント中")\n"
+                
+                if mounted {
+                    if let volumePath = diagnostics["volumePath"] as? String {
+                        message += "ボリュームパス: \(volumePath)\n"
+                    }
+                    if let deviceId = diagnostics["deviceIdentifier"] as? String {
+                        message += "デバイスID: \(deviceId)\n"
+                    }
+                    if let volumeName = diagnostics["volumeName"] as? String {
+                        message += "ボリューム名: \(volumeName)\n"
+                    }
+                    if let fsType = diagnostics["filesystemType"] as? String {
+                        message += "ファイルシステム: \(fsType)\n"
+                    }
+                    
+                    // Show blocking processes
+                    if let processes = diagnostics["blockingProcesses"] as? [[String: Any]], !processes.isEmpty {
+                        message += "\n⚠️ ボリュームを使用中のプロセス:\n"
+                        for process in processes {
+                            if let pid = process["pid"] as? Int,
+                               let name = process["name"] as? String,
+                               let path = process["path"] as? String {
+                                message += "  • \(name) (PID: \(pid))\n"
+                                message += "    \(path)\n"
+                                
+                                // Check if it's this app
+                                if path.contains("PlayCoverManager") || path.contains("PlayCover Manager") {
+                                    message += "    ⚠️ このアプリ (PlayCoverManager) がロックしています\n"
+                                }
+                            }
+                        }
+                    } else {
+                        message += "\n✅ ボリュームを使用中のプロセスはありません\n"
+                    }
+                }
+            }
+            
+            // Show alert
+            await MainActor.run {
+                let alert = NSAlert()
+                alert.messageText = "ディスクイメージ診断"
+                alert.informativeText = message
+                alert.alertStyle = .informational
+                alert.addButton(withTitle: "OK")
+                
+                // Add copy button
+                alert.addButton(withTitle: "コピー")
+                
+                let response = alert.runModal()
+                if response == .alertSecondButtonReturn {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(message, forType: .string)
+                }
             }
         }
     }
