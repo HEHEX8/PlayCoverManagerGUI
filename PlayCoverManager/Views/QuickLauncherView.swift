@@ -1013,18 +1013,24 @@ private struct AppDetailSheet: View {
     
     enum SettingsTab: String, CaseIterable, Identifiable {
         case overview = "概要"
-        case basic = "基本"
-        case info = "情報"
-        case analysis = "解析"
+        case settings = "設定"
+        case details = "詳細"
         
         var id: String { rawValue }
         
         var icon: String {
             switch self {
-            case .overview: return "doc.text.fill"
-            case .basic: return "slider.horizontal.3"
-            case .info: return "info.circle.fill"
-            case .analysis: return "chart.bar.doc.horizontal"
+            case .overview: return "info.circle.fill"
+            case .settings: return "gearshape.fill"
+            case .details: return "doc.text.magnifyingglass"
+            }
+        }
+        
+        var description: String {
+            switch self {
+            case .overview: return "アプリの基本情報とストレージ"
+            case .settings: return "アプリ固有の設定"
+            case .details: return "技術情報と解析"
             }
         }
     }
@@ -1134,12 +1140,10 @@ private struct AppDetailSheet: View {
                         switch selectedTab {
                         case .overview:
                             OverviewView(app: app, viewModel: viewModel)
-                        case .basic:
-                            BasicSettingsView(app: app, viewModel: viewModel)
-                        case .info:
-                            InfoView(app: app, viewModel: viewModel)
-                        case .analysis:
-                            AnalysisView(app: app)
+                        case .settings:
+                            SettingsView(app: app, viewModel: viewModel)
+                        case .details:
+                            DetailsView(app: app, viewModel: viewModel)
                         }
                     }
                     .padding(24)
@@ -2094,7 +2098,7 @@ private struct QuickInfoRow: View {
 
 // MARK: - Basic Settings Tab
 
-private struct BasicSettingsView: View {
+private struct SettingsView: View {
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
@@ -2139,7 +2143,7 @@ private struct BasicSettingsView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("基本設定")
+            Text("アプリ設定")
                 .font(.headline)
             
             // Nobrowse setting
@@ -2264,10 +2268,25 @@ private struct BasicSettingsView: View {
 
 // MARK: - Info Tab
 
-private struct InfoView: View {
+private struct DetailsView: View {
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @State private var infoPlist: [String: Any]?
+    @State private var selectedSection: DetailSection = .info
+    
+    enum DetailSection: String, CaseIterable, Identifiable {
+        case info = "技術情報"
+        case analysis = "解析"
+        
+        var id: String { rawValue }
+        
+        var icon: String {
+            switch self {
+            case .info: return "info.circle"
+            case .analysis: return "chart.bar.doc.horizontal"
+            }
+        }
+    }
     
     init(app: PlayCoverApp, viewModel: LauncherViewModel) {
         self.app = app
@@ -2275,13 +2294,50 @@ private struct InfoView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("アプリ情報")
+        VStack(alignment: .leading, spacing: 16) {
+            Text("詳細情報")
                 .font(.headline)
             
+            // Sub-section selector
+            Picker("", selection: $selectedSection) {
+                ForEach(DetailSection.allCases) { section in
+                    Label(section.rawValue, systemImage: section.icon).tag(section)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    // Basic Info Section
+                switch selectedSection {
+                case .info:
+                    InfoContentView(app: app, viewModel: viewModel, infoPlist: $infoPlist)
+                case .analysis:
+                    AnalysisContentView(app: app)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onAppear {
+            loadInfoPlist()
+        }
+    }
+    
+    private func loadInfoPlist() {
+        guard let bundle = Bundle(url: app.appURL),
+              let info = bundle.infoDictionary else { return }
+        infoPlist = info
+    }
+}
+
+// MARK: - Info Content View
+private struct InfoContentView: View {
+    let app: PlayCoverApp
+    @Bindable var viewModel: LauncherViewModel
+    @Binding var infoPlist: [String: Any]?
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Basic Info Section
                     infoSection(title: "基本情報") {
                         infoRow(label: "アプリ名", value: app.displayName)
                         if let standardName = app.standardName, standardName != app.displayName {
@@ -2648,18 +2704,19 @@ struct StorageInfo {
     let isMounted: Bool
 }
 
-// MARK: - Analysis Tab
+// MARK: - Analysis Content View
 
-private struct AnalysisView: View {
+private struct AnalysisContentView: View {
     let app: PlayCoverApp
     @State private var analyzing = false
     @State private var analysisResult: AppAnalysisResult?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("アプリ解析")
-                    .font(.headline)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                 
                 Spacer()
                 
