@@ -105,18 +105,27 @@ final class LauncherViewModel {
     private func setupAppLifecycleMonitoring() {
         let workspace = NSWorkspace.shared
         
+        NSLog("=== [LIFECYCLE] Setting up app lifecycle monitoring ===")
+        
         // Monitor app launches
         appLaunchObserver = workspace.notificationCenter.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification,
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let self = self else { return }
+            NSLog("=== [LIFECYCLE] Launch notification received ===")
+            guard let self = self else { 
+                NSLog("=== [LIFECYCLE] self is nil ===")
+                return 
+            }
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                let bundleID = app.bundleIdentifier {
+                NSLog("=== [LIFECYCLE] App launched: \(bundleID) ===")
                 Task { @MainActor in
                     await self.handleAppLaunched(bundleID: bundleID)
                 }
+            } else {
+                NSLog("=== [LIFECYCLE] Failed to extract app info from launch notification ===")
             }
         }
         
@@ -126,39 +135,65 @@ final class LauncherViewModel {
             object: nil,
             queue: .main
         ) { [weak self] notification in
-            guard let self = self else { return }
+            NSLog("=== [LIFECYCLE] Terminate notification received ===")
+            guard let self = self else { 
+                NSLog("=== [LIFECYCLE] self is nil ===")
+                return 
+            }
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                let bundleID = app.bundleIdentifier {
+                NSLog("=== [LIFECYCLE] App terminated: \(bundleID) ===")
                 Task { @MainActor in
                     await self.handleAppTerminated(bundleID: bundleID)
                 }
+            } else {
+                NSLog("=== [LIFECYCLE] Failed to extract app info from terminate notification ===")
             }
         }
+        
+        NSLog("=== [LIFECYCLE] Setup completed ===")
     }
     
     private func handleAppLaunched(bundleID: String) async {
+        NSLog("=== [LIFECYCLE] handleAppLaunched: \(bundleID) ===")
+        
         // Check if this is one of our managed apps
-        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { return }
+        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { 
+            NSLog("=== [LIFECYCLE] Not our app, ignoring ===")
+            return 
+        }
+        
+        NSLog("=== [LIFECYCLE] Our app! Updating state ===")
         
         // Update running state
         previouslyRunningApps.insert(bundleID)
         
         // Refresh to update UI
         await refresh()
+        NSLog("=== [LIFECYCLE] Launch handling complete ===")
     }
     
     private func handleAppTerminated(bundleID: String) async {
+        NSLog("=== [LIFECYCLE] handleAppTerminated: \(bundleID) ===")
+        
         // Check if this is one of our managed apps
-        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { return }
+        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { 
+            NSLog("=== [LIFECYCLE] Not our app, ignoring ===")
+            return 
+        }
+        
+        NSLog("=== [LIFECYCLE] Our app! Starting auto-unmount ===")
         
         // Remove from running apps
         previouslyRunningApps.remove(bundleID)
         
         // Auto-unmount the container
         await unmountContainer(for: bundleID)
+        NSLog("=== [LIFECYCLE] Auto-unmount complete ===")
         
         // Refresh to update UI
         await refresh()
+        NSLog("=== [LIFECYCLE] Terminate handling complete ===")
     }
     
     private func cleanupStaleLockFiles() {
