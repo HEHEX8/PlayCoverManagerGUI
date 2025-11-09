@@ -221,6 +221,19 @@ struct TerminationFlowView: View {
     let onForceTerminate: () -> Void
     let onCancel: () -> Void
     
+    /// Get app name from bundle ID
+    private func getAppName(for bundleID: String) -> String {
+        // Try to find running app with this bundle ID
+        let runningApps = NSWorkspace.shared.runningApplications
+        if let app = runningApps.first(where: { $0.bundleIdentifier == bundleID }),
+           let appName = app.localizedName {
+            return appName
+        }
+        
+        // Fallback to bundle ID
+        return bundleID
+    }
+    
     var body: some View {
         ZStack {
             Color.black.opacity(0.5)
@@ -319,8 +332,8 @@ struct TerminationFlowView: View {
                                 .font(.callout.bold())
                                 .foregroundStyle(.secondary)
                             
-                            ForEach(runningApps, id: \.self) { appID in
-                                Text("• \(appID)")
+                            ForEach(runningApps, id: \.self) { bundleID in
+                                Text("• \(getAppName(for: bundleID))")
                                     .font(.callout)
                                     .foregroundStyle(.secondary)
                             }
