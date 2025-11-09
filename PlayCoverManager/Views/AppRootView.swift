@@ -391,9 +391,9 @@ struct RunningAppsBlockingView: View {
                 .keyboardShortcut(.cancelAction)
                 
                 Button {
-                    onForceQuit()
+                    quitAllApps()
                 } label: {
-                    Text("強制終了")
+                    Text("すべて終了")
                         .font(.system(size: 14, weight: .medium))
                         .frame(minWidth: 100)
                 }
@@ -429,6 +429,25 @@ struct RunningAppsBlockingView: View {
         _ = launcherService.terminateApp(bundleID: app.bundleIdentifier ?? "")
         
         // Wait a moment and check if app is still running
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            loadRunningApps()
+            
+            // If all apps are closed, automatically proceed
+            if appInfoList.isEmpty {
+                onCancel()  // Close dialog and let the system retry
+            }
+        }
+    }
+    
+    private func quitAllApps() {
+        let launcherService = LauncherService()
+        
+        // Terminate all running apps
+        for bundleID in runningAppBundleIDs {
+            _ = launcherService.terminateApp(bundleID: bundleID)
+        }
+        
+        // Wait a moment and check if all apps are closed
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             loadRunningApps()
             
