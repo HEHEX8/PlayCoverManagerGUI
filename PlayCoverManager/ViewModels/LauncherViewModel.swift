@@ -38,7 +38,7 @@ final class LauncherViewModel {
         case ejectConfirming(volumeDisplayName: String)
         case success(unmountedCount: Int, ejectedDrive: String?)
         case error(title: String, message: String)
-        case runningAppsError(failedCount: Int, runningApps: [String])  // Running apps preventing unmount
+        case runningAppsBlocking(runningAppBundleIDs: [String])  // Running apps preventing unmount
         case forceUnmountOffering(failedCount: Int, applyToPlayCoverContainer: Bool)
         case forceEjectOffering(volumeDisplayName: String, devicePath: String)
     }
@@ -425,7 +425,7 @@ final class LauncherViewModel {
         
         if !runningApps.isEmpty {
             let runningBundleIDs = runningApps.map { $0.bundleIdentifier }
-            unmountFlowState = .runningAppsError(failedCount: runningApps.count, runningApps: runningBundleIDs)
+            unmountFlowState = .runningAppsBlocking(runningAppBundleIDs: runningBundleIDs)
             return
         }
         

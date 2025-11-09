@@ -221,19 +221,6 @@ struct TerminationFlowView: View {
     let onForceTerminate: () -> Void
     let onCancel: () -> Void
     
-    /// Get app name from bundle ID
-    private func getAppName(for bundleID: String) -> String {
-        // Try to find running app with this bundle ID
-        let runningApps = NSWorkspace.shared.runningApplications
-        if let app = runningApps.first(where: { $0.bundleIdentifier == bundleID }),
-           let appName = app.localizedName {
-            return appName
-        }
-        
-        // Fallback to bundle ID
-        return bundleID
-    }
-    
     var body: some View {
         ZStack {
             Color.black.opacity(0.5)
@@ -246,11 +233,7 @@ struct TerminationFlowView: View {
                 case .timeout:
                     timeoutView()
                 case .failed(let failedCount, let runningApps):
-                    RunningAppsErrorView(
-                        failedCount: failedCount,
-                        runningApps: runningApps,
-                        onCancel: onCancel
-                    )
+                    failedView(failedCount: failedCount, runningApps: runningApps)
                 case .idle:
                     EmptyView()
                 }
@@ -315,87 +298,144 @@ struct TerminationFlowView: View {
         }
     }
     
+    private func failedView(failedCount: Int, runningApps: [String]) -> some View {
+        RunningAppsBlockingView(
+            runningAppBundleIDs: runningApps,
+            onCancel: onCancel,
+            onForceQuit: onForceTerminate
+        )
+    }
 }
 
-// MARK: - Shared Running Apps Error View (used by both ⌘Q and ALL unmount)
-struct RunningAppsErrorView: View {
-    let failedCount: Int
-    let runningApps: [String]
+// MARK: - Running Apps Blocking View (Shared by ⌘Q and ALL unmount)
+struct RunningAppsBlockingView: View {
+    let runningAppBundleIDs: [String]
     let onCancel: () -> Void
+    let onForceQuit: () -> Void
     
-    /// Get app name from bundle ID
-    private func getAppName(for bundleID: String) -> String {
-        // Try to find running app with this bundle ID
-        let runningApps = NSWorkspace.shared.runningApplications
-        if let app = runningApps.first(where: { $0.bundleIdentifier == bundleID }),
-           let appName = app.localizedName {
-            return appName
-        }
-        
-        // Fallback to bundle ID
-        return bundleID
+    @State private var appInfoList: [RunningAppInfo] = []
+    
+    struct RunningAppInfo: Identifiable {
+        let id: String  // bundle ID
+        let name: String
+        let icon: NSImage?
+        let app: NSRunningApplication
     }
     
     var body: some View {
-        ZStack {
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
+        VStack(spacing: 32) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 64))
+                .foregroundStyle(.orange)
             
-            VStack(spacing: 32) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.orange)
+            VStack(spacing: 16) {
+                Text("一部のディスクイメージをアンマウントできません")
+                    .font(.title2.bold())
                 
-                VStack(spacing: 16) {
-                    Text("一部のディスクイメージをアンマウントできません")
-                        .font(.title2.bold())
-                    
+                Text("以下のアプリが実行中です。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                
+                // Running apps list with icons and quit buttons
+                ScrollView {
                     VStack(spacing: 12) {
-                        Text("\(failedCount) 個のディスクイメージをアンマウントできませんでした。")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                        
-                        if !runningApps.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("実行中のアプリ:")
-                                    .font(.callout.bold())
-                                    .foregroundStyle(.secondary)
-                                
-                                ForEach(runningApps, id: \.self) { bundleID in
-                                    Text("• \(getAppName(for: bundleID))")
-                                        .font(.callout)
-                                        .foregroundStyle(.secondary)
+                        ForEach(appInfoList) { appInfo in
+                            HStack(spacing: 12) {
+                                // App icon
+                                if let icon = appInfo.icon {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 48, height: 48)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                } else {
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 48, height: 48)
                                 }
                                 
-                                Text("アプリを終了してから再度お試しください。")
-                                    .font(.callout)
-                                    .foregroundStyle(.secondary)
-                                    .padding(.top, 8)
+                                // App name
+                                Text(appInfo.name)
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                // Quit button
+                                Button {
+                                    quitApp(appInfo.app)
+                                } label: {
+                                    Text("終了")
+                                        .font(.system(size: 13, weight: .medium))
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
-                            .padding()
-                            .background(.tertiary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+                            .padding(12)
+                            .background(Color(nsColor: .controlBackgroundColor))
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                     }
-                    .multilineTextAlignment(.center)
                 }
-                
-                HStack(spacing: 12) {
-                    Button {
-                        onCancel()
-                    } label: {
-                        Text("OK")
-                            .font(.system(size: 14, weight: .medium))
-                            .frame(minWidth: 100)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .keyboardShortcut(.defaultAction)
-                }
+                .frame(maxHeight: 300)
             }
-            .padding(48)
-            .frame(maxWidth: 600)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
+            
+            HStack(spacing: 12) {
+                Button {
+                    onCancel()
+                } label: {
+                    Text("キャンセル")
+                        .font(.system(size: 14, weight: .medium))
+                        .frame(minWidth: 100)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .keyboardShortcut(.cancelAction)
+                
+                Button {
+                    onForceQuit()
+                } label: {
+                    Text("強制終了")
+                        .font(.system(size: 14, weight: .medium))
+                        .frame(minWidth: 100)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(.orange)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(48)
+        .frame(maxWidth: 600)
+        .onAppear {
+            loadRunningApps()
+        }
+    }
+    
+    private func loadRunningApps() {
+        let launcherService = LauncherService()
+        appInfoList = runningAppBundleIDs.compactMap { bundleID in
+            guard let app = launcherService.getRunningApp(bundleID: bundleID) else {
+                return nil
+            }
+            
+            let name = app.localizedName ?? bundleID
+            let icon = app.icon
+            
+            return RunningAppInfo(id: bundleID, name: name, icon: icon, app: app)
+        }
+    }
+    
+    private func quitApp(_ app: NSRunningApplication) {
+        let launcherService = LauncherService()
+        _ = launcherService.terminateApp(bundleID: app.bundleIdentifier ?? "")
+        
+        // Wait a moment and check if app is still running
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            loadRunningApps()
+            
+            // If all apps are closed, automatically proceed
+            if appInfoList.isEmpty {
+                onCancel()  // Close dialog and let the system retry
+            }
         }
     }
 }
