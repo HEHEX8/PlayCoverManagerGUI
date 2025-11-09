@@ -630,13 +630,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "\\（其他）件"
+            "value": "\\(其他）件"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "\\（其他）件"
+            "value": "\\(其他）件"
           }
         }
       }
@@ -955,13 +955,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "•%＠"
+            "value": "•%@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "•%＠"
+            "value": "•%@"
           }
         }
       }
@@ -1274,7 +1274,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "应用程序： ％@"
+            "value": "应用程序： %@"
           }
         },
         "zh-Hant": {
@@ -6920,13 +6920,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "版本 ％@"
+            "value": "版本 %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "版本 ％@"
+            "value": "版本 %@"
           }
         }
       }
@@ -9403,13 +9403,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "全部的： ％@"
+            "value": "全部的： %@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "全部的： ％@"
+            "value": "全部的： %@"
           }
         }
       }
