@@ -105,6 +105,14 @@ struct PlayCoverManagerApp: App {
                 .keyboardShortcut(",", modifiers: [.command])
             }
             
+            // Quit command (ensure ⌘Q works)
+            CommandGroup(replacing: .appTermination) {
+                Button("PlayCover Manager を終了") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .keyboardShortcut("q", modifiers: [.command])
+            }
+            
             // Help menu
             CommandGroup(after: .help) {
                 Button("キーボードショートカット") {

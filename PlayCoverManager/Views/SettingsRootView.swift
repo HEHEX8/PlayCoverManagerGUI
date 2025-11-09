@@ -213,25 +213,29 @@ private struct GeneralSettingsView: View {
     }
     
     private func restartApp() {
-        // Get the app bundle URL
-        guard let bundleURL = Bundle.main.bundleURL as URL? else {
-            // Fallback: just terminate and let user restart manually
-            NSApplication.shared.terminate(nil)
-            return
+        let bundlePath = Bundle.main.bundlePath
+        
+        // Safely single-quote a path for shell command (handles spaces and quotes)
+        func shellEscape(_ s: String) -> String {
+            return "'" + s.replacingOccurrences(of: "'", with: "'\"'\"'") + "'"
         }
         
-        // Use NSWorkspace to reopen the app
-        let configuration = NSWorkspace.OpenConfiguration()
-        configuration.createsNewApplicationInstance = true
+        // Sleep briefly so current process exits before `open` launches new instance
+        // Do NOT use `open -n` (forces duplicate); short sleep prevents duplicates
+        let command = "sleep 0.2; open \(shellEscape(bundlePath))"
         
-        NSWorkspace.shared.openApplication(at: bundleURL, configuration: configuration) { app, error in
-            if error == nil {
-                // Successfully launched new instance, quit this one
-                DispatchQueue.main.async {
-                    NSApplication.shared.terminate(nil)
-                }
-            }
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/bash")
+        task.arguments = ["-c", command]
+        
+        do {
+            try task.run()
+        } catch {
+            Logger.error("Error restarting app: \(error)")
         }
+        
+        // Terminate current process so spawned shell can start app anew
+        exit(0)
     }
     
     private func calculateDiskUsage() async {

@@ -60,6 +60,14 @@ final class AppViewModel {
             // Check macOS version first (ASIF requires Tahoe 26.0+)
             try environmentService.checkASIFSupport()
             
+            // Check Full Disk Access permission (required for ~/Library/Containers)
+            guard environmentService.checkFullDiskAccess() else {
+                throw AppError.permissionDenied(
+                    String(localized: "フルディスクアクセス権限が必要です"),
+                    message: String(localized: "このアプリは ~/Library/Containers/ にアクセスする必要があります。\n\n対処方法：\n1. システム設定を開く（⌘Space で「システム設定」を検索）\n2. プライバシーとセキュリティ > フルディスクアクセス\n3. 「+」ボタンで PlayCover Manager を追加\n4. アプリを再起動してください")
+                )
+            }
+            
             let playCoverPaths = try environmentService.detectPlayCover()
             self.playCoverPaths = playCoverPaths
 

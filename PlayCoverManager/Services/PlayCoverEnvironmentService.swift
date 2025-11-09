@@ -9,6 +9,19 @@ final class PlayCoverEnvironmentService {
         self.fileManager = fileManager
     }
     
+    /// Check if Full Disk Access permission is granted
+    func checkFullDiskAccess() -> Bool {
+        // Test by attempting to read ~/Library/Safari (requires Full Disk Access)
+        let testPath = NSHomeDirectory() + "/Library/Safari"
+        
+        do {
+            _ = try fileManager.contentsOfDirectory(atPath: testPath)
+            return true
+        } catch {
+            return false
+        }
+    }
+    
     /// Check if the current macOS version supports ASIF format (Tahoe 26.0+)
     func checkASIFSupport() throws {
         let osVersion = ProcessInfo.processInfo.operatingSystemVersion
