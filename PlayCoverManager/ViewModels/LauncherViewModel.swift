@@ -64,10 +64,6 @@ final class LauncherViewModel {
     // nonisolated(unsafe) allows access from deinit
     nonisolated(unsafe) private var appLaunchObserver: NSObjectProtocol?
     nonisolated(unsafe) private var appTerminateObserver: NSObjectProtocol?
-    
-    // Polling-based fallback for app termination detection
-    // Used as fallback when NSWorkspace notifications don't work for PlayCover apps
-    private var pollingTask: Task<Void, Never>?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -98,21 +94,15 @@ final class LauncherViewModel {
         
         // Setup real-time app lifecycle monitoring
         setupAppLifecycleMonitoring()
-        
-        // Start polling-based fallback for termination detection
-        startPollingBasedTerminationDetection()
     }
     
     nonisolated deinit {
-        // Cancel polling task
-        pollingTask?.cancel()
-        
-        // Remove notification observers
+        // Remove notification observers from NSWorkspace notification center
         if let observer = appLaunchObserver {
-            NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
         if let observer = appTerminateObserver {
-            NotificationCenter.default.removeObserver(observer)
+            NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }
     }
     
@@ -125,10 +115,13 @@ final class LauncherViewModel {
         appLaunchObserver = workspace.notificationCenter.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification,
             object: nil,
-            queue: .main
+            queue: nil  // Use default queue to ensure notification delivery
         ) { [weak self] notification in
-            guard let self = self else { return }
             NSLog("[DEBUG] didLaunchApplicationNotification received")
+            guard let self = self else {
+                NSLog("[DEBUG] self is nil in launch handler")
+                return
+            }
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                let bundleID = app.bundleIdentifier {
                 NSLog("[DEBUG] Extracted bundleID from notification: \(bundleID)")
@@ -144,10 +137,13 @@ final class LauncherViewModel {
         appTerminateObserver = workspace.notificationCenter.addObserver(
             forName: NSWorkspace.didTerminateApplicationNotification,
             object: nil,
-            queue: .main
+            queue: nil  // Use default queue to ensure notification delivery
         ) { [weak self] notification in
-            guard let self = self else { return }
             NSLog("[DEBUG] didTerminateApplicationNotification received")
+            guard let self = self else {
+                NSLog("[DEBUG] self is nil in terminate handler")
+                return
+            }
             if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                let bundleID = app.bundleIdentifier {
                 NSLog("[DEBUG] Extracted bundleID from notification: \(bundleID)")
@@ -160,50 +156,6 @@ final class LauncherViewModel {
         }
         
         NSLog("[DEBUG] App lifecycle monitoring setup completed")
-    }
-    
-    /// Start polling-based termination detection as fallback
-    /// NSWorkspace notifications may not work reliably for PlayCover-wrapped iOS apps
-    private func startPollingBasedTerminationDetection() {
-        NSLog("[DEBUG] Starting polling-based termination detection")
-        
-        pollingTask = Task { @MainActor in
-            while !Task.isCancelled {
-                // Check every 2 seconds
-                try? await Task.sleep(for: .seconds(2))
-                
-                guard !Task.isCancelled else { break }
-                
-                // Check for terminated apps
-                await checkForTerminatedApps()
-            }
-        }
-    }
-    
-    /// Check if any previously running apps have terminated
-    private func checkForTerminatedApps() async {
-        var terminatedApps: [String] = []
-        
-        for bundleID in previouslyRunningApps {
-            let isRunning = launcherService.isAppRunning(bundleID: bundleID)
-            if !isRunning {
-                NSLog("[DEBUG] Polling detected termination of: \(bundleID)")
-                terminatedApps.append(bundleID)
-            }
-        }
-        
-        // Process terminated apps
-        for bundleID in terminatedApps {
-            previouslyRunningApps.remove(bundleID)
-            
-            // Auto-unmount the container
-            NSLog("[DEBUG] Polling: Calling unmountContainer for \(bundleID)")
-            await unmountContainer(for: bundleID)
-            
-            // Refresh UI
-            await refresh()
-            NSLog("[DEBUG] Polling: Auto-unmount and UI refresh completed for \(bundleID)")
-        }
     }
     
     private func handleAppLaunched(bundleID: String) async {
