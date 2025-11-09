@@ -425,55 +425,6 @@ final class LauncherViewModel {
         return perAppSettings
     }
     
-    // MARK: - App Termination Monitoring (Legacy - NSWorkspace notifications)
-    // NOTE: NSWorkspace notifications don't work for PlayCover-launched iOS apps
-    // This code is kept for reference but not used. Use polling-based detection instead.
-    /*
-    private func startMonitoringAppTerminations() {
-        appTerminationObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didTerminateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            
-            guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else {
-                return
-            }
-            
-            let bundleID = app.bundleIdentifier ?? "<no bundle ID>"
-            let appName = app.localizedName ?? "<no name>"
-            
-            guard app.bundleIdentifier != nil else {
-                return
-            }
-            
-            // Handle app termination on MainActor
-            // Swift 6.2: Task.immediate for immediate UI update on app termination
-            Task.immediate { @MainActor [weak self] in
-                guard let self = self else {
-                    return
-                }
-                
-                for managedApp in self.apps {
-                }
-                
-                // Check if this is one of our managed apps
-                let isManagedApp = self.apps.contains { $0.bundleIdentifier == bundleID }
-                
-                guard isManagedApp else {
-                    return
-                }
-                
-                // Unmount the container for this app
-                await self.unmountContainer(for: bundleID)
-                
-                // Refresh to update running indicator
-                await self.refresh()
-            }
-        }
-    }
-    */
-    
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         
