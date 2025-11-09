@@ -59,6 +59,10 @@ final class LauncherViewModel {
     
     // Track running apps for termination detection
     private var previouslyRunningApps: Set<String> = []
+    
+    // NSWorkspace notification observers for real-time app lifecycle monitoring
+    private var appLaunchObserver: NSObjectProtocol?
+    private var appTerminateObserver: NSObjectProtocol?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -82,10 +86,78 @@ final class LauncherViewModel {
         
         // Cleanup stale lock files on startup
         cleanupStaleLockFiles()
+        
+        // Setup real-time app lifecycle monitoring
+        setupAppLifecycleMonitoring()
     }
     
     nonisolated deinit {
-        // Nothing to clean up
+        // Remove notification observers
+        if let observer = appLaunchObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let observer = appTerminateObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+    
+    private func setupAppLifecycleMonitoring() {
+        let workspace = NSWorkspace.shared
+        
+        // Monitor app launches
+        appLaunchObserver = workspace.notificationCenter.addObserver(
+            forName: NSWorkspace.didLaunchApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self else { return }
+            if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+               let bundleID = app.bundleIdentifier {
+                Task { @MainActor in
+                    await self.handleAppLaunched(bundleID: bundleID)
+                }
+            }
+        }
+        
+        // Monitor app terminations
+        appTerminateObserver = workspace.notificationCenter.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            guard let self = self else { return }
+            if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+               let bundleID = app.bundleIdentifier {
+                Task { @MainActor in
+                    await self.handleAppTerminated(bundleID: bundleID)
+                }
+            }
+        }
+    }
+    
+    private func handleAppLaunched(bundleID: String) async {
+        // Check if this is one of our managed apps
+        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { return }
+        
+        // Update running state
+        previouslyRunningApps.insert(bundleID)
+        
+        // Refresh to update UI
+        await refresh()
+    }
+    
+    private func handleAppTerminated(bundleID: String) async {
+        // Check if this is one of our managed apps
+        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { return }
+        
+        // Remove from running apps
+        previouslyRunningApps.remove(bundleID)
+        
+        // Auto-unmount the container
+        await unmountContainer(for: bundleID)
+        
+        // Refresh to update UI
+        await refresh()
     }
     
     private func cleanupStaleLockFiles() {
@@ -107,26 +179,13 @@ final class LauncherViewModel {
 
     func refresh() async {
         do {
-            // Get current running state before refresh
-            let oldRunningApps = Set(apps.filter { $0.isRunning }.map { $0.bundleIdentifier })
-            
             // Refresh app list (includes isRunning check via LauncherService)
             let refreshed = try launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
             apps = refreshed
             applySearch()
             
-            // Get new running state after refresh
-            let newRunningApps = Set(apps.filter { $0.isRunning }.map { $0.bundleIdentifier })
-            
-            // Detect terminated apps (was running before, but not now)
-            let terminatedApps = oldRunningApps.subtracting(newRunningApps)
-            
-            // Auto-unmount terminated apps
-            for bundleID in terminatedApps {
-                await unmountContainer(for: bundleID)
-            }
-            
-            previouslyRunningApps = newRunningApps
+            // Update running apps set for consistency
+            previouslyRunningApps = Set(apps.filter { $0.isRunning }.map { $0.bundleIdentifier })
         } catch {
             self.error = AppError.environment("アプリ一覧の更新に失敗", message: error.localizedDescription, underlying: error)
         }
