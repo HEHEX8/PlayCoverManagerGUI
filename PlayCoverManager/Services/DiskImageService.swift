@@ -389,17 +389,22 @@ final class DiskImageService {
     ///   - volumePath: The path of the volume on the disk image
     ///   - force: If true, force unmount even if files are in use (dangerous, use with caution)
     func ejectDiskImage(for volumePath: URL, force: Bool = false) async throws {
+        NSLog("[DEBUG] DiskImageService: ejectDiskImage called for: \(volumePath.path)")
+        
         // Get device identifier for the volume
         let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", volumePath.path])
         guard let infoData = infoOutput?.data(using: .utf8),
               let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any],
               let deviceId = infoPlist["DeviceIdentifier"] as? String else {
+            NSLog("[DEBUG] DiskImageService: Failed to get device identifier")
             throw AppError.diskImage("デバイスIDの取得に失敗", message: volumePath.path, underlying: nil)
         }
         
+        NSLog("[DEBUG] DiskImageService: Device ID: \(deviceId)")
         
         // Get the parent disk image device (e.g., disk4 from disk4s1)
         let parentDevice = deviceId.replacingOccurrences(of: "s\\d+$", with: "", options: [.regularExpression])
+        NSLog("[DEBUG] DiskImageService: Parent device: \(parentDevice), force: \(force)")
         
         // Eject the parent device (unmounts all volumes and detaches device)
         do {
@@ -407,8 +412,11 @@ final class DiskImageService {
             if force {
                 args.append("-force")
             }
-            _ = try await processRunner.run("/usr/sbin/diskutil", args)
+            NSLog("[DEBUG] DiskImageService: Running: diskutil \(args.joined(separator: " "))")
+            let output = try await processRunner.run("/usr/sbin/diskutil", args)
+            NSLog("[DEBUG] DiskImageService: Eject succeeded: \(output)")
         } catch {
+            NSLog("[DEBUG] DiskImageService: Eject failed: \(error)")
             throw error
         }
     }

@@ -428,7 +428,32 @@ final class LauncherViewModel {
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         
+        // DEBUG: To view these logs, open Console.app and filter by "[DEBUG]"
+        // or run: log stream --predicate 'eventMessage CONTAINS "[DEBUG]"' --level debug
+        NSLog("[DEBUG] Attempting to unmount container for: \(bundleID)")
+        
         do {
+            // Check what processes are using the volume before unmounting
+            if let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL),
+               descriptor.isMounted {
+                NSLog("[DEBUG] Container is mounted at: \(containerURL.path)")
+                
+                // Use lsof to check what's using the volume
+                let lsofOutput = try? ProcessRunner().runSync("/usr/sbin/lsof", ["+D", containerURL.path])
+                if let output = lsofOutput, !output.isEmpty {
+                    let lines = output.split(separator: "\n")
+                    NSLog("[DEBUG] Processes using volume (\(lines.count - 1) processes):")
+                    for (index, line) in lines.enumerated() {
+                        if index == 0 { continue } // Skip header
+                        NSLog("[DEBUG]   \(line)")
+                    }
+                } else {
+                    NSLog("[DEBUG] No processes found using the volume")
+                }
+            } else {
+                NSLog("[DEBUG] Container is not mounted")
+            }
+            
             try await DiskImageHelper.unmountDiskImageSafely(
                 for: bundleID,
                 containerURL: containerURL,
@@ -436,7 +461,9 @@ final class LauncherViewModel {
                 lockService: lockService,
                 force: false
             )
+            NSLog("[DEBUG] Successfully unmounted container for: \(bundleID)")
         } catch {
+            NSLog("[DEBUG] Failed to unmount container for \(bundleID): \(error)")
             // Silently fail - will retry on next refresh
             // System processes (cfprefsd, etc.) may still be holding file handles
         }

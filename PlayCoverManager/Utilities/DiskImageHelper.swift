@@ -126,26 +126,36 @@ final class DiskImageHelper {
         lockService: ContainerLockService,
         force: Bool = false
     ) async throws {
+        NSLog("[DEBUG] DiskImageHelper: unmountDiskImageSafely called for \(bundleID)")
+        
         // Release our lock first
         await lockService.unlockContainer(for: bundleID)
+        NSLog("[DEBUG] DiskImageHelper: Released our lock for \(bundleID)")
         
         // Check if mounted
         let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
         guard let descriptor = descriptor, descriptor.isMounted else {
+            NSLog("[DEBUG] DiskImageHelper: Container not mounted, nothing to do")
             return
         }
+        
+        NSLog("[DEBUG] DiskImageHelper: Container is mounted, checking locks...")
         
         // Check if another process has a lock (unless forcing)
         if !force {
             let canLock = await lockService.canLockContainer(for: bundleID, at: containerURL)
             if !canLock {
+                NSLog("[DEBUG] DiskImageHelper: Another process has a lock, aborting unmount")
                 // Another process is using this container
                 return
             }
+            NSLog("[DEBUG] DiskImageHelper: No other locks, proceeding with unmount")
         }
         
         // Unmount
+        NSLog("[DEBUG] DiskImageHelper: Calling ejectDiskImage...")
         try await diskImageService.ejectDiskImage(for: containerURL, force: force)
+        NSLog("[DEBUG] DiskImageHelper: ejectDiskImage completed successfully")
     }
     
     // MARK: - App Directory Discovery
