@@ -2465,19 +2465,9 @@ private struct InfoContentView: View {
                         }
                     }
                 }
-                .padding()
             }
+            .padding()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .onAppear {
-            loadInfoPlist()
-        }
-    }
-    
-    private func loadInfoPlist() {
-        guard let bundle = Bundle(url: app.appURL),
-              let info = bundle.infoDictionary else { return }
-        infoPlist = info
     }
     
     @ViewBuilder
