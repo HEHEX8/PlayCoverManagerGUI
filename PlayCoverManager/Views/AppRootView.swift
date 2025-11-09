@@ -411,9 +411,9 @@ struct RunningAppsBlockingView: View {
     }
     
     private func loadRunningApps() {
-        let workspace = NSWorkspace.shared
+        let launcherService = LauncherService()
         appInfoList = runningAppBundleIDs.compactMap { bundleID in
-            guard let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == bundleID }) else {
+            guard let app = launcherService.getRunningApp(bundleID: bundleID) else {
                 return nil
             }
             
@@ -425,7 +425,8 @@ struct RunningAppsBlockingView: View {
     }
     
     private func quitApp(_ app: NSRunningApplication) {
-        app.terminate()
+        let launcherService = LauncherService()
+        _ = launcherService.terminateApp(bundleID: app.bundleIdentifier ?? "")
         
         // Wait a moment and check if app is still running
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
