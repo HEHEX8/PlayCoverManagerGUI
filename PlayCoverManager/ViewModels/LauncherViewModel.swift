@@ -451,13 +451,15 @@ final class LauncherViewModel {
                     NSLog("[DEBUG] No processes found using the volume")
                 }
                 
-                // Synchronize preferences to ensure cfprefsd releases file handles
-                NSLog("[DEBUG] Synchronizing preferences for: \(bundleID)")
+                // Force cfprefsd to release preferences cache for this bundle
+                NSLog("[DEBUG] Forcing cfprefsd to release preferences cache for: \(bundleID)")
+                
+                // Step 1: Synchronize preferences
                 CFPreferencesAppSynchronize(bundleID as CFString)
                 
-                // Give cfprefsd time to release file handles
-                NSLog("[DEBUG] Waiting for cfprefsd to release file handles...")
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                // Step 2: Force cfprefsd to re-read preferences (triggers cache release)
+                let defaultsOutput = try? ProcessRunner().runSync("/usr/bin/defaults", ["read", bundleID])
+                NSLog("[DEBUG] Forced defaults read completed: \(defaultsOutput != nil ? "success" : "failed")")
             } else {
                 NSLog("[DEBUG] Container is not mounted")
             }
@@ -514,13 +516,11 @@ final class LauncherViewModel {
                 continue
             }
             
-            // Synchronize preferences to ensure cfprefsd releases file handles
+            // Force cfprefsd to release preferences cache
             CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+            let _ = try? ProcessRunner().runSync("/usr/bin/defaults", ["read", app.bundleIdentifier])
             
             do {
-                // Small delay to allow cfprefsd to release file handles
-                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-                
                 try await diskImageService.ejectDiskImage(for: container)
                 successCount += 1
             } catch {
