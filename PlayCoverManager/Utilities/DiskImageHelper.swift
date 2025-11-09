@@ -163,12 +163,11 @@ final class DiskImageHelper {
     /// Result of unmount operation
     enum UnmountResult {
         case success
-        case normalFailed(Error)
-        case forceFailed(Error)
+        case failed(Error)  // Simplified: both normal and force failed
     }
     
     /// Try two-stage unmount: normal eject first, then force eject if it fails
-    /// Returns result indicating success or failure mode
+    /// Returns result indicating success or failure
     static func unmountWithTwoStageEject(
         containerURL: URL,
         diskImageService: DiskImageService,
@@ -195,9 +194,9 @@ final class DiskImageHelper {
                 try await diskImageService.ejectDiskImage(for: containerURL, force: true)
                 NSLog("[DEBUG] DiskImageHelper: Stage 2 - Force eject succeeded")
                 return .success
-            } catch {
-                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Force eject also failed: \(error)")
-                return .forceFailed(error)
+            } catch let forceError {
+                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Force eject also failed: \(forceError)")
+                return .failed(forceError)
             }
         }
     }

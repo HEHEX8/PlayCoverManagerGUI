@@ -301,7 +301,7 @@ final class AppViewModel {
             switch result {
             case .success:
                 NSLog("Successfully unmounted container for \(app.bundleIdentifier)")
-            case .normalFailed, .forceFailed(let error):
+            case .failed(let error):
                 failedCount += 1
                 NSLog("Failed to unmount container for \(app.bundleIdentifier): \(error)")
             }
@@ -321,7 +321,7 @@ final class AppViewModel {
             switch result {
             case .success:
                 NSLog("Successfully unmounted PlayCover container")
-            case .normalFailed, .forceFailed(let error):
+            case .failed(let error):
                 failedCount += 1
                 NSLog("Failed to unmount PlayCover container: \(error)")
             }

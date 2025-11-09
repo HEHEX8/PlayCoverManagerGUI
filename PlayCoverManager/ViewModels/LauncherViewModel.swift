@@ -530,9 +530,7 @@ final class LauncherViewModel {
         switch result {
         case .success:
             NSLog("[DEBUG] Successfully unmounted container for: \(bundleID)")
-        case .normalFailed(let error):
-            NSLog("[DEBUG] Normal eject failed for \(bundleID), but force eject succeeded: \(error)")
-        case .forceFailed(let error):
+        case .failed(let error):
             NSLog("[DEBUG] Failed to unmount container for \(bundleID): \(error)")
         }
     }
@@ -585,7 +583,7 @@ final class LauncherViewModel {
             switch result {
             case .success:
                 successCount += 1
-            case .normalFailed, .forceFailed:
+            case .failed:
                 failedCount += 1
             }
         }
@@ -619,7 +617,7 @@ final class LauncherViewModel {
                 switch result {
                 case .success:
                     successCount += 1
-                case .normalFailed, .forceFailed(let error):
+                case .failed(let error):
                     // PlayCover container failed, show error and abort
                     await MainActor.run {
                         unmountFlowState = .error(
