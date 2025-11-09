@@ -11,6 +11,7 @@ import AppKit
 
 @main
 struct PlayCoverManagerApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var appViewModel: AppViewModel
     @State private var settingsStore: SettingsStore
     @State private var perAppSettingsStore: PerAppSettingsStore
@@ -29,7 +30,12 @@ struct PlayCoverManagerApp: App {
         let perAppSettings = PerAppSettingsStore()
         _settingsStore = State(wrappedValue: settings)
         _perAppSettingsStore = State(wrappedValue: perAppSettings)
-        _appViewModel = State(wrappedValue: AppViewModel(settings: settings, perAppSettings: perAppSettings))
+        
+        let viewModel = AppViewModel(settings: settings, perAppSettings: perAppSettings)
+        _appViewModel = State(wrappedValue: viewModel)
+        
+        // Pass viewModel to AppDelegate for termination handling
+        AppDelegate.shared = viewModel
     }
     
     /// macOS Tahoe 26.0 以降かどうかをチェック
@@ -48,6 +54,10 @@ struct PlayCoverManagerApp: App {
                     .environment(appViewModel)
                     .environment(settingsStore)
                     .environment(perAppSettingsStore)
+                    .onAppear {
+                        // Configure app to terminate when last window is closed
+                        NSApp.delegate?.applicationShouldTerminateAfterLastWindowClosed = { _ in true }
+                    }
             }
         }
         .commands {
@@ -155,5 +165,31 @@ private struct UnsupportedOSView: View {
     private static var currentOSVersion: String {
         let osVersion = ProcessInfo.processInfo.operatingSystemVersion
         return "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
+    }
+}
+
+// MARK: - App Delegate
+class AppDelegate: NSObject, NSApplicationDelegate {
+    static var shared: AppViewModel?
+    
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return true
+    }
+    
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard let viewModel = Self.shared else {
+            return .terminateNow
+        }
+        
+        // Start async unmount and return later
+        Task { @MainActor in
+            // Unmount PlayCover's own disk image
+            await viewModel.unmountPlayCoverContainer()
+            
+            // Now terminate
+            NSApplication.shared.reply(toApplicationShouldTerminate: true)
+        }
+        
+        return .terminateLater
     }
 }

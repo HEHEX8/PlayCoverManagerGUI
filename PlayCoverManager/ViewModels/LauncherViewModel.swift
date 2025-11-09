@@ -91,7 +91,7 @@ final class LauncherViewModel {
         setupAppLifecycleMonitoring()
     }
     
-    nonisolated deinit {
+    deinit {
         // Remove notification observers
         if let observer = appLaunchObserver {
             NotificationCenter.default.removeObserver(observer)

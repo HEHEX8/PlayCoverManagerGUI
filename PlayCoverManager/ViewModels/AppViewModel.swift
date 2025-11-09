@@ -205,4 +205,24 @@ final class AppViewModel {
         phase = .terminating
         NSApplication.shared.terminate(nil)
     }
+    
+    /// Unmount PlayCover's own container when app terminates
+    @MainActor
+    func unmountPlayCoverContainer() async {
+        guard let playCoverPaths = playCoverPaths else { return }
+        
+        let containerURL = playCoverPaths.containerRootURL
+        
+        // Check if mounted
+        let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
+        guard isMounted else { return }
+        
+        do {
+            // Unmount PlayCover's container with force
+            try await diskImageService.ejectDiskImage(for: containerURL, force: true)
+            NSLog("Successfully unmounted PlayCover container")
+        } catch {
+            NSLog("Failed to unmount PlayCover container: \(error)")
+        }
+    }
 }
