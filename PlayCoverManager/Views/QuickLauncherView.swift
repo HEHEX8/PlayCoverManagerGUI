@@ -1765,11 +1765,29 @@ private struct OverviewView: View {
                             
                             VStack(spacing: 8) {
                                 StorageRow(label: "アプリ本体", size: storage.appSize, color: .blue)
-                                StorageRow(label: "コンテナ", size: storage.containerSize, color: .orange)
+                                if storage.diskImagePath != nil {
+                                    StorageRow(
+                                        label: storage.isMounted ? "コンテナ (イメージ・マウント中)" : "コンテナ (イメージ)",
+                                        size: storage.containerSize,
+                                        color: .orange
+                                    )
+                                    if let internalSize = storage.internalDataSize {
+                                        StorageRow(label: "  └ 内部使用容量", size: internalSize, color: .gray)
+                                            .font(.caption)
+                                    }
+                                } else {
+                                    StorageRow(label: "コンテナ", size: storage.containerSize, color: .orange)
+                                }
                             }
                             .padding(12)
                             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                             .cornerRadius(8)
+                            
+                            if storage.diskImagePath != nil {
+                                Text("※ 合計 = アプリ本体 + イメージファイル")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                     
@@ -1900,44 +1918,87 @@ private struct OverviewView: View {
             return nil
         }
         
-        let containerSize: String
-        let containerPath: String
-        
-        // Check if disk image is mounted and use mount point for size calculation
+        // Check if disk image exists
         if let diskImageState = try? DiskImageHelper.checkDiskImageState(
             for: app.bundleIdentifier,
             containerURL: containerURL,
             diskImageService: viewModel.diskImageService
-        ), diskImageState.isMounted, let volumePath = diskImageState.descriptor.volumePath {
-            // Use mounted volume path for accurate size
-            containerSize = calculateDirectorySize(at: volumePath) ?? "不明"
-            containerPath = "\(volumePath.path) (マウント中)"
-        } else if FileManager.default.fileExists(atPath: containerURL.path) {
-            // Use container directory
-            containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
-            containerPath = containerURL.path
+        ), diskImageState.imageExists {
+            // Disk image exists - use disk image file size
+            let diskImagePath = diskImageState.descriptor.imageURL.path
+            let diskImageSize: String
+            if let sizeOnDisk = diskImageState.descriptor.sizeOnDisk {
+                diskImageSize = ByteCountFormatter.string(fromByteCount: Int64(sizeOnDisk), countStyle: .file)
+            } else {
+                diskImageSize = calculateDirectorySize(at: diskImageState.descriptor.imageURL) ?? "不明"
+            }
+            
+            // Calculate internal data size only when not mounted
+            let internalDataSize: String?
+            if !diskImageState.isMounted, let volumePath = diskImageState.descriptor.volumePath {
+                internalDataSize = calculateDirectorySize(at: volumePath)
+            } else if !diskImageState.isMounted {
+                internalDataSize = calculateDirectorySize(at: containerURL)
+            } else {
+                internalDataSize = nil
+            }
+            
+            // Total = app + disk image file size
+            let totalSize: String
+            if let appBytes = parseByteCount(appSize),
+               let imageBytes = parseByteCount(diskImageSize) {
+                let total = appBytes + imageBytes
+                totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+            } else {
+                totalSize = appSize
+            }
+            
+            return StorageInfo(
+                appPath: app.appURL.path,
+                appSize: appSize,
+                containerPath: diskImagePath,
+                containerSize: diskImageSize,
+                totalSize: totalSize,
+                diskImagePath: diskImagePath,
+                diskImageSize: diskImageSize,
+                internalDataSize: internalDataSize,
+                isMounted: diskImageState.isMounted
+            )
         } else {
-            containerSize = "未作成"
-            containerPath = "\(containerURL.path) (未作成)"
+            // No disk image - traditional container directory
+            let containerSize: String
+            let containerPath: String
+            
+            if FileManager.default.fileExists(atPath: containerURL.path) {
+                containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
+                containerPath = containerURL.path
+            } else {
+                containerSize = "未作成"
+                containerPath = "\(containerURL.path) (未作成)"
+            }
+            
+            let totalSize: String
+            if containerSize != "未作成", containerSize != "不明",
+               let appBytes = parseByteCount(appSize),
+               let containerBytes = parseByteCount(containerSize) {
+                let total = appBytes + containerBytes
+                totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+            } else {
+                totalSize = appSize
+            }
+            
+            return StorageInfo(
+                appPath: app.appURL.path,
+                appSize: appSize,
+                containerPath: containerPath,
+                containerSize: containerSize,
+                totalSize: totalSize,
+                diskImagePath: nil,
+                diskImageSize: nil,
+                internalDataSize: nil,
+                isMounted: false
+            )
         }
-        
-        let totalSize: String
-        if containerSize != "未作成", containerSize != "不明",
-           let appBytes = parseByteCount(appSize),
-           let containerBytes = parseByteCount(containerSize) {
-            let total = appBytes + containerBytes
-            totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
-        } else {
-            totalSize = appSize
-        }
-        
-        return StorageInfo(
-            appPath: app.appURL.path,
-            appSize: appSize,
-            containerPath: containerPath,
-            containerSize: containerSize,
-            totalSize: totalSize
-        )
     }
     
     private func calculateDirectorySize(at url: URL) -> String? {
@@ -2322,17 +2383,34 @@ private struct InfoView: View {
                             Divider()
                                 .padding(.vertical, 4)
                             
-                            // Container
+                            // Container (disk image or directory)
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("アプリコンテナ")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                infoRow(label: "所在地", value: storageInfo.containerPath)
-                                infoRow(label: "使用容量", value: storageInfo.containerSize)
+                                if storageInfo.diskImagePath != nil {
+                                    Text("コンテナ (ディスクイメージ)")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                    infoRow(label: "所在地", value: storageInfo.containerPath)
+                                    infoRow(label: "イメージ容量", value: storageInfo.containerSize)
+                                    if let internalSize = storageInfo.internalDataSize {
+                                        infoRow(label: "内部使用容量", value: internalSize)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    infoRow(label: "マウント状態", value: storageInfo.isMounted ? "マウント中" : "アンマウント中")
+                                } else {
+                                    Text("アプリコンテナ")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                    infoRow(label: "所在地", value: storageInfo.containerPath)
+                                    infoRow(label: "使用容量", value: storageInfo.containerSize)
+                                }
                                 Button("Finder で表示") {
-                                    let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-                                    if FileManager.default.fileExists(atPath: containerURL.path) {
-                                        NSWorkspace.shared.activateFileViewerSelecting([containerURL])
+                                    if let diskImagePath = storageInfo.diskImagePath {
+                                        NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: diskImagePath)])
+                                    } else {
+                                        let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                                        if FileManager.default.fileExists(atPath: containerURL.path) {
+                                            NSWorkspace.shared.activateFileViewerSelecting([containerURL])
+                                        }
                                     }
                                 }
                                 .buttonStyle(.link)
@@ -2352,6 +2430,11 @@ private struct InfoView: View {
                                     .font(.caption)
                                     .fontWeight(.bold)
                                     .foregroundStyle(.blue)
+                            }
+                            if storageInfo.diskImagePath != nil {
+                                Text("※ アプリ本体 + ディスクイメージファイル")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -2510,46 +2593,88 @@ private struct InfoView: View {
             return nil
         }
         
-        // Get container size
-        let containerSize: String
-        let containerPath: String
-        
-        // Check if disk image is mounted and use mount point for size calculation
+        // Check if disk image exists
         if let diskImageState = try? DiskImageHelper.checkDiskImageState(
             for: app.bundleIdentifier,
             containerURL: containerURL,
             diskImageService: viewModel.diskImageService
-        ), diskImageState.isMounted, let volumePath = diskImageState.descriptor.volumePath {
-            // Use mounted volume path for accurate size
-            containerSize = calculateDirectorySize(at: volumePath) ?? "不明"
-            containerPath = "\(volumePath.path) (マウント中)"
-        } else if FileManager.default.fileExists(atPath: containerURL.path) {
-            // Use container directory
-            containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
-            containerPath = containerURL.path
+        ), diskImageState.imageExists {
+            // Disk image exists - use disk image file size
+            let diskImagePath = diskImageState.descriptor.imageURL.path
+            let diskImageSize: String
+            if let sizeOnDisk = diskImageState.descriptor.sizeOnDisk {
+                diskImageSize = ByteCountFormatter.string(fromByteCount: Int64(sizeOnDisk), countStyle: .file)
+            } else {
+                diskImageSize = calculateDirectorySize(at: diskImageState.descriptor.imageURL) ?? "不明"
+            }
+            
+            // Calculate internal data size only when not mounted
+            let internalDataSize: String?
+            if !diskImageState.isMounted, let volumePath = diskImageState.descriptor.volumePath {
+                internalDataSize = calculateDirectorySize(at: volumePath)
+            } else if !diskImageState.isMounted {
+                internalDataSize = calculateDirectorySize(at: containerURL)
+            } else {
+                internalDataSize = nil
+            }
+            
+            // Total = app + disk image file size
+            let totalSize: String
+            if let appBytes = parseByteCount(appSize),
+               let imageBytes = parseByteCount(diskImageSize) {
+                let total = appBytes + imageBytes
+                totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+            } else {
+                totalSize = appSize
+            }
+            
+            return StorageInfo(
+                appPath: app.appURL.path,
+                appSize: appSize,
+                containerPath: diskImagePath,
+                containerSize: diskImageSize,
+                totalSize: totalSize,
+                diskImagePath: diskImagePath,
+                diskImageSize: diskImageSize,
+                internalDataSize: internalDataSize,
+                isMounted: diskImageState.isMounted
+            )
         } else {
-            containerSize = "未作成"
-            containerPath = "\(containerURL.path) (未作成)"
+            // No disk image - traditional container directory
+            let containerSize: String
+            let containerPath: String
+            
+            if FileManager.default.fileExists(atPath: containerURL.path) {
+                containerSize = calculateDirectorySize(at: containerURL) ?? "不明"
+                containerPath = containerURL.path
+            } else {
+                containerSize = "未作成"
+                containerPath = "\(containerURL.path) (未作成)"
+            }
+            
+            // Calculate total (only if container exists and has valid size)
+            let totalSize: String
+            if containerSize != "未作成", containerSize != "不明",
+               let appBytes = parseByteCount(appSize),
+               let containerBytes = parseByteCount(containerSize) {
+                let total = appBytes + containerBytes
+                totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
+            } else {
+                totalSize = appSize
+            }
+            
+            return StorageInfo(
+                appPath: app.appURL.path,
+                appSize: appSize,
+                containerPath: containerPath,
+                containerSize: containerSize,
+                totalSize: totalSize,
+                diskImagePath: nil,
+                diskImageSize: nil,
+                internalDataSize: nil,
+                isMounted: false
+            )
         }
-        
-        // Calculate total (only if container exists and has valid size)
-        let totalSize: String
-        if containerSize != "未作成", containerSize != "不明",
-           let appBytes = parseByteCount(appSize),
-           let containerBytes = parseByteCount(containerSize) {
-            let total = appBytes + containerBytes
-            totalSize = ByteCountFormatter.string(fromByteCount: total, countStyle: .file)
-        } else {
-            totalSize = appSize
-        }
-        
-        return StorageInfo(
-            appPath: app.appURL.path,
-            appSize: appSize,
-            containerPath: containerPath,
-            containerSize: containerSize,
-            totalSize: totalSize
-        )
     }
     
     private func parseByteCount(_ sizeString: String) -> Int64? {
@@ -2582,6 +2707,12 @@ struct StorageInfo {
     let containerPath: String
     let containerSize: String
     let totalSize: String
+    
+    // Disk image information
+    let diskImagePath: String?
+    let diskImageSize: String?
+    let internalDataSize: String?  // Only shown when not mounted
+    let isMounted: Bool
 }
 
 // MARK: - Analysis Tab
