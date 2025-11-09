@@ -4,7 +4,7 @@ import os.log
 /// Centralized logging utility for PlayCover Manager
 /// Provides structured logging with different severity levels
 enum Logger {
-    private nonisolated(unsafe) static let subsystem = Bundle.main.bundleIdentifier ?? "com.playcover.manager"
+    private static nonisolated let subsystem = Bundle.main.bundleIdentifier ?? "com.playcover.manager"
     
     // MARK: - Logging Methods
     
