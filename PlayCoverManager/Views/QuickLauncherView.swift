@@ -845,7 +845,7 @@ private struct iOSAppIconView: View {
                 )
                 
                 guard state.imageExists else {
-                    NSLog("Disk image not found for \(app.bundleIdentifier)")
+                    Logger.error("Disk image not found for \(app.bundleIdentifier)")
                     return
                 }
                 
@@ -853,7 +853,7 @@ private struct iOSAppIconView: View {
                 if !state.isMounted {
                     let internalItems = try detectInternalDataLocal(at: containerURL)
                     if !internalItems.isEmpty {
-                        NSLog("Internal data detected but debug console launch doesn't handle data migration yet")
+                        Logger.error("Internal data detected but debug console launch doesn't handle data migration yet")
                         // TODO: Show alert to user that they need to launch normally first
                         return
                     }
@@ -873,7 +873,7 @@ private struct iOSAppIconView: View {
                 // Find the executable in the app bundle
                 guard let bundle = Bundle(url: app.appURL),
                       let executableName = bundle.infoDictionary?["CFBundleExecutable"] as? String else {
-                    NSLog("Failed to find executable name for \(app.bundleIdentifier)")
+                    Logger.error("Failed to find executable name for \(app.bundleIdentifier)")
                     return
                 }
                 
@@ -881,7 +881,7 @@ private struct iOSAppIconView: View {
                 
                 // Check if executable exists
                 guard FileManager.default.fileExists(atPath: executablePath) else {
-                    NSLog("Executable not found at: \(executablePath)")
+                    Logger.error("Executable not found at: \(executablePath)")
                     return
                 }
                 
@@ -925,7 +925,7 @@ private struct iOSAppIconView: View {
                 // Open the script with Terminal (this doesn't require AppleScript permissions)
                 NSWorkspace.shared.open(scriptURL)
             } catch {
-                NSLog("Failed to launch debug console: \(error)")
+                Logger.error("Failed to launch debug console: \(error)")
             }
         }
     }
@@ -2898,13 +2898,17 @@ actor AppAnalyzer {
         let fileManager = FileManager.default
         
         // Enumerate all files with streaming (memory efficient)
+        // Note: Convert enumerator to array to work with Swift 6 concurrency
         if let enumerator = fileManager.enumerator(
             at: appURL,
             includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
             options: [.skipsHiddenFiles]
         ) {
-            // Stream through files without loading all into memory
-            for case let fileURL as URL in enumerator {
+            // Convert enumerator contents to array for async context compatibility
+            let allObjects = enumerator.allObjects
+            
+            // Process all files
+            for case let fileURL as URL in allObjects {
                 guard let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey]),
                       let isDirectory = resourceValues.isDirectory else {
                     continue
@@ -3029,7 +3033,7 @@ actor AppAnalyzer {
             process.waitUntilExit()
             
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            if let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+            if let plist = data.parsePlist() {
                 entitlements = plist.keys.sorted()
             }
         } catch {

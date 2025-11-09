@@ -237,13 +237,13 @@ final class LauncherService {
     /// - Returns: true if terminate signal was sent successfully
     public func terminateApp(bundleID: String) -> Bool {
         guard let app = getRunningApp(bundleID: bundleID) else {
-            NSLog("[DEBUG] Cannot terminate \(bundleID): app not running")
+            Logger.debug("Cannot terminate \(bundleID): app not running")
             return false
         }
         
-        NSLog("[DEBUG] Sending SIGTERM to \(bundleID) (PID: \(app.processIdentifier))")
+        Logger.debug("Sending SIGTERM to \(bundleID) (PID: \(app.processIdentifier))")
         let success = app.terminate()
-        NSLog("[DEBUG] SIGTERM result for \(bundleID): \(success)")
+        Logger.debug("SIGTERM result for \(bundleID): \(success)")
         return success
     }
     
@@ -252,13 +252,13 @@ final class LauncherService {
     /// - Returns: true if force terminate signal was sent successfully
     public func forceTerminateApp(bundleID: String) -> Bool {
         guard let app = getRunningApp(bundleID: bundleID) else {
-            NSLog("[DEBUG] Cannot force terminate \(bundleID): app not running")
+            Logger.debug("Cannot force terminate \(bundleID): app not running")
             return false
         }
         
-        NSLog("[DEBUG] Sending SIGKILL to \(bundleID) (PID: \(app.processIdentifier))")
+        Logger.debug("Sending SIGKILL to \(bundleID) (PID: \(app.processIdentifier))")
         let success = app.forceTerminate()
-        NSLog("[DEBUG] SIGKILL result for \(bundleID): \(success)")
+        Logger.debug("SIGKILL result for \(bundleID): \(success)")
         return success
     }
     

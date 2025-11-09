@@ -126,36 +126,36 @@ final class DiskImageHelper {
         lockService: ContainerLockService,
         force: Bool = false
     ) async throws {
-        NSLog("[DEBUG] DiskImageHelper: unmountDiskImageSafely called for \(bundleID)")
+        Logger.diskImage("unmountDiskImageSafely called for \(bundleID)")
         
         // Release our lock first
         await lockService.unlockContainer(for: bundleID)
-        NSLog("[DEBUG] DiskImageHelper: Released our lock for \(bundleID)")
+        Logger.diskImage("Released our lock for \(bundleID)")
         
         // Check if mounted
         let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
         guard let descriptor = descriptor, descriptor.isMounted else {
-            NSLog("[DEBUG] DiskImageHelper: Container not mounted, nothing to do")
+            Logger.diskImage("Container not mounted, nothing to do")
             return
         }
         
-        NSLog("[DEBUG] DiskImageHelper: Container is mounted, checking locks...")
+        Logger.diskImage("Container is mounted, checking locks...")
         
         // Check if another process has a lock (unless forcing)
         if !force {
             let canLock = await lockService.canLockContainer(for: bundleID, at: containerURL)
             if !canLock {
-                NSLog("[DEBUG] DiskImageHelper: Another process has a lock, aborting unmount")
+                Logger.diskImage("Another process has a lock, aborting unmount")
                 // Another process is using this container
                 return
             }
-            NSLog("[DEBUG] DiskImageHelper: No other locks, proceeding with unmount")
+            Logger.diskImage("No other locks, proceeding with unmount")
         }
         
         // Unmount
-        NSLog("[DEBUG] DiskImageHelper: Calling ejectDiskImage...")
+        Logger.diskImage("Calling ejectDiskImage...")
         try await diskImageService.ejectDiskImage(for: containerURL, force: force)
-        NSLog("[DEBUG] DiskImageHelper: ejectDiskImage completed successfully")
+        Logger.diskImage("ejectDiskImage completed successfully")
     }
     
     // MARK: - Two-Stage Unmount
@@ -179,37 +179,37 @@ final class DiskImageHelper {
     ) async -> UnmountResult {
         // Synchronize preferences if bundleID provided
         if let bundleID = bundleID {
-            NSLog("[DEBUG] DiskImageHelper: Synchronizing preferences for \(bundleID)")
+            Logger.diskImage("Synchronizing preferences for \(bundleID)")
             CFPreferencesAppSynchronize(bundleID as CFString)
         }
         
         // Stage 1: Try normal eject
-        NSLog("[DEBUG] DiskImageHelper: Stage 1 - Attempting normal eject for \(containerURL.path)")
+        Logger.diskImage("Stage 1 - Attempting normal eject for \(containerURL.path)")
         do {
             try await diskImageService.ejectDiskImage(for: containerURL, force: false)
-            NSLog("[DEBUG] DiskImageHelper: Stage 1 - Normal eject succeeded")
+            Logger.diskImage("Stage 1 - Normal eject succeeded")
             return .success
         } catch let normalError {
-            NSLog("[DEBUG] DiskImageHelper: Stage 1 - Normal eject failed: \(normalError)")
+            Logger.diskImage("Stage 1 - Normal eject failed: \(normalError)")
             
             // Stage 2: If app is provided and running, terminate it normally
             if let bundleID = bundleID, 
                let launcherService = launcherService,
                launcherService.isAppRunning(bundleID: bundleID) {
-                NSLog("[DEBUG] DiskImageHelper: Stage 2 - App \(bundleID) is running, sending SIGTERM")
+                Logger.diskImage("Stage 2 - App \(bundleID) is running, sending SIGTERM")
                 _ = launcherService.terminateApp(bundleID: bundleID)
                 
                 // Wait a bit for graceful shutdown
                 try? await Task.sleep(for: .seconds(2))
                 
                 // Retry normal eject after app termination
-                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Retrying normal eject after SIGTERM")
+                Logger.diskImage("Stage 2 - Retrying normal eject after SIGTERM")
                 do {
                     try await diskImageService.ejectDiskImage(for: containerURL, force: false)
-                    NSLog("[DEBUG] DiskImageHelper: Stage 2 - Normal eject succeeded after SIGTERM")
+                    Logger.diskImage("Stage 2 - Normal eject succeeded after SIGTERM")
                     return .success
                 } catch {
-                    NSLog("[DEBUG] DiskImageHelper: Stage 2 - Normal eject still failed after SIGTERM: \(error)")
+                    Logger.diskImage("Stage 2 - Normal eject still failed after SIGTERM: \(error)")
                 }
             }
             
@@ -217,7 +217,7 @@ final class DiskImageHelper {
             if let bundleID = bundleID,
                let launcherService = launcherService,
                launcherService.isAppRunning(bundleID: bundleID) {
-                NSLog("[DEBUG] DiskImageHelper: Stage 3 - App \(bundleID) still running, sending SIGKILL")
+                Logger.diskImage("Stage 3 - App \(bundleID) still running, sending SIGKILL")
                 _ = launcherService.forceTerminateApp(bundleID: bundleID)
                 
                 // Wait a bit for forced shutdown
@@ -225,13 +225,13 @@ final class DiskImageHelper {
             }
             
             // Final attempt: Force eject
-            NSLog("[DEBUG] DiskImageHelper: Stage 3 - Attempting force eject")
+            Logger.diskImage("Stage 3 - Attempting force eject")
             do {
                 try await diskImageService.ejectDiskImage(for: containerURL, force: true)
-                NSLog("[DEBUG] DiskImageHelper: Stage 3 - Force eject succeeded")
+                Logger.diskImage("Stage 3 - Force eject succeeded")
                 return .success
             } catch let forceError {
-                NSLog("[DEBUG] DiskImageHelper: Stage 3 - Force eject also failed: \(forceError)")
+                Logger.error("Stage 3 - Force eject also failed: \(forceError)")
                 return .failed(forceError)
             }
         }

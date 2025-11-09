@@ -33,8 +33,7 @@ final class PlayCoverEnvironmentService {
         guard let plistData = try? Data(contentsOf: infoPlistURL) else {
             throw AppError.environment("PlayCover の Info.plist を読み込めません", message: "PlayCover.app を確認してください。")
         }
-        var format = PropertyListSerialization.PropertyListFormat.xml
-        guard let plist = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: &format) as? [String: Any],
+        guard let plist = plistData.parsePlist(),
               let bundleIdentifier = plist["CFBundleIdentifier"] as? String else {
             throw AppError.environment("PlayCover の Bundle ID を取得できません", message: "PlayCover.app を再インストールしてください。")
         }
@@ -62,9 +61,7 @@ final class PlayCoverEnvironmentService {
     private func isVolumeMounted(at mountPoint: URL, expectedVolumeName: String) async -> Bool {
         do {
             let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
-            guard let data = output.data(using: .utf8) else { return false }
-            let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-            if let dict = plist as? [String: Any], let volumeName = dict["VolumeName"] as? String {
+            if let dict = output.parsePlist(), let volumeName = dict["VolumeName"] as? String {
                 return volumeName == expectedVolumeName
             }
         } catch {
