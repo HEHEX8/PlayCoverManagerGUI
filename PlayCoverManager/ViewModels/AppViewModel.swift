@@ -222,7 +222,10 @@ final class AppViewModel {
     
     func forceTerminate() {
         terminationFlowState = .idle
-        NSApplication.shared.reply(toApplicationShouldTerminate: true)
+        NSLog("[DEBUG] Force terminating application with exit(0)")
+        // Use exit(0) to actually force terminate the app
+        // This bypasses any further unmount attempts
+        exit(0)
     }
     
     func continueWaiting() {
@@ -278,7 +281,7 @@ final class AppViewModel {
             return (success: false, failedCount: failedCount, runningApps: runningApps)
         }
         
-        // Step 2: Unmount all app containers
+        // Step 2: Unmount all app containers using 2-stage eject
         for app in launcherVM.apps {
             let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             
@@ -288,26 +291,37 @@ final class AppViewModel {
                 continue
             }
             
-            // Synchronize preferences
-            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+            // Use 2-stage unmount: normal first, then force if needed
+            let result = await DiskImageHelper.unmountWithTwoStageEject(
+                containerURL: container,
+                diskImageService: diskImageService,
+                bundleID: app.bundleIdentifier
+            )
             
-            do {
-                try await diskImageService.ejectDiskImage(for: container, force: true)
-            } catch {
+            switch result {
+            case .success:
+                NSLog("Successfully unmounted container for \(app.bundleIdentifier)")
+            case .normalFailed, .forceFailed(let error):
                 failedCount += 1
                 NSLog("Failed to unmount container for \(app.bundleIdentifier): \(error)")
             }
         }
         
-        // Step 3: Unmount PlayCover's own container
+        // Step 3: Unmount PlayCover's own container using 2-stage eject
         let playCoverContainer = playCoverPaths.containerRootURL
         let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
         
         if isMounted {
-            do {
-                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
+            let result = await DiskImageHelper.unmountWithTwoStageEject(
+                containerURL: playCoverContainer,
+                diskImageService: diskImageService,
+                bundleID: nil  // No bundleID for PlayCover itself
+            )
+            
+            switch result {
+            case .success:
                 NSLog("Successfully unmounted PlayCover container")
-            } catch {
+            case .normalFailed, .forceFailed(let error):
                 failedCount += 1
                 NSLog("Failed to unmount PlayCover container: \(error)")
             }

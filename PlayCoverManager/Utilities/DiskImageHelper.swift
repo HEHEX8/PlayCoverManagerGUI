@@ -158,6 +158,50 @@ final class DiskImageHelper {
         NSLog("[DEBUG] DiskImageHelper: ejectDiskImage completed successfully")
     }
     
+    // MARK: - Two-Stage Unmount
+    
+    /// Result of unmount operation
+    enum UnmountResult {
+        case success
+        case normalFailed(Error)
+        case forceFailed(Error)
+    }
+    
+    /// Try two-stage unmount: normal eject first, then force eject if it fails
+    /// Returns result indicating success or failure mode
+    static func unmountWithTwoStageEject(
+        containerURL: URL,
+        diskImageService: DiskImageService,
+        bundleID: String? = nil
+    ) async -> UnmountResult {
+        // Synchronize preferences if bundleID provided
+        if let bundleID = bundleID {
+            NSLog("[DEBUG] DiskImageHelper: Synchronizing preferences for \(bundleID)")
+            CFPreferencesAppSynchronize(bundleID as CFString)
+        }
+        
+        // Stage 1: Try normal eject
+        NSLog("[DEBUG] DiskImageHelper: Stage 1 - Attempting normal eject for \(containerURL.path)")
+        do {
+            try await diskImageService.ejectDiskImage(for: containerURL, force: false)
+            NSLog("[DEBUG] DiskImageHelper: Stage 1 - Normal eject succeeded")
+            return .success
+        } catch {
+            NSLog("[DEBUG] DiskImageHelper: Stage 1 - Normal eject failed: \(error)")
+            
+            // Stage 2: Try force eject
+            NSLog("[DEBUG] DiskImageHelper: Stage 2 - Attempting force eject")
+            do {
+                try await diskImageService.ejectDiskImage(for: containerURL, force: true)
+                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Force eject succeeded")
+                return .success
+            } catch {
+                NSLog("[DEBUG] DiskImageHelper: Stage 2 - Force eject also failed: \(error)")
+                return .forceFailed(error)
+            }
+        }
+    }
+    
     // MARK: - App Directory Discovery
     
     /// Find all .app directories in a given directory

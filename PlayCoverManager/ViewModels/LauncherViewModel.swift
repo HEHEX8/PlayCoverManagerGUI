@@ -492,47 +492,48 @@ final class LauncherViewModel {
         // or run: log stream --predicate 'eventMessage CONTAINS "[DEBUG]"' --level debug
         NSLog("[DEBUG] Attempting to unmount container for: \(bundleID)")
         
-        do {
-            // Check what processes are using the volume before unmounting
-            if let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL),
-               descriptor.isMounted {
-                NSLog("[DEBUG] Container is mounted at: \(containerURL.path)")
-                
-                // Use lsof to check what's using the volume
-                let lsofOutput = try? ProcessRunner().runSync("/usr/sbin/lsof", ["+D", containerURL.path])
-                if let output = lsofOutput, !output.isEmpty {
-                    let lines = output.split(separator: "\n")
-                    NSLog("[DEBUG] Processes using volume (\(lines.count - 1) processes):")
-                    for (index, line) in lines.enumerated() {
-                        if index == 0 { continue } // Skip header
-                        NSLog("[DEBUG]   \(line)")
-                    }
-                } else {
-                    NSLog("[DEBUG] No processes found using the volume")
-                }
-                
-                // Synchronize preferences to write any pending changes before force eject
-                NSLog("[DEBUG] Synchronizing preferences to ensure all changes are written")
-                CFPreferencesAppSynchronize(bundleID as CFString)
-            } else {
-                NSLog("[DEBUG] Container is not mounted")
-            }
+        // Check what processes are using the volume before unmounting
+        if let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL),
+           descriptor.isMounted {
+            NSLog("[DEBUG] Container is mounted at: \(containerURL.path)")
             
-            // Use force eject after app termination to handle cfprefsd and other system daemons
-            // that may still hold references to the container volume.
-            // This is safe because CFPreferencesAppSynchronize() ensures settings are written.
-            NSLog("[DEBUG] Using force eject to unmount container (cfprefsd workaround)")
-            try await DiskImageHelper.unmountDiskImageSafely(
-                for: bundleID,
-                containerURL: containerURL,
-                diskImageService: diskImageService,
-                lockService: lockService,
-                force: true
-            )
+            // Use lsof to check what's using the volume
+            let lsofOutput = try? ProcessRunner().runSync("/usr/sbin/lsof", ["+D", containerURL.path])
+            if let output = lsofOutput, !output.isEmpty {
+                let lines = output.split(separator: "\n")
+                NSLog("[DEBUG] Processes using volume (\(lines.count - 1) processes):")
+                for (index, line) in lines.enumerated() {
+                    if index == 0 { continue } // Skip header
+                    NSLog("[DEBUG]   \(line)")
+                }
+            } else {
+                NSLog("[DEBUG] No processes found using the volume")
+            }
+        } else {
+            NSLog("[DEBUG] Container is not mounted")
+            return
+        }
+        
+        // Release our lock first
+        await lockService.unlockContainer(for: bundleID)
+        NSLog("[DEBUG] Released our lock for \(bundleID)")
+        
+        // Use 2-stage unmount: normal first, then force if needed
+        // This tries normal eject first, which is safer and allows cfprefsd to release cleanly
+        // Only falls back to force eject if normal fails
+        let result = await DiskImageHelper.unmountWithTwoStageEject(
+            containerURL: containerURL,
+            diskImageService: diskImageService,
+            bundleID: bundleID
+        )
+        
+        switch result {
+        case .success:
             NSLog("[DEBUG] Successfully unmounted container for: \(bundleID)")
-        } catch {
+        case .normalFailed(let error):
+            NSLog("[DEBUG] Normal eject failed for \(bundleID), but force eject succeeded: \(error)")
+        case .forceFailed(let error):
             NSLog("[DEBUG] Failed to unmount container for \(bundleID): \(error)")
-            // Even force eject can fail in rare cases
         }
     }
 
@@ -574,14 +575,17 @@ final class LauncherViewModel {
                 continue
             }
             
-            // Synchronize preferences to ensure all changes are written
-            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+            // Use 2-stage unmount: normal first, then force if needed
+            let result = await DiskImageHelper.unmountWithTwoStageEject(
+                containerURL: container,
+                diskImageService: diskImageService,
+                bundleID: app.bundleIdentifier
+            )
             
-            do {
-                // Use force eject to handle cfprefsd and other system processes
-                try await diskImageService.ejectDiskImage(for: container, force: true)
+            switch result {
+            case .success:
                 successCount += 1
-            } catch {
+            case .normalFailed, .forceFailed:
                 failedCount += 1
             }
         }
@@ -605,11 +609,17 @@ final class LauncherViewModel {
             // Check if it's actually mounted by querying diskutil
             let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
             if isMounted {
-                // Try to eject disk image
-                do {
-                    try await diskImageService.ejectDiskImage(for: playCoverContainer)
+                // Use 2-stage unmount: normal first, then force if needed
+                let result = await DiskImageHelper.unmountWithTwoStageEject(
+                    containerURL: playCoverContainer,
+                    diskImageService: diskImageService,
+                    bundleID: nil  // No bundleID for PlayCover itself
+                )
+                
+                switch result {
+                case .success:
                     successCount += 1
-                } catch {
+                case .normalFailed, .forceFailed(let error):
                     // PlayCover container failed, show error and abort
                     await MainActor.run {
                         unmountFlowState = .error(
