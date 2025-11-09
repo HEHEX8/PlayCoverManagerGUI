@@ -60,10 +60,9 @@ final class LauncherViewModel {
     // Track running apps for termination detection
     private var previouslyRunningApps: Set<String> = []
     
-    // NSWorkspace notification observers for real-time app lifecycle monitoring
+    // KVO observation for runningApplications (more efficient than notifications)
     // nonisolated(unsafe) allows access from deinit
-    nonisolated(unsafe) private var appLaunchObserver: NSObjectProtocol?
-    nonisolated(unsafe) private var appTerminateObserver: NSObjectProtocol?
+    nonisolated(unsafe) private var runningAppsObservation: NSKeyValueObservation?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
@@ -93,107 +92,68 @@ final class LauncherViewModel {
     }
     
     nonisolated deinit {
-        // Remove notification observers
-        if let observer = appLaunchObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
-        if let observer = appTerminateObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
+        // Remove KVO observation
+        runningAppsObservation?.invalidate()
     }
     
     private func setupAppLifecycleMonitoring() {
         let workspace = NSWorkspace.shared
         
-        NSLog("=== [LIFECYCLE] Setting up app lifecycle monitoring ===")
+        // Initialize tracking set with currently running apps
+        previouslyRunningApps = Set(
+            workspace.runningApplications
+                .compactMap { $0.bundleIdentifier }
+                .filter { bundleID in apps.contains(where: { $0.bundleIdentifier == bundleID }) }
+        )
         
-        // Monitor app launches
-        appLaunchObserver = workspace.notificationCenter.addObserver(
-            forName: NSWorkspace.didLaunchApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            NSLog("=== [LIFECYCLE] Launch notification received ===")
-            guard let self = self else { 
-                NSLog("=== [LIFECYCLE] self is nil ===")
-                return 
-            }
-            if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-               let bundleID = app.bundleIdentifier {
-                NSLog("=== [LIFECYCLE] App launched: \(bundleID) ===")
+        NSLog("[LIFECYCLE] KVO monitoring setup - tracking \(previouslyRunningApps.count) running apps")
+        
+        // Use KVO to observe runningApplications - more efficient than notifications
+        // This detects ALL app launches and terminations instantly
+        runningAppsObservation = workspace.observe(\.runningApplications, options: [.old, .new]) { [weak self] workspace, change in
+            guard let self = self else { return }
+            
+            // Get current running apps (filter to our managed apps only)
+            let currentRunning = Set(
+                workspace.runningApplications
+                    .compactMap { $0.bundleIdentifier }
+                    .filter { bundleID in self.apps.contains(where: { $0.bundleIdentifier == bundleID }) }
+            )
+            
+            // Detect newly launched apps
+            let launched = currentRunning.subtracting(self.previouslyRunningApps)
+            for bundleID in launched {
+                NSLog("[LIFECYCLE] KVO detected launch: \(bundleID)")
                 Task { @MainActor in
                     await self.handleAppLaunched(bundleID: bundleID)
                 }
-            } else {
-                NSLog("=== [LIFECYCLE] Failed to extract app info from launch notification ===")
             }
-        }
-        
-        // Monitor app terminations
-        appTerminateObserver = workspace.notificationCenter.addObserver(
-            forName: NSWorkspace.didTerminateApplicationNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            NSLog("=== [LIFECYCLE] Terminate notification received ===")
-            guard let self = self else { 
-                NSLog("=== [LIFECYCLE] self is nil ===")
-                return 
-            }
-            if let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-               let bundleID = app.bundleIdentifier {
-                NSLog("=== [LIFECYCLE] App terminated: \(bundleID) ===")
+            
+            // Detect terminated apps
+            let terminated = self.previouslyRunningApps.subtracting(currentRunning)
+            for bundleID in terminated {
+                NSLog("[LIFECYCLE] KVO detected termination: \(bundleID)")
                 Task { @MainActor in
                     await self.handleAppTerminated(bundleID: bundleID)
                 }
-            } else {
-                NSLog("=== [LIFECYCLE] Failed to extract app info from terminate notification ===")
             }
+            
+            // Update tracking set
+            self.previouslyRunningApps = currentRunning
         }
-        
-        NSLog("=== [LIFECYCLE] Setup completed ===")
     }
     
     private func handleAppLaunched(bundleID: String) async {
-        NSLog("=== [LIFECYCLE] handleAppLaunched: \(bundleID) ===")
-        
-        // Check if this is one of our managed apps
-        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { 
-            NSLog("=== [LIFECYCLE] Not our app, ignoring ===")
-            return 
-        }
-        
-        NSLog("=== [LIFECYCLE] Our app! Updating state ===")
-        
-        // Update running state
-        previouslyRunningApps.insert(bundleID)
-        
-        // Refresh to update UI
+        // Refresh to update UI (green dot appears)
         await refresh()
-        NSLog("=== [LIFECYCLE] Launch handling complete ===")
     }
     
     private func handleAppTerminated(bundleID: String) async {
-        NSLog("=== [LIFECYCLE] handleAppTerminated: \(bundleID) ===")
-        
-        // Check if this is one of our managed apps
-        guard apps.contains(where: { $0.bundleIdentifier == bundleID }) else { 
-            NSLog("=== [LIFECYCLE] Not our app, ignoring ===")
-            return 
-        }
-        
-        NSLog("=== [LIFECYCLE] Our app! Starting auto-unmount ===")
-        
-        // Remove from running apps
-        previouslyRunningApps.remove(bundleID)
-        
         // Auto-unmount the container
         await unmountContainer(for: bundleID)
-        NSLog("=== [LIFECYCLE] Auto-unmount complete ===")
         
-        // Refresh to update UI
+        // Refresh to update UI (green dot disappears)
         await refresh()
-        NSLog("=== [LIFECYCLE] Terminate handling complete ===")
     }
     
     private func cleanupStaleLockFiles() {
