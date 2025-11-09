@@ -445,7 +445,7 @@ struct QuickLauncherView: View {
             set: { if !$0 { viewModel.cancelImageCreation() } }
         ),
         title: String(localized: "ディスクイメージが存在しません"),
-        message: "\(viewModel.pendingImageCreation?.displayName ?? "String(localized: ") 用の ASIF ディスクイメージを作成しますか？"),
+        message: String(localized: "\(viewModel.pendingImageCreation?.displayName ?? "") 用の ASIF ディスクイメージを作成しますか？"),
         buttons: [
             AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
                 viewModel.cancelImageCreation()
