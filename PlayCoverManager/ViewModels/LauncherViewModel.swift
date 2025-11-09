@@ -38,6 +38,7 @@ final class LauncherViewModel {
         case ejectConfirming(volumeDisplayName: String)
         case success(unmountedCount: Int, ejectedDrive: String?)
         case error(title: String, message: String)
+        case runningAppsError(failedCount: Int, runningApps: [String])  // Running apps preventing unmount
         case forceUnmountOffering(failedCount: Int, applyToPlayCoverContainer: Bool)
         case forceEjectOffering(volumeDisplayName: String, devicePath: String)
     }
@@ -423,11 +424,8 @@ final class LauncherViewModel {
         let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
         
         if !runningApps.isEmpty {
-            let appsList = runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
-            unmountFlowState = .error(
-                title: String(localized: "実行中のアプリがあります"),
-                message: String(localized: "以下のアプリが実行中です。アンマウントするには先にこれらのアプリを終了してください。\n\n\(appsList)")
-            )
+            let runningBundleIDs = runningApps.map { $0.bundleIdentifier }
+            unmountFlowState = .runningAppsError(failedCount: runningApps.count, runningApps: runningBundleIDs)
             return
         }
         

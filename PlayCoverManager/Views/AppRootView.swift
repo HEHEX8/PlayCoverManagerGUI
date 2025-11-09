@@ -246,7 +246,11 @@ struct TerminationFlowView: View {
                 case .timeout:
                     timeoutView()
                 case .failed(let failedCount, let runningApps):
-                    failedView(failedCount: failedCount, runningApps: runningApps)
+                    RunningAppsErrorView(
+                        failedCount: failedCount,
+                        runningApps: runningApps,
+                        onCancel: onCancel
+                    )
                 case .idle:
                     EmptyView()
                 }
@@ -311,68 +315,87 @@ struct TerminationFlowView: View {
         }
     }
     
-    private func failedView(failedCount: Int, runningApps: [String]) -> some View {
-        VStack(spacing: 32) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.orange)
+}
+
+// MARK: - Shared Running Apps Error View (used by both ⌘Q and ALL unmount)
+struct RunningAppsErrorView: View {
+    let failedCount: Int
+    let runningApps: [String]
+    let onCancel: () -> Void
+    
+    /// Get app name from bundle ID
+    private func getAppName(for bundleID: String) -> String {
+        // Try to find running app with this bundle ID
+        let runningApps = NSWorkspace.shared.runningApplications
+        if let app = runningApps.first(where: { $0.bundleIdentifier == bundleID }),
+           let appName = app.localizedName {
+            return appName
+        }
+        
+        // Fallback to bundle ID
+        return bundleID
+    }
+    
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
             
-            VStack(spacing: 16) {
-                Text("一部のディスクイメージをアンマウントできません")
-                    .font(.title2.bold())
+            VStack(spacing: 32) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.orange)
                 
-                VStack(spacing: 12) {
-                    Text("\(failedCount) 個のディスクイメージをアンマウントできませんでした。")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 16) {
+                    Text("一部のディスクイメージをアンマウントできません")
+                        .font(.title2.bold())
                     
-                    if !runningApps.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("実行中のアプリ:")
-                                .font(.callout.bold())
-                                .foregroundStyle(.secondary)
-                            
-                            ForEach(runningApps, id: \.self) { bundleID in
-                                Text("• \(getAppName(for: bundleID))")
+                    VStack(spacing: 12) {
+                        Text("\(failedCount) 個のディスクイメージをアンマウントできませんでした。")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                        
+                        if !runningApps.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("実行中のアプリ:")
+                                    .font(.callout.bold())
+                                    .foregroundStyle(.secondary)
+                                
+                                ForEach(runningApps, id: \.self) { bundleID in
+                                    Text("• \(getAppName(for: bundleID))")
+                                        .font(.callout)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Text("アプリを終了してから再度お試しください。")
                                     .font(.callout)
                                     .foregroundStyle(.secondary)
+                                    .padding(.top, 8)
                             }
-                            
-                            Text("アプリを終了してから再度お試しください(句点付き)")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 8)
+                            .padding()
+                            .background(.tertiary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
                         }
-                        .padding()
-                        .background(.tertiary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
                     }
+                    .multilineTextAlignment(.center)
                 }
-                .multilineTextAlignment(.center)
-            }
-            
-            HStack(spacing: 12) {
-                Button {
-                    onCancel()
-                } label: {
-                    Text("キャンセル")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(minWidth: 100)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .keyboardShortcut(.defaultAction)
                 
-                Button {
-                    onForceTerminate()
-                } label: {
-                    Text("強制終了")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(minWidth: 100)
+                HStack(spacing: 12) {
+                    Button {
+                        onCancel()
+                    } label: {
+                        Text("OK")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(minWidth: 100)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(.orange)
             }
+            .padding(48)
+            .frame(maxWidth: 600)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+            .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
         }
     }
 }

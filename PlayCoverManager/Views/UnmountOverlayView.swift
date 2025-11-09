@@ -55,6 +55,15 @@ struct UnmountOverlayView: View {
                 )
                 .id("error")
                 
+            case .runningAppsError(let failedCount, let runningApps):
+                // Use same view as ⌘Q termination flow
+                RunningAppsErrorView(
+                    failedCount: failedCount,
+                    runningApps: runningApps,
+                    onCancel: { viewModel.dismissUnmountError() }
+                )
+                .id("runningAppsError")
+                
             case .forceUnmountOffering(let failedCount, let applyToPlayCoverContainer):
                 ForceUnmountOfferingView(
                     failedCount: failedCount,
