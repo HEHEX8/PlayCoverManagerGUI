@@ -38,7 +38,7 @@ final class LauncherViewModel {
         case ejectConfirming(volumeDisplayName: String)
         case success(unmountedCount: Int, ejectedDrive: String?)
         case error(title: String, message: String)
-        case forceUnmountOffering(failedCount: Int, applyToPlayCoverContainer: Bool)
+        case forceUnmountOffering(failedCount: Int, runningApps: [String], applyToPlayCoverContainer: Bool)
         case forceEjectOffering(volumeDisplayName: String, devicePath: String)
     }
     var unmountFlowState: UnmountFlowState = .idle
@@ -620,8 +620,12 @@ final class LauncherViewModel {
         
         // If any app container failed, offer force unmount option
         guard failedCount == 0 else {
+            // Get list of running apps
+            let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
+                .map { $0.bundleIdentifier }
+            
             await MainActor.run {
-                unmountFlowState = .forceUnmountOffering(failedCount: failedCount, applyToPlayCoverContainer: applyToPlayCoverContainer)
+                unmountFlowState = .forceUnmountOffering(failedCount: failedCount, runningApps: runningApps, applyToPlayCoverContainer: applyToPlayCoverContainer)
             }
             return
         }
@@ -1113,7 +1117,9 @@ final class LauncherViewModel {
         await MainActor.run {
             if failedCount > 0 {
                 // Some failed - offer force unmount
-                unmountFlowState = .forceUnmountOffering(failedCount: failedCount, applyToPlayCoverContainer: true)
+                let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
+                    .map { $0.bundleIdentifier }
+                unmountFlowState = .forceUnmountOffering(failedCount: failedCount, runningApps: runningApps, applyToPlayCoverContainer: true)
             } else {
                 // All succeeded - proceed to storage selection
                 unmountFlowState = .idle

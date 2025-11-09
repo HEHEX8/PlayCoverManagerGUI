@@ -55,9 +55,10 @@ struct UnmountOverlayView: View {
                 )
                 .id("error")
                 
-            case .forceUnmountOffering(let failedCount, let applyToPlayCoverContainer):
+            case .forceUnmountOffering(let failedCount, let runningApps, let applyToPlayCoverContainer):
                 ForceUnmountOfferingView(
                     failedCount: failedCount,
+                    runningApps: runningApps,
                     onForce: { viewModel.performForceUnmountAll(applyToPlayCoverContainer: applyToPlayCoverContainer) },
                     onCancel: { viewModel.dismissUnmountError() }
                 )
@@ -404,56 +405,91 @@ private struct UnmountSuccessView: View {
 
 private struct ForceUnmountOfferingView: View {
     let failedCount: Int
+    let runningApps: [String]
     let onForce: () -> Void
     let onCancel: () -> Void
     
+    /// Get app name from bundle ID
+    private func getAppName(bundleID: String) -> String {
+        // Try to find running app with this bundle ID
+        let runningApps = NSWorkspace.shared.runningApplications
+        if let app = runningApps.first(where: { $0.bundleIdentifier == bundleID }),
+           let appName = app.localizedName {
+            return appName
+        }
+        
+        // Fallback to bundle ID
+        return bundleID
+    }
+    
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 32) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 64))
                 .foregroundStyle(.orange)
             
-            Text("アンマウントに失敗しました")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            VStack(spacing: 12) {
-                Text("\(failedCount) 個のコンテナをアンマウントできませんでした。")
-                    .multilineTextAlignment(.center)
+            VStack(spacing: 16) {
+                Text("一部のディスクイメージをアンマウントできません")
+                    .font(.title2.bold())
                 
-                Text("システムプロセス（cfprefsdなど）がファイルを使用している可能性があります。")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Text("強制的にアンマウントを試行しますか？")
-                    .font(.callout)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.orange)
-                    .padding(.top, 8)
-                
-                Text("⚠️ 強制アンマウントはデータ損失のリスクがあります")
-                    .font(.caption)
-                    .foregroundStyle(.red)
+                VStack(spacing: 12) {
+                    Text("\(failedCount) 個のディスクイメージをアンマウントできませんでした。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    
+                    if !runningApps.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("実行中のアプリ:")
+                                .font(.callout.bold())
+                                .foregroundStyle(.secondary)
+                            
+                            ForEach(runningApps, id: \.self) { bundleID in
+                                let appName = getAppName(bundleID: bundleID)
+                                Text("• \(appName)")
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Text("アプリを終了してから再度お試しください。")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .padding(.top, 8)
+                        }
+                        .padding()
+                        .background(.tertiary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+                .multilineTextAlignment(.center)
             }
-            .frame(maxWidth: 450)
             
             HStack(spacing: 12) {
-                Button("キャンセル", action: onCancel)
-                    .keyboardShortcut(.cancelAction)
+                Button {
+                    onCancel()
+                } label: {
+                    Text("キャンセル")
+                        .font(.system(size: 14, weight: .medium))
+                        .frame(minWidth: 100)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .keyboardShortcut(.defaultAction)
                 
-                Button("強制アンマウント") {
+                Button {
                     onForce()
+                } label: {
+                    Text("強制終了")
+                        .font(.system(size: 14, weight: .medium))
+                        .frame(minWidth: 100)
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .tint(.orange)
-                .keyboardShortcut(.defaultAction)
             }
         }
-        .padding(32)
-        .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.3), radius: 20)
+        .padding(48)
+        .frame(maxWidth: 600)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
     }
 }
 
