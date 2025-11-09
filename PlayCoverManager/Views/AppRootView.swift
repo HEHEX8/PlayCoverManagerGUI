@@ -310,21 +310,19 @@ struct TerminationFlowView: View {
     }
     
     private func retryUnmount() {
-        // Retry the termination flow
-        if let appDelegate = NSApplication.shared.delegate as? AppDelegate {
-            Task { @MainActor in
-                if let viewModel = AppDelegate.shared {
-                    viewModel.terminationFlowState = .unmounting(status: String(localized: "ディスクイメージをアンマウントしています…"))
-                    
-                    let result = await viewModel.unmountAllContainersForTermination()
-                    
-                    if result.success {
-                        viewModel.terminationFlowState = .idle
-                        NSApplication.shared.reply(toApplicationShouldTerminate: true)
-                    } else {
-                        viewModel.terminationFlowState = .failed(failedCount: result.failedCount, runningApps: result.runningApps)
-                    }
-                }
+        // Apps are already terminated, auto-eject will handle unmounting
+        // Wait a moment for auto-eject to complete, then terminate PlayCoverManager
+        Task { @MainActor in
+            if let viewModel = AppDelegate.shared {
+                viewModel.terminationFlowState = .unmounting(status: String(localized: "アンマウント処理を完了しています…"))
+                
+                // Give auto-eject time to complete (it triggers on app termination)
+                try? await Task.sleep(for: .seconds(1))
+                
+                // All apps terminated, auto-eject handles unmounting
+                // Proceed with PlayCoverManager termination
+                viewModel.terminationFlowState = .idle
+                NSApplication.shared.reply(toApplicationShouldTerminate: true)
             }
         }
     }
