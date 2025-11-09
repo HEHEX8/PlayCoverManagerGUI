@@ -1928,11 +1928,3 @@ private struct LinkButton: View {
         .buttonStyle(.plain)
     }
 }
-
-
-
-   }
-}
-
-
-
