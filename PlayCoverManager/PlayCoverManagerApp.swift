@@ -188,12 +188,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return .terminateNow
         }
         
-        // TEMPORARY FIX: Allow immediate termination for testing
-        // TODO: Re-enable unmount flow after fixing the blocking issue
-        return .terminateNow
-        
         // Set up 5-second timeout for force termination
-        /*
         forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.handleTimeout()
@@ -223,7 +218,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         return .terminateLater
-        */
     }
     
     @MainActor

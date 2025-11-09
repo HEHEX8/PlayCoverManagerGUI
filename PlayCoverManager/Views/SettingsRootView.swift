@@ -220,18 +220,24 @@ private struct GeneralSettingsView: View {
             return
         }
         
-        // Use NSWorkspace to reopen the app
-        let configuration = NSWorkspace.OpenConfiguration()
-        // Do NOT create new instance - let macOS handle single instance
-        configuration.createsNewApplicationInstance = false
+        // Schedule relaunch after termination using /usr/bin/open
+        // This ensures the app terminates first, then relaunches
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = [bundleURL.path]
         
-        NSWorkspace.shared.openApplication(at: bundleURL, configuration: configuration) { app, error in
-            if error == nil {
-                // Successfully scheduled relaunch, quit this one
-                DispatchQueue.main.async {
-                    NSApplication.shared.terminate(nil)
-                }
+        // Delay the relaunch to give time for termination
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.5) {
+            do {
+                try task.run()
+            } catch {
+                Logger.error("Failed to schedule app relaunch: \(error)")
             }
+        }
+        
+        // Terminate current instance
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            NSApplication.shared.terminate(nil)
         }
     }
     
