@@ -2895,7 +2895,9 @@ actor AppAnalyzer {
             includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
             options: [.skipsHiddenFiles]
         ) {
-            for case let fileURL as URL in enumerator {
+            // Convert to array to avoid async iteration issues
+            let allURLs = enumerator.allObjects.compactMap { $0 as? URL }
+            for fileURL in allURLs {
                 guard let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey]),
                       let isDirectory = resourceValues.isDirectory else {
                     continue

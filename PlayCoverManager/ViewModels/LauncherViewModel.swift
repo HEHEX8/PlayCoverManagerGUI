@@ -61,8 +61,10 @@ final class LauncherViewModel {
     private var previouslyRunningApps: Set<String> = []
     
     // KVO observation for runningApplications (more efficient than notifications)
-    // nonisolated(unsafe) is required for mutable stored properties accessed in deinit
-    nonisolated(unsafe) private var runningAppsObservation: NSKeyValueObservation?
+    // @ObservationIgnored prevents Observable macro from tracking this property
+    // This allows nonisolated access in deinit
+    @ObservationIgnored
+    private var runningAppsObservation: NSKeyValueObservation?
 
     init(apps: [PlayCoverApp],
          playCoverPaths: PlayCoverPaths,
