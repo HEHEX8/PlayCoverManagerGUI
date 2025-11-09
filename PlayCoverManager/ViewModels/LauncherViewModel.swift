@@ -569,7 +569,7 @@ final class LauncherViewModel {
         
         // Use TaskGroup for parallel unmounting (faster for multiple apps)
         let unmountStartTime = CFAbsoluteTimeGetCurrent()
-        await withTaskGroup(of: (String, Bool).self) { group in
+        await withTaskGroup(of: Bool.self) { group in
             for app in apps {
                 let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 
@@ -596,15 +596,15 @@ final class LauncherViewModel {
                     
                     switch result {
                     case .success:
-                        return (app.bundleIdentifier, true)
+                        return true
                     case .failed:
-                        return (app.bundleIdentifier, false)
+                        return false
                     }
                 }
             }
             
             // Collect results
-            for await (_, success) in group {
+            for await success in group {
                 if success {
                     successCount += 1
                 } else {

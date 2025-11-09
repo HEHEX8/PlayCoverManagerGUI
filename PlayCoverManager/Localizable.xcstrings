@@ -12321,29 +12321,6 @@
         }
       }
     },
-    "設定 (⌘,)": {
-      "extractionState": "manual",
-      "localizations": {
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "設定 (⌘,)"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings (⌘,)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置 (⌘,)"
-          }
-        }
-      }
-    },
     "設定(メニュー)": {
       "extractionState": "manual",
       "localizations": {
@@ -12777,6 +12754,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "（既定）"
+          }
+        }
+      }
+    },
+    "設定 (ショートカット)": {
+      "extractionState": "manual",
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定 (⌘,)"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings (⌘,)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置 (⌘,)"
           }
         }
       }

@@ -2887,6 +2887,21 @@ actor AppAnalyzer {
         }.value
     }
     
+    // Helper function to enumerate files synchronously (Swift 6 compatibility)
+    nonisolated private func enumerateFilesSynchronously(at url: URL) -> [URL] {
+        let fileManager = FileManager.default
+        guard let enumerator = fileManager.enumerator(
+            at: url,
+            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        ) else {
+            return []
+        }
+        
+        // Synchronously collect all URLs - this avoids async context issues
+        return enumerator.compactMap { $0 as? URL }
+    }
+    
     private func analyzeInternal(appURL: URL) async -> AppAnalysisResult {
         var totalFiles = 0
         var totalBytes: Int64 = 0
@@ -2895,23 +2910,11 @@ actor AppAnalyzer {
         var frameworks: Set<String> = []
         var fileTypeMap: [String: (count: Int, bytes: Int64)] = [:]
         
-        let fileManager = FileManager.default
+        // Enumerate all files synchronously to avoid Swift 6 async context issues
+        let allFileURLs = enumerateFilesSynchronously(at: appURL)
         
-        // Enumerate all files with streaming (memory efficient)
-        // Note: Collect enumerator objects to array synchronously for Swift 6 compatibility
-        if let enumerator = fileManager.enumerator(
-            at: appURL,
-            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
-            options: [.skipsHiddenFiles]
-        ) {
-            // Convert enumerator contents to array in a synchronous way for async context compatibility
-            var allObjects: [Any] = []
-            for obj in enumerator {
-                allObjects.append(obj)
-            }
-            
-            // Process all files
-            for case let fileURL as URL in allObjects {
+        // Process all files
+        for fileURL in allFileURLs {
                 guard let resourceValues = try? fileURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey]),
                       let isDirectory = resourceValues.isDirectory else {
                     continue
@@ -2945,7 +2948,6 @@ actor AppAnalyzer {
                 if fileURL.pathExtension == "framework" {
                     frameworks.insert(fileURL.deletingPathExtension().lastPathComponent)
                 }
-            }
         }
         
         // Get code signature info
@@ -3211,7 +3213,7 @@ private struct DrawerPanel: View {
                             .frame(width: 32, height: 32)
                     ),
                     title: "設定",
-                    help: "設定 (⌘,)"
+                    help: "設定 (ショートカット)"
                 ) {
                     showingSettings = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
