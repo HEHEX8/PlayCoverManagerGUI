@@ -451,16 +451,8 @@ final class LauncherViewModel {
                     NSLog("[DEBUG] No processes found using the volume")
                 }
                 
-                // Force cfprefsd to flush its cache by sending SIGHUP
-                NSLog("[DEBUG] Sending SIGHUP to cfprefsd to flush cache")
-                
-                // Synchronize preferences first
+                // Synchronize preferences to write any pending changes
                 CFPreferencesAppSynchronize(bundleID as CFString)
-                
-                // Send SIGHUP to cfprefsd to flush all cached preferences
-                // This should release any file handles to the container volume
-                let _ = try? ProcessRunner().runSync("/usr/bin/killall", ["-HUP", "cfprefsd"])
-                NSLog("[DEBUG] Sent SIGHUP to cfprefsd")
             } else {
                 NSLog("[DEBUG] Container is not mounted")
             }
@@ -502,9 +494,6 @@ final class LauncherViewModel {
         await MainActor.run {
             unmountFlowState = .processing(status: "アプリコンテナをアンマウントしています…")
         }
-        
-        // Flush cfprefsd cache once before unmounting all containers
-        let _ = try? ProcessRunner().runSync("/usr/bin/killall", ["-HUP", "cfprefsd"])
         
         for app in apps {
             let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
