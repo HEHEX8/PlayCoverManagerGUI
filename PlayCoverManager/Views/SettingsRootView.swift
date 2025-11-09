@@ -213,30 +213,26 @@ private struct GeneralSettingsView: View {
     }
     
     private func restartApp() {
-        // Get the app bundle URL
-        guard let bundleURL = Bundle.main.bundleURL as URL? else {
-            // Fallback: just terminate and let user restart manually
-            NSApplication.shared.terminate(nil)
-            return
-        }
+        let bundlePath = Bundle.main.bundlePath
         
-        // Schedule relaunch after termination using /usr/bin/open
-        // This ensures the app terminates first, then relaunches
+        // Use shell script to wait and relaunch
+        // This approach bypasses AppDelegate termination flow
+        let script = """
+        sleep 0.3
+        open "\(bundlePath)"
+        """
+        
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = [bundleURL.path]
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", script]
         
-        // Delay the relaunch to give time for termination
-        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.5) {
-            do {
-                try task.run()
-            } catch {
-                Logger.error("Failed to schedule app relaunch: \(error)")
-            }
-        }
-        
-        // Terminate current instance
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        do {
+            try task.run()
+            // Use Darwin.exit to bypass AppDelegate
+            Darwin.exit(0)
+        } catch {
+            Logger.error("Failed to restart: \(error)")
+            // Fallback to normal termination
             NSApplication.shared.terminate(nil)
         }
     }
