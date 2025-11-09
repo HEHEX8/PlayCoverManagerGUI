@@ -44,7 +44,8 @@ struct QuickLauncherView: View {
     // Workaround for macOS focus loss bug after dismissing sheets/overlays
     // Forces the window to regain focus and become key window
     private func restoreWindowFocus() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
             if let window = NSApp.keyWindow ?? NSApp.windows.first {
                 window.makeKey()
                 window.makeFirstResponder(window.contentView)
@@ -269,7 +270,8 @@ struct QuickLauncherView: View {
                                 // Mark as performed after grid appears
                                 // Use delay to ensure animation starts before flag is set
                                 if !hasPerformedInitialAnimation {
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    Task { @MainActor in
+                                        try? await Task.sleep(for: .milliseconds(50))
                                         hasPerformedInitialAnimation = true
                                     }
                                 }
@@ -289,7 +291,8 @@ struct QuickLauncherView: View {
                                 
                                 // Trigger animation on the grid icon after a brief delay
                                 // to ensure the observer is set up
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                Task { @MainActor in
+                                    try? await Task.sleep(for: .milliseconds(50))
                                     NotificationCenter.default.post(
                                         name: NSNotification.Name("TriggerAppIconAnimation"),
                                         object: nil,
@@ -729,11 +732,11 @@ private struct iOSAppIconView: View {
             if let bundleID = notification.userInfo?["bundleID"] as? String,
                bundleID == app.bundleIdentifier {
                 // Delay animation slightly to sync with button animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(100))
                     isAnimating = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                        isAnimating = false
-                    }
+                    try? await Task.sleep(for: .milliseconds(550))
+                    isAnimating = false
                 }
             }
         }
@@ -775,18 +778,17 @@ private struct iOSAppIconView: View {
                         performShakeAnimation()
                     } else {
                         // Released within bounds - normal launch
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(50))
                             isAnimating = true
                             
                             // Trigger launch during bounce animation
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                tapAction()
-                            }
+                            try? await Task.sleep(for: .milliseconds(100))
+                            tapAction()
                             
                             // Stop bounce animation after completion
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                                isAnimating = false
-                            }
+                            try? await Task.sleep(for: .milliseconds(650))
+                            isAnimating = false
                         }
                     }
                 }
@@ -795,17 +797,15 @@ private struct iOSAppIconView: View {
             Button("起動") { 
                 // Smooth press + bounce animation sequence
                 isPressed = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(100))
                     isPressed = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        isAnimating = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            tapAction()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.65) {
-                                isAnimating = false
-                            }
-                        }
-                    }
+                    try? await Task.sleep(for: .milliseconds(50))
+                    isAnimating = true
+                    try? await Task.sleep(for: .milliseconds(100))
+                    tapAction()
+                    try? await Task.sleep(for: .milliseconds(650))
+                    isAnimating = false
                 }
             }
             Button("デバッグコンソールで起動") {

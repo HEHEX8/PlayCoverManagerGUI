@@ -40,6 +40,15 @@ final class ProcessRunner: Sendable {
                 let stderrPipe = Pipe()
                 process.standardOutput = stdoutPipe
                 process.standardError = stderrPipe
+                
+                // Get file handles and ensure they're closed after use
+                let stdoutHandle = stdoutPipe.fileHandleForReading
+                let stderrHandle = stderrPipe.fileHandleForReading
+                defer {
+                    // Automatically close file handles to prevent resource leaks
+                    try? stdoutHandle.close()
+                    try? stderrHandle.close()
+                }
 
                 do {
                     try process.run()
@@ -50,14 +59,10 @@ final class ProcessRunner: Sendable {
 
                 process.waitUntilExit()
 
-                let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-                let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+                let stdoutData = stdoutHandle.readDataToEndOfFile()
+                let stderrData = stderrHandle.readDataToEndOfFile()
                 let stdoutString = String(data: stdoutData, encoding: .utf8) ?? ""
                 let stderrString = String(data: stderrData, encoding: .utf8) ?? ""
-                
-                // Explicitly close file handles to prevent resource leaks
-                try? stdoutPipe.fileHandleForReading.close()
-                try? stderrPipe.fileHandleForReading.close()
 
                 if process.terminationStatus == 0 {
                     continuation.resume(returning: stdoutString)
@@ -83,18 +88,23 @@ final class ProcessRunner: Sendable {
         let stderrPipe = Pipe()
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
+        
+        // Get file handles and ensure they're closed after use
+        let stdoutHandle = stdoutPipe.fileHandleForReading
+        let stderrHandle = stderrPipe.fileHandleForReading
+        defer {
+            // Automatically close file handles to prevent resource leaks
+            try? stdoutHandle.close()
+            try? stderrHandle.close()
+        }
 
         try process.run()
         process.waitUntilExit()
 
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        let stdoutData = stdoutHandle.readDataToEndOfFile()
+        let stderrData = stderrHandle.readDataToEndOfFile()
         let stdoutString = String(data: stdoutData, encoding: .utf8) ?? ""
         let stderrString = String(data: stderrData, encoding: .utf8) ?? ""
-        
-        // Explicitly close file handles to prevent resource leaks
-        try? stdoutPipe.fileHandleForReading.close()
-        try? stderrPipe.fileHandleForReading.close()
 
         if process.terminationStatus == 0 {
             return stdoutString

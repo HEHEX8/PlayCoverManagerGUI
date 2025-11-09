@@ -6,6 +6,20 @@ enum DiskImageServiceError: Error {
     case invalidBundleIdentifier
 }
 
+// MARK: - PropertyList Helper Extension
+// Centralized PropertyList parsing to reduce code duplication and improve performance
+private extension String {
+    /// Parse String output from diskutil as PropertyList Dictionary
+    /// - Returns: Parsed dictionary or nil if parsing fails
+    func parsePlist() -> [String: Any]? {
+        guard let data = self.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+            return nil
+        }
+        return plist
+    }
+}
+
 struct DiskImageDescriptor: Identifiable, Equatable {
     let id = UUID()
     let bundleIdentifier: String
@@ -49,8 +63,7 @@ final class DiskImageService {
         var volumePath: URL? = nil
         do {
             let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", mountPoint.path])
-            if let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+            if let plist = output.parsePlist(),
                let volumeName = plist["VolumeName"] as? String {
                 // Compare expected volume name with the image file name (without extension)
                 let expected = imageURL.deletingPathExtension().lastPathComponent
@@ -233,8 +246,7 @@ final class DiskImageService {
     func isMounted(at url: URL) throws -> Bool {
         do {
             let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", url.path])
-            if let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+            if let plist = output.parsePlist(),
                let _ = plist["VolumeName"] as? String {
                 return true
             }
@@ -255,8 +267,7 @@ final class DiskImageService {
         while currentPath.path != "/" {
             let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
             if let output = output,
-               let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+               let plist = output.parsePlist() {
                 
                 // Check if it's removable media
                 if let isInternal = plist["Internal"] as? Bool {
@@ -283,8 +294,7 @@ final class DiskImageService {
         while currentPath.path != "/" {
             let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
             if let output = output,
-               let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let plist = output.parsePlist(),
                let node = plist["DeviceNode"] as? String {
                 deviceNode = node
                 break
@@ -328,8 +338,7 @@ final class DiskImageService {
         while currentPath.path != "/" {
             let output = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", currentPath.path])
             if let output = output,
-               let data = output.data(using: .utf8),
-               let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+               let plist = output.parsePlist(),
                let volumeName = plist["VolumeName"] as? String {
                 
                 // Get device identifier (e.g., "disk5s2")
@@ -351,8 +360,7 @@ final class DiskImageService {
                     
                     // Query parent disk for media name
                     if let parentOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", parentDisk]),
-                       let parentData = parentOutput.data(using: .utf8),
-                       let parentPlist = try? PropertyListSerialization.propertyList(from: parentData, options: [], format: nil) as? [String: Any] {
+                       let parentPlist = parentOutput.parsePlist() {
                         mediaName = parentPlist["MediaName"] as? String
                         
                         // Also try IORegistryEntryName as fallback
@@ -393,8 +401,7 @@ final class DiskImageService {
         
         // Get device identifier for the volume
         let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", volumePath.path])
-        guard let infoData = infoOutput?.data(using: .utf8),
-              let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any],
+        guard let infoPlist = infoOutput?.parsePlist(),
               let deviceId = infoPlist["DeviceIdentifier"] as? String else {
             NSLog("[DEBUG] DiskImageService: Failed to get device identifier")
             throw AppError.diskImage("デバイスIDの取得に失敗", message: volumePath.path, underlying: nil)
@@ -424,8 +431,7 @@ final class DiskImageService {
     func detachAllDiskImages() async throws -> Int {
         // Get list of all disks
         let output = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist"])
-        guard let data = output.data(using: .utf8),
-              let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+        guard let plist = output.parsePlist(),
               let allDisks = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
             return 0
         }
@@ -441,8 +447,7 @@ final class DiskImageService {
                 
                 // Get detailed info to confirm it's a disk image
                 let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", deviceId])
-                if let infoData = infoOutput?.data(using: .utf8),
-                   let infoPlist = try? PropertyListSerialization.propertyList(from: infoData, options: [], format: nil) as? [String: Any] {
+                if let infoPlist = infoOutput?.parsePlist() {
                     
                     // Check for Virtual/DiskImage indicators
                     let isVirtual = infoPlist["Virtual"] as? Bool ?? false
@@ -484,8 +489,7 @@ final class DiskImageService {
         do {
             // Get list of all mounted volumes using diskutil
             let output = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist"])
-            guard let data = output.data(using: .utf8),
-                  let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+            guard let plist = output.parsePlist(),
                   let allDisksAndPartitions = plist["AllDisksAndPartitions"] as? [[String: Any]] else {
                 return 0
             }
@@ -564,16 +568,14 @@ final class DiskImageService {
         if let diskID = diskIdentifier {
             do {
                 let output = try await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", diskID])
-                if let data = output.data(using: .utf8),
-                   let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any],
+                if let plist = output.parsePlist(),
                    let volumeName = plist["VolumeName"] as? String {
                     volumeNames.append(volumeName)
                 }
                 
                 // Also check for partitions on this disk
                 let listOutput = try await processRunner.run("/usr/sbin/diskutil", ["list", "-plist", diskID])
-                if let listData = listOutput.data(using: .utf8),
-                   let listPlist = try? PropertyListSerialization.propertyList(from: listData, options: [], format: nil) as? [String: Any],
+                if let listPlist = listOutput.parsePlist(),
                    let allDisks = listPlist["AllDisksAndPartitions"] as? [[String: Any]] {
                     for disk in allDisks {
                         if let partitions = disk["Partitions"] as? [[String: Any]] {

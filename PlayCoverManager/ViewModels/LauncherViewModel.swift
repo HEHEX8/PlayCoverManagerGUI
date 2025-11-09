@@ -99,11 +99,14 @@ final class LauncherViewModel {
     private func setupAppLifecycleMonitoring() {
         let workspace = NSWorkspace.shared
         
+        // Build Set of managed bundle IDs for O(1) lookup (performance optimization)
+        let managedBundleIDs = Set(apps.map { $0.bundleIdentifier })
+        
         // Initialize tracking set with currently running apps
         previouslyRunningApps = Set(
             workspace.runningApplications
                 .compactMap { $0.bundleIdentifier }
-                .filter { bundleID in apps.contains(where: { $0.bundleIdentifier == bundleID }) }
+                .filter { managedBundleIDs.contains($0) }  // O(1) instead of O(n)
         )
         
         NSLog("[LIFECYCLE] KVO monitoring setup - tracking \(previouslyRunningApps.count) running apps")
@@ -116,11 +119,14 @@ final class LauncherViewModel {
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 
+                // Build Set of managed bundle IDs for O(1) lookup
+                let managedBundleIDs = Set(self.apps.map { $0.bundleIdentifier })
+                
                 // Get current running apps (filter to our managed apps only)
                 let currentRunning = Set(
                     workspace.runningApplications
                         .compactMap { $0.bundleIdentifier }
-                        .filter { bundleID in self.apps.contains(where: { $0.bundleIdentifier == bundleID }) }
+                        .filter { managedBundleIDs.contains($0) }  // O(1) instead of O(n)
                 )
                 
                 // Detect newly launched apps
@@ -465,7 +471,8 @@ final class LauncherViewModel {
     /// Workaround for macOS focus loss bug after dismissing overlays/dialogs
     /// Forces the window to regain focus and become key window
     private func restoreWindowFocus() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
             if let window = NSApp.keyWindow ?? NSApp.windows.first {
                 window.makeKey()
                 window.makeFirstResponder(window.contentView)
