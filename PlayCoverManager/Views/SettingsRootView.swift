@@ -1002,26 +1002,31 @@ struct IPAInstallerSheet: View {
         currentPhase = .installing
         isInstalling = true
         
+        // Ensure results screen is always shown, even if unexpected error occurs
+        defer {
+            Task { @MainActor in
+                stopStatusUpdater()
+                isInstalling = false
+                currentPhase = .results
+                showResults = true
+                
+                // Refresh launcher to show newly installed apps (in background)
+                Task {
+                    await launcherViewModel.refresh()
+                }
+            }
+        }
+        
         do {
             try await service.installIPAs(analyzedIPAs)
         } catch {
             await MainActor.run {
                 statusMessage = String(localized: "エラー: \(error.localizedDescription)")
+                // Record fatal error in failedApps if not already recorded
+                if service.failedApps.isEmpty && service.installedApps.isEmpty {
+                    service.failedApps.append(String(localized: "致命的なエラー: \(error.localizedDescription)"))
+                }
             }
-        }
-        
-        // Refresh launcher to show newly installed apps (in background)
-        Task {
-            await launcherViewModel.refresh()
-        }
-        
-        // Update UI with service state on main thread
-        await MainActor.run {
-            
-            stopStatusUpdater()
-            isInstalling = false
-            currentPhase = .results
-            showResults = true
         }
     }
 }
