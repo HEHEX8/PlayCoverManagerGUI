@@ -8,6 +8,18 @@
             "state": "translated",
             "value": ""
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ""
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ""
+          }
         }
       }
     },
@@ -87,6 +99,18 @@
             "state": "translated",
             "value": ".%@"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": ".%@"
+          }
         }
       }
     },
@@ -96,6 +120,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "No apps found matching \"%@\"."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到与“%@”匹配的应用程序。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到與“%@”匹配的應用程序。"
           }
         }
       }
@@ -113,6 +149,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "（包括 PlayCover 容器和关联的应用程序容器）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "（包括 PlayCover 容器和關聯的應用程序容器）"
           }
         }
       }
@@ -153,6 +195,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "（既定）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(預設)"
           }
         }
       }
@@ -209,6 +257,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Failed to eject \"%@\"."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "弹出“%@”失败。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "彈出“%@”失敗。"
           }
         }
       }
@@ -686,6 +746,18 @@
             "state": "translated",
             "value": "%@ → %@"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ → %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ → %@"
+          }
         }
       }
     },
@@ -696,12 +768,36 @@
             "state": "translated",
             "value": "Data exists in internal storage for %@. How would you like to proceed?"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数据存在于%@的内部存储器中。你如何处理？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "數據存在於%@的內部存儲器中。你如何處理？"
+          }
         }
       }
     },
     "%@:": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@:"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@:"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "%@:"
@@ -722,6 +818,18 @@
             "state": "translated",
             "value": "%lld / %lld Complete"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld 已完成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld / %lld 已完成"
+          }
         }
       }
     },
@@ -731,6 +839,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld items"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件"
           }
         }
       }
@@ -765,6 +885,18 @@
             "state": "translated",
             "value": "Install %lld apps?"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您想安装 %lld 个应用程序吗？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您想安裝 %lld 個應用程序嗎？"
+          }
         }
       }
     },
@@ -774,6 +906,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Failed to unmount %lld containers."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法卸载 %lld 个容器。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法卸載 %lld 個容器。"
           }
         }
       }
@@ -785,6 +929,18 @@
             "state": "translated",
             "value": "Failed to unmount %lld disk images."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法卸载 %lld 磁盘映像。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法卸載 %lld 磁盤映像。"
+          }
         }
       }
     },
@@ -794,6 +950,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "• %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "•%＠"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "•%＠"
           }
         }
       }
@@ -897,6 +1065,18 @@
             "state": "translated",
             "value": "© 2025 HEHEX8"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "© 2025 HEHEX8"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "© 2025 HEHEX8"
+          }
         }
       }
     },
@@ -952,6 +1132,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "+%lld apps"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld 个应用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "+%lld 個應用"
           }
         }
       }
@@ -1077,6 +1269,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "App: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用程序： ％@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "應用程式: %@"
           }
         }
       }
@@ -1225,6 +1429,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Enter"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "进入"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進入"
           }
         }
       }
@@ -1488,6 +1704,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "iOS %@+"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS%@+"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iOS%@+"
           }
         }
       }
@@ -1890,6 +2118,18 @@
             "state": "translated",
             "value": "OK"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好的"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好的"
+          }
         }
       }
     },
@@ -1900,6 +2140,18 @@
             "state": "translated",
             "value": "PlayCover Manager"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover 管理器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover 管理器"
+          }
         }
       }
     },
@@ -1909,6 +2161,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "PlayCover Manager is a companion app for PlayCover.\n\nIt simplifies disk image management and IPA installation."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Manager 是一款对 PlayCover 进行补充的应用程序。\n\n轻松管理磁盘映像和 IPA 安装。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PlayCover Manager 是一款對 PlayCover 進行補充的應用程序。\n\n輕鬆管理磁盤映像和 IPA 安裝。"
           }
         }
       }
@@ -2684,6 +2948,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Version %@ (Build %@)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本%@（内部版本%@）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本%@（內部版本%@）"
           }
         }
       }
@@ -3971,6 +4247,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unmounted volumes: %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已卸载的卷：%lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已卸載的捲：%lld"
           }
         }
       }
@@ -5362,6 +5650,18 @@
             "state": "translated",
             "value": "Unmount all disk images and exit the app.\n\nFor external drives, make sure you can safely remove the entire drive."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸载所有磁盘映像并退出应用程序。\n\n对于外部驱动器，请确保每个驱动器都可以安全移除。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸載所有磁盤映像並退出應用程序。\n\n對於外部驅動器，請確保每個驅動器都可以安全移除。"
+          }
         }
       }
     },
@@ -5517,6 +5817,12 @@
             "state": "translated",
             "value": "设置完成"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設置完成"
+          }
         }
       }
     },
@@ -5533,6 +5839,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "暂停"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暫停"
           }
         }
       }
@@ -5551,6 +5863,12 @@
             "state": "translated",
             "value": "降级"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "降級"
+          }
         }
       }
     },
@@ -5567,6 +5885,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "数据"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "數據"
           }
         }
       }
@@ -5585,6 +5909,12 @@
             "state": "translated",
             "value": "数据保存到外部驱动器或网络驱动器 (\\(volumeName))。\\n\\n您想弹出驱动器吗？"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "數據保存到外部驅動器或網絡驅動器 (\\(volumeName))。\\n\\n您想彈出驅動器嗎？"
+          }
         }
       }
     },
@@ -5594,6 +5924,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "The data storage location is on an external or network drive (%@).\n\nWould you like to eject the drive?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数据存储在外部驱动器或网络驱动器 (%@) 上。\n\n您想弹出驱动器吗？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "數據存儲在外部驅動器或網絡驅動器 (%@) 上。\n\n您想彈出驅動器嗎？"
           }
         }
       }
@@ -5635,6 +5977,12 @@
             "state": "translated",
             "value": "磁盘映像"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像"
+          }
         }
       }
     },
@@ -5651,6 +5999,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "磁盘映像（安装）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像（安裝）"
           }
         }
       }
@@ -5698,6 +6052,12 @@
             "state": "translated",
             "value": "磁盘映像不存在"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像不存在"
+          }
         }
       }
     },
@@ -5714,6 +6074,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "未找到磁盘映像"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到磁盤映像"
           }
         }
       }
@@ -5732,6 +6098,12 @@
             "state": "translated",
             "value": "卸载磁盘映像失败"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸載磁盤映像失敗"
+          }
         }
       }
     },
@@ -5741,6 +6113,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unmounting disk images is taking a long time.\n\nForce quit? (Data may be lost)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸载磁盘映像需要很长时间。\n\n您想强制退出吗？（数据可能会丢失）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸載磁盤映像需要很長時間。\n\n您想強制退出嗎？（數據可能會丟失）"
           }
         }
       }
@@ -5759,6 +6143,12 @@
             "state": "translated",
             "value": "卸载磁盘映像需要很长时间。\\n\\n您想强制退出吗？（数据可能会丢失）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卸載磁盤映像需要很長時間。\\n\\n您想強制退出嗎？（數據可能會丟失）"
+          }
         }
       }
     },
@@ -5775,6 +6165,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "创建磁盘映像失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "創建磁盤映像失敗"
           }
         }
       }
@@ -5793,6 +6189,12 @@
             "state": "translated",
             "value": "磁盘映像的保存位置"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像的保存位置"
+          }
         }
       }
     },
@@ -5809,6 +6211,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "未设置磁盘映像保存目的地"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未設置磁盤映像保存目的地"
           }
         }
       }
@@ -5827,6 +6235,12 @@
             "state": "translated",
             "value": "选择保存磁盘映像的位置"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇保存磁盤映像的位置"
+          }
         }
       }
     },
@@ -5843,6 +6257,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "准备磁盘映像"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "準備磁盤映像"
           }
         }
       }
@@ -5861,6 +6281,12 @@
             "state": "translated",
             "value": "准备磁盘映像失败"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "準備磁盤映像失敗"
+          }
         }
       }
     },
@@ -5870,6 +6296,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Disk images can become very large.\nPlease select a drive with sufficient free space."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盘映像可能很大。\n请选择具有足够可用空间的驱动器。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像可能很大。\n請選擇具有足夠可用空間的驅動器。"
           }
         }
       }
@@ -5888,6 +6326,12 @@
             "state": "translated",
             "value": "磁盘映像可能很大。\\n请选择具有足够可用空间的驱动器。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像可能很大。\\n請選擇具有足夠可用空間的驅動器。"
+          }
         }
       }
     },
@@ -5904,6 +6348,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在卸载磁盘映像..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在卸載磁盤映像..."
           }
         }
       }
@@ -5922,6 +6372,12 @@
             "state": "translated",
             "value": "我卸载了磁盘映像。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我卸載了磁盤映像。"
+          }
         }
       }
     },
@@ -5938,6 +6394,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在卸载磁盘映像..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在卸載磁盤映像..."
           }
         }
       }
@@ -5956,6 +6418,12 @@
             "state": "translated",
             "value": "正在创建磁盘映像..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在創建磁盤映像..."
+          }
         }
       }
     },
@@ -5972,6 +6440,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在删除磁盘映像..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在刪除磁盤映像..."
           }
         }
       }
@@ -5990,6 +6464,12 @@
             "state": "translated",
             "value": "磁盘镜像创建"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤鏡像創建"
+          }
         }
       }
     },
@@ -6006,6 +6486,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "磁盘映像创建错误：\\(msg)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像創建錯誤：\\(msg)"
           }
         }
       }
@@ -6024,6 +6510,12 @@
             "state": "translated",
             "value": "创建磁盘映像"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "創建磁盤映像"
+          }
         }
       }
     },
@@ -6040,6 +6532,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "磁盘映像存储目的地"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磁盤映像存儲目的地"
           }
         }
       }
@@ -6058,6 +6556,12 @@
             "state": "translated",
             "value": "无法访问磁盘映像存储位置"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法訪問磁盤映像存儲位置"
+          }
         }
       }
     },
@@ -6074,6 +6578,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "请选择磁盘映像保存目的地"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請選擇磁盤映像保存目的地"
           }
         }
       }
@@ -6092,6 +6602,12 @@
             "state": "translated",
             "value": "我能够创建目录，但文件写入测试失败。\\n\\n解决方案：\\n• 请在设置屏幕中选择不同的目标。\\n• 如果是外部驱动器，请确保已安装它。\\n• 确保驱动器不是只读的。\\n\\n路径: \\(parentDir.path)\\n错误: \\(error.localizedDescription)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我能夠創建目錄，但文件寫入測試失敗。\\n\\n解決方案：\\n• 請在設置屏幕中選擇不同的目標。 \\n• 如果是外部驅動器，請確保已安裝它。 \\n• 確保驅動器不是只讀的。 \\n\\n路徑: \\(parentDir.path)\\n錯誤: \\(error.localizedDescription)"
+          }
         }
       }
     },
@@ -6108,6 +6624,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "获取设备ID失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "獲取設備ID失敗"
           }
         }
       }
@@ -6126,6 +6648,12 @@
             "state": "translated",
             "value": "获取设备路径失败"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "獲取設備路徑失敗"
+          }
         }
       }
     },
@@ -6143,6 +6671,12 @@
             "state": "translated",
             "value": "在调试控制台中启动"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在調試控制台中啟動"
+          }
         }
       }
     },
@@ -6152,6 +6686,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "The drive is not connected or the path is invalid.\nPlease select a different storage location."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "驱动器未连接或路径无效。\n请选择其他目的地。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "驅動器未連接或路徑無效。\n請選擇其他目的地。"
           }
         }
       }
@@ -6170,6 +6716,12 @@
             "state": "translated",
             "value": "驱动器未连接或路径无效。\\n请选择另一个保存目的地。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "驅動器未連接或路徑無效。\\n請選擇另一個保存目的地。"
+          }
         }
       }
     },
@@ -6186,6 +6738,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "驱动器弹出失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "驅動器彈出失敗"
           }
         }
       }
@@ -6204,6 +6762,12 @@
             "state": "translated",
             "value": "驱动器删除完成"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "驅動器刪除完成"
+          }
         }
       }
     },
@@ -6221,6 +6785,12 @@
             "state": "translated",
             "value": "无法强制弹出驱动器。\\n\\n请从 Finder 中手动将其弹出。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法強制彈出驅動器。\\n\\n請從 Finder 中手動將其彈出。"
+          }
         }
       }
     },
@@ -6237,6 +6807,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "驱动器上的卷可能正在使用中。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "驅動器上的捲可能正在使用中。"
           }
         }
       }
@@ -6278,6 +6854,12 @@
             "state": "translated",
             "value": "导航"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "導航"
+          }
         }
       }
     },
@@ -6318,6 +6900,12 @@
             "state": "translated",
             "value": "版本 \\(版本)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本 \\(版本)"
+          }
         }
       }
     },
@@ -6327,6 +6915,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Version %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本 ％@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本 ％@"
           }
         }
       }
@@ -6351,6 +6951,12 @@
             "state": "translated",
             "value": "版本："
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版本（標籤）"
+          }
         }
       }
     },
@@ -6367,6 +6973,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "字节"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "位元組"
           }
         }
       }
@@ -6385,6 +6997,12 @@
             "state": "translated",
             "value": "二进制大小"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二進制大小"
+          }
         }
       }
     },
@@ -6401,6 +7019,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "二进制信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二進制信息"
           }
         }
       }
@@ -6419,6 +7043,12 @@
             "state": "translated",
             "value": "路径不存在"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "路徑不存在"
+          }
         }
       }
     },
@@ -6435,6 +7065,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "后台位置信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "後台位置信息"
           }
         }
       }
@@ -6453,6 +7089,12 @@
             "state": "translated",
             "value": "后台采集"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "後台採集"
+          }
         }
       }
     },
@@ -6469,6 +7111,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "背景音频"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "背景音頻"
           }
         }
       }
@@ -6487,6 +7135,12 @@
             "state": "translated",
             "value": "封装类型"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "封裝類型"
+          }
         }
       }
     },
@@ -6503,6 +7157,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "束结构"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "束結構"
           }
         }
       }
@@ -6521,6 +7181,12 @@
             "state": "translated",
             "value": "内部版本号"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內部版本號"
+          }
         }
       }
     },
@@ -6534,6 +7200,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件大小"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "文件大小"
@@ -6561,6 +7233,12 @@
             "state": "translated",
             "value": "文件大小："
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件大小（標籤）"
+          }
         }
       }
     },
@@ -6574,6 +7252,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件名"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "文件名"
@@ -6595,6 +7279,12 @@
             "state": "translated",
             "value": "文件类型"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件類型"
+          }
         }
       }
     },
@@ -6611,6 +7301,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "启动重点应用程序"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟動重點應用程序"
           }
         }
       }
@@ -6629,6 +7325,12 @@
             "state": "translated",
             "value": "清晰的焦点"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清晰的焦點"
+          }
         }
       }
     },
@@ -6642,6 +7344,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "框架 (\\(result.frameworks.count))"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "框架 (\\(result.frameworks.count))"
@@ -6662,6 +7370,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "进程退出（退出代码：$EXIT_CODE）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "進程退出（退出代碼：$EXIT_CODE）"
           }
         }
       }
@@ -6703,6 +7417,12 @@
             "state": "translated",
             "value": "麦克风"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "麥克風"
+          }
         }
       }
     },
@@ -6719,6 +7439,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "安装错误：\\(msg)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝錯誤：\\(msg)"
           }
         }
       }
@@ -6737,6 +7463,12 @@
             "state": "translated",
             "value": "安装"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝"
+          }
         }
       }
     },
@@ -6754,6 +7486,12 @@
             "state": "translated",
             "value": "挂载：\\(mountedCount)个容器"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "掛載：\\(mountedCount)個容器"
+          }
         }
       }
     },
@@ -6763,6 +7501,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mounted: %lld containers"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装：%lld 个容器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝：%lld 個容器"
           }
         }
       }
@@ -6781,6 +7531,12 @@
             "state": "translated",
             "value": "您无权访问挂载目标"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您無權訪問掛載目標"
+          }
         }
       }
     },
@@ -6797,6 +7553,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "挂载完成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "掛載完成"
           }
         }
       }
@@ -6837,6 +7599,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "挂载状态"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "掛載狀態"
           }
         }
       }
@@ -6901,6 +7669,12 @@
             "state": "translated",
             "value": "菜单 (⌘M)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜單 (⌘M)"
+          }
         }
       }
     },
@@ -6918,6 +7692,12 @@
             "state": "translated",
             "value": "显示菜单"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示菜單"
+          }
         }
       }
     },
@@ -6934,6 +7714,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "打开/关闭菜单"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開/關閉菜單"
           }
         }
       }
@@ -6975,6 +7761,12 @@
             "state": "translated",
             "value": "运动传感器"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運動傳感器"
+          }
         }
       }
     },
@@ -7015,6 +7807,12 @@
             "state": "translated",
             "value": "提醒"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提醒"
+          }
         }
       }
     },
@@ -7031,6 +7829,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "远程通知"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遠程通知"
           }
         }
       }
@@ -7095,6 +7899,12 @@
             "state": "translated",
             "value": "无法卸载某些磁盘映像"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法卸載某些磁盤映像"
+          }
         }
       }
     },
@@ -7111,6 +7921,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "覆盖"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "覆蓋"
           }
         }
       }
@@ -7129,6 +7945,12 @@
             "state": "translated",
             "value": "覆盖/其他"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "覆蓋/其他"
+          }
         }
       }
     },
@@ -7146,6 +7968,12 @@
             "state": "translated",
             "value": "请通过下面的按钮安装 IPA。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請通過下面的按鈕安裝 IPA。"
+          }
         }
       }
     },
@@ -7159,6 +7987,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不清楚"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "不清楚"
@@ -7179,6 +8013,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "互换性重视"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強調兼容性"
           }
         }
       }
@@ -7220,6 +8060,12 @@
             "state": "translated",
             "value": "当前正在运行以下应用程序。卸载前请关闭这些应用程序。\\n\\n\\(应用程序列表)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當前正在運行以下應用程序。卸載前請關閉這些應用程序。\\n\\n\\(應用程序列表)"
+          }
         }
       }
     },
@@ -7236,6 +8082,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "按任意键关闭窗口..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按任意鍵關閉窗口..."
           }
         }
       }
@@ -7254,6 +8106,12 @@
             "state": "translated",
             "value": "位置情报（使用中）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "位置信息（使用中）"
+          }
         }
       }
     },
@@ -7271,6 +8129,12 @@
             "state": "translated",
             "value": "位置信息（始终）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "位置信息（始終）"
+          }
         }
       }
     },
@@ -7287,6 +8151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "什么都不做"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "什麼都不做"
           }
         }
       }
@@ -7328,6 +8198,12 @@
             "state": "translated",
             "value": "创造"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "創造"
+          }
         }
       }
     },
@@ -7344,6 +8220,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "作成完了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "創建完成"
           }
         }
       }
@@ -7385,6 +8267,12 @@
             "state": "translated",
             "value": "使用容量"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用容量"
+          }
         }
       }
     },
@@ -7398,6 +8286,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用量"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "使用量"
@@ -7442,6 +8336,12 @@
             "state": "translated",
             "value": "未选择保存目的地"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未選擇保存目的地"
+          }
         }
       }
     },
@@ -7458,6 +8358,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "您没有保存目的地的写入权限"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您沒有保存目的地的寫入權限"
           }
         }
       }
@@ -7476,6 +8382,12 @@
             "state": "translated",
             "value": "目标驱动器可能未连接。\\n\\n保存位置：\\(baseDirectory.path)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標驅動器可能未連接。\\n\\n保存位置：\\(baseDirectory.path)"
+          }
         }
       }
     },
@@ -7492,6 +8404,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择保存目的地"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇保存目的地"
           }
         }
       }
@@ -7510,6 +8428,12 @@
             "state": "translated",
             "value": "您无权访问存储位置"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您無權訪問存儲位置"
+          }
         }
       }
     },
@@ -7523,6 +8447,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改保存目的地"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "更改保存目的地"
@@ -7596,6 +8526,12 @@
             "state": "translated",
             "value": "如果更改存储位置，所有已挂载的容器将被卸载，环境将在新的存储位置构建。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果更改存儲位置，所有已掛載的容器將被卸載，環境將在新的存儲位置構建。"
+          }
         }
       }
     },
@@ -7612,6 +8548,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "要更改保存位置，请先关闭这些应用程序。\\n\\n\\(应用程序列表)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要更改保存位置，請先關閉這些應用程序。\\n\\n\\(應用程序列表)"
           }
         }
       }
@@ -7630,6 +8572,12 @@
             "state": "translated",
             "value": "要更改存储位置，您必须卸载当前安装的所有磁盘映像。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要更改存儲位置，您必須卸載當前安裝的所有磁盤映像。"
+          }
         }
       }
     },
@@ -7646,6 +8594,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择保存目的地"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇保存目的地"
           }
         }
       }
@@ -7664,6 +8618,12 @@
             "state": "translated",
             "value": "请先创建磁盘映像。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請先創建磁盤映像。"
+          }
         }
       }
     },
@@ -7681,6 +8641,12 @@
             "state": "translated",
             "value": "内部数据（参考信息）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內部數據（參考信息）"
+          }
         }
       }
     },
@@ -7697,6 +8663,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "找到内部数据"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找到內部數據"
           }
         }
       }
@@ -7738,6 +8710,12 @@
             "state": "translated",
             "value": "删除内部数据失败"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除內部數據失敗"
+          }
         }
       }
     },
@@ -7754,6 +8732,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "安装保持内部数据完好无损"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝保持內部數據完好無損"
           }
         }
       }
@@ -7772,6 +8756,12 @@
             "state": "translated",
             "value": "将内部数据集成到容器中然后移除并挂载"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將內部數據集成到容器中然後移除並掛載"
+          }
         }
       }
     },
@@ -7789,6 +8779,12 @@
             "state": "translated",
             "value": "处理内部数据..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "處理內部數據..."
+          }
         }
       }
     },
@@ -7805,6 +8801,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "丢弃内部数据"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丟棄內部數據"
           }
         }
       }
@@ -7846,6 +8848,12 @@
             "state": "translated",
             "value": "丢弃内部数据并安装新数据"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丟棄內部數據並安裝新數據"
+          }
         }
       }
     },
@@ -7862,6 +8870,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "整合内部数据"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整合內部數據"
           }
         }
       }
@@ -7903,6 +8917,12 @@
             "state": "translated",
             "value": "内部数据使用（参考）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內部數據使用（參考）"
+          }
         }
       }
     },
@@ -7919,6 +8939,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "内部数据处理失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內部數據處理失敗"
           }
         }
       }
@@ -7937,6 +8963,12 @@
             "state": "translated",
             "value": "内部数据处理默认值"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內部數據處理默認值"
+          }
         }
       }
     },
@@ -7953,6 +8985,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "内部数据处理方法"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "內部數據處理方法"
           }
         }
       }
@@ -7971,6 +9009,12 @@
             "state": "translated",
             "value": "重新安装"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新安裝"
+          }
         }
       }
     },
@@ -7987,6 +9031,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "再解析"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新分析"
           }
         }
       }
@@ -8005,6 +9055,12 @@
             "state": "translated",
             "value": "再试行"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重試"
+          }
         }
       }
     },
@@ -8018,6 +9074,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大文件"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "最大文件"
@@ -8039,6 +9101,12 @@
             "state": "translated",
             "value": "最大文件大小"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大文件大小"
+          }
         }
       }
     },
@@ -8055,6 +9123,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "最小iOS"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最低 iOS 版本"
           }
         }
       }
@@ -8073,6 +9147,12 @@
             "state": "translated",
             "value": "最小OS"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最低操作系統"
+          }
         }
       }
     },
@@ -8090,6 +9170,12 @@
             "state": "translated",
             "value": "照片库"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照片庫"
+          }
         }
       }
     },
@@ -8103,6 +9189,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "加工..."
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "加工..."
@@ -8130,6 +9222,12 @@
             "state": "translated",
             "value": "加工..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "處理（求和點）"
+          }
         }
       }
     },
@@ -8146,6 +9244,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "需要初始设置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要初始設置"
           }
         }
       }
@@ -8187,6 +9291,12 @@
             "state": "translated",
             "value": "添加另一个 IPA"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加另一個 IPA"
+          }
         }
       }
     },
@@ -8204,6 +9314,12 @@
             "state": "translated",
             "value": "请尝试使用不同的关键字进行搜索。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請嘗試使用不同的關鍵字進行搜索。"
+          }
         }
       }
     },
@@ -8220,6 +9336,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "最后启动的应用程序"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最後啟動的應用程序"
           }
         }
       }
@@ -8261,6 +9383,12 @@
             "state": "translated",
             "value": "总计: \\(ByteCountFormatter.string(fromByteCount:totalSize, countStyle:.file))"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "總計：\\(ByteCountFormatter.string(fromByteCount:totalSize, countStyle:.file))"
+          }
         }
       }
     },
@@ -8270,6 +9398,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Total: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部的： ％@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部的： ％@"
           }
         }
       }
@@ -8288,6 +9428,12 @@
             "state": "translated",
             "value": "总尺寸："
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "總尺寸："
+          }
         }
       }
     },
@@ -8304,6 +9450,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "合计使用容量:"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用的總容量："
           }
         }
       }
@@ -8322,6 +9474,12 @@
             "state": "translated",
             "value": "总容量"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "總容量"
+          }
         }
       }
     },
@@ -8338,6 +9496,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "使用相同版本覆盖安装。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用相同版本覆蓋安裝。"
           }
         }
       }
@@ -8356,6 +9520,12 @@
             "state": "translated",
             "value": "报告问题"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "報告問題"
+          }
         }
       }
     },
@@ -8372,6 +9542,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "基本情报"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基本信息"
           }
         }
       }
@@ -8390,6 +9566,12 @@
             "state": "translated",
             "value": "推荐外部存储"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "推薦外部存儲"
+          }
         }
       }
     },
@@ -8407,6 +9589,12 @@
             "state": "translated",
             "value": "现在可以安全删除外部驱动器“\\(driveName)”。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在可以安全刪除外部驅動器“\\(driveName)”。"
+          }
         }
       }
     },
@@ -8416,6 +9604,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "External drive \"%@\" is now safe to remove."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在可以安全删除外部驱动器“%@”。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在可以安全刪除外部驅動器“%@”。"
           }
         }
       }
@@ -8434,6 +9634,12 @@
             "state": "translated",
             "value": "无法获取外部驱动器的设备路径。\\n\\n请从 Finder 中手动将其弹出。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法獲取外部驅動器的設備路徑。\\n\\n請從 Finder 中手動將其彈出。"
+          }
         }
       }
     },
@@ -8451,6 +9657,12 @@
             "state": "translated",
             "value": "弹出外部驱动器？"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "彈出外部驅動器？"
+          }
         }
       }
     },
@@ -8467,6 +9679,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "使外部驱动器可移动..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使外部驅動器可移動..."
           }
         }
       }
@@ -8508,6 +9726,12 @@
             "state": "translated",
             "value": "完成"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
+          }
         }
       }
     },
@@ -8524,6 +9748,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "已完成（PlayCover 结束后）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已完成（PlayCover 結束後）"
           }
         }
       }
@@ -8542,6 +9772,12 @@
             "state": "translated",
             "value": "完成检测-最终确认..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成檢測-最終確認..."
+          }
         }
       }
     },
@@ -8558,6 +9794,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "执行"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "執行"
           }
         }
       }
@@ -8576,6 +9818,12 @@
             "state": "translated",
             "value": "执行时，它会创建并安装磁盘映像。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "執行時，它會創建並安裝磁盤映像。"
+          }
         }
       }
     },
@@ -8592,6 +9840,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "可执行文件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可執行文件"
           }
         }
       }
@@ -8610,6 +9864,12 @@
             "state": "translated",
             "value": "可执行文件：\\(可执行文件名称)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可執行文件：\\(可執行文件名稱)"
+          }
         }
       }
     },
@@ -8626,6 +9886,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "运行应用程序："
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "運行應用程序："
           }
         }
       }
@@ -8644,6 +9910,12 @@
             "state": "translated",
             "value": "我有一个正在运行的应用程序"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我有一個正在運行的應用程序"
+          }
         }
       }
     },
@@ -8660,6 +9932,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "兼容设备"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "兼容設備"
           }
         }
       }
@@ -8678,6 +9956,12 @@
             "state": "translated",
             "value": "支持的语言​​(\\(result.localizations.count))"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持的語言​​(\\(result.localizations.count))"
+          }
         }
       }
     },
@@ -8694,6 +9978,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "适用于小型显示器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "適用於小型顯示器"
           }
         }
       }
@@ -8712,6 +10002,12 @@
             "state": "translated",
             "value": "强制卸载"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強制卸載"
+          }
         }
       }
     },
@@ -8728,6 +10024,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "强制卸载失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強制卸載失敗"
           }
         }
       }
@@ -8746,6 +10048,12 @@
             "state": "translated",
             "value": "强制卸载..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強制卸載..."
+          }
         }
       }
     },
@@ -8762,6 +10070,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "强制弹出"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強制彈出"
           }
         }
       }
@@ -8780,6 +10094,12 @@
             "state": "translated",
             "value": "强制弹出失败"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強制彈出失敗"
+          }
         }
       }
     },
@@ -8796,6 +10116,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "强制弹出..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強制彈出..."
           }
         }
       }
@@ -8814,6 +10140,12 @@
             "state": "translated",
             "value": "您想尝试强制卸载吗？"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您想嘗試強制卸載嗎？"
+          }
         }
       }
     },
@@ -8830,6 +10162,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "您想尝试强制弹出吗？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您想嘗試強制彈出嗎？"
           }
         }
       }
@@ -8848,6 +10186,12 @@
             "state": "translated",
             "value": "强制终止"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "強制終止"
+          }
         }
       }
     },
@@ -8861,6 +10205,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "支持"
@@ -8904,6 +10254,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "資訊"
           }
         }
       }
@@ -8968,6 +10324,12 @@
             "state": "translated",
             "value": "所在地"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "地點"
+          }
         }
       }
     },
@@ -8984,6 +10346,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "技术情报"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "技術資料"
           }
         }
       }
@@ -9002,6 +10370,12 @@
             "state": "translated",
             "value": "技术信息和分析"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "技術信息和分析"
+          }
         }
       }
     },
@@ -9018,6 +10392,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "新安装"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新安裝"
           }
         }
       }
@@ -9036,6 +10416,12 @@
             "state": "translated",
             "value": "方法 1"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方法一"
+          }
         }
       }
     },
@@ -9052,6 +10438,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "方法 2"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方法2"
           }
         }
       }
@@ -9070,6 +10462,12 @@
             "state": "translated",
             "value": "已经安装了"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已經安裝了"
+          }
         }
       }
     },
@@ -9086,6 +10484,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "将您现有的应用程序降级到旧版本。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將您現有的應用程序降級到舊版本。"
           }
         }
       }
@@ -9104,6 +10508,12 @@
             "state": "translated",
             "value": "将现有应用程序升级到新版本。"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將現有應用程序升級到新版本。"
+          }
         }
       }
     },
@@ -9121,6 +10531,12 @@
             "state": "translated",
             "value": "使用现有磁盘映像"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用現有磁盤映像"
+          }
         }
       }
     },
@@ -9137,6 +10553,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "默认处理"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "默認處理"
           }
         }
       }
@@ -9201,6 +10623,12 @@
             "state": "translated",
             "value": "未创建"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未創建"
+          }
         }
       }
     },
@@ -9217,6 +10645,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "未署名"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未簽名"
           }
         }
       }
@@ -9281,6 +10715,12 @@
             "state": "translated",
             "value": "没有找到搜索结果"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有找到搜索結果"
+          }
         }
       }
     },
@@ -9321,6 +10761,12 @@
             "state": "translated",
             "value": "授权请求"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授權請求"
+          }
         }
       }
     },
@@ -9337,6 +10783,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "职能/权限"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "職能/權限"
           }
         }
       }
@@ -9378,6 +10830,12 @@
             "state": "translated",
             "value": "正在删除残留目录..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在刪除殘留目錄..."
+          }
         }
       }
     },
@@ -9394,6 +10852,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "准备中..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在準備..."
           }
         }
       }
@@ -9412,6 +10876,12 @@
             "state": "translated",
             "value": "当前全局设置：\\(settingsStore.defaultDataHandling.localizedDescription)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當前全局設置：\\(settingsStore.defaultDataHandling.localizedDescription)"
+          }
         }
       }
     },
@@ -9429,6 +10899,12 @@
             "state": "translated",
             "value": "当前全局设置：\\(settingsStore.nobrowseEnabled ?"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當前全局設置：\\(settingsStore.nobrowseEnabled ?"
+          }
         }
       }
     },
@@ -9438,6 +10914,18 @@
           "stringUnit": {
             "state": "translated",
             "value": "Current global setting: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前全局设置：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "當前全局設置：%@"
           }
         }
       }
@@ -9456,6 +10944,12 @@
             "state": "translated",
             "value": "重新检查环境..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新檢查環境..."
+          }
         }
       }
     },
@@ -9472,6 +10966,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "检查环境..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檢查環境..."
           }
         }
       }
@@ -9490,6 +10990,12 @@
             "state": "translated",
             "value": "确认"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確認"
+          }
         }
       }
     },
@@ -9506,6 +11012,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "简体中文"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "簡體中文"
           }
         }
       }
@@ -9547,6 +11059,12 @@
             "state": "translated",
             "value": "完成的..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成的..."
+          }
         }
       }
     },
@@ -9563,6 +11081,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "总尺寸"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "總尺寸"
           }
         }
       }
@@ -9581,6 +11105,12 @@
             "state": "translated",
             "value": "文件总数"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件總數"
+          }
         }
       }
     },
@@ -9597,6 +11127,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "繁体中文"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繁體中文"
           }
         }
       }
@@ -9615,6 +11151,12 @@
             "state": "translated",
             "value": "签约日期"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "簽約日期"
+          }
         }
       }
     },
@@ -9631,6 +11173,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "签署"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "簽署"
           }
         }
       }
@@ -9649,6 +11197,12 @@
             "state": "translated",
             "value": "签名状态"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "簽名狀態"
+          }
         }
       }
     },
@@ -9666,6 +11220,12 @@
             "state": "translated",
             "value": "自动（基于显示）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自動（基於顯示）"
+          }
         }
       }
     },
@@ -9679,6 +11239,12 @@
           }
         },
         "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "英文名"
+          }
+        },
+        "zh-Hant": {
           "stringUnit": {
             "state": "translated",
             "value": "英文名"
@@ -9700,6 +11266,12 @@
             "state": "translated",
             "value": "版权"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "版權"
+          }
         }
       }
     },
@@ -9716,6 +11288,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "解析"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分析"
           }
         }
       }
@@ -9734,6 +11312,12 @@
             "state": "translated",
             "value": "解析中: \\(ipaURL.lastPathComponent)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解析：\\(ipaURL.lastPathComponent)"
+          }
         }
       }
     },
@@ -9751,6 +11335,12 @@
             "state": "translated",
             "value": "解析中..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在分析..."
+          }
         }
       }
     },
@@ -9767,6 +11357,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "解析开始"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開始分析"
           }
         }
       }
@@ -9877,6 +11473,12 @@
             "state": "translated",
             "value": "计算中..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在計算..."
+          }
         }
       }
     },
@@ -9923,6 +11525,12 @@
             "state": "translated",
             "value": "设置 (⌘,)"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設置（快捷方式）"
+          }
         }
       }
     },
@@ -9946,6 +11554,12 @@
             "state": "translated",
             "value": "环境..."
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設置（菜單）"
+          }
         }
       }
     },
@@ -9962,6 +11576,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在删除配置文件..."
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在刪除配置文件..."
           }
         }
       }
@@ -10003,6 +11623,12 @@
             "state": "translated",
             "value": "您想重置您的设置吗？"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "您想重置您的設置嗎？"
+          }
         }
       }
     },
@@ -10019,6 +11645,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "关闭设置（Esc）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉設置（Esc）"
           }
         }
       }
@@ -10037,6 +11669,12 @@
             "state": "translated",
             "value": "打开设置"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開設置"
+          }
         }
       }
     },
@@ -10053,6 +11691,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "请从设置屏幕指定保存目的地。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請從設置屏幕指定保存目的地。"
           }
         }
       }
@@ -10071,6 +11715,12 @@
             "state": "translated",
             "value": "详细"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "細節"
+          }
         }
       }
     },
@@ -10087,6 +11737,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "详细信息和设置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳細信息和設置"
           }
         }
       }
@@ -10105,6 +11761,12 @@
             "state": "translated",
             "value": "详情"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "詳情"
+          }
         }
       }
     },
@@ -10121,6 +11783,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "解释"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解釋"
           }
         }
       }
@@ -10139,6 +11807,12 @@
             "state": "translated",
             "value": "启动"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟動"
+          }
         }
       }
     },
@@ -10155,6 +11829,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "设置在启动期间发现内部数据时要执行的操作。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設置在啟動期間發現內部數據時要執行的操作。"
           }
         }
       }
@@ -10173,6 +11853,12 @@
             "state": "translated",
             "value": "启动验证失败"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "啟動驗證失敗"
+          }
         }
       }
     },
@@ -10190,6 +11876,12 @@
             "state": "translated",
             "value": "联系地址"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "聯繫地址"
+          }
         }
       }
     },
@@ -10206,6 +11898,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇"
           }
         }
       }
@@ -10247,6 +11945,12 @@
             "state": "translated",
             "value": "关闭（Esc）"
           }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉（Esc）"
+          }
         }
       }
     },
@@ -10263,6 +11967,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "开发者信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開發者信息"
           }
         }
       }
