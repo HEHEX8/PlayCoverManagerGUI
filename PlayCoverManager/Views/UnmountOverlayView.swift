@@ -63,7 +63,10 @@ struct UnmountOverlayView: View {
                     RunningAppsBlockingView(
                         runningAppBundleIDs: runningAppBundleIDs,
                         onCancel: { viewModel.dismissUnmountError() },
-                        onQuitAllAndRetry: nil  // No retry for ALL unmount flow, just dismiss
+                        onQuitAllAndRetry: {
+                            // Retry ALL unmount flow after quitting all apps
+                            viewModel.retryUnmountAll()
+                        }
                     )
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
                     .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)

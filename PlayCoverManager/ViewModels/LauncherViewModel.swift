@@ -444,6 +444,21 @@ final class LauncherViewModel {
         Task.immediate { await performUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer) }
     }
     
+    func retryUnmountAll() {
+        // Retry unmount after apps have been terminated
+        // This is called from the "すべて終了" button in the running apps blocking dialog
+        guard let applyToPlayCoverContainer = pendingUnmountTask else { return }
+        
+        // Wait for auto-eject to complete, then retry the unmount flow
+        Task {
+            // Give auto-eject time to complete
+            try? await Task.sleep(for: .seconds(1))
+            
+            // Continue with the unmount flow
+            await performUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer)
+        }
+    }
+    
     func cancelUnmount() {
         unmountFlowState = .idle
         pendingUnmountTask = nil
