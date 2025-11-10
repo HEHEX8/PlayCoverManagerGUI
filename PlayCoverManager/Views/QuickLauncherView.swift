@@ -3184,8 +3184,8 @@ private struct DrawerPanel: View {
                             }
                         }
                     ),
-                    title: "PlayCover.app",
-                    help: String(localized: "PlayCover を開く (⌘⇧P)")
+                    title: "PlayCover アプリを開く",
+                    help: String(localized: "PlayCover アプリを開く (⌘⇧P)")
                 ) {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
