@@ -528,7 +528,7 @@ final class LauncherViewModel {
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         
-        Logger.unmount("Attempting to unmount container for: \(bundleID)")
+        Logger.unmount("Attempting to eject container for: \(bundleID)")
         
         // Check if mounted
         let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
@@ -537,7 +537,7 @@ final class LauncherViewModel {
             return
         }
         
-        Logger.unmount("Container is mounted, proceeding with unmount")
+        Logger.unmount("Container is mounted, proceeding with eject")
         
         // Synchronize preferences to ensure settings are saved
         CFPreferencesAppSynchronize(bundleID as CFString)
@@ -546,78 +546,35 @@ final class LauncherViewModel {
         sync()
         Logger.unmount("Filesystem sync completed")
         
-        // Wait for cfprefsd to release the volume
-        do {
-            try await waitForCfprefsdRelease(mountPoint: containerURL, timeout: 10)
-        } catch {
-            Logger.unmount("Error waiting for cfprefsd: \(error), will attempt eject anyway")
-        }
-        
         // Release our lock
         await lockService.unlockContainer(for: bundleID)
         
         // Check if another process has a lock
         let canLock = await lockService.canLockContainer(for: bundleID, at: containerURL)
         if !canLock {
-            Logger.unmount("Another process has a lock, skipping unmount")
+            Logger.unmount("Another process has a lock, skipping eject")
             return
         }
         
-        // Use normal (non-force) eject for auto-unmount to ensure proper write completion
-        // This allows the system to properly flush all buffers before unmounting
-        do {
-            try await diskImageService.ejectDiskImage(for: containerURL, force: false)
-            Logger.unmount("Successfully unmounted container for: \(bundleID)")
-        } catch {
-            Logger.error("Failed to unmount container for \(bundleID): \(error)")
-        }
-    }
-    
-    /// Wait for cfprefsd to release the volume before ejecting
-    private func waitForCfprefsdRelease(mountPoint: URL, timeout: TimeInterval) async throws {
-        Logger.unmount("waitForCfprefsdRelease called for: \(mountPoint.path)")
-        let startTime = Date()
-        var attempt = 0
-        
-        while Date().timeIntervalSince(startTime) < timeout {
-            attempt += 1
-            
-            // Check if cfprefsd has released the volume
-            Logger.unmount("Running lsof check (attempt \(attempt))")
-            
+        // Retry eject with exponential backoff (cfprefsd may need time to release)
+        let maxRetries = 5
+        for attempt in 1...maxRetries {
             do {
-                let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
-                Logger.unmount("lsof output length: \(output.count) bytes")
-                
-                if !output.contains("cfprefsd") {
-                    Logger.unmount("cfprefsd has released the volume (checked \(attempt) times)")
+                try await diskImageService.ejectDiskImage(for: containerURL, force: false)
+                Logger.unmount("Successfully ejected container for: \(bundleID) on attempt \(attempt)")
+                return
+            } catch {
+                if attempt == maxRetries {
+                    Logger.error("Failed to eject container for \(bundleID) after \(maxRetries) attempts: \(error)")
                     return
                 }
                 
-                if attempt == 1 {
-                    Logger.unmount("cfprefsd still accessing volume, waiting for release...")
-                }
-            } catch {
-                // lsof failed (e.g., exit code 1 when no files are open, or permission issue)
-                // This is actually good - likely means no files are open
-                Logger.unmount("lsof completed on attempt \(attempt): \(error)")
-                return
+                // Exponential backoff: 0.5s, 1s, 2s, 4s
+                let delay = 0.5 * pow(2.0, Double(attempt - 1))
+                Logger.unmount("Eject attempt \(attempt) failed, retrying in \(delay)s: \(error)")
+                try? await Task.sleep(for: .seconds(delay))
             }
-            
-            // Check every 500ms
-            try await Task.sleep(for: .milliseconds(500))
         }
-        
-        // Timeout - log what's still open (try one last time)
-        Logger.unmount("Timeout reached after \(timeout)s, checking final state")
-        do {
-            let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
-            Logger.unmount("Timeout after \(timeout)s. Processes still using volume:\n\(output)")
-        } catch {
-            Logger.unmount("Timeout after \(timeout)s. Final lsof check also failed: \(error)")
-        }
-        
-        throw AppError.diskImage("cfprefsd タイムアウト", message: "cfprefsd がボリュームを解放しませんでした")
     }
 
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
