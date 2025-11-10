@@ -356,6 +356,7 @@ struct RunningAppsBlockingView: View {
     let onQuitAllAndRetry: (() -> Void)?  // Optional: retry unmount after quitting all apps
     
     @State private var appInfoList: [RunningAppInfo] = []
+    @State private var isProcessing: Bool = false  // Processing state for "すべて終了"
     
     struct RunningAppInfo: Identifiable {
         let id: String  // bundle ID
@@ -366,22 +367,33 @@ struct RunningAppsBlockingView: View {
     
     var body: some View {
         VStack(spacing: 32) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 64))
-                .foregroundStyle(.orange)
-            
-            VStack(spacing: 16) {
-                Text("一部のディスクイメージをアンマウントできません")
-                    .font(.title2.bold())
+            if isProcessing {
+                // Processing state: show progress indicator
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .padding(.bottom, 16)
                 
-                Text("以下のアプリが実行中です。")
-                    .font(.callout)
+                Text("アプリを終了しています...")
+                    .font(.headline)
                     .foregroundStyle(.secondary)
+            } else {
+                // Normal state: show running apps
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 64))
+                    .foregroundStyle(.orange)
                 
-                // Running apps list with icons and quit buttons
-                ScrollView {
-                    VStack(spacing: 12) {
-                        ForEach(appInfoList) { appInfo in
+                VStack(spacing: 16) {
+                    Text("一部のディスクイメージをアンマウントできません")
+                        .font(.title2.bold())
+                    
+                    Text("以下のアプリが実行中です。")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                    
+                    // Running apps list with icons and quit buttons
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            ForEach(appInfoList) { appInfo in
                             HStack(spacing: 12) {
                                 // App icon
                                 if let icon = appInfo.icon {
@@ -416,37 +428,38 @@ struct RunningAppsBlockingView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                     }
-                }
-                .frame(maxHeight: 300)
-            }
-            
-            HStack(spacing: 12) {
-                Button {
-                    onCancel()
-                } label: {
-                    Text("キャンセル")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(minWidth: 100)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .keyboardShortcut(.cancelAction)
-                
-                Button {
-                    if let onQuitAllAndRetry = onQuitAllAndRetry {
-                        quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
-                    } else {
-                        quitAllApps()
                     }
-                } label: {
-                    Text("すべて終了")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(minWidth: 100)
+                    .frame(maxHeight: 300)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(.orange)
-                .keyboardShortcut(.defaultAction)
+                
+                HStack(spacing: 12) {
+                    Button {
+                        onCancel()
+                    } label: {
+                        Text("キャンセル")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(minWidth: 100)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                    .keyboardShortcut(.cancelAction)
+                    
+                    Button {
+                        if let onQuitAllAndRetry = onQuitAllAndRetry {
+                            quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
+                        } else {
+                            quitAllApps()
+                        }
+                    } label: {
+                        Text("すべて終了")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(minWidth: 100)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.orange)
+                    .keyboardShortcut(.defaultAction)
+                }
             }
         }
         .padding(48)
@@ -511,8 +524,8 @@ struct RunningAppsBlockingView: View {
     }
     
     private func quitAllAppsAndRetry(onRetry: @escaping () -> Void) {
-        // Close dialog immediately to prevent multiple clicks
-        onCancel()
+        // Show processing state
+        isProcessing = true
         
         // Terminate all running apps
         let launcherService = LauncherService()
