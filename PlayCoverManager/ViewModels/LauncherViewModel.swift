@@ -420,6 +420,9 @@ final class LauncherViewModel {
     private var pendingUnmountTask: Bool?
     
     func unmountAll(applyToPlayCoverContainer: Bool = true) {
+        // Store for later use (even if apps are running)
+        pendingUnmountTask = applyToPlayCoverContainer
+        
         // Check for running apps first
         let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
         
@@ -431,9 +434,6 @@ final class LauncherViewModel {
         
         // Show confirmation overlay
         unmountFlowState = .confirming(volumeDisplayName: "")
-        
-        // Store for later use when user confirms
-        pendingUnmountTask = applyToPlayCoverContainer
     }
     
     func confirmUnmount() {
