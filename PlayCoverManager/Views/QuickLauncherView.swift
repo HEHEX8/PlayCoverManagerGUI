@@ -91,9 +91,27 @@ struct QuickLauncherView: View {
         
         switch keyCode {
         case 36, 49:  // Return (36) or Space (49)
-            // Launch focused app
+            // Launch focused app with animation
             if currentIndex < apps.count {
-                viewModel.launch(app: apps[currentIndex])
+                let app = apps[currentIndex]
+                
+                // Trigger icon animation
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TriggerAppIconAnimation"),
+                    object: nil,
+                    userInfo: ["bundleID": app.bundleIdentifier]
+                )
+                
+                // Launch app
+                viewModel.launch(app: app)
+                
+                // If this is the recent app, trigger bounce animation on recent button
+                if app.lastLaunchedFlag {
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("TriggerRecentAppBounce"),
+                        object: nil
+                    )
+                }
             }
             return true
             
@@ -674,10 +692,6 @@ private struct iOSAppIconView: View {
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
-    @State private var isPressed = false
-    @State private var isCancelled = false
-    @State private var shakeOffset: CGFloat = 0
-    @State private var isDragging = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -722,14 +736,8 @@ private struct iOSAppIconView: View {
                     .offset(x: 6, y: -6)
                 }
             }
-            // Combined animations: press + bounce + shake
-            // Use max() to ensure scale never goes below minimum threshold
-            .scaleEffect(max(0.1, isPressed ? 0.92 : (isAnimating ? 0.85 : 1.0)))
-            .brightness(isPressed ? -0.1 : 0)
-            .offset(x: shakeOffset)
-            .rotationEffect(.degrees(isCancelled ? (shakeOffset * 0.3) : 0))
-            .frame(minWidth: 1, minHeight: 1) // Prevent negative geometry
-            .animation(.easeOut(duration: 0.1), value: isPressed)
+            // Bounce animation
+            .scaleEffect(isAnimating ? 0.85 : 1.0)
             .animation(
                 isAnimating ? 
                     Animation.interpolatingSpring(stiffness: 300, damping: 10)
@@ -737,7 +745,6 @@ private struct iOSAppIconView: View {
                     .easeOut(duration: 0.2),
                 value: isAnimating
             )
-            .animation(.linear(duration: 0.05), value: shakeOffset)
             
             // App name below icon
             Text(app.displayName)
@@ -777,77 +784,14 @@ private struct iOSAppIconView: View {
                 }
             }
         }
-        // NOTE: DragGesture is temporarily disabled to avoid conflicts with external Button wrapper
-        // When wrapped in Button (for inactive window click fix), the Button handles the tap
-        // If we need drag-to-shake functionality in the future, we can re-enable this with
-        // proper gesture priority handling
-        /*
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    // Completely ignore all gestures during any animation
-                    guard !isAnimating && !isCancelled else { return }
-                    
-                    // Press down animation (only once per drag)
-                    if !isPressed && !isDragging {
-                        isPressed = true
-                        isDragging = true
-                    }
-                }
-                .onEnded { gesture in
-                    // Must have started a drag to process end
-                    guard isDragging else { return }
-                    
-                    // Reset drag state immediately
-                    isDragging = false
-                    
-                    // Ignore if currently animating or already cancelled
-                    guard !isAnimating && !isCancelled else {
-                        isPressed = false
-                        return
-                    }
-                    
-                    // Calculate drag distance
-                    let iconSize: CGFloat = 80
-                    let tolerance: CGFloat = 20
-                    let distance = max(abs(gesture.translation.width), abs(gesture.translation.height))
-                    
-                    // Reset press state
-                    isPressed = false
-                    
-                    if distance > iconSize / 2 + tolerance {
-                        // Released outside bounds - perform shake animation
-                        performShakeAnimation()
-                    } else {
-                        // Released within bounds - normal launch
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(50))
-                            isAnimating = true
-                            
-                            // Trigger launch during bounce animation
-                            try? await Task.sleep(for: .milliseconds(100))
-                            tapAction()
-                            
-                            // Stop bounce animation after completion
-                            try? await Task.sleep(for: .milliseconds(650))
-                            isAnimating = false
-                        }
-                    }
-                }
-        )
-        */
         .contextMenu {
-            Button("起動") { 
-                // Smooth press + bounce animation sequence
-                isPressed = true
+            Button("起動") {
+                // Trigger bounce animation
                 Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(100))
-                    isPressed = false
-                    try? await Task.sleep(for: .milliseconds(50))
                     isAnimating = true
                     try? await Task.sleep(for: .milliseconds(100))
                     tapAction()
-                    try? await Task.sleep(for: .milliseconds(650))
+                    try? await Task.sleep(for: .milliseconds(550))
                     isAnimating = false
                 }
             }
@@ -992,30 +936,6 @@ private struct iOSAppIconView: View {
     }
     
     // "Nani yanen!" shake animation function
-    private func performShakeAnimation() {
-        // Prevent re-entry if already shaking
-        guard !isCancelled else { return }
-        
-        // Set cancelled state to block new gestures
-        isCancelled = true
-        
-        // Quick shake sequence: left → right → left → right → center
-        let shakeSequence: [CGFloat] = [-6, 6, -4, 4, -2, 2, 0]
-        
-        // Apply shake offsets sequentially
-        for (index, offset) in shakeSequence.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.05) {
-                self.shakeOffset = offset
-            }
-        }
-        
-        // Reset all states after animation completes
-        let totalDuration = Double(shakeSequence.count) * 0.05 + 0.1
-        DispatchQueue.main.asyncAfter(deadline: .now() + totalDuration) {
-            self.isCancelled = false
-            self.shakeOffset = 0
-        }
-    }
 }
 
 // App detail and settings sheet with tabbed interface
