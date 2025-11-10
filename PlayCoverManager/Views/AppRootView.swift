@@ -511,15 +511,17 @@ struct RunningAppsBlockingView: View {
     }
     
     private func quitAllAppsAndRetry(onRetry: @escaping () -> Void) {
-        let launcherService = LauncherService()
+        // Close dialog immediately to prevent multiple clicks
+        onCancel()
         
         // Terminate all running apps
+        let launcherService = LauncherService()
         for bundleID in runningAppBundleIDs {
             _ = launcherService.terminateApp(bundleID: bundleID)
         }
         
-        // Wait a moment and then retry
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // Wait for termination and auto-eject, then retry
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             onRetry()
         }
     }

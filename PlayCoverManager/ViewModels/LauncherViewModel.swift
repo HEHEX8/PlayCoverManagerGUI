@@ -447,14 +447,11 @@ final class LauncherViewModel {
     func retryUnmountAll() {
         // Retry unmount after apps have been terminated
         // This is called from the "すべて終了" button in the running apps blocking dialog
+        // Note: quitAllAppsAndRetry() already waited 1.5 seconds for auto-eject
         guard let applyToPlayCoverContainer = pendingUnmountTask else { return }
         
-        // Wait for auto-eject to complete, then retry the unmount flow
+        // Continue with the unmount flow (skip running apps check since they're already terminated)
         Task {
-            // Give auto-eject time to complete
-            try? await Task.sleep(for: .seconds(1))
-            
-            // Continue with the unmount flow
             await performUnmountAllAndQuit(applyToPlayCoverContainer: applyToPlayCoverContainer)
         }
     }
