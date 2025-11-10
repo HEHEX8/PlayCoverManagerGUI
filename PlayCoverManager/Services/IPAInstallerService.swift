@@ -391,22 +391,47 @@ class IPAInstallerService {
     // MARK: - Installation Progress Monitoring
     
     // Monitor installation completion by watching Applications directory
-    // Simplified process: Wait for .app creation/update → Wait for valid signature → Complete
+    // Simplified process: Wait for PlayCover to start → Wait for .app creation/update → Wait for valid signature → Complete
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
-        await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中") }
-        
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
         
-        // Get initial app state (for detecting creation/modification)
+        // Step 0: Wait for PlayCover to start (確実に起動を検知してからトリガー)
+        await MainActor.run { currentStatus = String(localized: "PlayCoverの起動を待機中...") }
+        Logger.installation("Waiting for PlayCover to start")
+        
+        let startupTimeout = 30 // 30 seconds to start
+        var playCoverStarted = false
+        
+        for _ in 0..<startupTimeout {
+            let isRunning = await MainActor.run {
+                NSWorkspace.shared.runningApplications.contains { app in
+                    app.bundleIdentifier == playCoverBundleID
+                }
+            }
+            
+            if isRunning {
+                playCoverStarted = true
+                Logger.installation("PlayCover started successfully")
+                break
+            }
+            
+            try await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+        
+        guard playCoverStarted else {
+            throw AppError.installation(String(localized: "PlayCover の起動に失敗しました"), message: "30秒以内に起動しませんでした")
+        }
+        
+        // PlayCover起動確認後、初期状態を取得
+        await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中") }
         let targetAppURL = getAppURL(for: bundleID, in: applicationsDir)
         let initialMTime = targetAppURL.flatMap { getAppModificationTime($0) } ?? 0
         
         let maxWait = 300 // 5 minutes
         let checkInterval: TimeInterval = 1.0
         var appDetected = false
-        var playCoverDetected = false  // Track if PlayCover has been detected at least once
         
         for i in 0..<maxWait {
             // Check if PlayCover is still running
@@ -416,14 +441,8 @@ class IPAInstallerService {
                 }
             }
             
-            // Track if PlayCover has been detected
-            if playCoverRunning {
-                playCoverDetected = true
-            }
-            
             // If PlayCover crashed, retry installation
-            // Only check for crash if PlayCover was detected at least once (avoid false positive during startup)
-            if !playCoverRunning && playCoverDetected {
+            if !playCoverRunning {
                 Logger.installation("PlayCover terminated unexpectedly")
                 
                 // Check if installation completed before crash
