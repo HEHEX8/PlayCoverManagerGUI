@@ -546,9 +546,11 @@ final class LauncherViewModel {
         sync()
         Logger.unmount("Filesystem sync completed")
         
-        // Give cfprefsd time to release the volume after sync
-        try? await Task.sleep(for: .seconds(1.0))
-        Logger.unmount("Initial delay completed, attempting eject")
+        // Wait 30 seconds before attempting eject
+        // This allows quick app relaunches without remounting, and gives cfprefsd time to release
+        Logger.unmount("Waiting 30 seconds before eject (allows quick relaunch)")
+        try? await Task.sleep(for: .seconds(30.0))
+        Logger.unmount("Grace period completed, attempting eject")
         
         // Release our lock
         await lockService.unlockContainer(for: bundleID)
@@ -560,24 +562,13 @@ final class LauncherViewModel {
             return
         }
         
-        // Retry eject with exponential backoff (cfprefsd may need time to release)
-        let maxRetries = 5
-        for attempt in 1...maxRetries {
-            do {
-                try await diskImageService.ejectDiskImage(for: containerURL, force: false)
-                Logger.unmount("Successfully ejected container for: \(bundleID) on attempt \(attempt)")
-                return
-            } catch {
-                if attempt == maxRetries {
-                    Logger.error("Failed to eject container for \(bundleID) after \(maxRetries) attempts: \(error)")
-                    return
-                }
-                
-                // Exponential backoff: 0.5s, 1s, 2s, 4s
-                let delay = 0.5 * pow(2.0, Double(attempt - 1))
-                Logger.unmount("Eject attempt \(attempt) failed, retrying in \(delay)s: \(error)")
-                try? await Task.sleep(for: .seconds(delay))
-            }
+        // Single eject attempt (silent failure is OK - will mount on next launch)
+        do {
+            try await diskImageService.ejectDiskImage(for: containerURL, force: false)
+            Logger.unmount("Successfully ejected container for: \(bundleID)")
+        } catch {
+            Logger.unmount("Failed to eject container for \(bundleID), will remain mounted: \(error)")
+            // Silent failure - no user notification needed
         }
     }
 
@@ -624,14 +615,22 @@ final class LauncherViewModel {
                 continue
             }
             
-            // Force eject remaining containers (apps should already be terminated)
-            Logger.unmount("Container still mounted for \(app.bundleIdentifier), force ejecting")
+            // Try normal eject first (apps should already be terminated)
+            Logger.unmount("Container still mounted for \(app.bundleIdentifier), attempting normal eject")
+            
+            // Sync preferences and filesystem
+            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+            sync()
+            
+            // Wait 5 seconds for cfprefsd to release
+            try? await Task.sleep(for: .seconds(5.0))
+            
             do {
-                try await diskImageService.ejectDiskImage(for: container, force: true)
-                Logger.unmount("Successfully force ejected container for \(app.bundleIdentifier)")
+                try await diskImageService.ejectDiskImage(for: container, force: false)
+                Logger.unmount("Successfully ejected container for \(app.bundleIdentifier)")
                 successCount += 1
             } catch {
-                Logger.error("Failed to force eject container for \(app.bundleIdentifier): \(error)")
+                Logger.unmount("Normal eject failed for \(app.bundleIdentifier), marking as failed: \(error)")
                 failedCount += 1
             }
         }
@@ -649,7 +648,7 @@ final class LauncherViewModel {
             return
         }
         
-        // Step 2: Force eject PlayCover container
+        // Step 2: Eject PlayCover container
         if applyToPlayCoverContainer {
             await MainActor.run {
                 unmountFlowState = .processing(status: String(localized: "PlayCover コンテナをアンマウントしています…"))
@@ -659,10 +658,17 @@ final class LauncherViewModel {
             // Check if it's actually mounted
             let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
             if isMounted {
-                Logger.unmount("Force ejecting PlayCover container")
+                Logger.unmount("Ejecting PlayCover container")
+                
+                // Sync filesystem
+                sync()
+                
+                // Wait 5 seconds for cfprefsd to release
+                try? await Task.sleep(for: .seconds(5.0))
+                
                 do {
-                    try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
-                    Logger.unmount("Successfully force ejected PlayCover container")
+                    try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
+                    Logger.unmount("Successfully ejected PlayCover container")
                     successCount += 1
                 } catch {
                     // PlayCover container failed, show error and abort
