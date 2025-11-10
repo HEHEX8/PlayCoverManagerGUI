@@ -573,7 +573,7 @@ final class LauncherViewModel {
         }
     }
     
-    /// Wait for cfprefsd to release the volume before unmounting
+    /// Wait for cfprefsd to release the volume before ejecting
     private func waitForCfprefsdRelease(mountPoint: URL, timeout: TimeInterval) async throws {
         Logger.unmount("waitForCfprefsdRelease called for: \(mountPoint.path)")
         let startTime = Date()
@@ -584,26 +584,38 @@ final class LauncherViewModel {
             
             // Check if cfprefsd has released the volume
             Logger.unmount("Running lsof check (attempt \(attempt))")
-            let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
-            Logger.unmount("lsof output length: \(output.count) bytes")
             
-            if !output.contains("cfprefsd") {
-                Logger.unmount("cfprefsd has released the volume (checked \(attempt) times)")
+            do {
+                let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
+                Logger.unmount("lsof output length: \(output.count) bytes")
+                
+                if !output.contains("cfprefsd") {
+                    Logger.unmount("cfprefsd has released the volume (checked \(attempt) times)")
+                    return
+                }
+                
+                if attempt == 1 {
+                    Logger.unmount("cfprefsd still accessing volume, waiting for release...")
+                }
+            } catch {
+                // lsof failed (e.g., exit code 1 when no files are open, or permission issue)
+                // This is actually good - likely means no files are open
+                Logger.unmount("lsof completed on attempt \(attempt): \(error)")
                 return
-            }
-            
-            if attempt == 1 {
-                Logger.unmount("cfprefsd still accessing volume, waiting for release...")
             }
             
             // Check every 500ms
             try await Task.sleep(for: .milliseconds(500))
         }
         
-        // Timeout - log what's still open
+        // Timeout - log what's still open (try one last time)
         Logger.unmount("Timeout reached after \(timeout)s, checking final state")
-        let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
-        Logger.unmount("Timeout after \(timeout)s. Processes still using volume:\n\(output)")
+        do {
+            let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
+            Logger.unmount("Timeout after \(timeout)s. Processes still using volume:\n\(output)")
+        } catch {
+            Logger.unmount("Timeout after \(timeout)s. Final lsof check also failed: \(error)")
+        }
         
         throw AppError.diskImage("cfprefsd タイムアウト", message: "cfprefsd がボリュームを解放しませんでした")
     }
