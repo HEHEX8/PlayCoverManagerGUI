@@ -603,8 +603,11 @@ final class LauncherViewModel {
         }
         activeUnmountTasks.removeAll()
         
-        // Wait briefly for tasks to clean up
-        try? await Task.sleep(for: .milliseconds(100))
+        // Wait for tasks to clean up and release locks
+        // Increased from 100ms to ensure lock service cleanup completes
+        Logger.unmount("Waiting for lock cleanup...")
+        try? await Task.sleep(for: .seconds(1.0))
+        Logger.unmount("Lock cleanup completed")
         
         // Set initial processing state
         await MainActor.run {
@@ -653,8 +656,8 @@ final class LauncherViewModel {
             CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
             sync()
             
-            // Wait 5 seconds for cfprefsd to release
-            try? await Task.sleep(for: .seconds(5.0))
+            // Brief wait for sync to complete (not cfprefsd - app is already terminated)
+            try? await Task.sleep(for: .milliseconds(500))
             
             do {
                 try await diskImageService.ejectDiskImage(for: container, force: false)
@@ -694,8 +697,8 @@ final class LauncherViewModel {
                 // Sync filesystem
                 sync()
                 
-                // Wait 5 seconds for cfprefsd to release
-                try? await Task.sleep(for: .seconds(5.0))
+                // Brief wait for sync to complete
+                try? await Task.sleep(for: .milliseconds(500))
                 
                 do {
                     try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
@@ -847,11 +850,11 @@ final class LauncherViewModel {
     private func performForceUnmountForStorageChange() async {
         // Cancel all active auto-unmount tasks
         Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for force unmount")
-        for (bundleID, task) in activeUnmountTasks {
+        for (_, task) in activeUnmountTasks {
             task.cancel()
         }
         activeUnmountTasks.removeAll()
-        try? await Task.sleep(for: .milliseconds(100))
+        try? await Task.sleep(for: .seconds(1.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
@@ -912,11 +915,11 @@ final class LauncherViewModel {
     private func performForceUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
         // Cancel all active auto-unmount tasks
         Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for force unmount and quit")
-        for (bundleID, task) in activeUnmountTasks {
+        for (_, task) in activeUnmountTasks {
             task.cancel()
         }
         activeUnmountTasks.removeAll()
-        try? await Task.sleep(for: .milliseconds(100))
+        try? await Task.sleep(for: .seconds(1.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
@@ -1142,11 +1145,11 @@ final class LauncherViewModel {
     private func performUnmountForStorageChange() async {
         // Cancel all active auto-unmount tasks
         Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for storage change")
-        for (bundleID, task) in activeUnmountTasks {
+        for (_, task) in activeUnmountTasks {
             task.cancel()
         }
         activeUnmountTasks.removeAll()
-        try? await Task.sleep(for: .milliseconds(100))
+        try? await Task.sleep(for: .seconds(1.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "すべてのディスクイメージをアンマウント中…"))
