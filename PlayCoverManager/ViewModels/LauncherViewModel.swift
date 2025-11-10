@@ -156,8 +156,11 @@ final class LauncherViewModel {
     }
     
     private func handleAppTerminated(bundleID: String) async {
+        // TEMPORARY: Auto-unmount disabled for testing write completion issue
         // Auto-unmount the container
-        await unmountContainer(for: bundleID)
+        // await unmountContainer(for: bundleID)
+        
+        Logger.lifecycle("App terminated: \(bundleID) - auto-unmount disabled for testing")
         
         // Refresh to update UI (green dot disappears)
         await refresh()
