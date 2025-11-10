@@ -542,13 +542,16 @@ final class LauncherViewModel {
         // Synchronize preferences to ensure settings are saved
         CFPreferencesAppSynchronize(bundleID as CFString)
         
-        // Wait for filesystem writes to complete
-        Logger.unmount("Waiting for filesystem writes to complete")
-        try? await Task.sleep(for: .seconds(1))
-        
         // Force filesystem sync to disk
         sync()
         Logger.unmount("Filesystem sync completed")
+        
+        // Wait for cfprefsd to release the volume
+        do {
+            try await waitForCfprefsdRelease(mountPoint: containerURL, timeout: 10)
+        } catch {
+            Logger.unmount("Timeout waiting for cfprefsd, will attempt unmount anyway")
+        }
         
         // Release our lock
         await lockService.unlockContainer(for: bundleID)
@@ -568,6 +571,37 @@ final class LauncherViewModel {
         } catch {
             Logger.error("Failed to unmount container for \(bundleID): \(error)")
         }
+    }
+    
+    /// Wait for cfprefsd to release the volume before unmounting
+    private func waitForCfprefsdRelease(mountPoint: URL, timeout: TimeInterval) async throws {
+        let startTime = Date()
+        var attempt = 0
+        
+        while Date().timeIntervalSince(startTime) < timeout {
+            attempt += 1
+            
+            // Check if cfprefsd has released the volume
+            let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
+            
+            if !output.contains("cfprefsd") {
+                Logger.unmount("cfprefsd has released the volume (checked \(attempt) times)")
+                return
+            }
+            
+            if attempt == 1 {
+                Logger.unmount("cfprefsd still accessing volume, waiting for release...")
+            }
+            
+            // Check every 500ms
+            try await Task.sleep(for: .milliseconds(500))
+        }
+        
+        // Timeout - log what's still open
+        let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
+        Logger.unmount("Timeout after \(timeout)s. Processes still using volume:\n\(output)")
+        
+        throw AppError.unmount("cfprefsd タイムアウト", message: "cfprefsd がボリュームを解放しませんでした")
     }
 
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
