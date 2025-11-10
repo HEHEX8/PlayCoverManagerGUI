@@ -493,33 +493,89 @@ struct IPAInstallerSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 
             } else if analyzedIPAs.count > 1 {
-                // Multiple apps confirmation
+                // Multiple apps confirmation with list
                 VStack(spacing: 16) {
-                    // App icons grid (max 6)
-                    let displayApps = Array(analyzedIPAs.prefix(6))
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: 12) {
-                        ForEach(displayApps) { info in
-                            VStack(spacing: 4) {
-                                if let icon = info.icon {
-                                    Image(nsImage: icon)
-                                        .resizable()
-                                        .frame(width: 60, height: 60)
-                                        .clipShape(RoundedRectangle(cornerRadius: 13))
-                                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                    Text("\(analyzedIPAs.count) 個のアプリ")
+                        .font(.headline)
+                    
+                    // Scrollable list of apps
+                    ScrollView {
+                        VStack(spacing: 8) {
+                            ForEach(analyzedIPAs) { info in
+                                HStack(spacing: 12) {
+                                    // App icon
+                                    if let icon = info.icon {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .frame(width: 48, height: 48)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 48, height: 48)
+                                            .overlay {
+                                                Image(systemName: "app.dashed")
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                    }
+                                    
+                                    // App info
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(info.appName)
+                                            .font(.body)
+                                            .fontWeight(.medium)
+                                            .lineLimit(1)
+                                        
+                                        HStack(spacing: 8) {
+                                            // Install type badge
+                                            Group {
+                                                switch info.installType {
+                                                case .newInstall:
+                                                    Label("新規", systemImage: "sparkles")
+                                                        .foregroundStyle(.blue)
+                                                case .upgrade:
+                                                    Label("更新", systemImage: "arrow.up.circle.fill")
+                                                        .foregroundStyle(.green)
+                                                case .downgrade:
+                                                    Label("ダウン", systemImage: "arrow.down.circle.fill")
+                                                        .foregroundStyle(.orange)
+                                                case .reinstall:
+                                                    Label("上書き", systemImage: "arrow.clockwise.circle.fill")
+                                                        .foregroundStyle(.secondary)
+                                                }
+                                            }
+                                            .font(.caption2)
+                                            
+                                            Text("・")
+                                                .foregroundStyle(.tertiary)
+                                            
+                                            Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Remove from list button
+                                    Button {
+                                        removeIPAFromList(info)
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.title3)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("リストから外す")
                                 }
-                                Text(info.appName)
-                                    .font(.caption2)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
+                                .padding(12)
+                                .background(Color(nsColor: .controlBackgroundColor))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
                     }
-                    
-                    if analyzedIPAs.count > 6 {
-                        Text("+\(analyzedIPAs.count - 6) 個のアプリ")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    .frame(maxHeight: 300)
                 }
                 
                 Divider()
@@ -997,6 +1053,19 @@ struct IPAInstallerSheet: View {
     private func stopStatusUpdater() {
         statusUpdateTask?.cancel()
         statusUpdateTask = nil
+    }
+    
+    private func removeIPAFromList(_ info: IPAInstallerService.IPAInfo) {
+        // Remove from analyzed list
+        analyzedIPAs.removeAll { $0.id == info.id }
+        
+        // Remove from selected URLs
+        selectedIPAs.removeAll { $0 == info.ipaURL }
+        
+        // If no IPAs left, go back to selection
+        if analyzedIPAs.isEmpty {
+            currentPhase = .selection
+        }
     }
     
     private func startInstallation() async {
@@ -1644,19 +1713,24 @@ struct AppUninstallerSheet: View {
         
         currentPhase = .uninstalling
         
+        // Ensure results screen is always shown, even if error occurs
+        defer {
+            Task { @MainActor in
+                currentPhase = .results
+                stopStatusUpdater()
+                
+                // Update quick launcher
+                if let launcher = appViewModel.launcherViewModel {
+                    await launcher.refresh()
+                }
+            }
+        }
+        
         do {
             try await service.uninstallApps(appsToUninstall)
         } catch {
+            // Error is already recorded in service.failedApps
         }
-        
-        currentPhase = .results
-        
-        // Update quick launcher
-        if let launcher = appViewModel.launcherViewModel {
-            await launcher.refresh()
-        }
-        
-        stopStatusUpdater()
     }
 }
 
