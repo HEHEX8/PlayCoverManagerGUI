@@ -156,11 +156,8 @@ final class LauncherViewModel {
     }
     
     private func handleAppTerminated(bundleID: String) async {
-        // TEMPORARY: Auto-unmount disabled for testing write completion issue
-        // Auto-unmount the container
-        // await unmountContainer(for: bundleID)
-        
-        Logger.lifecycle("App terminated: \(bundleID) - auto-unmount disabled for testing")
+        // Auto-unmount the container with proper write completion handling
+        await unmountContainer(for: bundleID)
         
         // Refresh to update UI (green dot disappears)
         await refresh()
@@ -545,6 +542,14 @@ final class LauncherViewModel {
         // Synchronize preferences to ensure settings are saved
         CFPreferencesAppSynchronize(bundleID as CFString)
         
+        // Wait for filesystem writes to complete
+        Logger.unmount("Waiting for filesystem writes to complete")
+        try? await Task.sleep(for: .seconds(1))
+        
+        // Force filesystem sync to disk
+        sync()
+        Logger.unmount("Filesystem sync completed")
+        
         // Release our lock
         await lockService.unlockContainer(for: bundleID)
         
@@ -555,10 +560,10 @@ final class LauncherViewModel {
             return
         }
         
-        // Try unmount with force flag to handle cfprefsd and other system daemons
-        // This is safe after app termination since CFPreferencesAppSynchronize ensures data is written
+        // Use normal (non-force) eject for auto-unmount to ensure proper write completion
+        // This allows the system to properly flush all buffers before unmounting
         do {
-            try await diskImageService.ejectDiskImage(for: containerURL, force: true)
+            try await diskImageService.ejectDiskImage(for: containerURL, force: false)
             Logger.unmount("Successfully unmounted container for: \(bundleID)")
         } catch {
             Logger.error("Failed to unmount container for \(bundleID): \(error)")
