@@ -550,7 +550,7 @@ final class LauncherViewModel {
         do {
             try await waitForCfprefsdRelease(mountPoint: containerURL, timeout: 10)
         } catch {
-            Logger.unmount("Timeout waiting for cfprefsd, will attempt unmount anyway")
+            Logger.unmount("Error waiting for cfprefsd: \(error), will attempt eject anyway")
         }
         
         // Release our lock
@@ -575,6 +575,7 @@ final class LauncherViewModel {
     
     /// Wait for cfprefsd to release the volume before unmounting
     private func waitForCfprefsdRelease(mountPoint: URL, timeout: TimeInterval) async throws {
+        Logger.unmount("waitForCfprefsdRelease called for: \(mountPoint.path)")
         let startTime = Date()
         var attempt = 0
         
@@ -582,7 +583,9 @@ final class LauncherViewModel {
             attempt += 1
             
             // Check if cfprefsd has released the volume
+            Logger.unmount("Running lsof check (attempt \(attempt))")
             let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
+            Logger.unmount("lsof output length: \(output.count) bytes")
             
             if !output.contains("cfprefsd") {
                 Logger.unmount("cfprefsd has released the volume (checked \(attempt) times)")
@@ -598,6 +601,7 @@ final class LauncherViewModel {
         }
         
         // Timeout - log what's still open
+        Logger.unmount("Timeout reached after \(timeout)s, checking final state")
         let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
         Logger.unmount("Timeout after \(timeout)s. Processes still using volume:\n\(output)")
         
