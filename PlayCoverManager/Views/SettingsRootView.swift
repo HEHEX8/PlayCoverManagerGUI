@@ -383,7 +383,7 @@ struct IPAInstallerSheet: View {
             bottomButtons
         }
         .padding(24)
-        .frame(width: 750, height: 650)
+        .frame(width: 960, height: 650)
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
@@ -1148,7 +1148,7 @@ struct AppUninstallerSheet: View {
             bottomButtons
         }
         .padding(24)
-        .frame(width: 750, height: 650)
+        .frame(width: 960, height: 650)
         .onAppear {
             Task {
                 await loadApps()
