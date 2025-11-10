@@ -391,6 +391,7 @@ class IPAInstallerService {
     // MARK: - Installation Progress Monitoring
     
     // Monitor installation completion by watching Applications directory
+    // Simplified process: Wait for .app creation/update → Wait for valid signature → Complete
     private nonisolated func monitorInstallationProgress(bundleID: String, appName: String) async throws {
         await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中") }
         
@@ -398,125 +399,83 @@ class IPAInstallerService {
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
         
-        // Record initial app count and app modification times
-        let initialAppURLs = getAppURLs(in: applicationsDir)
-        let initialAppMTimes = getAppModificationTimes(initialAppURLs)
-        
-        await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中") }
+        // Get initial app state (for detecting creation/modification)
+        let targetAppURL = getAppURL(for: bundleID, in: applicationsDir)
+        let initialMTime = targetAppURL.flatMap { getAppModificationTime($0) } ?? 0
         
         let maxWait = 300 // 5 minutes
         let checkInterval: TimeInterval = 1.0
+        var appDetected = false
         
         for i in 0..<maxWait {
-            // Check if PlayCover is still running using both pgrep and NSWorkspace
-            let pgrepOutput = try? await processRunner.run("/usr/bin/pgrep", ["-x", "PlayCover"])
-            
-            // Also check via NSWorkspace (more reliable)
-            let runningApps = await MainActor.run {
-                NSWorkspace.shared.runningApplications
-            }
-            let playCoverRunning = runningApps.contains { app in
-                app.bundleIdentifier == "io.playcover.PlayCover"
+            // Check if PlayCover is still running
+            let playCoverRunning = await MainActor.run {
+                NSWorkspace.shared.runningApplications.contains { app in
+                    app.bundleIdentifier == playCoverBundleID
+                }
             }
             
-            // Debug logging
-            if i % 10 == 0 {
-            }
-            
-            // Check both nil case and empty string case
-            let isPlayCoverRunning: Bool
-            if let output = pgrepOutput {
-                // pgrep returns process IDs (one per line), or empty if not running
-                let pgrepSaysRunning = !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                // Use NSWorkspace as primary check, pgrep as backup
-                isPlayCoverRunning = playCoverRunning || pgrepSaysRunning
-            } else {
-                // Command failed - rely on NSWorkspace
-                isPlayCoverRunning = playCoverRunning
-            }
-            
-            if !isPlayCoverRunning {
-                // PlayCover crashed or closed - verify installation
-                await MainActor.run { currentStatus = String(localized: "PlayCover終了検知 - 検証中...") }
-                try await Task.sleep(nanoseconds: 1_000_000_000)
+            // If PlayCover crashed, retry installation
+            if !playCoverRunning {
+                Logger.installation("PlayCover terminated unexpectedly")
                 
-                if try await verifyInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run { 
-                        currentStatus = String(localized: "完了（PlayCover終了後）")
-                        retryCount = 0  // Reset retry count on success
+                // Check if installation completed before crash
+                if try await isInstallationComplete(bundleID: bundleID) {
+                    await MainActor.run {
+                        currentStatus = String(localized: "完了")
+                        retryCount = 0
                     }
+                    Logger.installation("Installation completed before PlayCover termination")
                     return
+                }
+                
+                // Installation incomplete - retry
+                let currentRetry = await MainActor.run { retryCount }
+                let maxRetries = await MainActor.run { self.maxRetries }
+                
+                if currentRetry < maxRetries {
+                    await MainActor.run {
+                        retryCount += 1
+                        currentStatus = String(localized: "PlayCoverがクラッシュしました - 再試行中 (\(retryCount)/\(maxRetries))")
+                    }
+                    Logger.installation("Retrying installation (\(currentRetry + 1)/\(maxRetries))")
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+                    throw AppError.installationRetry
                 } else {
-                    // PlayCover crashed before installation completed - auto retry
-                    let currentRetry = await MainActor.run { retryCount }
-                    let maxRetries = await MainActor.run { self.maxRetries }
-                    
-                    if currentRetry < maxRetries {
-                        await MainActor.run { 
-                            retryCount += 1
-                            currentStatus = String(localized: "PlayCoverがクラッシュしました - 再試行中 (\(retryCount)/\(maxRetries))")
-                        }
-                        
-                        Logger.installation("PlayCover crashed, retrying (\(currentRetry + 1)/\(maxRetries))")
-                        
-                        // Wait a bit before retrying
-                        try await Task.sleep(nanoseconds: 2_000_000_000)
-                        
-                        // Retry by calling installIPAToPlayCover again (recursive call within monitoring)
-                        // This will restart PlayCover and monitoring
-                        throw AppError.installationRetry  // Special error type to trigger retry
-                    } else {
-                        await MainActor.run { retryCount = 0 }  // Reset for next installation
-                        throw AppError.installation(String(localized: "PlayCover が終了しました"), message: "\(maxRetries)回の再試行後もインストールが完了しませんでした")
+                    await MainActor.run { retryCount = 0 }
+                    throw AppError.installation(String(localized: "PlayCover が終了しました"), message: "\(maxRetries)回の再試行後もインストールが完了しませんでした")
+                }
+            }
+            
+            // Step 1: Wait for .app creation or modification
+            if !appDetected {
+                if let appURL = getAppURL(for: bundleID, in: applicationsDir) {
+                    let currentMTime = getAppModificationTime(appURL) ?? 0
+                    if currentMTime > initialMTime {
+                        appDetected = true
+                        await MainActor.run { currentStatus = String(localized: "アプリ検出 - 署名完了を待機中...") }
+                        Logger.installation("App detected: \(appURL.path), waiting for signature")
                     }
                 }
             }
             
-            // Check for new or modified apps
-            let currentAppURLs = getAppURLs(in: applicationsDir)
-            let currentAppMTimes = getAppModificationTimes(currentAppURLs)
-            
-            // Look for our specific app by bundle ID
-            for appURL in currentAppURLs {
-                let infoPlist = appURL.appendingPathComponent("Info.plist")
-                guard FileManager.default.fileExists(atPath: infoPlist.path),
-                      let plistData = try? Data(contentsOf: infoPlist),
-                      let plist = plistData.parsePlist(),
-                      let installedBundleID = plist["CFBundleIdentifier"] as? String else {
-                    continue
-                }
-                
-                if installedBundleID == bundleID {
-                    let currentMTime = currentAppMTimes[appURL.path] ?? 0
-                    let initialMTime = initialAppMTimes[appURL.path] ?? 0
-                    
-                    // App was created or updated
-                    if currentMTime > initialMTime {
-                        // Verify _CodeSignature exists (installation complete)
-                        let codeSignatureDir = appURL.appendingPathComponent("_CodeSignature")
-                        if FileManager.default.fileExists(atPath: codeSignatureDir.path) {
-                            await MainActor.run { currentStatus = String(localized: "完了検知 - 最終確認中...") }
-                            
-                            // Wait for stability
-                            try await Task.sleep(nanoseconds: 2_000_000_000)
-                            
-                            // Re-verify
-                            if try await verifyInstallationComplete(bundleID: bundleID) {
-                                await MainActor.run { currentStatus = String(localized: "完了") }
-                                
-                                // Installation complete - terminate PlayCover gracefully
-                                Logger.installation("Installation verified complete, terminating PlayCover")
-                                await terminatePlayCover()
-                                
-                                return
-                            }
-                        }
+            // Step 2: Once app detected, wait for valid signature
+            if appDetected {
+                if try await isInstallationComplete(bundleID: bundleID) {
+                    await MainActor.run {
+                        currentStatus = String(localized: "完了")
+                        retryCount = 0
                     }
+                    Logger.installation("Installation complete with valid signature")
+                    
+                    // Terminate PlayCover gracefully
+                    await terminatePlayCover()
+                    return
                 }
             }
             
             // Update status every 5 seconds
-            if i % 5 == 0 {
+            if i % 5 == 0 && i > 0 {
                 await MainActor.run { currentStatus = String(localized: "PlayCoverでIPAをインストール中 (\(i)秒経過)") }
             }
             
@@ -526,82 +485,55 @@ class IPAInstallerService {
         throw AppError.installation(String(localized: "タイムアウト"), message: "5分以内に完了しませんでした")
     }
     
-    // Get all app URLs in directory
-    private nonisolated func getAppURLs(in directory: URL) -> [URL] {
+    /// Get app URL for specific bundle ID
+    private nonisolated func getAppURL(for bundleID: String, in directory: URL) -> URL? {
         guard let appDirs = try? FileManager.default.contentsOfDirectory(
             at: directory,
-            includingPropertiesForKeys: [.contentModificationDateKey],
+            includingPropertiesForKeys: nil,
             options: []
         ) else {
-            return []
+            return nil
         }
         
-        return appDirs.filter { $0.pathExtension == "app" }
+        for appURL in appDirs where appURL.pathExtension == "app" {
+            let infoPlist = appURL.appendingPathComponent("Info.plist")
+            guard let plistData = try? Data(contentsOf: infoPlist),
+                  let plist = plistData.parsePlist(),
+                  let installedBundleID = plist["CFBundleIdentifier"] as? String,
+                  installedBundleID == bundleID else {
+                continue
+            }
+            return appURL
+        }
+        
+        return nil
     }
     
-    // Get modification times for all apps
-    private nonisolated func getAppModificationTimes(_ appURLs: [URL]) -> [String: TimeInterval] {
-        var mtimes: [String: TimeInterval] = [:]
-        
-        for appURL in appURLs {
-            if let attributes = try? FileManager.default.attributesOfItem(atPath: appURL.path),
-               let modDate = attributes[.modificationDate] as? Date {
-                mtimes[appURL.path] = modDate.timeIntervalSince1970
-            }
+    /// Get modification time for app
+    private nonisolated func getAppModificationTime(_ appURL: URL) -> TimeInterval? {
+        guard let attributes = try? FileManager.default.attributesOfItem(atPath: appURL.path),
+              let modDate = attributes[.modificationDate] as? Date else {
+            return nil
         }
-        
-        return mtimes
+        return modDate.timeIntervalSince1970
     }
     
     
     // MARK: - Installation Verification
     
-    private func verifyInstallationComplete(bundleID: String) async throws -> Bool {
+    /// Check if installation is complete (app exists with valid signature)
+    private nonisolated func isInstallationComplete(bundleID: String) async throws -> Bool {
         let playCoverBundleID = "io.playcover.PlayCover"
         let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
-        let appSettingsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/App Settings", isDirectory: true)
-        let settingsFile = appSettingsDir.appendingPathComponent("\(bundleID).plist")
         
-        // Settings file must exist
-        guard FileManager.default.fileExists(atPath: settingsFile.path) else {
+        // Find app by bundle ID
+        guard let appURL = getAppURL(for: bundleID, in: applicationsDir) else {
             return false
         }
         
-        guard let appDirs = try? FileManager.default.contentsOfDirectory(
-            at: applicationsDir,
-            includingPropertiesForKeys: nil
-        ) else {
-            return false
-        }
-        
-        for appURL in appDirs where appURL.pathExtension == "app" {
-            let infoPlist = appURL.appendingPathComponent("Info.plist")
-            guard FileManager.default.fileExists(atPath: infoPlist.path) else { continue }
-            
-            let plistData = try Data(contentsOf: infoPlist)
-            guard let plist = plistData.parsePlist(),
-                  let installedBundleID = plist["CFBundleIdentifier"] as? String else {
-                continue
-            }
-            
-            if installedBundleID == bundleID {
-                // Verify structure integrity: both _CodeSignature and settings file must exist
-                let codeSignatureDir = appURL.appendingPathComponent("_CodeSignature")
-                guard FileManager.default.fileExists(atPath: codeSignatureDir.path) else {
-                    return false
-                }
-                
-                // Additional check: Verify code signature is valid and complete
-                // This ensures signing process has finished (not just _CodeSignature dir exists)
-                if try await verifyCodeSignature(appPath: appURL.path) {
-                    return true
-                }
-            }
-        }
-        
-        return false
+        // Verify code signature is valid (this is the key check)
+        return try await verifyCodeSignature(appPath: appURL.path)
     }
     
     /// Verify that app's code signature is valid and complete using codesign
