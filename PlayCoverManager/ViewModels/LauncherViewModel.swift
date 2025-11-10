@@ -448,7 +448,14 @@ final class LauncherViewModel {
         // Retry unmount after apps have been terminated
         // This is called from the "すべて終了" button in the running apps blocking dialog
         // Note: quitAllAppsAndRetry() already waited 1.5 seconds for auto-eject
-        guard let applyToPlayCoverContainer = pendingUnmountTask else { return }
+        Logger.unmount("retryUnmountAll() called, pendingUnmountTask: \(String(describing: pendingUnmountTask))")
+        
+        guard let applyToPlayCoverContainer = pendingUnmountTask else {
+            Logger.error("retryUnmountAll() - pendingUnmountTask is nil, cannot continue")
+            return
+        }
+        
+        Logger.unmount("Continuing unmount flow with applyToPlayCoverContainer: \(applyToPlayCoverContainer)")
         
         // Continue with the unmount flow (skip running apps check since they're already terminated)
         Task {
