@@ -777,6 +777,11 @@ private struct iOSAppIconView: View {
                 }
             }
         }
+        // NOTE: DragGesture is temporarily disabled to avoid conflicts with external Button wrapper
+        // When wrapped in Button (for inactive window click fix), the Button handles the tap
+        // If we need drag-to-shake functionality in the future, we can re-enable this with
+        // proper gesture priority handling
+        /*
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
@@ -830,6 +835,7 @@ private struct iOSAppIconView: View {
                     }
                 }
         )
+        */
         .contextMenu {
             Button("起動") { 
                 // Smooth press + bounce animation sequence
