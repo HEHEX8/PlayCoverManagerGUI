@@ -382,8 +382,8 @@ struct IPAInstallerSheet: View {
             
             bottomButtons
         }
-        .padding(24)
-        .frame(width: 960, height: 650)
+        .padding(20)
+        .frame(width: 700, height: 600)
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
@@ -495,141 +495,161 @@ struct IPAInstallerSheet: View {
             } else if analyzedIPAs.count > 1 {
                 // Multiple apps confirmation with expanded list view
                 VStack(spacing: 0) {
-                    // Header with summary
-                    HStack(spacing: 16) {
-                        Image(systemName: "square.and.arrow.down.fill")
-                            .font(.system(size: 36))
-                            .foregroundStyle(.blue)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
+                    // Compact header with summary
+                    VStack(spacing: 8) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "square.and.arrow.down.fill")
+                                .font(.system(size: 24))
+                                .foregroundStyle(.blue)
+                            
                             Text("\(analyzedIPAs.count) 個のアプリをインストールしますか？")
                                 .font(.headline)
                             
-                            // Summary badges
-                            let newInstalls = analyzedIPAs.filter { $0.installType == .newInstall }.count
-                            let upgrades = analyzedIPAs.filter { $0.installType == .upgrade }.count
-                            let others = analyzedIPAs.count - newInstalls - upgrades
-                            let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
-                            
-                            HStack(spacing: 12) {
-                                if newInstalls > 0 {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "sparkles")
-                                        Text("\(newInstalls)")
-                                    }
-                                    .font(.caption)
-                                    .foregroundStyle(.blue)
-                                }
-                                if upgrades > 0 {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "arrow.up.circle.fill")
-                                        Text("\(upgrades)")
-                                    }
-                                    .font(.caption)
-                                    .foregroundStyle(.green)
-                                }
-                                if others > 0 {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "arrow.clockwise.circle.fill")
-                                        Text("\(others)")
-                                    }
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                }
-                                
-                                Text("・")
-                                    .foregroundStyle(.tertiary)
-                                
-                                Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                            }
+                            Spacer()
                         }
                         
-                        Spacer()
+                        // Summary badges in compact layout
+                        let newInstalls = analyzedIPAs.filter { $0.installType == .newInstall }.count
+                        let upgrades = analyzedIPAs.filter { $0.installType == .upgrade }.count
+                        let others = analyzedIPAs.count - newInstalls - upgrades
+                        let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
+                        
+                        HStack(spacing: 10) {
+                            if newInstalls > 0 {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "sparkles")
+                                        .font(.caption2)
+                                    Text("\(newInstalls)")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.blue)
+                            }
+                            if upgrades > 0 {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "arrow.up.circle.fill")
+                                        .font(.caption2)
+                                    Text("\(upgrades)")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.green)
+                            }
+                            if others > 0 {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "arrow.clockwise.circle.fill")
+                                        .font(.caption2)
+                                    Text("\(others)")
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            }
+                            
+                            Text("・")
+                                .foregroundStyle(.tertiary)
+                                .font(.caption)
+                            
+                            Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                            
+                            Spacer()
+                        }
                     }
-                    .padding(16)
+                    .padding(12)
                     .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     
-                    // Expanded scrollable list of apps
+                    // Expanded scrollable list of apps with optimized spacing
                     ScrollView {
-                        VStack(spacing: 8) {
+                        VStack(spacing: 6) {
                             ForEach(analyzedIPAs) { info in
-                                HStack(spacing: 12) {
-                                    // App icon
+                                HStack(spacing: 10) {
+                                    // App icon (slightly smaller)
                                     if let icon = info.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 48, height: 48)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                            .frame(width: 42, height: 42)
+                                            .clipShape(RoundedRectangle(cornerRadius: 9))
+                                            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10)
+                                        RoundedRectangle(cornerRadius: 9)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48, height: 48)
+                                            .frame(width: 42, height: 42)
                                             .overlay {
                                                 Image(systemName: "app.dashed")
+                                                    .font(.caption)
                                                     .foregroundStyle(.secondary)
                                             }
                                     }
                                     
-                                    // App info
-                                    VStack(alignment: .leading, spacing: 4) {
+                                    // App info (compact layout)
+                                    VStack(alignment: .leading, spacing: 2) {
                                         Text(info.appName)
-                                            .font(.body)
+                                            .font(.callout)
                                             .fontWeight(.medium)
                                             .lineLimit(1)
                                         
-                                        HStack(spacing: 8) {
+                                        HStack(spacing: 6) {
                                             // Install type badge
                                             Group {
                                                 switch info.installType {
                                                 case .newInstall:
-                                                    Label("新規", systemImage: "sparkles")
-                                                        .foregroundStyle(.blue)
+                                                    HStack(spacing: 2) {
+                                                        Image(systemName: "sparkles")
+                                                        Text("新規")
+                                                    }
+                                                    .foregroundStyle(.blue)
                                                 case .upgrade:
-                                                    Label("更新", systemImage: "arrow.up.circle.fill")
-                                                        .foregroundStyle(.green)
+                                                    HStack(spacing: 2) {
+                                                        Image(systemName: "arrow.up.circle.fill")
+                                                        Text("更新")
+                                                    }
+                                                    .foregroundStyle(.green)
                                                 case .downgrade:
-                                                    Label("ダウン", systemImage: "arrow.down.circle.fill")
-                                                        .foregroundStyle(.orange)
+                                                    HStack(spacing: 2) {
+                                                        Image(systemName: "arrow.down.circle.fill")
+                                                        Text("ダウン")
+                                                    }
+                                                    .foregroundStyle(.orange)
                                                 case .reinstall:
-                                                    Label("上書き", systemImage: "arrow.clockwise.circle.fill")
-                                                        .foregroundStyle(.secondary)
+                                                    HStack(spacing: 2) {
+                                                        Image(systemName: "arrow.clockwise.circle.fill")
+                                                        Text("上書き")
+                                                    }
+                                                    .foregroundStyle(.secondary)
                                                 }
                                             }
                                             .font(.caption2)
                                             
                                             Text("・")
                                                 .foregroundStyle(.tertiary)
+                                                .font(.caption2)
                                             
                                             Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
-                                                .font(.caption)
+                                                .font(.caption2)
                                                 .foregroundStyle(.secondary)
                                         }
                                     }
                                     
                                     Spacer()
                                     
-                                    // Remove from list button
+                                    // Remove from list button (compact)
                                     Button {
                                         removeIPAFromList(info)
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.title3)
+                                            .font(.body)
                                             .foregroundStyle(.secondary)
                                     }
                                     .buttonStyle(.plain)
                                     .help("リストから外す")
                                 }
-                                .padding(12)
+                                .padding(10)
                                 .background(Color(nsColor: .controlBackgroundColor))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
-                        .padding(.top, 12)
+                        .padding(.top, 8)
                     }
                 }
             }
@@ -1147,8 +1167,8 @@ struct AppUninstallerSheet: View {
             
             bottomButtons
         }
-        .padding(24)
-        .frame(width: 960, height: 650)
+        .padding(20)
+        .frame(width: 700, height: 600)
         .onAppear {
             Task {
                 await loadApps()
@@ -1245,37 +1265,38 @@ struct AppUninstallerSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 
             } else if selectedAppInfos.count > 1 {
-                // Multiple apps confirmation with list
-                VStack(spacing: 16) {
+                // Multiple apps confirmation with compact list
+                VStack(spacing: 12) {
                     Text("\(selectedAppInfos.count) 個のアプリ")
                         .font(.headline)
                     
-                    // Scrollable list of selected apps
+                    // Scrollable list of selected apps with optimized spacing
                     ScrollView {
-                        VStack(spacing: 8) {
+                        VStack(spacing: 6) {
                             ForEach(selectedAppInfos, id: \.bundleID) { app in
-                                HStack(spacing: 12) {
-                                    // App icon
+                                HStack(spacing: 10) {
+                                    // App icon (slightly smaller)
                                     if let icon = app.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 48, height: 48)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                            .frame(width: 42, height: 42)
+                                            .clipShape(RoundedRectangle(cornerRadius: 9))
+                                            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10)
+                                        RoundedRectangle(cornerRadius: 9)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48, height: 48)
+                                            .frame(width: 42, height: 42)
                                             .overlay {
                                                 Image(systemName: "app.dashed")
+                                                    .font(.caption)
                                                     .foregroundStyle(.secondary)
                                             }
                                     }
                                     
-                                    // App info
-                                    VStack(alignment: .leading, spacing: 4) {
+                                    // App info (compact layout)
+                                    VStack(alignment: .leading, spacing: 2) {
                                         Text(app.appName)
-                                            .font(.body)
+                                            .font(.callout)
                                             .fontWeight(.medium)
                                             .lineLimit(1)
                                         
@@ -1284,7 +1305,7 @@ struct AppUninstallerSheet: View {
                                                 .font(.caption2)
                                                 .foregroundStyle(.tertiary)
                                             Text(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))
-                                                .font(.caption)
+                                                .font(.caption2)
                                                 .foregroundStyle(.secondary)
                                             
                                             Text("・")
@@ -1295,25 +1316,25 @@ struct AppUninstallerSheet: View {
                                                 .font(.caption2)
                                                 .foregroundStyle(.tertiary)
                                             Text(ByteCountFormatter.string(fromByteCount: app.diskImageSize, countStyle: .file))
-                                                .font(.caption)
+                                                .font(.caption2)
                                                 .foregroundStyle(.secondary)
                                         }
                                     }
                                     
                                     Spacer()
                                     
-                                    // Remove from selection button
+                                    // Remove from selection button (compact)
                                     Button {
                                         removeAppFromSelection(app.bundleID)
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.title3)
+                                            .font(.body)
                                             .foregroundStyle(.secondary)
                                     }
                                     .buttonStyle(.plain)
                                     .help("選択を解除")
                                 }
-                                .padding(12)
+                                .padding(10)
                                 .background(Color(nsColor: .controlBackgroundColor))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
