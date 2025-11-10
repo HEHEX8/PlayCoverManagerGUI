@@ -601,7 +601,7 @@ final class LauncherViewModel {
         let output = try await processRunner.run("/usr/sbin/lsof", ["+D", mountPoint.path])
         Logger.unmount("Timeout after \(timeout)s. Processes still using volume:\n\(output)")
         
-        throw AppError.unmount("cfprefsd タイムアウト", message: "cfprefsd がボリュームを解放しませんでした")
+        throw AppError.diskImage("cfprefsd タイムアウト", message: "cfprefsd がボリュームを解放しませんでした")
     }
 
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
