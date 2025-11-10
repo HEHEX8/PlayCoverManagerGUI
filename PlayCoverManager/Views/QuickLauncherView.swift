@@ -234,17 +234,19 @@ struct QuickLauncherView: View {
                         ScrollView {
                             LazyVGrid(columns: gridColumns, spacing: 32) {
                                 ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                                    iOSAppIconView(
-                                        app: app, 
-                                        index: index,
-                                        shouldAnimate: !hasPerformedInitialAnimation,
-                                        isFocused: focusedAppIndex == index
-                                    ) {
+                                    Button {
                                         // Single tap - launch
                                         // Clear search focus and focus this app
                                         isSearchFieldFocused = false
                                         focusedAppIndex = index
                                         viewModel.launch(app: app)
+                                        
+                                        // Trigger icon animation
+                                        NotificationCenter.default.post(
+                                            name: NSNotification.Name("TriggerAppIconAnimation"),
+                                            object: nil,
+                                            userInfo: ["bundleID": app.bundleIdentifier]
+                                        )
                                         
                                         // If this is the recent app, trigger bounce animation on recent button
                                         if app.lastLaunchedFlag {
@@ -253,13 +255,32 @@ struct QuickLauncherView: View {
                                                 object: nil
                                             )
                                         }
-                                    } rightClickAction: {
-                                        // Right click - show detail/settings
-                                        selectedAppForDetail = app
-                                    } uninstallAction: {
-                                        // Uninstall action - open uninstaller with pre-selected app
-                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                    } label: {
+                                        iOSAppIconView(
+                                            app: app, 
+                                            index: index,
+                                            shouldAnimate: !hasPerformedInitialAnimation,
+                                            isFocused: focusedAppIndex == index
+                                        ) {
+                                            // This tap action is now only called by DragGesture
+                                            // (for drag-based interactions)
+                                            viewModel.launch(app: app)
+                                            
+                                            if app.lastLaunchedFlag {
+                                                NotificationCenter.default.post(
+                                                    name: NSNotification.Name("TriggerRecentAppBounce"),
+                                                    object: nil
+                                                )
+                                            }
+                                        } rightClickAction: {
+                                            // Right click - show detail/settings
+                                            selectedAppForDetail = app
+                                        } uninstallAction: {
+                                            // Uninstall action - open uninstaller with pre-selected app
+                                            selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                        }
                                     }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(32)
@@ -310,17 +331,19 @@ struct QuickLauncherView: View {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 32) {
                             ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                                iOSAppIconView(
-                                    app: app, 
-                                    index: index,
-                                    shouldAnimate: !hasPerformedInitialAnimation,
-                                    isFocused: focusedAppIndex == index
-                                ) {
+                                Button {
                                     // Single tap - launch
                                     // Clear search focus and focus this app
                                     isSearchFieldFocused = false
                                     focusedAppIndex = index
                                     viewModel.launch(app: app)
+                                    
+                                    // Trigger icon animation
+                                    NotificationCenter.default.post(
+                                        name: NSNotification.Name("TriggerAppIconAnimation"),
+                                        object: nil,
+                                        userInfo: ["bundleID": app.bundleIdentifier]
+                                    )
                                     
                                     // If this is the recent app, trigger bounce animation on recent button
                                     if app.lastLaunchedFlag {
@@ -329,13 +352,32 @@ struct QuickLauncherView: View {
                                             object: nil
                                         )
                                     }
-                                } rightClickAction: {
-                                    // Right click - show detail/settings
-                                    selectedAppForDetail = app
-                                } uninstallAction: {
-                                    // Uninstall action - open uninstaller with pre-selected app
-                                    selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                } label: {
+                                    iOSAppIconView(
+                                        app: app, 
+                                        index: index,
+                                        shouldAnimate: !hasPerformedInitialAnimation,
+                                        isFocused: focusedAppIndex == index
+                                    ) {
+                                        // This tap action is now only called by DragGesture
+                                        // (for drag-based interactions)
+                                        viewModel.launch(app: app)
+                                        
+                                        if app.lastLaunchedFlag {
+                                            NotificationCenter.default.post(
+                                                name: NSNotification.Name("TriggerRecentAppBounce"),
+                                                object: nil
+                                            )
+                                        }
+                                    } rightClickAction: {
+                                        // Right click - show detail/settings
+                                        selectedAppForDetail = app
+                                    } uninstallAction: {
+                                        // Uninstall action - open uninstaller with pre-selected app
+                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                    }
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(32)
