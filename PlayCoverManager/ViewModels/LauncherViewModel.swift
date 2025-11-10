@@ -176,6 +176,22 @@ final class LauncherViewModel {
         await refresh()
     }
     
+    // MARK: - Public Helper Methods for AppViewModel
+    
+    /// Returns the number of active auto-unmount tasks
+    var activeUnmountTaskCount: Int {
+        activeUnmountTasks.count
+    }
+    
+    /// Cancels all active auto-unmount tasks
+    func cancelAllAutoUnmountTasks() async {
+        for (bundleID, task) in activeUnmountTasks {
+            task.cancel()
+            Logger.unmount("Cancelled auto-unmount for: \(bundleID)")
+        }
+        activeUnmountTasks.removeAll()
+    }
+    
     private func cleanupStaleLockFiles() {
         // Get all container URLs for installed apps
         var containerURLs: [URL] = []

@@ -289,8 +289,25 @@ final class AppViewModel {
             return (success: false, failedCount: failedCount, runningApps: runningApps)
         }
         
+        // Cancel all active auto-unmount tasks to prevent conflicts
+        Logger.unmount("Cancelling \(launcherVM.activeUnmountTaskCount) active auto-unmount tasks")
+        await launcherVM.cancelAllAutoUnmountTasks()
+        
+        // Wait for tasks to clean up and release locks
+        Logger.unmount("Waiting for lock cleanup...")
+        try? await Task.sleep(for: .seconds(1.0))
+        
+        // Explicitly release all locks to ensure no file handles remain
+        Logger.unmount("Releasing all container locks...")
+        for app in launcherVM.apps {
+            await lockService.unlockContainer(for: app.bundleIdentifier)
+            // Flush actor queue to ensure file handle is closed
+            _ = await lockService.confirmUnlockCompleted()
+        }
+        Logger.unmount("Lock cleanup completed")
+        
         // Step 2: Check and unmount any remaining app containers
-        // (Auto-eject should have handled these already with force unmount)
+        // (Auto-eject should have already unmounted terminated apps)
         for app in launcherVM.apps {
             let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             
@@ -300,29 +317,42 @@ final class AppViewModel {
                 continue
             }
             
-            // Force eject remaining disk images (apps should already be terminated)
-            Logger.unmount("Container still mounted for \(app.bundleIdentifier), force ejecting")
+            // Try normal eject first (apps should already be terminated)
+            Logger.unmount("Container still mounted for \(app.bundleIdentifier), attempting normal eject")
+            
+            // Sync preferences and filesystem
+            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+            sync()
+            
+            // Brief wait for sync to complete (not cfprefsd - app is already terminated)
+            try? await Task.sleep(for: .milliseconds(500))
+            
             do {
-                try await diskImageService.ejectDiskImage(for: container, force: true)
-                Logger.unmount("Successfully force ejected container for \(app.bundleIdentifier)")
+                try await diskImageService.ejectDiskImage(for: container, force: false)
+                Logger.unmount("Successfully ejected container for \(app.bundleIdentifier)")
             } catch {
+                Logger.unmount("Normal eject failed for \(app.bundleIdentifier), marking as failed: \(error)")
                 failedCount += 1
-                Logger.error("Failed to force eject container for \(app.bundleIdentifier): \(error)")
             }
         }
         
-        // Step 3: Force eject PlayCover's own container
+        // Step 3: Normal eject PlayCover's own container
         let playCoverContainer = playCoverPaths.containerRootURL
         let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
         
         if isMounted {
-            Logger.unmount("Force ejecting PlayCover container")
+            Logger.unmount("Ejecting PlayCover container")
+            
+            // Sync filesystem
+            sync()
+            try? await Task.sleep(for: .milliseconds(500))
+            
             do {
-                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
-                Logger.unmount("Successfully force ejected PlayCover container")
+                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
+                Logger.unmount("Successfully ejected PlayCover container")
             } catch {
+                Logger.unmount("Normal eject failed for PlayCover container: \(error)")
                 failedCount += 1
-                Logger.error("Failed to force eject PlayCover container: \(error)")
             }
         }
         
