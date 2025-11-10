@@ -504,8 +504,10 @@ class IPAInstallerService {
                             if try await verifyInstallationComplete(bundleID: bundleID) {
                                 await MainActor.run { currentStatus = String(localized: "完了") }
                                 
-                                // Don't quit PlayCover - let user close it manually
-                                // Automatically quitting can cause incomplete installations
+                                // Installation complete - terminate PlayCover gracefully
+                                Logger.installation("Installation verified complete, terminating PlayCover")
+                                await terminatePlayCover()
+                                
                                 return
                             }
                         }
@@ -618,6 +620,25 @@ class IPAInstallerService {
             Logger.installation("Code signature verification failed for: \(appPath) - \(error)")
             return false
         }
+    }
+    
+    /// Terminate PlayCover gracefully with SIGTERM
+    private nonisolated func terminatePlayCover() async {
+        let playCoverBundleID = "io.playcover.PlayCover"
+        
+        // Find PlayCover process
+        let runningApps = await MainActor.run {
+            NSWorkspace.shared.runningApplications
+        }
+        
+        guard let playCoverApp = runningApps.first(where: { $0.bundleIdentifier == playCoverBundleID }) else {
+            Logger.installation("PlayCover not running, cannot terminate")
+            return
+        }
+        
+        Logger.installation("Sending SIGTERM to PlayCover (PID: \(playCoverApp.processIdentifier))")
+        let success = playCoverApp.terminate()
+        Logger.installation("SIGTERM result: \(success)")
     }
     
     
