@@ -546,6 +546,10 @@ final class LauncherViewModel {
         sync()
         Logger.unmount("Filesystem sync completed")
         
+        // Give cfprefsd time to release the volume after sync
+        try? await Task.sleep(for: .seconds(1.0))
+        Logger.unmount("Initial delay completed, attempting eject")
+        
         // Release our lock
         await lockService.unlockContainer(for: bundleID)
         
