@@ -1252,33 +1252,81 @@ struct AppUninstallerSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 
             } else if selectedAppInfos.count > 1 {
-                // Multiple apps confirmation
+                // Multiple apps confirmation with list
                 VStack(spacing: 16) {
-                    // App icons grid (max 6 icons)
-                    let displayApps = Array(selectedAppInfos.prefix(6))
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: 12) {
-                        ForEach(displayApps, id: \.bundleID) { app in
-                            VStack(spacing: 4) {
-                                if let icon = app.icon {
-                                    Image(nsImage: icon)
-                                        .resizable()
-                                        .frame(width: 60, height: 60)
-                                        .clipShape(RoundedRectangle(cornerRadius: 13))
-                                        .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                    Text("\(selectedAppInfos.count) 個のアプリ")
+                        .font(.headline)
+                    
+                    // Scrollable list of selected apps
+                    ScrollView {
+                        VStack(spacing: 8) {
+                            ForEach(selectedAppInfos, id: \.bundleID) { app in
+                                HStack(spacing: 12) {
+                                    // App icon
+                                    if let icon = app.icon {
+                                        Image(nsImage: icon)
+                                            .resizable()
+                                            .frame(width: 48, height: 48)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                                    } else {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color.gray.opacity(0.3))
+                                            .frame(width: 48, height: 48)
+                                            .overlay {
+                                                Image(systemName: "app.dashed")
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                    }
+                                    
+                                    // App info
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(app.appName)
+                                            .font(.body)
+                                            .fontWeight(.medium)
+                                            .lineLimit(1)
+                                        
+                                        HStack(spacing: 4) {
+                                            Text("アプリ:")
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                            Text(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            
+                                            Text("・")
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                            
+                                            Text("イメージ:")
+                                                .font(.caption2)
+                                                .foregroundStyle(.tertiary)
+                                            Text(ByteCountFormatter.string(fromByteCount: app.diskImageSize, countStyle: .file))
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    // Remove from selection button
+                                    Button {
+                                        removeAppFromSelection(app.bundleID)
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .font(.title3)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("選択を解除")
                                 }
-                                Text(app.appName)
-                                    .font(.caption2)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
+                                .padding(12)
+                                .background(Color(nsColor: .controlBackgroundColor))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
                     }
-                    
-                    if selectedAppInfos.count > 6 {
-                        Text("+\(selectedAppInfos.count - 6) 個のアプリ")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                    .frame(maxHeight: 300)
                 }
                 
                 Divider()
@@ -1675,6 +1723,16 @@ struct AppUninstallerSheet: View {
     private func stopStatusUpdater() {
         statusUpdateTask?.cancel()
         statusUpdateTask = nil
+    }
+    
+    private func removeAppFromSelection(_ bundleID: String) {
+        // Remove from selection
+        selectedApps.remove(bundleID)
+        
+        // If no apps left selected, go back to selection screen
+        if selectedApps.isEmpty {
+            currentPhase = .selection
+        }
     }
     
     private func loadApps() async {
