@@ -360,9 +360,9 @@ struct IPAInstallerSheet: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Text("IPA インストーラー")
-                .font(.title2)
+                .font(.title3)
                 .fontWeight(.semibold)
             
             switch currentPhase {
@@ -1145,9 +1145,9 @@ struct AppUninstallerSheet: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Text("アプリアンインストーラー")
-                .font(.title2)
+                .font(.title3)
                 .fontWeight(.semibold)
             
             switch currentPhase {
@@ -1188,7 +1188,7 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Confirming View (Single or Multiple)
     private var confirmingView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 16) {
             let selectedAppInfos = apps.filter { selectedApps.contains($0.bundleID) }
             
             if selectedAppInfos.count == 1, let app = selectedAppInfos.first {
@@ -1266,7 +1266,7 @@ struct AppUninstallerSheet: View {
                 
             } else if selectedAppInfos.count > 1 {
                 // Multiple apps confirmation with compact list
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     Text("\(selectedAppInfos.count) 個のアプリ")
                         .font(.headline)
                     
@@ -1340,7 +1340,7 @@ struct AppUninstallerSheet: View {
                             }
                         }
                     }
-                    .frame(maxHeight: 300)
+                    .frame(maxHeight: 280)
                 }
                 
                 Divider()
