@@ -406,6 +406,7 @@ class IPAInstallerService {
         let maxWait = 300 // 5 minutes
         let checkInterval: TimeInterval = 1.0
         var appDetected = false
+        var playCoverDetected = false  // Track if PlayCover has been detected at least once
         
         for i in 0..<maxWait {
             // Check if PlayCover is still running
@@ -415,8 +416,14 @@ class IPAInstallerService {
                 }
             }
             
+            // Track if PlayCover has been detected
+            if playCoverRunning {
+                playCoverDetected = true
+            }
+            
             // If PlayCover crashed, retry installation
-            if !playCoverRunning {
+            // Only check for crash if PlayCover was detected at least once (avoid false positive during startup)
+            if !playCoverRunning && playCoverDetected {
                 Logger.installation("PlayCover terminated unexpectedly")
                 
                 // Check if installation completed before crash
