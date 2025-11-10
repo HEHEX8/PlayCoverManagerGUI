@@ -604,9 +604,17 @@ final class LauncherViewModel {
         activeUnmountTasks.removeAll()
         
         // Wait for tasks to clean up and release locks
-        // Increased from 100ms to ensure lock service cleanup completes
         Logger.unmount("Waiting for lock cleanup...")
         try? await Task.sleep(for: .seconds(1.0))
+        
+        // Explicitly release all locks to ensure no file handles remain
+        Logger.unmount("Releasing all container locks...")
+        for app in apps {
+            await lockService.unlockContainer(for: app.bundleIdentifier)
+        }
+        
+        // Additional wait for file system to fully release
+        try? await Task.sleep(for: .seconds(2.0))
         Logger.unmount("Lock cleanup completed")
         
         // Set initial processing state
@@ -856,6 +864,12 @@ final class LauncherViewModel {
         activeUnmountTasks.removeAll()
         try? await Task.sleep(for: .seconds(1.0))
         
+        // Explicitly release all locks
+        for app in apps {
+            await lockService.unlockContainer(for: app.bundleIdentifier)
+        }
+        try? await Task.sleep(for: .seconds(2.0))
+        
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
         }
@@ -920,6 +934,12 @@ final class LauncherViewModel {
         }
         activeUnmountTasks.removeAll()
         try? await Task.sleep(for: .seconds(1.0))
+        
+        // Explicitly release all locks
+        for app in apps {
+            await lockService.unlockContainer(for: app.bundleIdentifier)
+        }
+        try? await Task.sleep(for: .seconds(2.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
@@ -1150,6 +1170,12 @@ final class LauncherViewModel {
         }
         activeUnmountTasks.removeAll()
         try? await Task.sleep(for: .seconds(1.0))
+        
+        // Explicitly release all locks
+        for app in apps {
+            await lockService.unlockContainer(for: app.bundleIdentifier)
+        }
+        try? await Task.sleep(for: .seconds(2.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "すべてのディスクイメージをアンマウント中…"))
