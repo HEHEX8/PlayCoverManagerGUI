@@ -717,6 +717,11 @@ final class LauncherViewModel {
             if isMounted {
                 Logger.unmount("Ejecting PlayCover container")
                 
+                // Release PlayCover container lock first
+                await lockService.unlockContainer(for: playCoverPaths.bundleIdentifier)
+                _ = await lockService.confirmUnlockCompleted()
+                Logger.unmount("Released PlayCover container lock")
+                
                 // Sync filesystem
                 sync()
                 
@@ -910,6 +915,10 @@ final class LauncherViewModel {
         }
         
         // Force unmount PlayCover container
+        // Release PlayCover container lock
+        await lockService.unlockContainer(for: playCoverPaths.bundleIdentifier)
+        _ = await lockService.confirmUnlockCompleted()
+        
         let playCoverContainer = playCoverPaths.containerRootURL
         let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
         if isMounted {
@@ -983,6 +992,10 @@ final class LauncherViewModel {
         
         // Force unmount PlayCover container if requested
         if applyToPlayCoverContainer {
+            // Release PlayCover container lock
+            await lockService.unlockContainer(for: playCoverPaths.bundleIdentifier)
+            _ = await lockService.confirmUnlockCompleted()
+            
             let playCoverContainer = playCoverPaths.containerRootURL
             let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
             if isMounted {

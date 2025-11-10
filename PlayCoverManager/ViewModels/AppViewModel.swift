@@ -132,6 +132,10 @@ final class AppViewModel {
             // Use PlayCover's own mount method (not our helper since this is PlayCover's container)
             let nobrowse = settings.nobrowseEnabled
             try await environmentService.ensureMount(of: diskImageURL, mountPoint: mountPoint, nobrowse: nobrowse)
+            
+            // Acquire lock on PlayCover container to prevent unmounting while in use
+            Logger.debug("Acquiring lock for PlayCover container: \(playCoverPaths.bundleIdentifier)")
+            _ = await lockService.lockContainer(for: playCoverPaths.bundleIdentifier, at: mountPoint)
         } catch {
             throw AppError.diskImage(String(localized: "PlayCover コンテナのマウントに失敗"), message: error.localizedDescription, underlying: error)
         }
@@ -342,6 +346,11 @@ final class AppViewModel {
         
         if isMounted {
             Logger.unmount("Ejecting PlayCover container")
+            
+            // Release PlayCover container lock first
+            await lockService.unlockContainer(for: playCoverPaths.bundleIdentifier)
+            _ = await lockService.confirmUnlockCompleted()
+            Logger.unmount("Released PlayCover container lock")
             
             // Sync filesystem
             sync()
