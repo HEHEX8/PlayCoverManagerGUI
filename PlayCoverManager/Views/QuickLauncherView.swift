@@ -313,13 +313,10 @@ struct QuickLauncherView: View {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 32) {
                             ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                                iOSAppIconView(
-                                    app: app, 
-                                    index: index,
-                                    shouldAnimate: !hasPerformedInitialAnimation,
-                                    isFocused: focusedAppIndex == index
-                                ) {
+                                Button {
                                     // Single tap - launch
+                                    isSearchFieldFocused = false
+                                    focusedAppIndex = index
                                     viewModel.launch(app: app)
                                     
                                     // If this is the recent app, trigger bounce animation on recent button
@@ -329,19 +326,31 @@ struct QuickLauncherView: View {
                                             object: nil
                                         )
                                     }
-                                } rightClickAction: {
-                                    // Right click - show detail/settings
-                                    selectedAppForDetail = app
-                                } uninstallAction: {
-                                    // Uninstall action - open uninstaller with pre-selected app
-                                    selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                } label: {
+                                    iOSAppIconView(
+                                        app: app, 
+                                        index: index,
+                                        shouldAnimate: !hasPerformedInitialAnimation,
+                                        isFocused: focusedAppIndex == index
+                                    ) {
+                                        // Tap action (called by internal gesture)
+                                        viewModel.launch(app: app)
+                                        
+                                        if app.lastLaunchedFlag {
+                                            NotificationCenter.default.post(
+                                                name: NSNotification.Name("TriggerRecentAppBounce"),
+                                                object: nil
+                                            )
+                                        }
+                                    } rightClickAction: {
+                                        // Right click - show detail/settings
+                                        selectedAppForDetail = app
+                                    } uninstallAction: {
+                                        // Uninstall action - open uninstaller with pre-selected app
+                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                    }
                                 }
-                                .onTapGesture {
-                                    // Clear search focus and focus this app
-                                    isSearchFieldFocused = false
-                                    focusedAppIndex = index
-                                    viewModel.launch(app: app)
-                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(32)
