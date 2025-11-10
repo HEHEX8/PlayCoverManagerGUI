@@ -587,13 +587,37 @@ class IPAInstallerService {
             if installedBundleID == bundleID {
                 // Verify structure integrity: both _CodeSignature and settings file must exist
                 let codeSignatureDir = appURL.appendingPathComponent("_CodeSignature")
-                if FileManager.default.fileExists(atPath: codeSignatureDir.path) {
+                guard FileManager.default.fileExists(atPath: codeSignatureDir.path) else {
+                    return false
+                }
+                
+                // Additional check: Verify code signature is valid and complete
+                // This ensures signing process has finished (not just _CodeSignature dir exists)
+                if try await verifyCodeSignature(appPath: appURL.path) {
                     return true
                 }
             }
         }
         
         return false
+    }
+    
+    /// Verify that app's code signature is valid and complete using codesign
+    private func verifyCodeSignature(appPath: String) async throws -> Bool {
+        do {
+            // Use codesign -v to verify signature
+            // Exit code 0 means signature is valid
+            let output = try await processRunner.run("/usr/bin/codesign", ["-v", appPath])
+            
+            // codesign -v returns empty output on success, error message on failure
+            // If it completes without throwing, signature is valid
+            Logger.installation("Code signature verification passed for: \(appPath)")
+            return true
+        } catch {
+            // Signature is incomplete or invalid
+            Logger.installation("Code signature verification failed for: \(appPath) - \(error)")
+            return false
+        }
     }
     
     
