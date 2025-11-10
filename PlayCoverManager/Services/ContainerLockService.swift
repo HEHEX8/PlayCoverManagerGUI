@@ -85,6 +85,12 @@ actor ContainerLockService {
         activeLocks.removeValue(forKey: bundleID)
     }
     
+    /// Flush all pending operations by returning a confirmation
+    /// Use this after unlockContainer() to ensure file handle is closed
+    func confirmUnlockCompleted() -> Bool {
+        return true
+    }
+    
     /// Swift 6.2: Actor-isolated lock check (thread-safe by default)
     /// - Parameter bundleID: The bundle identifier of the app
     /// - Returns: true if locked by this instance

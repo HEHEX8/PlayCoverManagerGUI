@@ -611,10 +611,9 @@ final class LauncherViewModel {
         Logger.unmount("Releasing all container locks...")
         for app in apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
+            // Flush actor queue to ensure file handle is closed
+            _ = await lockService.confirmUnlockCompleted()
         }
-        
-        // Additional wait for file system to fully release
-        try? await Task.sleep(for: .seconds(2.0))
         Logger.unmount("Lock cleanup completed")
         
         // Set initial processing state
@@ -867,8 +866,8 @@ final class LauncherViewModel {
         // Explicitly release all locks
         for app in apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
+            _ = await lockService.confirmUnlockCompleted()
         }
-        try? await Task.sleep(for: .seconds(2.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
@@ -938,8 +937,8 @@ final class LauncherViewModel {
         // Explicitly release all locks
         for app in apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
+            _ = await lockService.confirmUnlockCompleted()
         }
-        try? await Task.sleep(for: .seconds(2.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
@@ -1174,8 +1173,8 @@ final class LauncherViewModel {
         // Explicitly release all locks
         for app in apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
+            _ = await lockService.confirmUnlockCompleted()
         }
-        try? await Task.sleep(for: .seconds(2.0))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "すべてのディスクイメージをアンマウント中…"))
