@@ -420,7 +420,8 @@ class IPAInstallerService {
                 Logger.installation("PlayCover terminated unexpectedly")
                 
                 // Check if installation completed before crash
-                if try await isInstallationComplete(bundleID: bundleID) {
+                // Only check if app was detected (to avoid false positive with existing app)
+                if appDetected && try await isInstallationComplete(bundleID: bundleID) {
                     await MainActor.run {
                         currentStatus = String(localized: "完了")
                         retryCount = 0
