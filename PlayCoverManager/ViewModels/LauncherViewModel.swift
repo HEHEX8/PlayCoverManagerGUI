@@ -559,61 +559,44 @@ final class LauncherViewModel {
             Logger.unmount("Mounted volumes before unmount: \(volumesBefore)")
         }
         
-        // Step 1: Unmount all app containers
-        Logger.unmount("Step 1: Unmounting app containers")
+        // Step 1: Check and force eject any remaining app containers
+        // (Auto-eject should have already unmounted terminated apps)
+        Logger.unmount("Step 1: Checking for remaining app containers")
         await MainActor.run {
-            unmountFlowState = .processing(status: String(localized: "アプリコンテナをアンマウントしています…"))
+            unmountFlowState = .processing(status: String(localized: "アプリコンテナを確認しています…"))
         }
         
-        // Use TaskGroup for parallel unmounting (faster for multiple apps)
         let unmountStartTime = CFAbsoluteTimeGetCurrent()
-        await withTaskGroup(of: Bool.self) { group in
-            for app in apps {
-                let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-                
-                // Check if app is currently running
-                if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
-                    failedCount += 1
-                    continue
-                }
-                
-                // Check if container is actually mounted
-                let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
-                guard let descriptor = descriptor, descriptor.isMounted else {
-                    continue
-                }
-                
-                // Add parallel unmount task
-                group.addTask {
-                    let result = await DiskImageHelper.unmountWithTwoStageEject(
-                        containerURL: container,
-                        diskImageService: self.diskImageService,
-                        bundleID: app.bundleIdentifier,
-                        launcherService: self.launcherService
-                    )
-                    
-                    switch result {
-                    case .success:
-                        return true
-                    case .failed:
-                        return false
-                    }
-                }
+        for app in apps {
+            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+            
+            // Check if app is currently running
+            if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
+                failedCount += 1
+                continue
             }
             
-            // Collect results
-            for await success in group {
-                if success {
-                    successCount += 1
-                } else {
-                    failedCount += 1
-                }
+            // Check if container is still mounted
+            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+            guard let descriptor = descriptor, descriptor.isMounted else {
+                continue
+            }
+            
+            // Force eject remaining containers (apps should already be terminated)
+            Logger.unmount("Container still mounted for \(app.bundleIdentifier), force ejecting")
+            do {
+                try await diskImageService.ejectDiskImage(for: container, force: true)
+                Logger.unmount("Successfully force ejected container for \(app.bundleIdentifier)")
+                successCount += 1
+            } catch {
+                Logger.error("Failed to force eject container for \(app.bundleIdentifier): \(error)")
+                failedCount += 1
             }
         }
         
         let unmountElapsed = CFAbsoluteTimeGetCurrent() - unmountStartTime
-        Logger.performance("Parallel unmount of \(successCount + failedCount) containers: \(String(format: "%.3f", unmountElapsed * 1000))ms")
-        Logger.unmount("Unmount results - Success: \(successCount), Failed: \(failedCount)")
+        Logger.performance("Check and force eject of remaining containers: \(String(format: "%.3f", unmountElapsed * 1000))ms")
+        Logger.unmount("Results - Success: \(successCount), Failed: \(failedCount)")
         
         
         // If any app container failed, offer force unmount option
@@ -624,28 +607,22 @@ final class LauncherViewModel {
             return
         }
         
-        // Step 2: Unmount PlayCover container
+        // Step 2: Force eject PlayCover container
         if applyToPlayCoverContainer {
             await MainActor.run {
                 unmountFlowState = .processing(status: String(localized: "PlayCover コンテナをアンマウントしています…"))
             }
             let playCoverContainer = playCoverPaths.containerRootURL
             
-            // Check if it's actually mounted by querying diskutil
+            // Check if it's actually mounted
             let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
             if isMounted {
-                // Use 2-stage unmount: normal first, then force if needed
-                let result = await DiskImageHelper.unmountWithTwoStageEject(
-                    containerURL: playCoverContainer,
-                    diskImageService: diskImageService,
-                    bundleID: nil,  // No bundleID for PlayCover itself
-                    launcherService: nil
-                )
-                
-                switch result {
-                case .success:
+                Logger.unmount("Force ejecting PlayCover container")
+                do {
+                    try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
+                    Logger.unmount("Successfully force ejected PlayCover container")
                     successCount += 1
-                case .failed(let error):
+                } catch {
                     // PlayCover container failed, show error and abort
                     await MainActor.run {
                         unmountFlowState = .error(
@@ -655,9 +632,7 @@ final class LauncherViewModel {
                     }
                     return
                 }
-            } else {
             }
-        } else {
         }
         
         
