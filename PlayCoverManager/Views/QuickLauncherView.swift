@@ -818,13 +818,15 @@ private struct iOSAppIconView: View {
     private func launchInDebugConsole(app: PlayCoverApp) {
         Task {
             do {
-                // Mount disk image if needed using common helper
+                // Use same mount and lock process as normal launch
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 let settingsStore = SettingsStore()
                 let diskImageService = DiskImageService(settings: settingsStore)
                 let perAppSettings = PerAppSettingsStore()
+                let lockService = ContainerLockService()
                 
-                // Check state and mount if needed
+                // Check disk image state
+                Logger.debug("Debug console: Checking disk image state for \(app.bundleIdentifier)")
                 let state = try DiskImageHelper.checkDiskImageState(
                     for: app.bundleIdentifier,
                     containerURL: containerURL,
@@ -832,22 +834,24 @@ private struct iOSAppIconView: View {
                 )
                 
                 guard state.imageExists else {
-                    Logger.error("Disk image not found for \(app.bundleIdentifier)")
+                    Logger.error("Debug console: Disk image not found for \(app.bundleIdentifier)")
                     return
                 }
                 
-                // Check for internal data if not mounted (simple check without viewModel)
+                // Check for internal data if not mounted
                 if !state.isMounted {
+                    Logger.debug("Debug console: Checking for internal data at \(containerURL.path)")
                     let internalItems = try detectInternalDataLocal(at: containerURL)
                     if !internalItems.isEmpty {
-                        Logger.error("Internal data detected but debug console launch doesn't handle data migration yet")
+                        Logger.error("Debug console: Internal data detected. Please launch normally first to migrate data.")
                         // TODO: Show alert to user that they need to launch normally first
                         return
                     }
                 }
                 
-                // Mount if needed
+                // Mount if needed (same as normal launch)
                 if !state.isMounted {
+                    Logger.debug("Debug console: Mounting disk image for \(app.bundleIdentifier)")
                     try await DiskImageHelper.mountDiskImageIfNeeded(
                         for: app.bundleIdentifier,
                         containerURL: containerURL,
@@ -855,7 +859,16 @@ private struct iOSAppIconView: View {
                         perAppSettings: perAppSettings,
                         globalSettings: settingsStore
                     )
+                    Logger.debug("Debug console: Successfully mounted disk image")
+                } else {
+                    Logger.debug("Debug console: Disk image already mounted")
                 }
+                
+                // NOTE: We intentionally do NOT acquire lock for debug console
+                // because Terminal.app runs the process independently, and we can't
+                // reliably release the lock when Terminal closes.
+                // The debug console is for development/troubleshooting only.
+                Logger.debug("Debug console: Skipping lock acquisition (debug mode)")
                 
                 // Find the executable in the app bundle
                 guard let bundle = Bundle(url: app.appURL),
@@ -880,13 +893,21 @@ private struct iOSAppIconView: View {
                 let escapedAppPath = app.appURL.path.replacingOccurrences(of: "'", with: "'\\''")
                 let escapedExecPath = executablePath.replacingOccurrences(of: "'", with: "'\\''")
                 
+                // Localized strings need to be evaluated in Swift, not in bash
+                let headerText = String(localized: "=== デバッグコンソール ===")
+                let appText = String(localized: "アプリ: \(app.displayName)")
+                let executableText = String(localized: "実行ファイル: \(executableName)")
+                let containerText = String(localized: "コンテナ: マウント済み")
+                let exitText = String(localized: "プロセス終了 (終了コード:")
+                let promptText = String(localized: "任意のキーを押してウィンドウを閉じる...")
+                
                 let scriptContent = """
                 #!/bin/bash
                 cd '\(escapedAppPath)'
-                echo String(localized: "=== デバッグコンソール ===")
-                echo String(localized: "アプリ: \(app.displayName)")
-                echo String(localized: "実行ファイル: \(executableName)")
-                echo String(localized: "コンテナ: マウント済み")
+                echo "\(headerText)"
+                echo "\(appText)"
+                echo "\(executableText)"
+                echo "\(containerText)"
                 echo "========================"
                 echo ""
                 
@@ -895,10 +916,10 @@ private struct iOSAppIconView: View {
                 EXIT_CODE=$?
                 echo ""
                 echo "========================"
-                echo String(localized: "プロセス終了 (終了コード: $EXIT_CODE)")
+                echo "\(exitText) $EXIT_CODE)"
                 echo "========================"
                 echo ""
-                read -p String(localized: "任意のキーを押してウィンドウを閉じる... ") -n1 -s
+                read -p "\(promptText)" -n1 -s
                 
                 # Clean up the script file
                 rm -f '\(scriptURL.path.replacingOccurrences(of: "'", with: "'\\''"))'
