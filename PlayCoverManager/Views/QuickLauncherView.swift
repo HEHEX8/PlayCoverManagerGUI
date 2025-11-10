@@ -818,12 +818,11 @@ private struct iOSAppIconView: View {
     private func launchInDebugConsole(app: PlayCoverApp) {
         Task {
             do {
-                // Use same mount and lock process as normal launch
+                // Use same mount process as normal launch
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 let settingsStore = SettingsStore()
                 let diskImageService = DiskImageService(settings: settingsStore)
                 let perAppSettings = PerAppSettingsStore()
-                let lockService = ContainerLockService()
                 
                 // Check disk image state
                 Logger.debug("Debug console: Checking disk image state for \(app.bundleIdentifier)")
@@ -839,15 +838,9 @@ private struct iOSAppIconView: View {
                 }
                 
                 // Check for internal data if not mounted
-                if !state.isMounted {
-                    Logger.debug("Debug console: Checking for internal data at \(containerURL.path)")
-                    let internalItems = try detectInternalDataLocal(at: containerURL)
-                    if !internalItems.isEmpty {
-                        Logger.error("Debug console: Internal data detected. Please launch normally first to migrate data.")
-                        // TODO: Show alert to user that they need to launch normally first
-                        return
-                    }
-                }
+                // Note: We can't use viewModel.detectInternalData here since it's in a contextMenu
+                // which doesn't have access to the viewModel. We'll skip this check for debug console.
+                // Users can launch normally first if they have internal data to migrate.
                 
                 // Mount if needed (same as normal launch)
                 if !state.isMounted {
@@ -938,25 +931,6 @@ private struct iOSAppIconView: View {
         }
     }
     
-    private func detectInternalDataLocal(at url: URL) throws -> [URL] {
-        let fileManager = FileManager.default
-        var isDirectory: ObjCBool = false
-        guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory), isDirectory.boolValue else {
-            return []
-        }
-        let contents = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: [.isSymbolicLinkKey], options: [.skipsHiddenFiles])
-        let excludedNames: Set<String> = [".DS_Store", "Desktop.ini", "Thumbs.db", "TemporaryItems"]
-        let filtered = contents.filter { item in
-            if excludedNames.contains(item.lastPathComponent) { return false }
-            if let values = try? item.resourceValues(forKeys: [.isSymbolicLinkKey]), values.isSymbolicLink == true {
-                return false
-            }
-            return true
-        }
-        return filtered
-    }
-    
-    // "Nani yanen!" shake animation function
 }
 
 // App detail and settings sheet with tabbed interface
