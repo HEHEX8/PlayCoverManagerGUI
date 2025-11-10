@@ -61,6 +61,9 @@ final class LauncherViewModel {
     @ObservationIgnored private var pendingLaunchContext: LaunchContext?
     @ObservationIgnored private var previouslyRunningApps: Set<String> = []
     
+    // Track active auto-unmount tasks to prevent duplicates and allow cancellation
+    @ObservationIgnored private var activeUnmountTasks: [String: Task<Void, Never>] = [:]
+    
     // KVO observation for runningApplications (more efficient than notifications)
     // @ObservationIgnored prevents Observable macro from tracking this property
     @ObservationIgnored private var runningAppsObservation: NSKeyValueObservation?
@@ -156,8 +159,18 @@ final class LauncherViewModel {
     }
     
     private func handleAppTerminated(bundleID: String) async {
-        // Auto-unmount the container with proper write completion handling
-        await unmountContainer(for: bundleID)
+        // Cancel any existing unmount task for this bundle ID
+        activeUnmountTasks[bundleID]?.cancel()
+        
+        // Create new auto-unmount task and track it
+        let task = Task {
+            await unmountContainer(for: bundleID)
+        }
+        activeUnmountTasks[bundleID] = task
+        
+        // Wait for completion and cleanup tracking
+        await task.value
+        activeUnmountTasks.removeValue(forKey: bundleID)
         
         // Refresh to update UI (green dot disappears)
         await refresh()
@@ -550,6 +563,13 @@ final class LauncherViewModel {
         // This allows quick app relaunches without remounting, and gives cfprefsd time to release
         Logger.unmount("Waiting 30 seconds before eject (allows quick relaunch)")
         try? await Task.sleep(for: .seconds(30.0))
+        
+        // Check if task was cancelled (e.g., by ALL eject or app relaunch)
+        if Task.isCancelled {
+            Logger.unmount("Auto-unmount cancelled for: \(bundleID)")
+            return
+        }
+        
         Logger.unmount("Grace period completed, attempting eject")
         
         // Release our lock
@@ -574,6 +594,17 @@ final class LauncherViewModel {
 
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
         Logger.unmount("Starting unmount all and quit flow (includePlayCover: \(applyToPlayCoverContainer))")
+        
+        // Cancel all active auto-unmount tasks to prevent conflicts
+        Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks")
+        for (bundleID, task) in activeUnmountTasks {
+            task.cancel()
+            Logger.unmount("Cancelled auto-unmount for: \(bundleID)")
+        }
+        activeUnmountTasks.removeAll()
+        
+        // Wait briefly for tasks to clean up
+        try? await Task.sleep(for: .milliseconds(100))
         
         // Set initial processing state
         await MainActor.run {
@@ -814,6 +845,14 @@ final class LauncherViewModel {
     
     /// Perform force unmount for storage change (does not quit)
     private func performForceUnmountForStorageChange() async {
+        // Cancel all active auto-unmount tasks
+        Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for force unmount")
+        for (bundleID, task) in activeUnmountTasks {
+            task.cancel()
+        }
+        activeUnmountTasks.removeAll()
+        try? await Task.sleep(for: .milliseconds(100))
+        
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
         }
@@ -871,6 +910,13 @@ final class LauncherViewModel {
     }
     
     private func performForceUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
+        // Cancel all active auto-unmount tasks
+        Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for force unmount and quit")
+        for (bundleID, task) in activeUnmountTasks {
+            task.cancel()
+        }
+        activeUnmountTasks.removeAll()
+        try? await Task.sleep(for: .milliseconds(100))
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
@@ -1094,6 +1140,14 @@ final class LauncherViewModel {
     
     /// Perform unmount all for storage location change (does not quit)
     private func performUnmountForStorageChange() async {
+        // Cancel all active auto-unmount tasks
+        Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for storage change")
+        for (bundleID, task) in activeUnmountTasks {
+            task.cancel()
+        }
+        activeUnmountTasks.removeAll()
+        try? await Task.sleep(for: .milliseconds(100))
+        
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "すべてのディスクイメージをアンマウント中…"))
         }
