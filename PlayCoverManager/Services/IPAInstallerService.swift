@@ -421,13 +421,15 @@ class IPAInstallerService {
                 
                 // Check if installation completed before crash
                 // Only check if app was detected (to avoid false positive with existing app)
-                if appDetected && try await isInstallationComplete(bundleID: bundleID) {
-                    await MainActor.run {
-                        currentStatus = String(localized: "完了")
-                        retryCount = 0
+                if appDetected {
+                    if try await isInstallationComplete(bundleID: bundleID) {
+                        await MainActor.run {
+                            currentStatus = String(localized: "完了")
+                            retryCount = 0
+                        }
+                        Logger.installation("Installation completed before PlayCover termination")
+                        return
                     }
-                    Logger.installation("Installation completed before PlayCover termination")
-                    return
                 }
                 
                 // Installation incomplete - retry
@@ -542,7 +544,7 @@ class IPAInstallerService {
         do {
             // Use codesign -v to verify signature
             // Exit code 0 means signature is valid
-            let output = try await processRunner.run("/usr/bin/codesign", ["-v", appPath])
+            _ = try await processRunner.run("/usr/bin/codesign", ["-v", appPath])
             
             // codesign -v returns empty output on success, error message on failure
             // If it completes without throwing, signature is valid
