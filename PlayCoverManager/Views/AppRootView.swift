@@ -310,8 +310,8 @@ struct TerminationFlowView: View {
     }
     
     private func retryUnmount() {
-        // Apps are already terminated, auto-eject will handle unmounting
-        // Wait a moment for auto-eject to complete, then terminate PlayCoverManager
+        // Apps are already terminated by quitAllAppsAndRetry()
+        // Wait for auto-eject to complete, then verify and eject PlayCover container
         Task { @MainActor in
             if let viewModel = AppDelegate.shared {
                 viewModel.terminationFlowState = .unmounting(status: String(localized: "アンマウント処理を完了しています…"))
@@ -319,10 +319,31 @@ struct TerminationFlowView: View {
                 // Give auto-eject time to complete (it triggers on app termination)
                 try? await Task.sleep(for: .seconds(1))
                 
-                // All apps terminated, auto-eject handles unmounting
-                // Proceed with PlayCoverManager termination
-                viewModel.terminationFlowState = .idle
-                NSApplication.shared.reply(toApplicationShouldTerminate: true)
+                // Verify and eject remaining containers (including PlayCover)
+                let result = await viewModel.unmountAllContainersForTermination()
+                
+                if result.success {
+                    // All clear, terminate the app without showing result
+                    viewModel.terminationFlowState = .idle
+                    NSApplication.shared.reply(toApplicationShouldTerminate: true)
+                } else if !result.runningApps.isEmpty {
+                    // Some apps still running
+                    viewModel.terminationFlowState = .failed(failedCount: result.failedCount, runningApps: result.runningApps)
+                } else {
+                    // PlayCover container failed to eject - block termination
+                    viewModel.terminationFlowState = .idle
+                    NSApplication.shared.reply(toApplicationShouldTerminate: false)
+                    
+                    // Show error to user
+                    if let launcherVM = viewModel.launcherViewModel {
+                        await MainActor.run {
+                            launcherVM.unmountFlowState = .error(
+                                title: String(localized: "アンマウントに失敗しました"),
+                                message: String(localized: "一部のディスクイメージをアンマウントできませんでした。\n\n手動でアンマウントしてから再度終了してください。")
+                            )
+                        }
+                    }
+                }
             }
         }
     }

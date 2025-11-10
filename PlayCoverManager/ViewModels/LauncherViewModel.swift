@@ -472,7 +472,9 @@ final class LauncherViewModel {
     
     func completeUnmount() {
         unmountFlowState = .idle
-        NSApplication.shared.terminate(nil)
+        restoreWindowFocus()
+        // Note: Do not terminate app here
+        // ALLイジェクトボタンからの実行なので、アプリは継続
     }
     
     func dismissUnmountError() {
