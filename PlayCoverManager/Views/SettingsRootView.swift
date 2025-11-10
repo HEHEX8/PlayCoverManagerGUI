@@ -383,7 +383,7 @@ struct IPAInstallerSheet: View {
             bottomButtons
         }
         .padding(24)
-        .frame(width: 700, height: 600)
+        .frame(width: 800, height: 700)
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
@@ -493,12 +493,67 @@ struct IPAInstallerSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 
             } else if analyzedIPAs.count > 1 {
-                // Multiple apps confirmation with list
-                VStack(spacing: 16) {
-                    Text("\(analyzedIPAs.count) 個のアプリ")
-                        .font(.headline)
+                // Multiple apps confirmation with expanded list view
+                VStack(spacing: 0) {
+                    // Header with summary
+                    HStack(spacing: 16) {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.system(size: 36))
+                            .foregroundStyle(.blue)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("\(analyzedIPAs.count) 個のアプリをインストールしますか？")
+                                .font(.headline)
+                            
+                            // Summary badges
+                            let newInstalls = analyzedIPAs.filter { $0.installType == .newInstall }.count
+                            let upgrades = analyzedIPAs.filter { $0.installType == .upgrade }.count
+                            let others = analyzedIPAs.count - newInstalls - upgrades
+                            let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
+                            
+                            HStack(spacing: 12) {
+                                if newInstalls > 0 {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "sparkles")
+                                        Text("\(newInstalls)")
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.blue)
+                                }
+                                if upgrades > 0 {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.up.circle.fill")
+                                        Text("\(upgrades)")
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.green)
+                                }
+                                if others > 0 {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "arrow.clockwise.circle.fill")
+                                        Text("\(others)")
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                }
+                                
+                                Text("・")
+                                    .foregroundStyle(.tertiary)
+                                
+                                Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(16)
+                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                     
-                    // Scrollable list of apps
+                    // Expanded scrollable list of apps
                     ScrollView {
                         VStack(spacing: 8) {
                             ForEach(analyzedIPAs) { info in
@@ -574,71 +629,9 @@ struct IPAInstallerSheet: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                             }
                         }
-                    }
-                    .frame(maxHeight: 300)
-                }
-                
-                Divider()
-                
-                // Confirmation message
-                VStack(spacing: 12) {
-                    Image(systemName: "square.and.arrow.down.fill")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.blue)
-                    
-                    Text("\(analyzedIPAs.count) 個のアプリをインストールしますか？")
-                        .font(.headline)
-                }
-                
-                Divider()
-                
-                // Summary
-                let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
-                let newInstalls = analyzedIPAs.filter { $0.installType == .newInstall }.count
-                let upgrades = analyzedIPAs.filter { $0.installType == .upgrade }.count
-                let others = analyzedIPAs.count - newInstalls - upgrades
-                
-                VStack(spacing: 8) {
-                    if newInstalls > 0 {
-                        HStack {
-                            Label("\(newInstalls) 個", systemImage: "sparkles")
-                                .foregroundStyle(.blue)
-                            Spacer()
-                            Text("新規インストール")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    if upgrades > 0 {
-                        HStack {
-                            Label("\(upgrades) 個", systemImage: "arrow.up.circle.fill")
-                                .foregroundStyle(.green)
-                            Spacer()
-                            Text("アップグレード")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    if others > 0 {
-                        HStack {
-                            Label("\(others) 個", systemImage: "arrow.clockwise.circle.fill")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text("上書き・その他")
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    Divider()
-                    HStack {
-                        Text("合計サイズ:")
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
-                            .fontWeight(.semibold)
+                        .padding(.top, 12)
                     }
                 }
-                .font(.callout)
-                .padding()
-                .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1155,7 +1148,7 @@ struct AppUninstallerSheet: View {
             bottomButtons
         }
         .padding(24)
-        .frame(width: 700, height: 600)
+        .frame(width: 800, height: 700)
         .onAppear {
             Task {
                 await loadApps()
