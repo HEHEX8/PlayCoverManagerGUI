@@ -490,10 +490,24 @@ final class LauncherViewModel {
     }
     
     func completeUnmount() {
+        // Check if external drive was ejected
+        let shouldTerminate: Bool
+        if case .success(_, let ejectedDrive) = unmountFlowState, ejectedDrive != nil {
+            // External drive was ejected, terminate app
+            shouldTerminate = true
+        } else {
+            // No external drive ejected, keep app running
+            shouldTerminate = false
+        }
+        
         unmountFlowState = .idle
         restoreWindowFocus()
-        // Note: Do not terminate app here
-        // ALLイジェクトボタンからの実行なので、アプリは継続
+        
+        if shouldTerminate {
+            // Terminate app after showing result
+            Logger.unmount("External drive was ejected, terminating app")
+            NSApplication.shared.terminate(nil)
+        }
     }
     
     func dismissUnmountError() {
