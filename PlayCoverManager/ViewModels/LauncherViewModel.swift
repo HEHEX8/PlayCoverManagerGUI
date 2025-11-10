@@ -21,7 +21,6 @@ final class LauncherViewModel {
     var searchText: String = "" {
         didSet { applySearch() }
     }
-    var selectedApp: PlayCoverApp?
     var isBusy: Bool = false
     var isShowingStatus: Bool = false  // Only show status overlay for time-consuming operations
     var error: AppError?

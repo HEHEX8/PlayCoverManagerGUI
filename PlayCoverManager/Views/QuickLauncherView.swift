@@ -529,9 +529,6 @@ struct QuickLauncherView: View {
         if viewModel.filteredApps.isEmpty {
             await viewModel.refresh()
         }
-        if viewModel.selectedApp == nil {
-            viewModel.selectedApp = viewModel.filteredApps.first
-        }
         
         // Set up storage change completion callback
         viewModel.onStorageChangeCompleted = { [weak appViewModel] in
@@ -1110,25 +1107,6 @@ private struct AppDetailSheet: View {
             }
         }
         .frame(width: 700, height: 600)
-    }
-}
-
-private struct AppIconView: View {
-    let icon: NSImage?
-
-    var body: some View {
-        Group {
-            if let icon {
-                Image(nsImage: icon)
-                    .resizable()
-            } else {
-                Image(systemName: "app.dashed")
-                    .resizable()
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(width: 40, height: 40)
-        .cornerRadius(8)
     }
 }
 

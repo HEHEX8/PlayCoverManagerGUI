@@ -6,7 +6,6 @@ struct AppError: Identifiable, Equatable, Error {
         case diskImage
         case installation
         case installationRetry  // Special case for automatic retry
-        case userCancelled
         case permissionDenied
         case unknown
     }
@@ -43,7 +42,7 @@ struct AppError: Identifiable, Equatable, Error {
     }
     
     static var installationRetry: AppError {
-        .init(category: .installationRetry, title: "Retry", message: "Automatic retry triggered")
+        .init(category: .installationRetry, title: "", message: "")
     }
 
     static func unknown(_ title: String, message: String, underlying: Error? = nil) -> AppError {
