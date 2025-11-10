@@ -490,24 +490,12 @@ final class LauncherViewModel {
     }
     
     func completeUnmount() {
-        // Check if external drive was ejected
-        let shouldTerminate: Bool
-        if case .success(_, let ejectedDrive) = unmountFlowState, ejectedDrive != nil {
-            // External drive was ejected, terminate app
-            shouldTerminate = true
-        } else {
-            // No external drive ejected, keep app running
-            shouldTerminate = false
-        }
-        
         unmountFlowState = .idle
-        restoreWindowFocus()
         
-        if shouldTerminate {
-            // Terminate app after showing result
-            Logger.unmount("External drive was ejected, terminating app")
-            NSApplication.shared.terminate(nil)
-        }
+        // PlayCover container has been ejected at this point
+        // App cannot continue normally, so terminate
+        Logger.unmount("PlayCover container ejected, terminating app")
+        NSApplication.shared.terminate(nil)
     }
     
     func dismissUnmountError() {
