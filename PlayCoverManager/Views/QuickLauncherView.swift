@@ -2302,7 +2302,7 @@ private struct SettingsView: View {
     }
     
     private func scanLprojDirectories() -> [String] {
-        var languages: Set<String> = []
+        var rawLanguages: [String] = []
         
         // Recursively scan for .lproj directories (same as analysis)
         guard let enumerator = FileManager.default.enumerator(
@@ -2319,18 +2319,103 @@ private struct SettingsView: View {
                 let langCode = fileURL.deletingPathExtension().lastPathComponent
                 // Convert Base.lproj to en
                 let normalizedCode = langCode == "Base" ? "en" : langCode
-                languages.insert(normalizedCode)
+                rawLanguages.append(normalizedCode)
             }
         }
         
-        let sortedLanguages = languages.sorted()
-        Logger.debug("Found .lproj directories (recursive scan): \(sortedLanguages)")
-        return sortedLanguages
+        Logger.debug("Found raw .lproj directories: \(rawLanguages)")
+        
+        // Normalize and deduplicate language codes
+        let normalizedLanguages = normalizeLanguageCodes(rawLanguages)
+        Logger.debug("Normalized languages: \(normalizedLanguages)")
+        
+        return normalizedLanguages.sorted()
+    }
+    
+    private func normalizeLanguageCodes(_ codes: [String]) -> [String] {
+        var languageMap: [String: String] = [:]  // normalized -> display code
+        
+        for code in codes {
+            let normalized = normalizeLanguageCode(code)
+            
+            // Keep the most specific variant (e.g., prefer zh-Hans over zh)
+            if let existing = languageMap[normalized] {
+                // If current code is more specific, replace
+                if code.count > existing.count {
+                    languageMap[normalized] = code
+                }
+            } else {
+                languageMap[normalized] = code
+            }
+        }
+        
+        return Array(languageMap.values)
+    }
+    
+    private func normalizeLanguageCode(_ code: String) -> String {
+        // Normalize Chinese variants
+        if code.hasPrefix("zh") {
+            if code.contains("Hans") || code == "zh-CN" || code == "zh-SG" {
+                return "zh-Hans"  // Simplified Chinese
+            } else if code.contains("Hant") || code == "zh-TW" || code == "zh-HK" || code == "zh-MO" {
+                return "zh-Hant"  // Traditional Chinese
+            } else if code == "zh" {
+                return "zh-Hans"  // Default to simplified
+            }
+        }
+        
+        // Normalize Portuguese variants
+        if code == "pt-BR" {
+            return "pt-BR"  // Keep Brazilian Portuguese distinct
+        } else if code.hasPrefix("pt") {
+            return "pt"  // European Portuguese
+        }
+        
+        // Normalize English variants (en-US, en-GB, etc.) to just "en"
+        if code.hasPrefix("en") && code != "en" {
+            return "en"
+        }
+        
+        // For other languages, remove region suffix if present
+        // e.g., "es-ES" -> "es", "fr-FR" -> "fr"
+        if code.contains("-") && !["zh-Hans", "zh-Hant", "pt-BR", "yue-Hans", "yue-Hant"].contains(code) {
+            return code.components(separatedBy: "-").first ?? code
+        }
+        
+        return code
     }
     
     private func getLanguageDisplayName(_ code: String) -> String {
-        // Use system localization for language names (same as detail tab)
         let locale = Locale.current
+        
+        // Handle special cases with region/script information
+        if code == "zh-Hans" {
+            return locale.localizedString(forLanguageCode: "zh") ?? "中文" + " (" + (locale.localizedString(forScriptCode: "Hans") ?? "简体") + ")"
+        } else if code == "zh-Hant" {
+            return locale.localizedString(forLanguageCode: "zh") ?? "中文" + " (" + (locale.localizedString(forScriptCode: "Hant") ?? "繁體") + ")"
+        } else if code == "pt-BR" {
+            return (locale.localizedString(forLanguageCode: "pt") ?? "Português") + " (" + (locale.localizedString(forRegionCode: "BR") ?? "Brasil") + ")"
+        } else if code == "yue-Hans" {
+            return "粵語 (简体)"
+        } else if code == "yue-Hant" {
+            return "粵語 (繁體)"
+        }
+        
+        // For codes with region (e.g., en-US, es-ES), show both language and region
+        if code.contains("-") {
+            let components = code.components(separatedBy: "-")
+            if components.count == 2 {
+                let langCode = components[0]
+                let regionCode = components[1]
+                
+                if let langName = locale.localizedString(forLanguageCode: langCode),
+                   let regionName = locale.localizedString(forRegionCode: regionCode) {
+                    return "\(langName) (\(regionName))"
+                }
+            }
+        }
+        
+        // Default: use system localization
         return locale.localizedString(forLanguageCode: code) ?? code
     }
     
