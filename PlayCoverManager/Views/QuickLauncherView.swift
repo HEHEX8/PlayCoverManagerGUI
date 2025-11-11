@@ -2348,32 +2348,24 @@ private struct SettingsView: View {
     }
     
     private func normalizeLanguageCodes(_ codes: [String]) -> [String] {
-        var languageMap: [String: String] = [:]  // normalized -> display code
+        var normalizedSet: Set<String> = []
         
         for code in codes {
             let normalized = normalizeLanguageCode(code)
-            
-            // Keep the most specific variant (e.g., prefer zh-Hans over zh)
-            if let existing = languageMap[normalized] {
-                // If current code is more specific, replace
-                if code.count > existing.count {
-                    languageMap[normalized] = code
-                }
-            } else {
-                languageMap[normalized] = code
-            }
+            normalizedSet.insert(normalized)
         }
         
-        return Array(languageMap.values)
+        return Array(normalizedSet)
     }
     
     private func normalizeLanguageCode(_ code: String) -> String {
         // Normalize Chinese variants
         if code.hasPrefix("zh") {
+            // Strip any region code and keep only script
             if code.contains("Hans") {
-                return "zh-Hans"  // Any Simplified Chinese variant
+                return "zh-Hans"  // Simplified Chinese (remove any region like -CN, -TW, etc.)
             } else if code.contains("Hant") {
-                return "zh-Hant"  // Any Traditional Chinese variant
+                return "zh-Hant"  // Traditional Chinese (remove any region like -TW, -HK, etc.)
             } else if code == "zh-CN" || code == "zh-SG" {
                 return "zh-Hans"  // Mainland China and Singapore use Simplified
             } else if code == "zh-TW" || code == "zh-HK" || code == "zh-MO" {
