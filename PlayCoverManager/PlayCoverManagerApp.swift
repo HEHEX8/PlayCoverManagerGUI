@@ -177,6 +177,46 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppViewModel?
     private var forceTerminateTimer: Timer?
     
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // Check for multiple running instances
+        let bundleID = Bundle.main.bundleIdentifier ?? "io.playcover.PlayCoverManager"
+        let runningApps = NSWorkspace.shared.runningApplications
+        let matchingApps = runningApps.filter { $0.bundleIdentifier == bundleID }
+        
+        // If more than 1 instance (self + others)
+        if matchingApps.count > 1 {
+            Task { @MainActor in
+                let alert = NSAlert()
+                alert.messageText = "PlayCover Manager は既に起動しています"
+                alert.informativeText = """
+                    複数のインスタンスが同時に実行されています。
+                    
+                    これによりディスクイメージの競合が発生し、アンマウントに失敗する可能性があります。
+                    
+                    実行中のインスタンス: \(matchingApps.count)個
+                    
+                    このインスタンスを終了してもよろしいですか？
+                    """
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "このインスタンスを終了")
+                alert.addButton(withTitle: "続行（非推奨）")
+                
+                let response = alert.runModal()
+                if response == .alertFirstButtonReturn {
+                    NSApplication.shared.terminate(nil)
+                } else {
+                    // Show another warning about potential issues
+                    let warningAlert = NSAlert()
+                    warningAlert.messageText = "注意"
+                    warningAlert.informativeText = "複数インスタンスの実行により、⌘Q終了時にディスクのアンマウントに失敗する可能性があります。"
+                    warningAlert.alertStyle = .informational
+                    warningAlert.addButton(withTitle: "了解")
+                    warningAlert.runModal()
+                }
+            }
+        }
+    }
+    
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         // ⌘W: Do not terminate, just close the window
         return false
