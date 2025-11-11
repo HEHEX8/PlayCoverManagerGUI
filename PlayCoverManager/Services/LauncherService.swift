@@ -196,6 +196,11 @@ final class LauncherService {
     }
     
     func openApp(_ app: PlayCoverApp, preferredLanguage: String? = nil) async throws {
+        // Set app-specific language preference if specified
+        if let language = preferredLanguage {
+            setAppLanguage(bundleID: app.bundleIdentifier, language: language)
+        }
+        
         // Use 'open' command for compatibility with PlayCover apps
         // NSWorkspace.open() doesn't work correctly with PlayCover-wrapped iOS apps
         // The 'open' command handles the app bundle correctly, just like Finder
@@ -203,18 +208,30 @@ final class LauncherService {
         process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         process.arguments = [app.appURL.path]
         
-        // Set language environment variables if preferred language is specified
-        if let language = preferredLanguage {
-            var environment = ProcessInfo.processInfo.environment
-            environment["AppleLanguages"] = "(\(language))"
-            environment["AppleLocale"] = language
-            process.environment = environment
-        }
-        
         try process.run()
         // Don't wait for exit - return immediately like Finder double-click
         
         writeLastLaunchFlag(for: app.bundleIdentifier)
+    }
+    
+    /// Set app-specific language preference using defaults write
+    private func setAppLanguage(bundleID: String, language: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        // Write AppleLanguages array to app's preference domain
+        process.arguments = ["write", bundleID, "AppleLanguages", "-array", language]
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus == 0 {
+                Logger.debug("Successfully set language \(language) for \(bundleID)")
+            } else {
+                Logger.error("Failed to set language preference: exit code \(process.terminationStatus)")
+            }
+        } catch {
+            Logger.error("Failed to execute defaults write: \(error)")
+        }
     }
 
     private func mapDataURL() -> URL {

@@ -2256,13 +2256,19 @@ private struct SettingsView: View {
     
     private func loadSupportedLanguages() {
         guard let bundle = Bundle(url: app.appURL),
-              let infoPlist = bundle.infoDictionary else { return }
+              let infoPlist = bundle.infoDictionary else {
+            Logger.debug("Failed to load bundle or infoPlist for \(app.displayName)")
+            return
+        }
         
         var languages: [String] = []
         
         // Get CFBundleLocalizations
         if let localizations = infoPlist["CFBundleLocalizations"] as? [String] {
             languages.append(contentsOf: localizations)
+            Logger.debug("Found CFBundleLocalizations: \(localizations)")
+        } else {
+            Logger.debug("No CFBundleLocalizations found in Info.plist")
         }
         
         // Include development region
@@ -2270,9 +2276,41 @@ private struct SettingsView: View {
             if !languages.contains(devRegion) {
                 languages.insert(devRegion, at: 0)
             }
+            Logger.debug("Found CFBundleDevelopmentRegion: \(devRegion)")
+        }
+        
+        // Check for .lproj directories as fallback
+        if languages.isEmpty {
+            Logger.debug("No languages found in Info.plist, checking .lproj directories...")
+            languages = scanLprojDirectories()
         }
         
         supportedLanguages = languages
+        Logger.debug("Final supported languages for \(app.displayName): \(languages)")
+    }
+    
+    private func scanLprojDirectories() -> [String] {
+        var languages: [String] = []
+        
+        guard let contents = try? FileManager.default.contentsOfDirectory(
+            at: app.appURL,
+            includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles]
+        ) else { return languages }
+        
+        for url in contents {
+            if url.pathExtension == "lproj" {
+                let langCode = url.deletingPathExtension().lastPathComponent
+                // Convert Base.lproj to en
+                let normalizedCode = langCode == "Base" ? "en" : langCode
+                if !languages.contains(normalizedCode) {
+                    languages.append(normalizedCode)
+                }
+            }
+        }
+        
+        Logger.debug("Found .lproj directories: \(languages)")
+        return languages.sorted()
     }
     
     private func getLanguageDisplayName(_ code: String) -> String {
