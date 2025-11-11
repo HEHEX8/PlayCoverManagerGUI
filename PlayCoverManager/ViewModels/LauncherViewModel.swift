@@ -153,11 +153,14 @@ final class LauncherViewModel {
     }
     
     private func handleAppLaunched(bundleID: String) async {
-        // Refresh to update UI (green dot appears)
-        await refresh()
+        // Update only this app's status
+        await updateAppStatus(bundleID: bundleID)
     }
     
     private func handleAppTerminated(bundleID: String) async {
+        // Update status immediately (will show orange while mounted)
+        await updateAppStatus(bundleID: bundleID)
+        
         // Cancel any existing unmount task for this bundle ID
         activeUnmountTasks[bundleID]?.cancel()
         
@@ -171,8 +174,43 @@ final class LauncherViewModel {
         await task.value
         activeUnmountTasks.removeValue(forKey: bundleID)
         
-        // Refresh to update UI (green dot disappears)
-        await refresh()
+        // Update status after unmount completes (will show red)
+        await updateAppStatus(bundleID: bundleID)
+    }
+    
+    /// Update status for a single app (efficient, doesn't check all apps)
+    private func updateAppStatus(bundleID: String) async {
+        guard let index = apps.firstIndex(where: { $0.bundleIdentifier == bundleID }) else {
+            return
+        }
+        
+        let app = apps[index]
+        let containerURL = PlayCoverPaths.containerURL(for: bundleID)
+        let isRunning = launcherService.isAppRunning(bundleID: bundleID)
+        let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
+        
+        // Debug log
+        if !isRunning && isMounted {
+            Logger.lifecycle("🟠 [\(app.displayName)] NOT running but MOUNTED - should show ORANGE")
+        } else if isRunning {
+            Logger.lifecycle("🟢 [\(app.displayName)] RUNNING - should show GREEN")
+        } else {
+            Logger.lifecycle("🔴 [\(app.displayName)] NOT running and NOT mounted - should show RED")
+        }
+        
+        apps[index] = PlayCoverApp(
+            bundleIdentifier: app.bundleIdentifier,
+            displayName: app.displayName,
+            standardName: app.standardName,
+            version: app.version,
+            appURL: app.appURL,
+            icon: app.icon,
+            lastLaunchedFlag: app.lastLaunchedFlag,
+            isRunning: isRunning,
+            isMounted: isMounted
+        )
+        
+        applySearch()
     }
     
     // MARK: - Public Helper Methods for AppViewModel
@@ -217,15 +255,6 @@ final class LauncherViewModel {
             apps = refreshed.map { app in
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
-                
-                // Debug log for status indicator
-                if !app.isRunning && isMounted {
-                    Logger.lifecycle("🟠 [\(app.displayName)] NOT running but MOUNTED - should show ORANGE")
-                } else if app.isRunning {
-                    Logger.lifecycle("🟢 [\(app.displayName)] RUNNING - should show GREEN")
-                } else {
-                    Logger.lifecycle("🔴 [\(app.displayName)] NOT running and NOT mounted - should show RED")
-                }
                 
                 return PlayCoverApp(
                     bundleIdentifier: app.bundleIdentifier,
