@@ -158,8 +158,6 @@ final class LauncherViewModel {
             task.cancel()
             activeUnmountTasks.removeValue(forKey: bundleID)
             Logger.lifecycle("Cancelled auto-unmount for \(bundleID) due to relaunch")
-        } else {
-            Logger.lifecycle("No active unmount task for \(bundleID) at launch time")
         }
         
         // Update only this app's status
@@ -203,14 +201,7 @@ final class LauncherViewModel {
         let isRunning = launcherService.isAppRunning(bundleID: bundleID)
         let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
         
-        // Debug log
-        if !isRunning && isMounted {
-            Logger.lifecycle("🟠 [\(app.displayName)] Status update: NOT running but MOUNTED")
-        } else if isRunning {
-            Logger.lifecycle("🟢 [\(app.displayName)] Status update: RUNNING")
-        } else {
-            Logger.lifecycle("🔴 [\(app.displayName)] Status update: NOT running and NOT mounted")
-        }
+
         
         let updatedApp = PlayCoverApp(
             bundleIdentifier: app.bundleIdentifier,
@@ -675,7 +666,7 @@ final class LauncherViewModel {
         // Check if another process has a lock
         let canLock = await lockService.canLockContainer(for: bundleID, at: containerURL)
         if !canLock {
-            Logger.unmount("Another process has a lock, skipping eject")
+            Logger.unmount("⚠️ Another process has a lock on \(bundleID), skipping eject - container remains MOUNTED")
             return
         }
         
