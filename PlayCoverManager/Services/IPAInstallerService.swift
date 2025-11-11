@@ -719,9 +719,6 @@ class IPAInstallerService {
             }
         }
         
-        // Step 5: Remove PlayCover shortcut (if exists)
-        await removePlayCoverShortcut(for: info)
-        
         await MainActor.run {
             currentStatus = String(localized: "完了")
         }
@@ -780,34 +777,6 @@ class IPAInstallerService {
             currentAppName = ""  // Clear current app name after all installations complete
             currentAppIcon = nil  // Clear current app icon
             
-        }
-    }
-    
-    // MARK: - PlayCover Shortcut Cleanup
-    
-    /// Remove PlayCover-created shortcut in ~/Applications/PlayCover/
-    /// PlayCover creates these shortcuts but they're useless without PlayCoverManager running
-    private nonisolated func removePlayCoverShortcut(for info: IPAInfo) async {
-        let playCoverAppsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Applications/PlayCover", isDirectory: true)
-        
-        // Try both English and localized app names
-        let possibleShortcutNames = [
-            info.appNameEnglish,
-            info.appName
-        ].filter { !$0.isEmpty }
-        
-        for appName in possibleShortcutNames {
-            let shortcutPath = playCoverAppsDir.appendingPathComponent("\(appName).app")
-            
-            if FileManager.default.fileExists(atPath: shortcutPath.path) {
-                do {
-                    try FileManager.default.removeItem(at: shortcutPath)
-                    Logger.installation("Removed PlayCover shortcut: \(shortcutPath.path)")
-                } catch {
-                    Logger.error("Failed to remove PlayCover shortcut at \(shortcutPath.path): \(error)")
-                }
-            }
         }
     }
     

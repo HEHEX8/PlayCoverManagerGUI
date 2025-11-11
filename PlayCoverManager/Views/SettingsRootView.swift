@@ -1841,6 +1841,33 @@ private struct MaintenanceSettingsView: View {
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
+                // PlayCover Shortcuts Card
+                VStack(alignment: .leading, spacing: 16) {
+                    Label("PlayCover ショートカット", systemImage: "folder.badge.questionmark")
+                        .font(.headline)
+                        .foregroundStyle(.orange)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 12) {
+                        Button {
+                            removePlayCoverShortcuts()
+                        } label: {
+                            Label("~/Applications/PlayCover を削除", systemImage: "trash")
+                                .font(.system(size: 14, weight: .medium))
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(.orange)
+                        
+                        Text("PlayCover が作成する不要なショートカットを削除します。PlayCover.app 起動時に再作成されます。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(20)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                
                 // Reset Card
                 VStack(alignment: .leading, spacing: 16) {
                     Label("リセット", systemImage: "arrow.counterclockwise.circle.fill")
@@ -1910,6 +1937,37 @@ private struct MaintenanceSettingsView: View {
         alert.messageText = String(localized: "キャッシュをクリアしました")
         alert.informativeText = String(localized: "アプリを再起動すると、アイコンが再読み込みされます。")
         alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+    
+    private func removePlayCoverShortcuts() {
+        let playCoverShortcutsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Applications/PlayCover", isDirectory: true)
+        
+        let alert = NSAlert()
+        
+        if FileManager.default.fileExists(atPath: playCoverShortcutsDir.path) {
+            do {
+                try FileManager.default.removeItem(at: playCoverShortcutsDir)
+                Logger.debug("Removed PlayCover shortcuts directory: \(playCoverShortcutsDir.path)")
+                
+                alert.messageText = String(localized: "削除完了")
+                alert.informativeText = String(localized: "~/Applications/PlayCover を削除しました。")
+                alert.alertStyle = .informational
+            } catch {
+                Logger.error("Failed to remove PlayCover shortcuts: \(error)")
+                
+                alert.messageText = String(localized: "削除失敗")
+                alert.informativeText = String(localized: "エラー: \(error.localizedDescription)")
+                alert.alertStyle = .warning
+            }
+        } else {
+            alert.messageText = String(localized: "ディレクトリが存在しません")
+            alert.informativeText = String(localized: "~/Applications/PlayCover は既に削除されています。")
+            alert.alertStyle = .informational
+        }
+        
         alert.addButton(withTitle: "OK")
         alert.runModal()
     }
