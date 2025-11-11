@@ -23,7 +23,7 @@
         }
       }
     },
-    " (推奨)": {
+    " （推奨）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -46,7 +46,7 @@
         }
       }
     },
-    " (省電力)": {
+    " （省電力）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -160,7 +160,7 @@
         }
       }
     },
-    "(拡張子なし)": {
+    "（拡張子なし）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -206,7 +206,7 @@
         }
       }
     },
-    ") 用の ASIF ディスクイメージを作成しますか？": {
+    "） 用の ASIF ディスクイメージを作成しますか？": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -1789,7 +1789,7 @@
         }
       }
     },
-    "Finder に表示しない (-nobrowse)": {
+    "Finder に表示しない （-nobrowse）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -2087,7 +2087,7 @@
         }
       }
     },
-    "IPA をインストール (⌘I)": {
+    "IPA をインストール （⌘I）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -2496,7 +2496,7 @@
         }
       }
     },
-    "PlayCover アプリを開く (⌘⇧P)": {
+    "PlayCover アプリを開く （⌘⇧P）": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2998,7 +2998,7 @@
         }
       }
     },
-    "PlayCover を開く (⌘⇧P)": {
+    "PlayCover を開く （⌘⇧P）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -3228,7 +3228,7 @@
         }
       }
     },
-    "PlayCoverがクラッシュしました - 再試行中 (%lld/%lld)": {
+    "PlayCoverがクラッシュしました - 再試行中 （%lld/%lld）": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3279,7 +3279,7 @@
         }
       }
     },
-    "PlayCoverでIPAをインストール中 (\\(i)秒経過)": {
+    "PlayCoverでIPAをインストール中 （\\(i)秒経過）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -3302,7 +3302,7 @@
         }
       }
     },
-    "PlayCoverでIPAをインストール中 (%lld秒経過)": {
+    "PlayCoverでIPAをインストール中 （%lld秒経過）": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3369,7 +3369,7 @@
         }
       }
     },
-    "Version %@ (Build %@)": {
+    "Version %@ （Build %@）": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3946,7 +3946,7 @@
         }
       }
     },
-    "アプリをアンインストール (⌘D)": {
+    "アプリをアンインストール （⌘D）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4151,7 +4151,7 @@
         }
       }
     },
-    "アプリを終了してから再度お試しください(句点付き)": {
+    "アプリを終了してから再度お試しください（句点付き）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4591,7 +4591,7 @@
         }
       }
     },
-    "アプリ設定を閉じる (Esc)": {
+    "アプリ設定を閉じる （Esc）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4660,7 +4660,7 @@
         }
       }
     },
-    "アンインストール (\\(selectedApps.count) 個)": {
+    "アンインストール （\\(selectedApps.count) 個）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4683,7 +4683,7 @@
         }
       }
     },
-    "アンインストール (%lld 個)": {
+    "アンインストール （%lld 個）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -4729,7 +4729,7 @@
         }
       }
     },
-    "アンインストール中(進行中)": {
+    "アンインストール中（進行中）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -5260,7 +5260,7 @@
         }
       }
     },
-    "インストール済みアプリ (\\(apps.count) 個)": {
+    "インストール済みアプリ （\\(apps.count) 個）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -5283,7 +5283,7 @@
         }
       }
     },
-    "インストール済みアプリ (%lld 個)": {
+    "インストール済みアプリ （%lld 個）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -5856,7 +5856,7 @@
         }
       }
     },
-    "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe (バージョン 26) 以降でのみ動作します。": {
+    "このアプリは ASIF ディスクイメージフォーマットを使用しており、macOS Tahoe （バージョン 26） 以降でのみ動作します。": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -6313,7 +6313,7 @@
         }
       }
     },
-    "すべてアンマウント (⌘⇧U)": {
+    "すべてアンマウント （⌘⇧U）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -6815,7 +6815,7 @@
         }
       }
     },
-    "ディスクイメージ (マウント中)": {
+    "ディスクイメージ （マウント中）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -6838,7 +6838,7 @@
         }
       }
     },
-    "ディスクイメージ(ラベル)": {
+    "ディスクイメージ（ラベル）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -7876,7 +7876,7 @@
         }
       }
     },
-    "バージョン(ラベル)": {
+    "バージョン（ラベル）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -8158,7 +8158,7 @@
         }
       }
     },
-    "ファイルサイズ(ラベル)": {
+    "ファイルサイズ（ラベル）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -8301,7 +8301,7 @@
         }
       }
     },
-    "フレームワーク (\\(result.frameworks.count))": {
+    "フレームワーク （\\(result.frameworks.count)）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -8324,7 +8324,7 @@
         }
       }
     },
-    "フレームワーク (%lld)": {
+    "フレームワーク （%lld）": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8346,7 +8346,7 @@
         }
       }
     },
-    "プロセス終了 (終了コード:": {
+    "プロセス終了 （終了コード:": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8368,7 +8368,7 @@
         }
       }
     },
-    "プロセス終了 (終了コード: $EXIT_CODE)": {
+    "プロセス終了 （終了コード: $EXIT_CODE）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -8574,7 +8574,7 @@
         }
       }
     },
-    "マウント時に Finder に表示しない (-nobrowse)": {
+    "マウント時に Finder に表示しない （-nobrowse）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -8666,7 +8666,7 @@
         }
       }
     },
-    "メニュー (⌘M)": {
+    "メニュー （⌘M）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -9581,7 +9581,7 @@
         }
       }
     },
-    "保存先を変更(アクション)": {
+    "保存先を変更（アクション）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -9770,7 +9770,7 @@
         }
       }
     },
-    "内部データ (参考情報)": {
+    "内部データ （参考情報）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -10046,7 +10046,7 @@
         }
       }
     },
-    "内部データ使用量 (参考)": {
+    "内部データ使用量 （参考）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -10345,7 +10345,7 @@
         }
       }
     },
-    "処理中(和点)": {
+    "処理中（和点）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -10556,7 +10556,7 @@
         }
       }
     },
-    "合計: \\(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))": {
+    "合計: \\(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file)）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -11035,7 +11035,7 @@
         }
       }
     },
-    "実行すると、ディスクイメージの作成とマウントを行います。": {
+    "実行すると、ディスクイメージの作成とマウントします。": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -11195,7 +11195,7 @@
         }
       }
     },
-    "対応言語 (\\(result.localizations.count))": {
+    "対応言語 （\\(result.localizations.count)）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -11218,7 +11218,7 @@
         }
       }
     },
-    "対応言語 (%lld)": {
+    "対応言語 （%lld）": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -12204,7 +12204,7 @@
         }
       }
     },
-    "現在のグローバル設定: \\(settingsStore.nobrowseEnabled ? ": {
+    "現在のグローバル設定: \\（settingsStore.nobrowseEnabled ? ": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -12868,7 +12868,7 @@
         }
       }
     },
-    "設定 (ショートカット)": {
+    "設定 （ショートカット）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -12897,7 +12897,7 @@
         }
       }
     },
-    "設定(メニュー)": {
+    "設定（メニュー）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -12995,7 +12995,7 @@
         }
       }
     },
-    "設定を閉じる (Esc)": {
+    "設定を閉じる （Esc）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -13316,7 +13316,7 @@
         }
       }
     },
-    "閉じる (Esc)": {
+    "閉じる （Esc）": {
       "extractionState": "manual",
       "localizations": {
         "en": {
@@ -13450,7 +13450,7 @@
         }
       }
     },
-    "中国語 (簡体字)": {
+    "中国語 （簡体字）": {
       "localizations": {
         "en": {
           "stringUnit": {
@@ -13472,7 +13472,7 @@
         }
       }
     },
-    "中国語 (繁体字)": {
+    "中国語 （繁体字）": {
       "localizations": {
         "en": {
           "stringUnit": {
