@@ -341,6 +341,9 @@ class AppUninstallerService {
             perAppSettingsStore.removeSettings(for: app.bundleID)
         }
         
+        // Step 9: Remove PlayCover shortcut (if exists)
+        await removePlayCoverShortcut(appName: app.appName)
+        
         await MainActor.run { currentStatus = String(localized: "✅ \(app.appName) をアンインストールしました") }
     }
     
@@ -381,6 +384,27 @@ class AppUninstallerService {
         await MainActor.run {
             currentProgress = 1.0
             currentStatus = String(localized: "完了")
+        }
+    }
+    
+    // MARK: - PlayCover Shortcut Cleanup
+    
+    /// Remove PlayCover-created shortcut for specific app
+    private nonisolated func removePlayCoverShortcut(appName: String) async {
+        await MainActor.run { currentStatus = String(localized: "ショートカットを削除中...") }
+        
+        let playCoverShortcutsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Applications/PlayCover", isDirectory: true)
+        
+        let shortcutPath = playCoverShortcutsDir.appendingPathComponent("\(appName).app")
+        
+        if FileManager.default.fileExists(atPath: shortcutPath.path) {
+            do {
+                try FileManager.default.removeItem(at: shortcutPath)
+                Logger.installation("Removed PlayCover shortcut: \(shortcutPath.path)")
+            } catch {
+                Logger.error("Failed to remove PlayCover shortcut at \(shortcutPath.path): \(error)")
+            }
         }
     }
     
