@@ -323,9 +323,9 @@ final class AppViewModel {
         Logger.unmount("Releasing all container locks...")
         for app in launcherVM.apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
-            // Flush actor queue to ensure file handle is closed
-            _ = await lockService.confirmUnlockCompleted()
         }
+        // Single flush after all unlocks (more efficient than per-lock flush)
+        _ = await lockService.confirmUnlockCompleted()
         Logger.unmount("Lock cleanup completed")
         
         // Step 2: Check and unmount any remaining app containers
@@ -342,12 +342,9 @@ final class AppViewModel {
             // Try normal eject first (apps should already be terminated)
             Logger.unmount("Container still mounted for \(app.bundleIdentifier), attempting normal eject")
             
-            // Sync preferences and filesystem
+            // Sync preferences and filesystem (both are synchronous and instant)
             CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
             sync()
-            
-            // Brief wait for sync to complete (not cfprefsd - app is already terminated)
-            try? await Task.sleep(for: .milliseconds(500))
             
             do {
                 try await diskImageService.ejectDiskImage(for: container, force: false)
@@ -378,9 +375,8 @@ final class AppViewModel {
             _ = await lockService.confirmUnlockCompleted()
             Logger.unmount("Released PlayCover container lock")
             
-            // Sync filesystem - brief wait only if needed
+            // Sync filesystem (no wait needed - sync() is synchronous and instant)
             sync()
-            try? await Task.sleep(for: .milliseconds(200))  // Reduced: 1s → 200ms (just for sync completion)
             
             do {
                 try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
