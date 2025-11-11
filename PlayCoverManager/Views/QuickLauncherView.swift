@@ -2357,45 +2357,67 @@ private struct SettingsView: View {
         
         return Array(normalizedSet)
     }
-    
+    /// Normalize language code using Apple's canonical identifier system
+    /// - Handles Chinese script variants (Hans/Hant) properly
+    /// - Removes unnecessary region codes while preserving important ones
+    /// - Uses Locale.canonicalLanguageIdentifier for standard processing
     private func normalizeLanguageCode(_ code: String) -> String {
-        // Normalize Chinese variants
+        // For Chinese, explicitly preserve script subtags (Hans/Hant)
+        // zh-CN -> zh-Hans, zh-TW -> zh-Hant, zh-HK -> zh-Hant
         if code.hasPrefix("zh") {
-            // Strip any region code and keep only script
             if code.contains("Hans") {
-                return "zh-Hans"  // Simplified Chinese (remove any region like -CN, -TW, etc.)
+                return "zh-Hans"  // Already has script, keep it
             } else if code.contains("Hant") {
-                return "zh-Hant"  // Traditional Chinese (remove any region like -TW, -HK, etc.)
+                return "zh-Hant"  // Already has script, keep it
             } else if code == "zh-CN" || code == "zh-SG" {
-                return "zh-Hans"  // Mainland China and Singapore use Simplified
+                return "zh-Hans"  // Mainland China/Singapore use Simplified
             } else if code == "zh-TW" || code == "zh-HK" || code == "zh-MO" {
-                return "zh-Hant"  // Taiwan, Hong Kong, Macau use Traditional
+                return "zh-Hant"  // Taiwan/Hong Kong/Macau use Traditional
             } else if code == "zh" {
-                return "zh-Hans"  // Default to simplified
+                return "zh-Hans"  // Default to Simplified
             }
         }
         
-        // Normalize Portuguese variants
+        // For Cantonese, preserve script subtags
+        if code.hasPrefix("yue") {
+            if code.contains("Hans") {
+                return "yue-Hans"
+            } else if code.contains("Hant") {
+                return "yue-Hant"
+            }
+        }
+        
+        // For Portuguese, keep pt-BR distinct from pt
         if code == "pt-BR" {
-            return "pt-BR"  // Keep Brazilian Portuguese distinct
+            return "pt-BR"
         } else if code.hasPrefix("pt") {
-            return "pt"  // European Portuguese
+            return "pt"
         }
         
-        // Normalize English variants (en-US, en-GB, etc.) to just "en"
-        if code.hasPrefix("en") && code != "en" {
-            return "en"
+        // Use Apple's canonical identifier for standard processing
+        // This handles most language variants automatically
+        let canonical = Locale.canonicalLanguageIdentifier(from: code)
+        
+        // For languages with script variants, keep them
+        if canonical.contains("-Hans") || canonical.contains("-Hant") {
+            return canonical
         }
         
-        // For other languages, remove region suffix if present
-        // e.g., "es-ES" -> "es", "fr-FR" -> "fr"
-        if code.contains("-") && !["zh-Hans", "zh-Hant", "pt-BR", "yue-Hans", "yue-Hant"].contains(code) {
-            return code.components(separatedBy: "-").first ?? code
+        // For most languages, strip region code (e.g., en-US -> en, es-ES -> es)
+        // But keep exceptions like pt-BR
+        if canonical.contains("-") && canonical != "pt-BR" && !canonical.contains("yue") {
+            return canonical.components(separatedBy: "-").first ?? canonical
         }
         
-        return code
+        return canonical
     }
     
+    /// Get language display name localized to current UI language
+    /// - Uses Locale.current to show language names in the current UI language
+    /// - For app-specific language settings, this shows names like:
+    ///   * Japanese UI: "日本語", "英語", "中国語（簡体字）"
+    ///   * Chinese UI: "日语", "英语", "简体中文"
+    ///   * English UI: "Japanese", "English", "Simplified Chinese"
     private func getLanguageDisplayName(_ code: String) -> String {
         let locale = Locale.current
         
@@ -2405,33 +2427,24 @@ private struct SettingsView: View {
             return displayName
         }
         
-        if code == "pt-BR" {
-            let baseName = locale.localizedString(forLanguageCode: "pt") ?? "Português"
-            let regionName = locale.localizedString(forRegionCode: "BR") ?? "Brasil"
-            return "\(baseName) (\(regionName))"
-        } else if code == "pt-PT" || code == "pt" {
-            return locale.localizedString(forLanguageCode: "pt") ?? "Português"
-        } else if code == "yue-Hans" {
+        // Special cases: Cantonese with script variants
+        // These are not standard and need manual handling
+        if code == "yue-Hans" {
+            // In current UI language
+            if let yueName = locale.localizedString(forLanguageCode: "yue") {
+                return "\(yueName) (简体)"  // Show script in Chinese
+            }
             return "粵語 (简体)"
         } else if code == "yue-Hant" {
+            if let yueName = locale.localizedString(forLanguageCode: "yue") {
+                return "\(yueName) (繁體)"
+            }
             return "粵語 (繁體)"
         }
         
-        // For codes with region (e.g., en-US, es-ES), show both language and region
-        if code.contains("-") {
-            let components = code.components(separatedBy: "-")
-            if components.count == 2 {
-                let langCode = components[0]
-                let regionCode = components[1]
-                
-                if let langName = locale.localizedString(forLanguageCode: langCode),
-                   let regionName = locale.localizedString(forRegionCode: regionCode) {
-                    return "\(langName) (\(regionName))"
-                }
-            }
-        }
-        
-        // Default: use system localization
+        // For all other languages with variants (including pt-BR, Chinese, etc.),
+        // localizedString(forIdentifier:) handles them properly
+        // It automatically formats as "Language (Region)" or "Language (Script)" as appropriate
         return locale.localizedString(forLanguageCode: code) ?? code
     }
     

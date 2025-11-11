@@ -31,37 +31,21 @@ final class SettingsStore {
         
         var id: String { rawValue }
         
+        /// Get native (endonym) display name for the language
+        /// Uses each language's own locale to get the native name
         var localizedDescription: String {
-            switch self {
-            case .system:
+            if self == .system {
                 return String(localized: "システム設定に従う")
-            case .japanese:
-                return String(localized: "日本語")
-            case .english:
-                return "English"
-            case .chinese:
-                return String(localized: "简体中文")
-            case .chineseTraditional:
-                return String(localized: "繁體中文")
-            case .korean:
-                return "한국어"
-            case .french:
-                return "Français"
-            case .german:
-                return "Deutsch"
-            case .spanish:
-                return "Español"
-            case .italian:
-                return "Italiano"
-            case .russian:
-                return "Русский"
-            case .portuguese:
-                return "Português"
-            case .arabic:
-                return "العربية"
-            case .hindi:
-                return "हिन्दी"
             }
+            
+            guard let code = languageCode else {
+                return String(localized: "システム設定に従う")
+            }
+            
+            // Use the language's own locale to get its native name (endonym)
+            // This ensures Japanese shows as "日本語", Chinese as "简体中文" etc.
+            let nativeLocale = Locale(identifier: code)
+            return nativeLocale.localizedString(forIdentifier: code) ?? code
         }
         
         var languageCode: String? {
