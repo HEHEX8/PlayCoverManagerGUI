@@ -117,7 +117,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Mount Settings Card
@@ -143,7 +143,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
 
@@ -184,7 +184,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
             }
             .padding(20)
@@ -325,7 +325,7 @@ private struct DataSettingsView: View {
                     }
                 }
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 Spacer()
@@ -1852,7 +1852,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // PlayCover Shortcuts Card
@@ -1879,7 +1879,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Reset Card
@@ -1906,7 +1906,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 Spacer()
@@ -2031,7 +2031,7 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(24)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Description Card
@@ -2054,7 +2054,7 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // System Requirements Card
@@ -2073,7 +2073,7 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Links Card
@@ -2092,7 +2092,7 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Copyright

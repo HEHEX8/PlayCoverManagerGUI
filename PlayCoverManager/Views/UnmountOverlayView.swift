@@ -68,7 +68,7 @@ struct UnmountOverlayView: View {
                             viewModel.retryUnmountAll()
                         }
                     )
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
                     .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
                 }
                 .id("runningAppsBlocking")
@@ -156,7 +156,7 @@ private struct StorageChangeConfirmationView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
@@ -232,7 +232,7 @@ private struct UnmountConfirmationView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
@@ -280,7 +280,7 @@ private struct UnmountProcessingView: View {
         }
         .padding(32)
         .frame(minWidth: 400)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
     }
 }
@@ -337,7 +337,7 @@ private struct UnmountEjectConfirmationView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
@@ -413,7 +413,7 @@ private struct UnmountSuccessView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
     }
 }
@@ -470,7 +470,7 @@ private struct ForceUnmountOfferingView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
     }
 }
@@ -527,7 +527,7 @@ private struct ForceEjectOfferingView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
     }
 }
@@ -560,7 +560,7 @@ private struct UnmountErrorView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
     }
 }

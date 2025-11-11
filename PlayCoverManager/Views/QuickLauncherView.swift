@@ -217,7 +217,7 @@ struct QuickLauncherView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: 280)
-                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     .onTapGesture {
                         // Focus search field when clicked
@@ -240,7 +240,7 @@ struct QuickLauncherView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
-                .background(.ultraThinMaterial)
+                .glassEffect(.regular, in: .rect)
                 .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
             
             // Recently launched app button (fixed at bottom)
@@ -338,7 +338,7 @@ struct QuickLauncherView: View {
                                 }
                             }
                         )
-                        .background(.ultraThinMaterial)
+                        .glassEffect(.regular, in: .rect)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
                     }
                 }
@@ -477,7 +477,7 @@ struct QuickLauncherView: View {
                 }
             }
             .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
             .shadow(radius: 12)
         }
     }
@@ -663,7 +663,7 @@ private struct ModernToolbarButton: View {
                 .foregroundStyle(color)
                 .rotationEffect(.degrees(rotation))
                 .frame(width: 44, height: 44)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 .scaleEffect(isHovered ? 1.05 : 1.0)
                 .brightness(isHovered ? 0.05 : 0)
@@ -1068,7 +1068,7 @@ private struct AppDetailSheet: View {
                     }
                 }
                 .padding(24)
-                .background(.ultraThinMaterial)
+                .glassEffect(.regular, in: .rect)
                 
                 Divider()
                 
@@ -1137,7 +1137,7 @@ private struct AppDetailSheet: View {
                     .help(String(localized: "アプリ設定を閉じる (Esc)"))
                 }
                 .padding(16)
-                .background(.ultraThinMaterial)
+                .glassEffect(.regular, in: .rect)
             }
         }
         .frame(width: 700, height: 600)
@@ -1202,7 +1202,7 @@ private struct EmptyAppListView: View {
                     }
                 }
                 .padding(40)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
                 .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
                 
                 // Action buttons (only for non-search empty state)
@@ -1344,7 +1344,7 @@ private struct RecentAppLaunchButton: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
@@ -3498,7 +3498,7 @@ private struct DrawerPanel: View {
         }
         .frame(width: 260)
         .frame(maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .glassEffect(.regular, in: .rect)
         .overlay(alignment: .trailing) {
             Rectangle()
                 .fill(Color(nsColor: .separatorColor))
@@ -3596,7 +3596,7 @@ private struct KeyboardShortcutGuide: View {
                 .help(String(localized: "閉じる (Esc)"))
             }
             .padding(24)
-            .background(.ultraThinMaterial)
+            .glassEffect(.regular, in: .rect)
             
             Divider()
             
@@ -3662,7 +3662,7 @@ private struct KeyboardShortcutGuide: View {
                 .keyboardShortcut(.cancelAction)
             }
             .padding(16)
-            .background(.ultraThinMaterial)
+            .glassEffect(.regular, in: .rect)
         }
         .frame(width: 600, height: 500)
         .background(Color(nsColor: .windowBackgroundColor))
@@ -3768,7 +3768,7 @@ private struct DataHandlingAlertView: View {
             }
             .padding(32)
             .frame(maxWidth: 600)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
             .shadow(color: .black.opacity(0.3), radius: 20)
         }
         .onAppear { setupKeyboardMonitor() }

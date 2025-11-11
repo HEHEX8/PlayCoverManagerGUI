@@ -25,7 +25,7 @@ struct SetupWizardView: View {
                     content
                 }
                 .frame(maxWidth: 600)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
                 .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
                 
                 Spacer()
