@@ -212,7 +212,25 @@ final class LauncherViewModel {
         do {
             // Refresh app list (includes isRunning check via LauncherService)
             let refreshed = try launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
-            apps = refreshed
+            
+            // Update isMounted status for each app
+            apps = refreshed.map { app in
+                let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
+                
+                return PlayCoverApp(
+                    bundleIdentifier: app.bundleIdentifier,
+                    displayName: app.displayName,
+                    standardName: app.standardName,
+                    version: app.version,
+                    appURL: app.appURL,
+                    icon: app.icon,
+                    lastLaunchedFlag: app.lastLaunchedFlag,
+                    isRunning: app.isRunning,
+                    isMounted: isMounted
+                )
+            }
+            
             applySearch()
             
             // Update running apps set for consistency

@@ -719,18 +719,48 @@ private struct iOSAppIconView: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                if app.isRunning {
-                    // Running indicator - adaptive for light/dark mode
-                    ZStack {
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: 14, height: 14)
-                        Circle()
-                            .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
-                            .frame(width: 14, height: 14)
+                // Status indicator:
+                // 🟢 Green: App is running
+                // 🟠 Orange: App not running but container mounted (needs unmount)
+                // 🔴 Red: App stopped and container unmounted
+                Group {
+                    if app.isRunning {
+                        // Green: Running
+                        ZStack {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 14, height: 14)
+                            Circle()
+                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                                .frame(width: 14, height: 14)
+                        }
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .offset(x: 6, y: -6)
+                    } else if app.isMounted {
+                        // Orange: Not running but mounted
+                        ZStack {
+                            Circle()
+                                .fill(Color.orange)
+                                .frame(width: 14, height: 14)
+                            Circle()
+                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                                .frame(width: 14, height: 14)
+                        }
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .offset(x: 6, y: -6)
+                    } else {
+                        // Red: Stopped and unmounted
+                        ZStack {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 14, height: 14)
+                            Circle()
+                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                                .frame(width: 14, height: 14)
+                        }
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .offset(x: 6, y: -6)
                     }
-                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                    .offset(x: 6, y: -6)
                 }
             }
             // Bounce animation

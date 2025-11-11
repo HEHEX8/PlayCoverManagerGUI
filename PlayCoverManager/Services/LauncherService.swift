@@ -14,6 +14,7 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
     let icon: NSImage?
     let lastLaunchedFlag: Bool
     let isRunning: Bool
+    let isMounted: Bool  // Container is mounted
     
     // Helper computed property to get the last component of bundle ID
     var bundleShortName: String {
@@ -25,7 +26,8 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
         lhs.bundleIdentifier == rhs.bundleIdentifier &&
         lhs.appURL == rhs.appURL &&
         lhs.lastLaunchedFlag == rhs.lastLaunchedFlag &&
-        lhs.isRunning == rhs.isRunning
+        lhs.isRunning == rhs.isRunning &&
+        lhs.isMounted == rhs.isMounted
     }
 
     func hash(into hasher: inout Hasher) {
@@ -33,6 +35,7 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
         hasher.combine(appURL)
         hasher.combine(lastLaunchedFlag)
         hasher.combine(isRunning)
+        hasher.combine(isMounted)
     }
 }
 
@@ -74,7 +77,8 @@ final class LauncherService {
             let icon = getCachedIcon(for: bundleID, appURL: url)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
             let isRunning = isAppRunning(bundleID: bundleID)
-            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, standardName: standardName, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning)
+            // isMounted will be set by LauncherViewModel
+            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, standardName: standardName, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning, isMounted: false)
             apps.append(app)
         }
         return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
