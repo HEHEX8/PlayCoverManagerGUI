@@ -59,8 +59,13 @@ struct KeyboardNavigableAlert: View {
         }
         .padding(32)
         .frame(minWidth: 400)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.prominent, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            // Track alert size for animations (macOS 26 API)
+        }
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
