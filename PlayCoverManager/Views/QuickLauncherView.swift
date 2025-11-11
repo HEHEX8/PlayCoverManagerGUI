@@ -2407,28 +2407,42 @@ private struct SettingsView: View {
     private func getLanguageDisplayName(_ code: String) -> String {
         let locale = Locale.current
         
-        // Handle special cases with clear script/region information
+        // Handle Chinese variants with explicit script names
         if code == "zh-Hans" {
-            // Show "简体中文" in Japanese/Chinese UI, "Chinese (Simplified)" in English
             let baseName = locale.localizedString(forLanguageCode: "zh") ?? "中文"
-            let scriptName = locale.localizedString(forScriptCode: "Hans") ?? "简体字"
+            // Hardcode script names since Locale.localizedString(forScriptCode:) is unreliable
+            let scriptName: String
+            switch locale.language.languageCode?.identifier ?? "en" {
+            case "ja":
+                scriptName = "簡体字"
+            case "zh":
+                scriptName = "简体"
+            default:
+                scriptName = "Simplified"
+            }
             return "\(baseName) (\(scriptName))"
         } else if code == "zh-Hant" {
-            // Show "繁體中文" in Japanese/Chinese UI, "Chinese (Traditional)" in English
             let baseName = locale.localizedString(forLanguageCode: "zh") ?? "中文"
-            let scriptName = locale.localizedString(forScriptCode: "Hant") ?? "繁體字"
+            let scriptName: String
+            switch locale.language.languageCode?.identifier ?? "en" {
+            case "ja":
+                scriptName = "繁体字"
+            case "zh":
+                scriptName = "繁體"
+            default:
+                scriptName = "Traditional"
+            }
             return "\(baseName) (\(scriptName))"
         } else if code == "pt-BR" {
             let baseName = locale.localizedString(forLanguageCode: "pt") ?? "Português"
             let regionName = locale.localizedString(forRegionCode: "BR") ?? "Brasil"
             return "\(baseName) (\(regionName))"
         } else if code == "pt-PT" || code == "pt" {
-            // European Portuguese
             return locale.localizedString(forLanguageCode: "pt") ?? "Português"
         } else if code == "yue-Hans" {
-            return "粵語 (简体字)"
+            return "粵語 (简体)"
         } else if code == "yue-Hant" {
-            return "粵語 (繁體字)"
+            return "粵語 (繁體)"
         }
         
         // For codes with region (e.g., en-US, es-ES), show both language and region
