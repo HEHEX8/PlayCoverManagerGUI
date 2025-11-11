@@ -92,9 +92,6 @@
         }
       }
     },
-    "・" : {
-
-    },
     ".%@" : {
       "localizations" : {
         "en" : {
@@ -924,9 +921,6 @@
         }
       }
     },
-    "%lld" : {
-
-    },
     "%lld / %lld 完了" : {
       "localizations" : {
         "en" : {
@@ -976,9 +970,6 @@
           }
         }
       }
-    },
-    "%lld 個のアプリ" : {
-
     },
     "%lld 個のアプリをアンインストールしますか？" : {
       "extractionState" : "manual",
@@ -1343,13 +1334,70 @@
       }
     },
     "~/Applications/PlayCover は既に削除されています。" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/Applications/PlayCover has already been deleted."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/Applications/PlayCover 已被删除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/Applications/PlayCover 已被刪除。"
+          }
+        }
+      }
     },
     "~/Applications/PlayCover を削除" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove ~/Applications/PlayCover"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除 ~/Applications/PlayCover"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刪除 ~/Applications/PlayCover"
+          }
+        }
+      }
     },
     "~/Applications/PlayCover を削除しました。" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/Applications/PlayCover has been removed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/Applications/PlayCover 已删除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "~/Applications/PlayCover 已刪除。"
+          }
+        }
+      }
     },
     "~/Library/Containers/ へのマウントには「フルディスクアクセス」権限が必要です。\n\n対処方法：\n1. システム設定を開く（⌘Space で「システム設定」を検索）\n2. プライバシーとセキュリティ > フルディスクアクセス\n3. 「+」ボタンで PlayCover Manager を追加\n4. アプリを再起動してください\n\nマウント先: %@" : {
       "localizations" : {
