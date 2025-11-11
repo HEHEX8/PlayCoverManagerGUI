@@ -798,11 +798,14 @@ private struct iOSAppIconView: View {
             Divider()
             Button("詳細と設定") { rightClickAction() }
             Divider()
-            Button("Finder で表示") {
+            Button("アプリ本体を Finder で表示") {
                 NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
             }
-            Button("アプリフォルダを開く") {
-                NSWorkspace.shared.open(app.appURL.deletingLastPathComponent())
+            Button("コンテナを Finder で表示") {
+                let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                if FileManager.default.fileExists(atPath: containerURL.path) {
+                    NSWorkspace.shared.activateFileViewerSelecting([containerURL])
+                }
             }
             Divider()
             Button("アンインストール", role: .destructive) {
@@ -1090,7 +1093,7 @@ private struct AppDetailSheet: View {
                     Button {
                         NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
                     } label: {
-                        Label("Finder で表示", systemImage: "folder")
+                        Label("アプリ本体を表示", systemImage: "folder")
                     }
                     .buttonStyle(.bordered)
                     
@@ -1727,7 +1730,7 @@ private struct OverviewView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "folder")
-                                Text("Finder でアプリを表示")
+                                Text("アプリ本体を Finder で表示")
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
@@ -1744,7 +1747,7 @@ private struct OverviewView: View {
                         } label: {
                             HStack {
                                 Image(systemName: "externaldrive")
-                                Text("Finder でコンテナを表示")
+                                Text("コンテナを Finder で表示")
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
@@ -2324,7 +2327,7 @@ private struct InfoContentView: View {
                             .fontWeight(.medium)
                         infoRow(label: String(localized: "所在地"), value: storageInfo.appPath)
                         infoRow(label: String(localized: "使用容量"), value: storageInfo.appSize)
-                        Button("Finder で表示") {
+                        Button("アプリ本体を表示") {
                             NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
                         }
                         .buttonStyle(.link)
@@ -2342,7 +2345,7 @@ private struct InfoContentView: View {
                         infoRow(label: String(localized: "所在地"), value: storageInfo.containerPath)
                         infoRow(label: String(localized: "ファイルサイズ"), value: storageInfo.containerSize)
                         infoRow(label: String(localized: "マウント状態"), value: storageInfo.isMounted ? "マウント中" : "アンマウント中")
-                        Button("Finder で表示") {
+                        Button("ディスクイメージを表示") {
                             NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: storageInfo.containerPath)])
                         }
                         .buttonStyle(.link)
