@@ -2208,8 +2208,9 @@ private struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
-            loadCurrentSettings()
+            // Load supported languages first, then current settings
             loadSupportedLanguages()
+            loadCurrentSettings()
         }
     }
     
@@ -2233,7 +2234,21 @@ private struct SettingsView: View {
         }
         
         // Load language setting
-        languageOverride = settings.preferredLanguage
+        if let savedLanguage = settings.preferredLanguage {
+            // Normalize saved language code to match current picker options
+            let normalized = normalizeLanguageCode(savedLanguage)
+            
+            // Check if normalized code exists in current supported languages
+            if supportedLanguages.contains(normalized) {
+                languageOverride = normalized
+            } else {
+                // Saved language not available, reset to default
+                languageOverride = nil
+                Logger.debug("Saved language '\(savedLanguage)' (normalized: '\(normalized)') not in current supported languages, resetting to default")
+            }
+        } else {
+            languageOverride = nil
+        }
     }
     
     private func saveNobrowseSetting(_ override: NobrowseOverride) {
@@ -2355,10 +2370,14 @@ private struct SettingsView: View {
     private func normalizeLanguageCode(_ code: String) -> String {
         // Normalize Chinese variants
         if code.hasPrefix("zh") {
-            if code.contains("Hans") || code == "zh-CN" || code == "zh-SG" {
-                return "zh-Hans"  // Simplified Chinese
-            } else if code.contains("Hant") || code == "zh-TW" || code == "zh-HK" || code == "zh-MO" {
-                return "zh-Hant"  // Traditional Chinese
+            if code.contains("Hans") {
+                return "zh-Hans"  // Any Simplified Chinese variant
+            } else if code.contains("Hant") {
+                return "zh-Hant"  // Any Traditional Chinese variant
+            } else if code == "zh-CN" || code == "zh-SG" {
+                return "zh-Hans"  // Mainland China and Singapore use Simplified
+            } else if code == "zh-TW" || code == "zh-HK" || code == "zh-MO" {
+                return "zh-Hant"  // Taiwan, Hong Kong, Macau use Traditional
             } else if code == "zh" {
                 return "zh-Hans"  // Default to simplified
             }
@@ -2388,17 +2407,28 @@ private struct SettingsView: View {
     private func getLanguageDisplayName(_ code: String) -> String {
         let locale = Locale.current
         
-        // Handle special cases with region/script information
+        // Handle special cases with clear script/region information
         if code == "zh-Hans" {
-            return locale.localizedString(forLanguageCode: "zh") ?? "中文" + " (" + (locale.localizedString(forScriptCode: "Hans") ?? "简体") + ")"
+            // Show "简体中文" in Japanese/Chinese UI, "Chinese (Simplified)" in English
+            let baseName = locale.localizedString(forLanguageCode: "zh") ?? "中文"
+            let scriptName = locale.localizedString(forScriptCode: "Hans") ?? "简体字"
+            return "\(baseName) (\(scriptName))"
         } else if code == "zh-Hant" {
-            return locale.localizedString(forLanguageCode: "zh") ?? "中文" + " (" + (locale.localizedString(forScriptCode: "Hant") ?? "繁體") + ")"
+            // Show "繁體中文" in Japanese/Chinese UI, "Chinese (Traditional)" in English
+            let baseName = locale.localizedString(forLanguageCode: "zh") ?? "中文"
+            let scriptName = locale.localizedString(forScriptCode: "Hant") ?? "繁體字"
+            return "\(baseName) (\(scriptName))"
         } else if code == "pt-BR" {
-            return (locale.localizedString(forLanguageCode: "pt") ?? "Português") + " (" + (locale.localizedString(forRegionCode: "BR") ?? "Brasil") + ")"
+            let baseName = locale.localizedString(forLanguageCode: "pt") ?? "Português"
+            let regionName = locale.localizedString(forRegionCode: "BR") ?? "Brasil"
+            return "\(baseName) (\(regionName))"
+        } else if code == "pt-PT" || code == "pt" {
+            // European Portuguese
+            return locale.localizedString(forLanguageCode: "pt") ?? "Português"
         } else if code == "yue-Hans" {
-            return "粵語 (简体)"
+            return "粵語 (简体字)"
         } else if code == "yue-Hant" {
-            return "粵語 (繁體)"
+            return "粵語 (繁體字)"
         }
         
         // For codes with region (e.g., en-US, es-ES), show both language and region
