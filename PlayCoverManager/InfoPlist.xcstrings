@@ -50,7 +50,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PlayCover マネージャー"
+            "value" : "PlayCover Manager"
           }
         },
         "ko" : {
@@ -134,7 +134,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PlayCover マネージャー"
+            "value" : "PlayCover Manager"
           }
         },
         "ko" : {
@@ -218,7 +218,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2025 HEHEX. MIT ライセンスで提供"
+            "value" : "Copyright © 2025 HEHEX. Licensed under MIT License."
           }
         },
         "ko" : {
