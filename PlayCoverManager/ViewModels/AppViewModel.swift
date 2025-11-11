@@ -310,7 +310,8 @@ final class AppViewModel {
         
         // Enter termination sequence - suppress KVO handling to prevent race conditions
         // This prevents new auto-unmount tasks from being created during termination
-        await launcherVM.enterTerminationSequence()
+        // Call immediately (nonisolated) to set flag before any KVO events can process
+        launcherVM.enterTerminationSequence()
         
         // Cancel all active auto-unmount tasks to prevent conflicts
         let activeTaskCount = launcherVM.activeUnmountTaskCount
