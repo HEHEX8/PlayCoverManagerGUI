@@ -350,6 +350,8 @@ struct IPAInstallerSheet: View {
     @State private var showResults = false
     @State private var currentPhase: InstallPhase = .selection
     @State private var statusUpdateTask: Task<Void, Never>?
+    @State private var installTask: Task<Void, Never>?
+    @State private var showingCancelConfirmation = false
     
     enum InstallPhase {
         case selection      // IPA選択
@@ -388,6 +390,16 @@ struct IPAInstallerSheet: View {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
             installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore, launcherService: launcherService)
+        }
+        .alert("インストールをキャンセルしますか？", isPresented: $showingCancelConfirmation) {
+            Button("キャンセルを続行", role: .destructive) {
+                cancelInstallation()
+            }
+            Button("インストールを続ける", role: .cancel) {
+                // Do nothing - continue installation
+            }
+        } message: {
+            Text("現在インストール中です。キャンセルすると、インストール済みのアプリはそのまま残りますが、進行中の処理が中断されます。")
         }
     }
     
@@ -979,7 +991,7 @@ struct IPAInstallerSheet: View {
     private var bottomButtons: some View {
         HStack {
             Button(currentPhase == .results ? "閉じる" : "キャンセル") {
-                dismiss()
+                handleCancel()
             }
             .keyboardShortcut(.cancelAction)
             
@@ -992,7 +1004,7 @@ struct IPAInstallerSheet: View {
                 }
                 
                 Button("インストール開始") {
-                    Task {
+                    installTask = Task {
                         await startInstallation()
                     }
                 }
@@ -1113,6 +1125,27 @@ struct IPAInstallerSheet: View {
                 }
             }
         }
+    }
+    
+    private func handleCancel() {
+        // If installing, show confirmation dialog
+        if currentPhase == .installing {
+            showingCancelConfirmation = true
+        } else {
+            // For other phases, close immediately
+            dismiss()
+        }
+    }
+    
+    private func cancelInstallation() {
+        // Cancel the installation task
+        installTask?.cancel()
+        
+        // Stop status updater
+        stopStatusUpdater()
+        
+        // Close the sheet
+        dismiss()
     }
 }
 
