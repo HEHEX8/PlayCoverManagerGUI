@@ -11,15 +11,19 @@ echo "PlayCover App Info.plist Fix Script"
 echo "================================================"
 echo ""
 
-# Find all PlayCover apps in /Applications
-APPS_DIR="/Applications"
+# Find all PlayCover apps in PlayCover's Applications directory
+APPS_DIR="$HOME/Library/Containers/io.playcover.PlayCover/Applications"
 
 if [ ! -d "$APPS_DIR" ]; then
-    echo "Error: /Applications directory not found"
+    echo "Error: PlayCover Applications directory not found at:"
+    echo "  $APPS_DIR"
+    echo ""
+    echo "Please make sure PlayCover is installed."
     exit 1
 fi
 
-echo "Searching for apps in $APPS_DIR..."
+echo "Searching for PlayCover apps in:"
+echo "  $APPS_DIR"
 echo ""
 
 # Counter for fixed apps
