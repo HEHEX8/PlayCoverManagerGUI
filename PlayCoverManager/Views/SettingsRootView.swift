@@ -1144,8 +1144,74 @@ struct IPAInstallerSheet: View {
         // Stop status updater
         stopStatusUpdater()
         
+        // Clean up incomplete installations (only for new installs, not upgrades)
+        Task {
+            await cleanupIncompleteInstallations()
+        }
+        
         // Close the sheet
         dismiss()
+    }
+    
+    private func cleanupIncompleteInstallations() async {
+        guard let service = installerService else { return }
+        
+        let playCoverBundleID = "io.playcover.PlayCover"
+        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
+        
+        // Get list of apps that were supposed to be installed
+        let installedBundleIDs = Set(service.installedApps.compactMap { appName in
+            analyzedIPAs.first(where: { $0.appName == appName })?.bundleID
+        })
+        
+        // Check each app in the queue
+        for ipaInfo in analyzedIPAs {
+            // Skip if already successfully installed
+            if installedBundleIDs.contains(ipaInfo.bundleID) {
+                continue
+            }
+            
+            // Only clean up new installs (don't remove existing apps during upgrade)
+            if ipaInfo.installType != .newInstall {
+                continue
+            }
+            
+            // Find and remove incomplete .app bundle
+            guard let appDirs = try? FileManager.default.contentsOfDirectory(
+                at: applicationsDir,
+                includingPropertiesForKeys: nil
+            ) else {
+                continue
+            }
+            
+            for appURL in appDirs where appURL.pathExtension == "app" {
+                let infoPlist = appURL.appendingPathComponent("Info.plist")
+                guard let plistData = try? Data(contentsOf: infoPlist),
+                      let plist = plistData.parsePlist(),
+                      let installedBundleID = plist["CFBundleIdentifier"] as? String,
+                      installedBundleID == ipaInfo.bundleID else {
+                    continue
+                }
+                
+                // Found incomplete installation - remove it
+                Logger.installation("Cleaning up incomplete installation: \(appURL.path)")
+                try? FileManager.default.removeItem(at: appURL)
+                
+                // Also try to eject the disk image if mounted
+                let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
+                    .appendingPathComponent("Library/Containers", isDirectory: true)
+                    .appendingPathComponent(ipaInfo.bundleID, isDirectory: true)
+                
+                if FileManager.default.fileExists(atPath: mountPoint.path) {
+                    let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
+                    try? await diskImageService.ejectDiskImage(for: mountPoint, force: true)
+                    Logger.installation("Ejected disk image for incomplete installation: \(ipaInfo.bundleID)")
+                }
+                
+                break
+            }
+        }
     }
 }
 
@@ -1719,7 +1785,8 @@ struct AppUninstallerSheet: View {
                     currentPhase = .selection
                 }
                 .keyboardShortcut(.cancelAction)
-            } else {
+            } else if currentPhase != .uninstalling {
+                // Hide cancel button during uninstallation (too fast to safely cancel)
                 Button(currentPhase == .results ? "閉じる" : "キャンセル") {
                     dismiss()
                 }
