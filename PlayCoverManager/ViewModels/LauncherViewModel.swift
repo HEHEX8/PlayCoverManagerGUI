@@ -63,6 +63,9 @@ final class LauncherViewModel {
     // Track active auto-unmount tasks to prevent duplicates and allow cancellation
     @ObservationIgnored private var activeUnmountTasks: [String: Task<Void, Never>] = [:]
     
+    // Flag to suppress KVO handling during termination sequence
+    @ObservationIgnored private var isTerminationSequenceActive: Bool = false
+    
     // KVO observation for runningApplications (more efficient than notifications)
     // @ObservationIgnored prevents Observable macro from tracking this property
     @ObservationIgnored private var runningAppsObservation: NSKeyValueObservation?
