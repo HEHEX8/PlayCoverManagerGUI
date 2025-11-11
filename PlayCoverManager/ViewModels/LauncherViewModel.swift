@@ -189,15 +189,6 @@ final class LauncherViewModel {
         let isRunning = launcherService.isAppRunning(bundleID: bundleID)
         let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
         
-        // Debug log
-        if !isRunning && isMounted {
-            Logger.lifecycle("🟠 [\(app.displayName)] NOT running but MOUNTED - should show ORANGE")
-        } else if isRunning {
-            Logger.lifecycle("🟢 [\(app.displayName)] RUNNING - should show GREEN")
-        } else {
-            Logger.lifecycle("🔴 [\(app.displayName)] NOT running and NOT mounted - should show RED")
-        }
-        
         apps[index] = PlayCoverApp(
             bundleIdentifier: app.bundleIdentifier,
             displayName: app.displayName,
