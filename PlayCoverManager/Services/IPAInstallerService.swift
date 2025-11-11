@@ -650,6 +650,12 @@ class IPAInstallerService {
             currentStatus = String(localized: "\(info.appName) をインストール中")
         }
         
+        // Step 0: Clean up any previous incomplete installation
+        await MainActor.run {
+            currentStatus = String(localized: "前回のインストール状態を確認中")
+        }
+        try await cleanupPreviousInstallation(info: info)
+        
         // Check if app is running (for upgrade/reinstall cases)
         if info.installType != .newInstall {
             await MainActor.run {
@@ -824,5 +830,109 @@ class IPAInstallerService {
         }
         
         return nil
+    }
+    
+    // MARK: - Cleanup Previous Installation
+    
+    /// Clean up any leftover state from previous incomplete installation
+    private nonisolated func cleanupPreviousInstallation(info: IPAInfo) async throws {
+        let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers", isDirectory: true)
+            .appendingPathComponent(info.bundleID, isDirectory: true)
+        
+        // Check if mount point exists
+        guard FileManager.default.fileExists(atPath: mountPoint.path) else {
+            // No previous installation state - nothing to clean up
+            return
+        }
+        
+        Logger.installation("Found existing mount point for \(info.bundleID), checking if it needs cleanup")
+        
+        // Check if it's actually mounted
+        let mountCheckProcess = Process()
+        mountCheckProcess.executableURL = URL(fileURLWithPath: "/sbin/mount")
+        mountCheckProcess.arguments = []
+        
+        let pipe = Pipe()
+        mountCheckProcess.standardOutput = pipe
+        mountCheckProcess.standardError = Pipe()
+        
+        do {
+            try mountCheckProcess.run()
+            mountCheckProcess.waitUntilExit()
+            
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            
+            if output.contains(mountPoint.path) {
+                // It's mounted - need to unmount it
+                Logger.installation("Mount point is mounted, attempting to unmount: \(mountPoint.path)")
+                
+                // Step 1: Kill any processes using this mount point
+                await killProcessesUsingMountPoint(bundleID: info.bundleID)
+                
+                // Step 2: Wait for processes to terminate
+                try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                
+                // Step 3: Try to eject
+                do {
+                    try await diskImageService.ejectDiskImage(for: mountPoint, force: false)
+                    Logger.installation("Successfully unmounted previous installation: \(info.bundleID)")
+                } catch {
+                    Logger.installation("Normal unmount failed, trying force unmount: \(error)")
+                    try? await diskImageService.ejectDiskImage(for: mountPoint, force: true)
+                }
+            } else {
+                // Mount point exists but not mounted - just a directory, remove it
+                Logger.installation("Mount point exists but not mounted, removing directory: \(mountPoint.path)")
+                try? FileManager.default.removeItem(at: mountPoint)
+            }
+        } catch {
+            Logger.installation("Failed to check mount status: \(error)")
+            // Try to remove anyway
+            try? FileManager.default.removeItem(at: mountPoint)
+        }
+    }
+    
+    /// Kill processes using mount point (for cleanup before reinstall)
+    private nonisolated func killProcessesUsingMountPoint(bundleID: String) async {
+        let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(bundleID)", isDirectory: true)
+        
+        guard FileManager.default.fileExists(atPath: mountPoint.path) else {
+            return
+        }
+        
+        // Use lsof to find processes using this mount point
+        let lsofProcess = Process()
+        lsofProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+        lsofProcess.arguments = ["-t", "+D", mountPoint.path]
+        
+        let pipe = Pipe()
+        lsofProcess.standardOutput = pipe
+        lsofProcess.standardError = Pipe()
+        
+        do {
+            try lsofProcess.run()
+            lsofProcess.waitUntilExit()
+            
+            if lsofProcess.terminationStatus == 0 {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let output = String(data: data, encoding: .utf8) {
+                    let pids = output.split(separator: "\n").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+                    
+                    for pid in pids {
+                        Logger.installation("Force killing process using mount point during cleanup, PID: \(pid)")
+                        let killProcess = Process()
+                        killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
+                        killProcess.arguments = ["-9", "\(pid)"]
+                        try? killProcess.run()
+                        killProcess.waitUntilExit()
+                    }
+                }
+            }
+        } catch {
+            Logger.installation("Failed to check for processes during cleanup: \(error)")
+        }
     }
 }
