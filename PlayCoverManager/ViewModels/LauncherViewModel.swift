@@ -321,6 +321,9 @@ final class LauncherViewModel {
             let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
             Logger.debug("Container URL: \(containerURL.path)")
             
+            // Clean up any lingering processes from previous failed installations/launches
+            await cleanupLingeringProcesses(for: app.bundleIdentifier, containerURL: containerURL)
+            
             // Check disk image state
             Logger.diskImage("Checking disk image state for \(app.bundleIdentifier)")
             let state = try DiskImageHelper.checkDiskImageState(
@@ -1327,6 +1330,78 @@ final class LauncherViewModel {
                 // Notify AppViewModel to show storage selection
                 onStorageChangeCompleted?()
             }
+        }
+    }
+    
+    // MARK: - Process Cleanup
+    
+    /// Clean up lingering processes from previous failed installations or crashes
+    private func cleanupLingeringProcesses(for bundleID: String, containerURL: URL) async {
+        // Check if there are any processes using files in the container
+        // This handles cases where installation was interrupted and processes are still running
+        
+        guard FileManager.default.fileExists(atPath: containerURL.path) else {
+            return
+        }
+        
+        Logger.lifecycle("Checking for lingering processes for \(bundleID)")
+        
+        // Use lsof to find processes using this container
+        let lsofProcess = Process()
+        lsofProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+        lsofProcess.arguments = ["-t", "+D", containerURL.path]
+        
+        let pipe = Pipe()
+        lsofProcess.standardOutput = pipe
+        lsofProcess.standardError = Pipe()
+        
+        do {
+            try lsofProcess.run()
+            lsofProcess.waitUntilExit()
+            
+            if lsofProcess.terminationStatus == 0 {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let output = String(data: data, encoding: .utf8), !output.isEmpty {
+                    let pids = output.split(separator: "\n")
+                        .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+                        .filter { $0 != getpid() } // Don't kill ourselves
+                    
+                    if !pids.isEmpty {
+                        Logger.lifecycle("Found \(pids.count) lingering processes, cleaning up: \(pids)")
+                        
+                        for pid in pids {
+                            // Try to get process name for logging
+                            let psProcess = Process()
+                            psProcess.executableURL = URL(fileURLWithPath: "/bin/ps")
+                            psProcess.arguments = ["-p", "\(pid)", "-o", "comm="]
+                            let psPipe = Pipe()
+                            psProcess.standardOutput = psPipe
+                            psProcess.standardError = Pipe()
+                            try? psProcess.run()
+                            psProcess.waitUntilExit()
+                            
+                            let psData = psPipe.fileHandleForReading.readDataToEndOfFile()
+                            let processName = String(data: psData, encoding: .utf8)?
+                                .trimmingCharacters(in: .whitespacesAndNewlines) ?? "unknown"
+                            
+                            Logger.lifecycle("Killing lingering process: PID \(pid) (\(processName))")
+                            
+                            // Force kill the process
+                            let killProcess = Process()
+                            killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
+                            killProcess.arguments = ["-9", "\(pid)"]
+                            try? killProcess.run()
+                            killProcess.waitUntilExit()
+                        }
+                        
+                        // Wait a moment for processes to fully terminate
+                        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                        Logger.lifecycle("Lingering process cleanup completed")
+                    }
+                }
+            }
+        } catch {
+            Logger.lifecycle("Failed to check for lingering processes: \(error)")
         }
     }
     
