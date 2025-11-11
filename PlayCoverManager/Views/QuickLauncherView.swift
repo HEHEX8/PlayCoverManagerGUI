@@ -2407,27 +2407,10 @@ private struct SettingsView: View {
     private func getLanguageDisplayName(_ code: String) -> String {
         let locale = Locale.current
         
-        // Use explicit names for Chinese variants based on UI language
-        if code == "zh-Hans" {
-            let currentLang = locale.language.languageCode?.identifier ?? "en"
-            switch currentLang {
-            case "ja":
-                return "中国語 (簡体字)"
-            case "zh":
-                return "中文 (简体)"
-            default:
-                return "Chinese (Simplified)"
-            }
-        } else if code == "zh-Hant" {
-            let currentLang = locale.language.languageCode?.identifier ?? "en"
-            switch currentLang {
-            case "ja":
-                return "中国語 (繁体字)"
-            case "zh":
-                return "中文 (繁體)"
-            default:
-                return "Chinese (Traditional)"
-            }
+        // Use localizedString(forIdentifier:) which properly handles script variants
+        // This is the correct API for getting full locale display names including script
+        if let displayName = locale.localizedString(forIdentifier: code) {
+            return displayName
         }
         
         if code == "pt-BR" {
