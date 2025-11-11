@@ -370,8 +370,14 @@ final class LauncherViewModel {
             Logger.debug("Acquiring lock for \(app.bundleIdentifier)")
             _ = await lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
             
+            // Get preferred language from per-app settings
+            let preferredLanguage = perAppSettings.getPreferredLanguage(for: app.bundleIdentifier)
+            
             Logger.lifecycle("Launching \(app.displayName)...")
-            try await launcherService.openApp(app)
+            if let language = preferredLanguage {
+                Logger.debug("Using preferred language: \(language)")
+            }
+            try await launcherService.openApp(app, preferredLanguage: preferredLanguage)
             Logger.lifecycle("Successfully launched \(app.displayName)")
             pendingLaunchContext = nil
             

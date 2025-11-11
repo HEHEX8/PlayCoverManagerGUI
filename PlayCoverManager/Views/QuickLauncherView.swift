@@ -2040,6 +2040,8 @@ private struct SettingsView: View {
     
     @State private var nobrowseOverride: NobrowseOverride = .useGlobal
     @State private var dataHandlingOverride: DataHandlingOverride = .useGlobal
+    @State private var languageOverride: String? = nil  // nil = system default, or language code like "ja", "en"
+    @State private var supportedLanguages: [String] = []
     
     enum NobrowseOverride: String, CaseIterable, Identifiable {
         case useGlobal
@@ -2156,6 +2158,39 @@ private struct SettingsView: View {
             
             Divider()
             
+            // Language setting
+            if !supportedLanguages.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("アプリの言語設定")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    
+                    Picker("", selection: $languageOverride) {
+                        Text("システムデフォルト").tag(nil as String?)
+                        ForEach(supportedLanguages, id: \.self) { lang in
+                            Text(getLanguageDisplayName(lang)).tag(lang as String?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: languageOverride) { _, newValue in
+                        saveLanguageSetting(newValue)
+                    }
+                    
+                    Text("このアプリで使用する言語を設定します。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    if languageOverride == nil {
+                        let systemLang = Locale.current.language.languageCode?.identifier ?? "en"
+                        Text("現在のシステム言語: \(getLanguageDisplayName(systemLang))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                Divider()
+            }
+            
             // Reset button
             Button(role: .destructive) {
                 resetToGlobalDefaults()
@@ -2170,6 +2205,7 @@ private struct SettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear {
             loadCurrentSettings()
+            loadSupportedLanguages()
         }
     }
     
@@ -2191,6 +2227,9 @@ private struct SettingsView: View {
         } else {
             dataHandlingOverride = .useGlobal
         }
+        
+        // Load language setting
+        languageOverride = settings.preferredLanguage
     }
     
     private func saveNobrowseSetting(_ override: NobrowseOverride) {
@@ -2210,11 +2249,76 @@ private struct SettingsView: View {
         perAppSettings.setDataHandlingStrategy(override.strategy, for: app.bundleIdentifier)
     }
     
+    private func saveLanguageSetting(_ language: String?) {
+        let perAppSettings = viewModel.getPerAppSettings()
+        perAppSettings.setPreferredLanguage(language, for: app.bundleIdentifier)
+    }
+    
+    private func loadSupportedLanguages() {
+        guard let bundle = Bundle(url: app.appURL),
+              let infoPlist = bundle.infoDictionary else { return }
+        
+        var languages: [String] = []
+        
+        // Get CFBundleLocalizations
+        if let localizations = infoPlist["CFBundleLocalizations"] as? [String] {
+            languages.append(contentsOf: localizations)
+        }
+        
+        // Include development region
+        if let devRegion = infoPlist["CFBundleDevelopmentRegion"] as? String {
+            if !languages.contains(devRegion) {
+                languages.insert(devRegion, at: 0)
+            }
+        }
+        
+        supportedLanguages = languages
+    }
+    
+    private func getLanguageDisplayName(_ code: String) -> String {
+        let languageNames: [String: String] = [
+            "en": "English",
+            "ja": "日本語",
+            "zh-Hans": "简体中文",
+            "zh-Hant": "繁體中文",
+            "ko": "한국어",
+            "fr": "Français",
+            "de": "Deutsch",
+            "es": "Español",
+            "it": "Italiano",
+            "pt": "Português",
+            "pt-BR": "Português (Brasil)",
+            "ru": "Русский",
+            "ar": "العربية",
+            "th": "ไทย",
+            "vi": "Tiếng Việt",
+            "id": "Bahasa Indonesia",
+            "ms": "Bahasa Melayu",
+            "tr": "Türkçe",
+            "nl": "Nederlands",
+            "pl": "Polski",
+            "uk": "Українська",
+            "sv": "Svenska",
+            "da": "Dansk",
+            "fi": "Suomi",
+            "no": "Norsk",
+            "cs": "Čeština",
+            "hu": "Magyar",
+            "ro": "Română",
+            "el": "Ελληνικά",
+            "he": "עברית",
+            "hi": "हिन्दी"
+        ]
+        
+        return languageNames[code] ?? code
+    }
+    
     private func resetToGlobalDefaults() {
         let perAppSettings = viewModel.getPerAppSettings()
         perAppSettings.removeSettings(for: app.bundleIdentifier)
         nobrowseOverride = .useGlobal
         dataHandlingOverride = .useGlobal
+        languageOverride = nil
     }
 }
 
@@ -2535,6 +2639,26 @@ private struct InfoContentView: View {
         }
         
         return nil
+    }
+    
+    private func getSupportedLanguages() -> [String] {
+        guard let infoPlist = infoPlist else { return [] }
+        
+        var languages: [String] = []
+        
+        // Get CFBundleLocalizations (list of supported localizations)
+        if let localizations = infoPlist["CFBundleLocalizations"] as? [String] {
+            languages.append(contentsOf: localizations)
+        }
+        
+        // Also include development region as fallback
+        if let devRegion = infoPlist["CFBundleDevelopmentRegion"] as? String {
+            if !languages.contains(devRegion) {
+                languages.insert(devRegion, at: 0)
+            }
+        }
+        
+        return languages
     }
     
     private func getAppSize() -> String? {

@@ -195,13 +195,21 @@ final class LauncherService {
         return icon
     }
     
-    func openApp(_ app: PlayCoverApp) async throws {
+    func openApp(_ app: PlayCoverApp, preferredLanguage: String? = nil) async throws {
         // Use 'open' command for compatibility with PlayCover apps
         // NSWorkspace.open() doesn't work correctly with PlayCover-wrapped iOS apps
         // The 'open' command handles the app bundle correctly, just like Finder
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         process.arguments = [app.appURL.path]
+        
+        // Set language environment variables if preferred language is specified
+        if let language = preferredLanguage {
+            var environment = ProcessInfo.processInfo.environment
+            environment["AppleLanguages"] = "(\(language))"
+            environment["AppleLocale"] = language
+            process.environment = environment
+        }
         
         try process.run()
         // Don't wait for exit - return immediately like Finder double-click

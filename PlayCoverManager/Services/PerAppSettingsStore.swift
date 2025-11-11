@@ -14,10 +14,12 @@ final class PerAppSettingsStore {
     struct AppSettings: Codable, Equatable {
         var nobrowseEnabled: Bool?  // nil means use global default
         var dataHandlingStrategy: String?  // nil means use global default
+        var preferredLanguage: String?  // nil means use system default (e.g., "ja", "en", "zh-Hans")
         
-        init(nobrowseEnabled: Bool? = nil, dataHandlingStrategy: String? = nil) {
+        init(nobrowseEnabled: Bool? = nil, dataHandlingStrategy: String? = nil, preferredLanguage: String? = nil) {
             self.nobrowseEnabled = nobrowseEnabled
             self.dataHandlingStrategy = dataHandlingStrategy
+            self.preferredLanguage = preferredLanguage
         }
     }
     
@@ -70,6 +72,16 @@ final class PerAppSettingsStore {
     func setDataHandlingStrategy(_ strategy: SettingsStore.InternalDataStrategy?, for bundleID: String) {
         var settings = getSettings(for: bundleID)
         settings.dataHandlingStrategy = strategy?.rawValue
+        setSettings(settings, for: bundleID)
+    }
+    
+    func getPreferredLanguage(for bundleID: String) -> String? {
+        return allSettings[bundleID]?.preferredLanguage
+    }
+    
+    func setPreferredLanguage(_ language: String?, for bundleID: String) {
+        var settings = getSettings(for: bundleID)
+        settings.preferredLanguage = language
         setSettings(settings, for: bundleID)
     }
     
