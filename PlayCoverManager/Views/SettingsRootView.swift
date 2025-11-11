@@ -978,10 +978,13 @@ struct IPAInstallerSheet: View {
     // MARK: - Bottom Buttons
     private var bottomButtons: some View {
         HStack {
-            Button(currentPhase == .results ? "閉じる" : "キャンセル") {
-                dismiss()
+            // Hide cancel button during installation - too complex to safely cancel
+            if currentPhase != .installing && currentPhase != .analyzing {
+                Button(currentPhase == .results ? "閉じる" : "キャンセル") {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
             }
-            .keyboardShortcut(.cancelAction)
             
             Spacer()
             
@@ -1686,7 +1689,8 @@ struct AppUninstallerSheet: View {
                     currentPhase = .selection
                 }
                 .keyboardShortcut(.cancelAction)
-            } else {
+            } else if currentPhase != .uninstalling {
+                // Hide cancel button during uninstallation
                 Button(currentPhase == .results ? "閉じる" : "キャンセル") {
                     dismiss()
                 }
