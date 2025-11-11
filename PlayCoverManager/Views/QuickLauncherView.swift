@@ -719,13 +719,13 @@ private struct iOSAppIconView: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                // Status indicator with 3 states
+                // Status indicator:
                 // 🟢 Green: App is running
-                // 🟠 Orange: App terminated, auto-unmount pending (30s grace period)
-                // 🔴 Red: App completely stopped, container unmounted
+                // 🟠 Orange: App not running but container mounted (needs unmount)
+                // 🔴 Red: App stopped and container unmounted
                 Group {
-                    switch app.status {
-                    case .running:
+                    if app.isRunning {
+                        // Green: Running
                         ZStack {
                             Circle()
                                 .fill(Color.green)
@@ -736,8 +736,8 @@ private struct iOSAppIconView: View {
                         }
                         .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
                         .offset(x: 6, y: -6)
-                        
-                    case .unmountPending:
+                    } else if app.isMounted {
+                        // Orange: Not running but mounted
                         ZStack {
                             Circle()
                                 .fill(Color.orange)
@@ -748,8 +748,8 @@ private struct iOSAppIconView: View {
                         }
                         .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
                         .offset(x: 6, y: -6)
-                        
-                    case .stopped:
+                    } else {
+                        // Red: Stopped and unmounted
                         ZStack {
                             Circle()
                                 .fill(Color.red)
@@ -822,7 +822,6 @@ private struct iOSAppIconView: View {
                     isAnimating = false
                 }
             }
-            .disabled(app.status == .unmountPending)
             Button("デバッグコンソールで起動") {
                 launchInDebugConsole(app: app)
             }

@@ -6,12 +6,6 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
     // This ensures the same app keeps the same view identity across refreshes
     var id: String { bundleIdentifier }
     
-    enum Status: Equatable, Hashable {
-        case running           // 🟢 App is running
-        case unmountPending    // 🟠 App terminated, auto-unmount pending (30s grace period)
-        case stopped           // 🔴 App stopped, container unmounted
-    }
-    
     let bundleIdentifier: String
     let displayName: String
     let standardName: String?  // English/standard name from Info.plist
@@ -20,7 +14,7 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
     let icon: NSImage?
     let lastLaunchedFlag: Bool
     let isRunning: Bool
-    let status: Status
+    let isMounted: Bool  // Container is mounted
     
     // Helper computed property to get the last component of bundle ID
     var bundleShortName: String {
@@ -33,7 +27,7 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
         lhs.appURL == rhs.appURL &&
         lhs.lastLaunchedFlag == rhs.lastLaunchedFlag &&
         lhs.isRunning == rhs.isRunning &&
-        lhs.status == rhs.status
+        lhs.isMounted == rhs.isMounted
     }
 
     func hash(into hasher: inout Hasher) {
@@ -41,7 +35,7 @@ struct PlayCoverApp: Identifiable, Equatable, Hashable {
         hasher.combine(appURL)
         hasher.combine(lastLaunchedFlag)
         hasher.combine(isRunning)
-        hasher.combine(status)
+        hasher.combine(isMounted)
     }
 }
 
@@ -83,12 +77,8 @@ final class LauncherService {
             let icon = getCachedIcon(for: bundleID, appURL: url)
             let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
             let isRunning = isAppRunning(bundleID: bundleID)
-            
-            // Determine status based on running state
-            // Note: unmountPending status will be set by LauncherViewModel
-            let status: PlayCoverApp.Status = isRunning ? .running : .stopped
-            
-            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, standardName: standardName, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning, status: status)
+            // isMounted will be set by LauncherViewModel
+            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, standardName: standardName, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning, isMounted: false)
             apps.append(app)
         }
         return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
