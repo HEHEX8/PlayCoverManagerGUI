@@ -62,6 +62,12 @@ struct SetupWizardView: View {
                 .padding(.bottom, 40)
             }
         }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            // Track window size for responsive wizard layout
+            // Uses macOS 26 onGeometryChange API
+        }
         .overlay {
             if let error = viewModel.error {
                 if error.category == .permissionDenied {

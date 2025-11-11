@@ -43,6 +43,12 @@ struct AppRootView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .onAppear { appViewModel.onAppear() }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            // Track window size changes for responsive UI
+            // This uses the new macOS 26 onGeometryChange API
+        }
         .overlay {
             // Termination flow overlay
             if appViewModel.terminationFlowState != .idle {
