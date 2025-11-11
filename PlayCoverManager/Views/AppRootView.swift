@@ -246,7 +246,7 @@ struct TerminationFlowView: View {
             }
             .padding(48)
             .frame(maxWidth: 600)
-            .glassEffect(.regular.tint(.blue.opacity(0.1)).interactive(), in: RoundedRectangle(cornerRadius: 20))
+            .glassEffect(.regular.tint(.blue.opacity(0.1)), in: RoundedRectangle(cornerRadius: 20))
             .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
         }
     }

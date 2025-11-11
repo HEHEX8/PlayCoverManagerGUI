@@ -125,7 +125,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(20)
-                .glassEffect(.regular.tint(.blue.opacity(0.08)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular.tint(.blue.opacity(0.08)), in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Mount Settings Card
@@ -151,7 +151,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(20)
-                .glassEffect(.regular.tint(.purple.opacity(0.08)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular.tint(.purple.opacity(0.08)), in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
 
@@ -192,7 +192,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(20)
-                .glassEffect(.regular.tint(.green.opacity(0.08)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular.tint(.green.opacity(0.08)), in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
             }
             .padding(20)
@@ -333,7 +333,7 @@ private struct DataSettingsView: View {
                     }
                 }
                 .padding(20)
-                .glassEffect(.regular.tint(.orange.opacity(0.08)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular.tint(.orange.opacity(0.08)), in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 Spacer()
@@ -1860,7 +1860,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(20)
-                .glassEffect(.regular.tint(.blue.opacity(0.08)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular.tint(.blue.opacity(0.08)), in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // PlayCover Shortcuts Card
@@ -1887,7 +1887,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(20)
-                .glassEffect(.regular.tint(.orange.opacity(0.08)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular.tint(.orange.opacity(0.08)), in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 // Reset Card
@@ -1914,7 +1914,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(20)
-                .glassEffect(.regular.tint(.red.opacity(0.08)).interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .glassEffect(.regular.tint(.red.opacity(0.08)), in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
                 
                 Spacer()

@@ -338,7 +338,7 @@ struct QuickLauncherView: View {
                                 }
                             }
                         )
-                        .glassEffect(.regular.tint(.accentColor.opacity(0.1)).interactive(), in: .rect)
+                        .glassEffect(.regular.tint(.accentColor.opacity(0.1)), in: .rect)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
                     }
                 }
@@ -669,8 +669,12 @@ private struct ModernToolbarButton: View {
                 .foregroundStyle(color)
                 .rotationEffect(.degrees(rotation))
                 .frame(width: 44, height: 44)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                )
+                .contentShape(Rectangle())  // Ensure entire area is tappable
                 .scaleEffect(isHovered ? 1.05 : 1.0)
                 .brightness(isHovered ? 0.05 : 0)
         }
