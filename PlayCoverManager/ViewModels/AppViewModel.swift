@@ -328,68 +328,94 @@ final class AppViewModel {
         _ = await lockService.confirmUnlockCompleted()
         Logger.unmount("Lock cleanup completed")
         
-        // Step 2: Check and unmount any remaining app containers
-        // (Auto-eject should have already unmounted terminated apps)
-        for app in launcherVM.apps {
-            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-            
-            // Check if still mounted
-            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
-            guard let descriptor = descriptor, descriptor.isMounted else {
-                continue
-            }
-            
-            // Try normal eject first (apps should already be terminated)
-            Logger.unmount("Container still mounted for \(app.bundleIdentifier), attempting normal eject")
-            
-            // Sync preferences and filesystem (both are synchronous and instant)
-            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
-            sync()
-            
-            do {
-                try await diskImageService.ejectDiskImage(for: container, force: false)
-                Logger.unmount("Successfully ejected container for \(app.bundleIdentifier)")
-            } catch {
-                Logger.unmount("Normal eject failed for \(app.bundleIdentifier): \(error)")
-                // Try force eject during app termination
-                Logger.unmount("Attempting force eject for \(app.bundleIdentifier)...")
-                do {
-                    try await diskImageService.ejectDiskImage(for: container, force: true)
-                    Logger.unmount("Successfully force ejected container for \(app.bundleIdentifier)")
-                } catch {
-                    Logger.unmount("Force eject also failed for \(app.bundleIdentifier): \(error)")
-                    failedCount += 1
+        // Steps 2 & 3: Parallel unmount of all containers (apps + PlayCover)
+        // Collect all eject tasks and execute them concurrently
+        await withTaskGroup(of: (success: Bool, bundleID: String).self) { group in
+            // Step 2: Add app container eject tasks
+            for app in launcherVM.apps {
+                let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                
+                // Check if still mounted
+                let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
+                guard let descriptor = descriptor, descriptor.isMounted else {
+                    continue
+                }
+                
+                // Add parallel eject task (capture values for async context)
+                let bundleID = app.bundleIdentifier
+                let containerURL = container
+                
+                group.addTask { [weak self] in
+                    guard let self = self else { return (false, bundleID) }
+                    
+                    Logger.unmount("Container still mounted for \(bundleID), attempting normal eject")
+                    
+                    // Sync preferences and filesystem (both are synchronous and instant)
+                    CFPreferencesAppSynchronize(bundleID as CFString)
+                    sync()
+                    
+                    do {
+                        try await self.diskImageService.ejectDiskImage(for: containerURL, force: false)
+                        Logger.unmount("Successfully ejected container for \(bundleID)")
+                        return (true, bundleID)
+                    } catch {
+                        Logger.unmount("Normal eject failed for \(bundleID): \(error)")
+                        // Try force eject during app termination
+                        Logger.unmount("Attempting force eject for \(bundleID)...")
+                        do {
+                            try await self.diskImageService.ejectDiskImage(for: containerURL, force: true)
+                            Logger.unmount("Successfully force ejected container for \(bundleID)")
+                            return (true, bundleID)
+                        } catch {
+                            Logger.unmount("Force eject also failed for \(bundleID): \(error)")
+                            return (false, bundleID)
+                        }
+                    }
                 }
             }
-        }
-        
-        // Step 3: Normal eject PlayCover's own container
-        let playCoverContainer = playCoverPaths.containerRootURL
-        let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
-        
-        if isMounted {
-            Logger.unmount("Ejecting PlayCover container")
             
-            // Release PlayCover container lock first
-            await lockService.unlockContainer(for: playCoverPaths.bundleIdentifier)
-            _ = await lockService.confirmUnlockCompleted()
-            Logger.unmount("Released PlayCover container lock")
+            // Step 3: Add PlayCover container eject task (in parallel with apps)
+            let playCoverContainer = playCoverPaths.containerRootURL
+            let playCoverBundleID = playCoverPaths.bundleIdentifier
+            let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
             
-            // Sync filesystem (no wait needed - sync() is synchronous and instant)
-            sync()
+            if isMounted {
+                group.addTask { [weak self] in
+                    guard let self = self else { return (false, playCoverBundleID) }
+                    
+                    Logger.unmount("Ejecting PlayCover container")
+                    
+                    // Release PlayCover container lock first
+                    await self.lockService.unlockContainer(for: playCoverBundleID)
+                    _ = await self.lockService.confirmUnlockCompleted()
+                    Logger.unmount("Released PlayCover container lock")
+                    
+                    // Sync filesystem (no wait needed - sync() is synchronous and instant)
+                    sync()
+                    
+                    do {
+                        try await self.diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
+                        Logger.unmount("Successfully ejected PlayCover container")
+                        return (true, playCoverBundleID)
+                    } catch {
+                        Logger.unmount("Normal eject failed for PlayCover container: \(error)")
+                        // Try force eject as last resort during app termination
+                        Logger.unmount("Attempting force eject for PlayCover container...")
+                        do {
+                            try await self.diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
+                            Logger.unmount("Successfully force ejected PlayCover container")
+                            return (true, playCoverBundleID)
+                        } catch {
+                            Logger.unmount("Force eject also failed for PlayCover container: \(error)")
+                            return (false, playCoverBundleID)
+                        }
+                    }
+                }
+            }
             
-            do {
-                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
-                Logger.unmount("Successfully ejected PlayCover container")
-            } catch {
-                Logger.unmount("Normal eject failed for PlayCover container: \(error)")
-                // Try force eject as last resort during app termination
-                Logger.unmount("Attempting force eject for PlayCover container...")
-                do {
-                    try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
-                    Logger.unmount("Successfully force ejected PlayCover container")
-                } catch {
-                    Logger.unmount("Force eject also failed for PlayCover container: \(error)")
+            // Collect results
+            for await result in group {
+                if !result.success {
                     failedCount += 1
                 }
             }
