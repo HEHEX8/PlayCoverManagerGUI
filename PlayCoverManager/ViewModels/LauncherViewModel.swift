@@ -728,9 +728,9 @@ final class LauncherViewModel {
         }
         activeUnmountTasks.removeAll()
         
-        // Wait for tasks to clean up and release locks
+        // Brief wait for tasks to clean up (reduced from 1.0s)
         Logger.unmount("Waiting for lock cleanup...")
-        try? await Task.sleep(for: .seconds(1.0))
+        try? await Task.sleep(for: .milliseconds(100))
         
         // Explicitly release all locks to ensure no file handles remain
         Logger.unmount("Releasing all container locks...")
@@ -765,39 +765,52 @@ final class LauncherViewModel {
             unmountFlowState = .processing(status: String(localized: "アプリコンテナを確認しています…"))
         }
         
+        // Parallel unmount all app containers
         let unmountStartTime = CFAbsoluteTimeGetCurrent()
-        for app in apps {
-            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-            
-            // Check if app is currently running
-            if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
-                failedCount += 1
-                continue
+        await withTaskGroup(of: (success: Bool, bundleID: String).self) { group in
+            for app in apps {
+                let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                let bundleID = app.bundleIdentifier
+                
+                // Check if app is currently running
+                if launcherService.isAppRunning(bundleID: bundleID) {
+                    continue
+                }
+                
+                // Check if container is still mounted
+                let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: container)
+                guard let descriptor = descriptor, descriptor.isMounted else {
+                    continue
+                }
+                
+                // Add parallel eject task
+                group.addTask { [weak self] in
+                    guard let self = self else { return (false, bundleID) }
+                    
+                    Logger.unmount("Container still mounted for \(bundleID), attempting normal eject")
+                    
+                    // Sync preferences and filesystem
+                    CFPreferencesAppSynchronize(bundleID as CFString)
+                    sync()
+                    
+                    do {
+                        try await self.diskImageService.ejectDiskImage(for: container, force: false)
+                        Logger.unmount("Successfully ejected container for \(bundleID)")
+                        return (true, bundleID)
+                    } catch {
+                        Logger.unmount("Normal eject failed for \(bundleID): \(error)")
+                        return (false, bundleID)
+                    }
+                }
             }
             
-            // Check if container is still mounted
-            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
-            guard let descriptor = descriptor, descriptor.isMounted else {
-                continue
-            }
-            
-            // Try normal eject first (apps should already be terminated)
-            Logger.unmount("Container still mounted for \(app.bundleIdentifier), attempting normal eject")
-            
-            // Sync preferences and filesystem
-            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
-            sync()
-            
-            // Brief wait for sync to complete (not cfprefsd - app is already terminated)
-            try? await Task.sleep(for: .milliseconds(500))
-            
-            do {
-                try await diskImageService.ejectDiskImage(for: container, force: false)
-                Logger.unmount("Successfully ejected container for \(app.bundleIdentifier)")
-                successCount += 1
-            } catch {
-                Logger.unmount("Normal eject failed for \(app.bundleIdentifier), marking as failed: \(error)")
-                failedCount += 1
+            // Collect results
+            for await result in group {
+                if result.success {
+                    successCount += 1
+                } else {
+                    failedCount += 1
+                }
             }
         }
         
@@ -833,9 +846,6 @@ final class LauncherViewModel {
                 
                 // Sync filesystem
                 sync()
-                
-                // Brief wait for sync to complete
-                try? await Task.sleep(for: .milliseconds(500))
                 
                 do {
                     try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
