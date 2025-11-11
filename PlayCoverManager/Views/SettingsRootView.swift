@@ -1087,6 +1087,9 @@ struct IPAInstallerSheet: View {
     private func startInstallation() async {
         guard let service = installerService, !analyzedIPAs.isEmpty else { return }
         
+        // Mark as critical operation to prevent app termination
+        await CriticalOperationService.shared.beginOperation("IPA インストール")
+        
         currentPhase = .installing
         isInstalling = true
         
@@ -1097,6 +1100,9 @@ struct IPAInstallerSheet: View {
                 isInstalling = false
                 currentPhase = .results
                 showResults = true
+                
+                // End critical operation
+                await CriticalOperationService.shared.endOperation()
                 
                 // Refresh launcher to show newly installed apps (in background)
                 Task {
@@ -1787,6 +1793,9 @@ struct AppUninstallerSheet: View {
         let appsToUninstall = apps.filter { selectedApps.contains($0.bundleID) }
         guard !appsToUninstall.isEmpty else { return }
         
+        // Mark as critical operation to prevent app termination
+        await CriticalOperationService.shared.beginOperation("アプリのアンインストール")
+        
         currentPhase = .uninstalling
         
         // Ensure results screen is always shown, even if error occurs
@@ -1794,6 +1803,9 @@ struct AppUninstallerSheet: View {
             Task { @MainActor in
                 currentPhase = .results
                 stopStatusUpdater()
+                
+                // End critical operation
+                await CriticalOperationService.shared.endOperation()
                 
                 // Update quick launcher
                 if let launcher = appViewModel.launcherViewModel {
