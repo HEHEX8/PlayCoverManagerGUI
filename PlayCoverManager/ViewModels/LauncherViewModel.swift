@@ -256,19 +256,6 @@ final class LauncherViewModel {
         activeUnmountTasks.removeAll()
     }
     
-    /// Suppress KVO handling during app termination sequence
-    /// Call this before starting termination unmount to prevent race conditions
-    func enterTerminationSequence() {
-        isTerminationSequenceActive = true
-        Logger.lifecycle("Termination sequence started - KVO handling suppressed")
-    }
-    
-    /// Resume normal KVO handling (typically not needed as app is terminating)
-    func exitTerminationSequence() {
-        isTerminationSequenceActive = false
-        Logger.lifecycle("Termination sequence ended - KVO handling resumed")
-    }
-    
     private func cleanupStaleLockFiles() {
         // Get all container URLs for installed apps
         var containerURLs: [URL] = []
