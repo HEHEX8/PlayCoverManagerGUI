@@ -292,6 +292,10 @@ final class AppViewModel {
             CriticalOperationService.shared.endOperation()
         }
         
+        // CRITICAL: Set termination flag FIRST, before any other operations
+        // This must happen before checking running apps to prevent KVO race
+        launcherVM.enterTerminationSequence()
+        
         var failedCount = 0
         var runningApps: [String] = []
         
@@ -308,12 +312,8 @@ final class AppViewModel {
             return (success: false, failedCount: failedCount, runningApps: runningApps)
         }
         
-        // Enter termination sequence - suppress KVO handling to prevent race conditions
-        // This prevents new auto-unmount tasks from being created during termination
-        // Call immediately (nonisolated) to set flag before any KVO events can process
-        launcherVM.enterTerminationSequence()
-        
         // Cancel all active auto-unmount tasks to prevent conflicts
+        // Flag is already set above, so no new tasks will be created
         let activeTaskCount = launcherVM.activeUnmountTaskCount
         if activeTaskCount > 0 {
             Logger.unmount("Cancelling \(activeTaskCount) active auto-unmount tasks")
