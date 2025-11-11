@@ -204,10 +204,6 @@ final class LauncherService {
             clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
-        // Disable notification requests for iOS apps
-        // iOS apps in PlayCover environment can't properly handle notifications anyway
-        disableNotifications(app: app)
-        
         // Use 'open' command for compatibility with PlayCover apps
         // NSWorkspace.open() doesn't work correctly with PlayCover-wrapped iOS apps
         // The 'open' command handles the app bundle correctly, just like Finder
@@ -262,81 +258,7 @@ final class LauncherService {
         }
     }
     
-    /// Disable notification requests for iOS apps by modifying app's Info.plist
-    /// iOS apps running in PlayCover can't properly handle notifications, so suppress them
-    /// This adds UIBackgroundModes without remote-notification to prevent notification requests
-    private func disableNotifications(app: PlayCoverApp) {
-        // Find the app's Info.plist
-        let infoPlistPath = app.appURL.appendingPathComponent("Info.plist")
-        
-        guard FileManager.default.fileExists(atPath: infoPlistPath.path) else {
-            Logger.debug("Info.plist not found for \(app.displayName)")
-            return
-        }
-        
-        // Check if UIBackgroundModes key exists and contains remote-notification
-        let checkProcess = Process()
-        checkProcess.executableURL = URL(fileURLWithPath: "/usr/libexec/PlistBuddy")
-        checkProcess.arguments = ["-c", "Print :UIBackgroundModes", infoPlistPath.path]
-        
-        let pipe = Pipe()
-        checkProcess.standardOutput = pipe
-        checkProcess.standardError = Pipe()
-        
-        do {
-            try checkProcess.run()
-            checkProcess.waitUntilExit()
-            
-            if checkProcess.terminationStatus == 0 {
-                // UIBackgroundModes exists, check if it contains remote-notification
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                let output = String(data: data, encoding: .utf8) ?? ""
-                
-                if output.contains("remote-notification") {
-                    // Remove remote-notification capability
-                    Logger.debug("Removing remote-notification from UIBackgroundModes for \(app.displayName)")
-                    removeRemoteNotificationMode(infoPlistPath: infoPlistPath.path)
-                }
-            }
-            
-            // Also try to add NSUserNotificationAlertStyle = none
-            addNotificationStyleNone(infoPlistPath: infoPlistPath.path, bundleID: app.bundleIdentifier)
-            
-        } catch {
-            Logger.error("Failed to check UIBackgroundModes: \(error)")
-        }
-    }
-    
-    /// Remove remote-notification from UIBackgroundModes array
-    private func removeRemoteNotificationMode(infoPlistPath: String) {
-        // This is complex - need to find array index and delete it
-        // For now, just log it
-        Logger.debug("Would remove remote-notification from \(infoPlistPath)")
-    }
-    
-    /// Add NSUserNotificationAlertStyle = none to suppress notification prompts
-    private func addNotificationStyleNone(infoPlistPath: String, bundleID: String) {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/libexec/PlistBuddy")
-        process.arguments = ["-c", "Add :NSUserNotificationAlertStyle string none", infoPlistPath]
-        
-        do {
-            try process.run()
-            process.waitUntilExit()
-            if process.terminationStatus == 0 {
-                Logger.debug("Successfully added NSUserNotificationAlertStyle=none for \(bundleID)")
-            } else {
-                // Key might already exist, try to set it instead
-                let setProcess = Process()
-                setProcess.executableURL = URL(fileURLWithPath: "/usr/libexec/PlistBuddy")
-                setProcess.arguments = ["-c", "Set :NSUserNotificationAlertStyle none", infoPlistPath]
-                try? setProcess.run()
-                setProcess.waitUntilExit()
-            }
-        } catch {
-            Logger.error("Failed to modify Info.plist: \(error)")
-        }
-    }
+
 
     private func mapDataURL() -> URL {
         let supportURL = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
