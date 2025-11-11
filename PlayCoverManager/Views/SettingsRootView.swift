@@ -1885,7 +1885,7 @@ private struct MaintenanceSettingsView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Label("キャッシュ", systemImage: "folder.badge.minus")
                         .font(.headline)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(.cyan)
                     
                     Divider()
                     
@@ -1906,19 +1906,19 @@ private struct MaintenanceSettingsView: View {
                 .padding(20)
                 .background(
                     ZStack {
-                        LinearGradient(colors: [.blue.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.blue.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
+                        LinearGradient(colors: [.cyan.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
+                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.cyan.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
                     .allowsHitTesting(false)
                 )
                 .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .blue.opacity(0.15), radius: 12, x: 0, y: 4)
+                .shadow(color: .cyan.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 // PlayCover Shortcuts Card
                 VStack(alignment: .leading, spacing: 16) {
                     Label("PlayCover ショートカット", systemImage: "folder.badge.questionmark")
                         .font(.headline)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(.yellow)
                     
                     Divider()
                     
@@ -1930,7 +1930,7 @@ private struct MaintenanceSettingsView: View {
                                 .font(.system(size: 14, weight: .medium))
                         }
                         .buttonStyle(.bordered)
-                        .tint(.orange)
+                        .tint(.yellow)
                         
                         Text("PlayCover が作成する不要なショートカットを削除します。PlayCover.app 起動時に再作成されます。")
                             .font(.caption)
@@ -1940,13 +1940,13 @@ private struct MaintenanceSettingsView: View {
                 .padding(20)
                 .background(
                     ZStack {
-                        LinearGradient(colors: [.orange.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.orange.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
+                        LinearGradient(colors: [.yellow.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
+                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.yellow.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
                     .allowsHitTesting(false)
                 )
                 .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .orange.opacity(0.15), radius: 12, x: 0, y: 4)
+                .shadow(color: .yellow.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 // Reset Card
                 VStack(alignment: .leading, spacing: 16) {
