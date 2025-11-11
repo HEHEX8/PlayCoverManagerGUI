@@ -204,6 +204,10 @@ final class LauncherService {
             clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
+        // Disable notification requests for iOS apps
+        // iOS apps in PlayCover environment can't properly handle notifications anyway
+        disableNotifications(bundleID: app.bundleIdentifier)
+        
         // Use 'open' command for compatibility with PlayCover apps
         // NSWorkspace.open() doesn't work correctly with PlayCover-wrapped iOS apps
         // The 'open' command handles the app bundle correctly, just like Finder
@@ -255,6 +259,28 @@ final class LauncherService {
             }
         } catch {
             Logger.error("Failed to execute defaults delete: \(error)")
+        }
+    }
+    
+    /// Disable notification requests for iOS apps
+    /// iOS apps running in PlayCover can't properly handle notifications, so suppress them
+    private func disableNotifications(bundleID: String) {
+        // Set UNUserNotificationCenter authorization to denied
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        // Write notification authorization status as denied (0 = denied, 2 = authorized)
+        process.arguments = ["write", bundleID, "UNUserNotificationCenterAuthorizationStatus", "-int", "0"]
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus == 0 {
+                Logger.debug("Successfully disabled notifications for \(bundleID)")
+            } else {
+                Logger.debug("Could not set notification preference for \(bundleID)")
+            }
+        } catch {
+            Logger.error("Failed to execute defaults write for notifications: \(error)")
         }
     }
 
