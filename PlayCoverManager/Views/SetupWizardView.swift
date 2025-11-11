@@ -20,13 +20,36 @@ struct SetupWizardView: View {
                 
                 Spacer()
                 
-                // Main content card
+                // Main content card with rich Liquid Glass
                 VStack(spacing: 0) {
                     content
                 }
                 .frame(maxWidth: 600)
-                .glassEffect(.regular.tint(.accentColor.opacity(0.1)), in: RoundedRectangle(cornerRadius: 20))
-                .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
+                .background(
+                    ZStack {
+                        // Animated gradient glow
+                        LinearGradient(
+                            colors: [.accentColor.opacity(0.08), .purple.opacity(0.06), .blue.opacity(0.05)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .blur(radius: 30)
+                        
+                        // Main glass layer
+                        RoundedRectangle(cornerRadius: 20)
+                            .glassEffect(.regular.tint(.accentColor.opacity(0.15)), in: RoundedRectangle(cornerRadius: 20))
+                    }
+                )
+                .overlay {
+                    // Elegant shine effect
+                    LinearGradient(
+                        colors: [.white.opacity(0.15), .clear, .clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                }
+                .shadow(color: .accentColor.opacity(0.2), radius: 40, x: 0, y: 15)
                 
                 Spacer()
                 
