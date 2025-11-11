@@ -308,17 +308,15 @@ final class AppViewModel {
             return (success: false, failedCount: failedCount, runningApps: runningApps)
         }
         
-        // Set termination flag to suppress KVO handling
-        await launcherVM.enterTerminationSequence()
-        
         // Cancel all active auto-unmount tasks to prevent conflicts
         let activeTaskCount = launcherVM.activeUnmountTaskCount
         if activeTaskCount > 0 {
             Logger.unmount("Cancelling \(activeTaskCount) active auto-unmount tasks")
             await launcherVM.cancelAllAutoUnmountTasks()
             
-            // Brief wait to allow KVO events to be processed and flag to propagate
-            try? await Task.sleep(for: .milliseconds(100))
+            // Wait for lock cleanup (proven 500ms solution)
+            Logger.unmount("Waiting for lock cleanup...")
+            try? await Task.sleep(for: .milliseconds(500))
         }
         
         // Explicitly release all locks to ensure no file handles remain
