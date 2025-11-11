@@ -35,13 +35,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "(推荐)"
+            "value": "(受到推崇的)"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "(推薦)"
+            "value": "(受到推崇的)"
           }
         }
       }
@@ -654,13 +654,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "数据存在于内部存储中的\\(request.app.displayName)。如何处理？"
+            "value": "数据存在于内部存储中的\\(request.app.displayName)。你如何处理？"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "數據存在於內部存儲中的\\(request.app.displayName)。如何處理？"
+            "value": "數據存在於內部存儲中的\\(request.app.displayName)。你如何處理？"
           }
         }
       }
@@ -773,13 +773,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "数据存在于%@的内部存储器中。如何处理？"
+            "value": "数据存在于%@的内部存储器中。你如何处理？"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "數據存在於%@的內部存儲器中。如何處理？"
+            "value": "數據存在於%@的內部存儲器中。你如何處理？"
           }
         }
       }
@@ -1367,13 +1367,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "安装到 ~/Library/Containers/ 需要“完全磁盘访问”权限。\n\n解决方法:\n1.打开系统设置(在⌘空格中搜索“系统设置”)\n2. 隐私和安全 > 全磁盘访问\n3. 使用“+”按钮添加 PlayCover Manager\n4. 请重新启动应用程序\n\n安装到:%@"
+            "value": "安装到 ~/Library/Containers/ 需要“完全磁盘访问”权限。\n\n如何处理:\n1.打开系统设置(在⌘空格中搜索“系统设置”)\n2. 隐私和安全 > 全磁盘访问\n3. 使用“+”按钮添加 PlayCover Manager\n4. 请重新启动应用程序\n\n安装到:%@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "安裝到 ~/Library/Containers/ 需要“完全磁盤訪問”權限。\n\n解決方法:\n1.打開系統設置(在⌘空格中搜索“系統設置”)\n2. 隱私和安全 > 全磁盤訪問\n3. 使用“+”按鈕添加 PlayCover Manager\n4. 請重新啟動應用程序\n\n安裝到:%@"
+            "value": "安裝到 ~/Library/Containers/ 需要“完全磁盤訪問”權限。\n\n如何處理:\n1.打開系統設置(在⌘空格中搜索“系統設置”)\n2. 隱私和安全 > 全磁盤訪問\n3. 使用“+”按鈕添加 PlayCover Manager\n4. 請重新啟動應用程序\n\n安裝到:%@"
           }
         }
       }
@@ -2259,13 +2259,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS 安全设置拒绝访问目标目录。\n\n解决方法:\n1. 系统设置 > 隐私和安全 > 全磁盘访问\n2. 单击“+”按钮并添加 PlayCover Manager\n3. 重新启动应用程序\n\n路径:%@"
+            "value": "macOS 安全设置拒绝访问目标目录。\n\n如何处理:\n1. 系统设置 > 隐私和安全 > 全磁盘访问\n2. 单击“+”按钮并添加 PlayCover Manager\n3. 重新启动应用程序\n\n路径:%@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS 安全設置拒絕訪問目標目錄。\n\n解決方法:\n1. 系統設置 > 隱私和安全 > 全磁盤訪問\n2. 單擊“+”按鈕並添加 PlayCover Manager\n3. 重新啟動應用程序\n\n路徑:%@"
+            "value": "macOS 安全設置拒絕訪問目標目錄。\n\n如何處理:\n1. 系統設置 > 隱私和安全 > 全磁盤訪問\n2. 單擊“+”按鈕並添加 PlayCover Manager\n3. 重新啟動應用程序\n\n路徑:%@"
           }
         }
       }
@@ -7478,13 +7478,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "我能够创建目录，但文件写入测试失败。\n\n解决方法:\n• 请在设置屏幕上选择不同的保存位置\n• 如果是外部驱动器，请确保已挂载\n• 检查驱动器是否不是只读的\n\n路径:%1$@\n错误:%2$@"
+            "value": "我能够创建目录，但文件写入测试失败。\n\n如何处理:\n• 请在设置屏幕上选择不同的保存位置\n• 如果是外部驱动器，请确保已安装它\n• 检查驱动器是否不是只读的\n\n路径:%1$@\n错误:%2$@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "我能夠創建目錄，但文件寫入測試失敗。\n\n解決方法:\n• 請在設置屏幕上選擇不同的保存位置\n• 如果是外部驅動器，請確保已掛載\n• 檢查驅動器是否不是只讀的\n\n路徑:%1$@\n錯誤:%2$@"
+            "value": "我能夠創建目錄，但文件寫入測試失敗。\n\n如何處理:\n• 請在設置屏幕上選擇不同的保存位置\n• 如果是外部驅動器，請確保已安裝它\n• 檢查驅動器是否不是只讀的\n\n路徑:%1$@\n錯誤:%2$@"
           }
         }
       }
@@ -7501,13 +7501,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "我能够创建目录，但文件写入测试失败。\\n\\n解决方案:\\n• 请在设置屏幕中选择不同的目标。\\n• 如果是外部驱动器，请确保已挂载。\\n• 确保驱动器不是只读的。\\n\\n路径: \\(parentDir.path)\\n错误: \\(error.localizedDescription)"
+            "value": "我能够创建目录，但文件写入测试失败。\\n\\n解决方案:\\n• 请在设置屏幕中选择不同的目标。\\n• 如果是外部驱动器，请确保已安装它。\\n• 确保驱动器不是只读的。\\n\\n路径: \\(parentDir.path)\\n错误: \\(error.localizedDescription)"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "我能夠創建目錄，但文件寫入測試失敗。\\n\\n解決方案:\\n• 請在設置屏幕中選擇不同的目標。 \\n• 如果是外部驅動器，請確保已掛載。 \\n• 確保驅動器不是只讀的。 \\n\\n路徑: \\(parentDir.path)\\n錯誤: \\(error.localizedDescription)"
+            "value": "我能夠創建目錄，但文件寫入測試失敗。\\n\\n解決方案:\\n• 請在設置屏幕中選擇不同的目標。 \\n• 如果是外部驅動器，請確保已安裝它。 \\n• 確保驅動器不是只讀的。 \\n\\n路徑: \\(parentDir.path)\\n錯誤: \\(error.localizedDescription)"
           }
         }
       }
