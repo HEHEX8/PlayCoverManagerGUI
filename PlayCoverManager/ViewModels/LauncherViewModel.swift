@@ -153,6 +153,13 @@ final class LauncherViewModel {
     }
     
     private func handleAppLaunched(bundleID: String) async {
+        // Cancel any pending unmount task for this app (user relaunched before unmount)
+        if let task = activeUnmountTasks[bundleID] {
+            task.cancel()
+            activeUnmountTasks.removeValue(forKey: bundleID)
+            Logger.lifecycle("Cancelled auto-unmount for \(bundleID) due to relaunch")
+        }
+        
         // Update only this app's status
         await updateAppStatus(bundleID: bundleID)
     }
@@ -161,8 +168,12 @@ final class LauncherViewModel {
         // Update status immediately (will show orange while mounted)
         await updateAppStatus(bundleID: bundleID)
         
-        // Cancel any existing unmount task for this bundle ID
-        activeUnmountTasks[bundleID]?.cancel()
+        // If there's already an unmount task for this app, don't create another one
+        // This prevents duplicate unmount attempts from KVO firing multiple times
+        guard activeUnmountTasks[bundleID] == nil else {
+            Logger.lifecycle("Unmount task already active for \(bundleID), skipping duplicate")
+            return
+        }
         
         // Create new auto-unmount task and track it
         let task = Task {
