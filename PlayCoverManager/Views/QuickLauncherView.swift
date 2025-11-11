@@ -2181,10 +2181,14 @@ private struct SettingsView: View {
                         .foregroundStyle(.secondary)
                     
                     if languageOverride == nil {
-                        let systemLang = Locale.current.language.languageCode?.identifier ?? "en"
-                        Text("現在のシステム言語: \(getLanguageDisplayName(systemLang))")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        let systemLangs = Locale.preferredLanguages
+                        if let primaryLang = systemLangs.first {
+                            // Extract language code from locale identifier (e.g., "ja-JP" -> "ja")
+                            let langCode = primaryLang.components(separatedBy: "-").first ?? primaryLang
+                            Text("現在のシステム言語: \(getLanguageDisplayName(langCode))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
                 
@@ -2314,41 +2318,9 @@ private struct SettingsView: View {
     }
     
     private func getLanguageDisplayName(_ code: String) -> String {
-        let languageNames: [String: String] = [
-            "en": "English",
-            "ja": "日本語",
-            "zh-Hans": "简体中文",
-            "zh-Hant": "繁體中文",
-            "ko": "한국어",
-            "fr": "Français",
-            "de": "Deutsch",
-            "es": "Español",
-            "it": "Italiano",
-            "pt": "Português",
-            "pt-BR": "Português (Brasil)",
-            "ru": "Русский",
-            "ar": "العربية",
-            "th": "ไทย",
-            "vi": "Tiếng Việt",
-            "id": "Bahasa Indonesia",
-            "ms": "Bahasa Melayu",
-            "tr": "Türkçe",
-            "nl": "Nederlands",
-            "pl": "Polski",
-            "uk": "Українська",
-            "sv": "Svenska",
-            "da": "Dansk",
-            "fi": "Suomi",
-            "no": "Norsk",
-            "cs": "Čeština",
-            "hu": "Magyar",
-            "ro": "Română",
-            "el": "Ελληνικά",
-            "he": "עברית",
-            "hi": "हिन्दी"
-        ]
-        
-        return languageNames[code] ?? code
+        // Use system localization for language names (same as detail tab)
+        let locale = Locale.current
+        return locale.localizedString(forLanguageCode: code) ?? code
     }
     
     private func resetToGlobalDefaults() {
@@ -3105,7 +3077,9 @@ actor AppAnalyzer {
                 // Check for localization
                 if fileURL.pathExtension == "lproj" {
                     let langCode = fileURL.deletingPathExtension().lastPathComponent
-                    localizations.insert(langCode)
+                    // Normalize Base.lproj to en
+                    let normalizedCode = langCode == "Base" ? "en" : langCode
+                    localizations.insert(normalizedCode)
                 }
                 
                 // Check for frameworks
