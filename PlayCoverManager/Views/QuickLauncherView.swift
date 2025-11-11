@@ -167,6 +167,7 @@ struct QuickLauncherView: View {
             Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .focusable()
+                .focusEffectDisabled()  // Disable blue focus ring
                 .opacity(0.01)  // Nearly invisible but still present
             
             // Modern gradient background
