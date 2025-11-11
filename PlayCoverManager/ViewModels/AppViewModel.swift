@@ -313,10 +313,7 @@ final class AppViewModel {
         if activeTaskCount > 0 {
             Logger.unmount("Cancelling \(activeTaskCount) active auto-unmount tasks")
             await launcherVM.cancelAllAutoUnmountTasks()
-            
-            // Wait for tasks to clean up and release locks
-            Logger.unmount("Waiting for lock cleanup...")
-            try? await Task.sleep(for: .milliseconds(500))  // Reduced: 1s → 500ms
+            // No wait needed - next unlock operations will ensure cleanup
         }
         
         // Explicitly release all locks to ensure no file handles remain
