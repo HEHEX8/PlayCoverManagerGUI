@@ -179,16 +179,27 @@ struct ContentView: View {
 
 #### Glass Material バリアント
 
+**⚠️ 重要**: Web検索で確認した正確な情報（2025年11月11日確認）
+
 ```swift
 // .regular - 標準的な半透明効果（最も一般的）
 .glassEffect(.regular, in: shape)
 
-// .prominent - より強調された半透明効果
-.glassEffect(.prominent, in: shape)
+// .clear - より透明な効果
+.glassEffect(.clear, in: shape)
 
-// .thin - より薄い半透明効果
-.glassEffect(.thin, in: shape)
+// .identity - ガラス効果を無効化（条件付きで使用）
+.glassEffect(.identity, in: shape)
+
+// ❌ .prominent は存在しない！
+// ✅ 強調効果を得るには .tint() と .interactive() を使用
+.glassEffect(.regular.tint(.accentColor).interactive(), in: shape)
 ```
+
+**出典**: 
+- Donny Wals: "Glassifying custom SwiftUI views"
+- Medium: "Liquid glass text effect in SwiftUI"
+- 確認日: 2025年11月11日
 
 #### サポートされるシェイプ
 
@@ -209,16 +220,31 @@ struct ContentView: View {
 #### 高度な使用例
 
 ```swift
-// ID指定でアニメーション可能
+// ✅ 色付きガラス効果（Tint）
+.glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 16))
+
+// ✅ インタラクティブなガラス効果（タップ、ドラッグ対応）
+.glassEffect(.regular.tint(.purple).interactive(), in: RoundedRectangle(cornerRadius: 16))
+
+// ✅ 透明度調整
+.glassEffect(.regular.tint(.purple.opacity(0.8)), in: RoundedRectangle(cornerRadius: 16))
+
+// ✅ 条件付きガラス効果
+.glassEffect(isEnabled ? .regular : .identity, in: shape)
+
+// ✅ ID指定でアニメーション可能（要確認）
 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
 .glassEffectID("mainCard")
 
-// トランジション指定
-.glassEffectTransition(.opacity)
-
-// 複数のガラス効果を結合
-.glassEffectUnion([.regular, .prominent])
+// ⚠️ 以下のAPIは確認が必要
+// .glassEffectTransition(.opacity)
+// .glassEffectUnion([.regular, .clear])
 ```
+
+**出典**:
+- Donny Wals: "Glassifying custom SwiftUI views" (2025年7月16日)
+- Donny Wals: "Designing custom UI with Liquid Glass" (2025年7月1日)
+- 確認日: 2025年11月11日
 
 ### ⚠️ 後方互換性の注意
 
@@ -929,6 +955,49 @@ class DataManager {
 **公式ドキュメントより**:
 > "For easily responding to geometry changes of a scroll view, see the onScrollGeometryChange(for:of:action:) modifier."
 
+#### 6. **Glass Material正確な仕様** (Donny Wals, Medium)
+
+**ソース**: 
+- https://swiftwithmajid.com/2025/07/16/glassifying-custom-swiftui-views/
+- https://medium.com/@danielcrompton5/liquid-glass-text-effect-in-swiftui-for-macos-ios-7468ced04e35
+
+**確認日**: 2025年11月11日
+
+**✅ 実在するGlass enum値**:
+- `Glass.regular` - 標準的なガラス効果（最も一般的）
+- `Glass.clear` - より透明なガラス効果
+- `Glass.identity` - ガラス効果を無効化（条件付きで使用）
+
+**❌ 存在しないもの**:
+- `Glass.prominent` - このenum値は存在しない！
+- `Glass.thin` - このenum値は存在しない！
+
+**✅ Glass のモディファイアメソッド**:
+- `.tint(Color)` - ガラスに色を付ける
+- `.interactive()` - タップ、ドラッグなどのジェスチャー対応を有効化
+
+**使用例（確認済み）**:
+```swift
+// 基本
+.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+
+// 色付き
+.glassEffect(.regular.tint(.purple), in: .capsule)
+
+// インタラクティブ（強調効果）
+.glassEffect(.regular.tint(.accentColor).interactive(), in: .capsule)
+
+// 透明度調整
+.glassEffect(.regular.tint(.purple.opacity(0.8)), in: .rect)
+
+// 条件付き無効化
+.glassEffect(isEnabled ? .regular : .identity, in: shape)
+```
+
+**重要**: 
+「prominent」な効果を得るには `.prominent` enum値ではなく、
+`.regular.tint(.accentColor).interactive()` を使用すること。
+
 #### 4. **ToolbarSpacer** (macOS 26 新機能)
 
 **ソース**: Apple Developer Documentation, WWDC25
@@ -957,9 +1026,9 @@ class DataManager {
 | API | 確認済み | ソース |
 |-----|---------|--------|
 | `.glassEffect(_:in:)` | ✅ | Apple Developer, WWDC25 |
-| `.glassEffectID()` | ✅ | Medium技術記事, WWDC25 |
-| `.glassEffectTransition()` | ✅ | Medium技術記事, WWDC25 |
-| `.glassEffectUnion()` | ✅ | Medium技術記事, WWDC25 |
+| `.glassEffectID()` | ⚠️ | 要確認（未検証） |
+| `.glassEffectTransition()` | ⚠️ | 要確認（未検証） |
+| `.glassEffectUnion()` | ⚠️ | 要確認（未検証） |
 | `.onGeometryChange(for:of:action:)` | ✅ | Apple公式ドキュメント |
 | `.onScrollGeometryChange(for:of:action:)` | ✅ | Apple公式ドキュメント |
 | `.onScrollPhaseChange()` | ✅ | Apple公式ドキュメント |
@@ -967,6 +1036,11 @@ class DataManager {
 | `WebView(url:)` | ✅ | Hacking with Swift確認 |
 | `.textEditorStyle(.rich)` | ✅ | Hacking with Swift確認 |
 | `.sectionIndexTitle()` | ✅ | Hacking with Swift確認 |
+| `Glass.regular` | ✅ | Donny Wals, Medium確認 |
+| `Glass.clear` | ✅ | Donny Wals, Medium確認 |
+| `Glass.identity` | ✅ | Donny Wals確認 |
+| `.tint(_:)` on Glass | ✅ | Donny Wals確認 |
+| `.interactive()` on Glass | ✅ | Donny Wals確認 |
 
 ### ⚠️ 重要な注意
 
@@ -979,6 +1053,13 @@ class DataManager {
 ---
 
 ## 📝 更新履歴
+
+- **2025年11月11日 v1.3**: Glass API正確な仕様を追記（重大な誤り修正）
+  - **重大修正**: `.prominent`と`.thin`は存在しないことを確認
+  - Glass enum値の正確な仕様を追記（.regular, .clear, .identity）
+  - `.tint()`と`.interactive()`メソッドの情報を追加
+  - 検証済みAPI一覧を更新（新たに5項目追加）
+  - 出典: Donny Wals、Medium技術記事（2025年7月）
 
 - **2025年11月11日 v1.2**: Web検索確認情報の追加、Git Push規則の調整
   - Web検索で確認済みの最新情報セクションを追加

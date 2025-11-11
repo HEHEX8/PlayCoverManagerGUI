@@ -156,7 +156,7 @@ private struct StorageChangeConfirmationView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .glassEffect(.prominent, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
@@ -232,7 +232,7 @@ private struct UnmountConfirmationView: View {
         }
         .padding(32)
         .frame(minWidth: 500)
-        .glassEffect(.prominent, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
