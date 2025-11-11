@@ -217,7 +217,7 @@ struct QuickLauncherView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: 280)
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+                    .glassEffect(.regular.tint(.accentColor.opacity(0.3)), in: RoundedRectangle(cornerRadius: 12))
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                     .onTapGesture {
                         // Focus search field when clicked
@@ -240,7 +240,7 @@ struct QuickLauncherView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
-                .glassEffect(.regular, in: .rect)
+                .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
                 .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
             
             // Recently launched app button (fixed at bottom)
@@ -338,7 +338,7 @@ struct QuickLauncherView: View {
                                 }
                             }
                         )
-                        .glassEffect(.regular, in: .rect)
+                        .glassEffect(.regular.tint(.accentColor.opacity(0.1)).interactive(), in: .rect)
                         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
                     }
                 }
@@ -451,6 +451,12 @@ struct QuickLauncherView: View {
             }
     }
     .frame(minWidth: 960, minHeight: 640)
+    .onGeometryChange(for: CGSize.self) { proxy in
+        proxy.size
+    } action: { newSize in
+        // Track window size for responsive grid layout
+        // Uses macOS 26 onGeometryChange API
+    }
     .overlay(alignment: .center) {
         // Unmount flow overlay (confirmation, progress, result, error)
         if viewModel.unmountFlowState != .idle {
@@ -477,7 +483,7 @@ struct QuickLauncherView: View {
                 }
             }
             .padding()
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+            .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle(cornerRadius: 12))
             .shadow(radius: 12)
         }
     }

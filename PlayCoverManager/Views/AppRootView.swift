@@ -90,7 +90,7 @@ struct CheckingView: View {
             }
             .padding(40)
             .frame(maxWidth: 500)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+            .glassEffect(.regular.tint(.blue.opacity(0.15)), in: RoundedRectangle(cornerRadius: 20))
             .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
         }
     }
@@ -192,7 +192,7 @@ struct ErrorView: View {
             }
             .padding(48)
             .frame(maxWidth: 600)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+            .glassEffect(.regular.tint(.orange.opacity(0.1)), in: RoundedRectangle(cornerRadius: 20))
             .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
         }
     }
@@ -246,7 +246,7 @@ struct TerminationFlowView: View {
             }
             .padding(48)
             .frame(maxWidth: 600)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+            .glassEffect(.regular.tint(.blue.opacity(0.1)).interactive(), in: RoundedRectangle(cornerRadius: 20))
             .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
         }
     }
