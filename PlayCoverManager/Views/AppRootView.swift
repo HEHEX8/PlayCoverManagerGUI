@@ -90,8 +90,14 @@ struct CheckingView: View {
             }
             .padding(40)
             .frame(maxWidth: 500)
-            .glassEffect(.regular.tint(.blue.opacity(0.15)), in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
+            .background(
+                ZStack {
+                    LinearGradient(colors: [.blue.opacity(0.08), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25)
+                    RoundedRectangle(cornerRadius: 20).glassEffect(.regular.tint(.blue.opacity(0.18)), in: RoundedRectangle(cornerRadius: 20))
+                }
+            )
+            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20)) }
+            .shadow(color: .blue.opacity(0.2), radius: 35, x: 0, y: 12)
         }
     }
 }
@@ -192,8 +198,14 @@ struct ErrorView: View {
             }
             .padding(48)
             .frame(maxWidth: 600)
-            .glassEffect(.regular.tint(.orange.opacity(0.1)), in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
+            .background(
+                ZStack {
+                    LinearGradient(colors: [.orange.opacity(0.07), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25)
+                    RoundedRectangle(cornerRadius: 20).glassEffect(.regular.tint(.orange.opacity(0.14)), in: RoundedRectangle(cornerRadius: 20))
+                }
+            )
+            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20)) }
+            .shadow(color: .orange.opacity(0.2), radius: 35, x: 0, y: 12)
         }
     }
     
@@ -246,8 +258,14 @@ struct TerminationFlowView: View {
             }
             .padding(48)
             .frame(maxWidth: 600)
-            .glassEffect(.regular.tint(.blue.opacity(0.1)), in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
+            .background(
+                ZStack {
+                    LinearGradient(colors: [.blue.opacity(0.07), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25)
+                    RoundedRectangle(cornerRadius: 20).glassEffect(.regular.tint(.blue.opacity(0.14)), in: RoundedRectangle(cornerRadius: 20))
+                }
+            )
+            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20)) }
+            .shadow(color: .blue.opacity(0.25), radius: 35, x: 0, y: 12)
         }
     }
     
