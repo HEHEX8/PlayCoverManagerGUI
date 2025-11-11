@@ -64,7 +64,7 @@ final class LauncherViewModel {
     @ObservationIgnored private var activeUnmountTasks: [String: Task<Void, Never>] = [:]
     
     // Flag to suppress KVO handling during termination sequence
-    // nonisolated to allow immediate access without MainActor scheduling
+    // nonisolated(unsafe): Safe for Bool flag (atomic read/write at CPU level)
     @ObservationIgnored nonisolated(unsafe) private var isTerminationSequenceActive: Bool = false
     
     // KVO observation for runningApplications (more efficient than notifications)
@@ -268,11 +268,8 @@ final class LauncherViewModel {
     
     /// Suppress KVO handling during app termination sequence
     /// Call this before starting termination unmount to prevent race conditions
-    /// Note: nonisolated to set flag immediately without MainActor scheduling delay
     nonisolated func enterTerminationSequence() {
-        // Set flag immediately without MainActor queueing
         isTerminationSequenceActive = true
-        // Log on MainActor (async)
         Task { @MainActor in
             Logger.lifecycle("Termination sequence started - KVO handling suppressed")
         }

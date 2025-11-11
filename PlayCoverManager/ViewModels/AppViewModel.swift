@@ -296,6 +296,10 @@ final class AppViewModel {
         // This must happen before checking running apps to prevent KVO race
         launcherVM.enterTerminationSequence()
         
+        // Brief wait to ensure flag is visible across all MainActor tasks
+        // This prevents KVO events already queued from creating new unmount tasks
+        try? await Task.sleep(for: .milliseconds(100))
+        
         var failedCount = 0
         var runningApps: [String] = []
         
