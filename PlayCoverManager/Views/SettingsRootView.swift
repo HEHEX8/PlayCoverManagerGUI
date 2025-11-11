@@ -1225,9 +1225,34 @@ struct IPAInstallerSheet: View {
                 // Step 4: Remove the incomplete .app bundle
                 try? FileManager.default.removeItem(at: appURL)
                 Logger.installation("Removed incomplete app bundle: \(appURL.path)")
-                }
                 
                 break
+            }
+        }
+        
+        // After cleaning up all incomplete installations, terminate PlayCover
+        await terminatePlayCover()
+    }
+    
+    /// Terminate PlayCover app after cleanup
+    private func terminatePlayCover() async {
+        let playCoverBundleID = "io.playcover.PlayCover"
+        
+        let runningApps = await MainActor.run {
+            NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == playCoverBundleID }
+        }
+        
+        for playCoverApp in runningApps {
+            Logger.installation("Terminating PlayCover (PID: \(playCoverApp.processIdentifier))")
+            let terminated = playCoverApp.terminate()
+            
+            if !terminated {
+                Logger.installation("Force killing PlayCover (PID: \(playCoverApp.processIdentifier))")
+                let killProcess = Process()
+                killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
+                killProcess.arguments = ["-9", "\(playCoverApp.processIdentifier)"]
+                try? killProcess.run()
+                killProcess.waitUntilExit()
             }
         }
     }
