@@ -1194,23 +1194,111 @@ struct IPAInstallerSheet: View {
                     continue
                 }
                 
-                // Found incomplete installation - remove it
+                // Found incomplete installation - need to clean up
                 Logger.installation("Cleaning up incomplete installation: \(appURL.path)")
-                try? FileManager.default.removeItem(at: appURL)
                 
-                // Also try to eject the disk image if mounted
+                // Step 1: Kill any running processes for this bundle ID
+                await killProcessesForBundleID(ipaInfo.bundleID)
+                
+                // Step 2: Wait a moment for processes to fully terminate
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                
+                // Step 3: Try to eject the disk image if mounted (before removing .app)
                 let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
                     .appendingPathComponent("Library/Containers", isDirectory: true)
                     .appendingPathComponent(ipaInfo.bundleID, isDirectory: true)
                 
                 if FileManager.default.fileExists(atPath: mountPoint.path) {
                     let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
-                    try? await diskImageService.ejectDiskImage(for: mountPoint, force: true)
-                    Logger.installation("Ejected disk image for incomplete installation: \(ipaInfo.bundleID)")
+                    
+                    // Try normal eject first
+                    do {
+                        try await diskImageService.ejectDiskImage(for: mountPoint, force: false)
+                        Logger.installation("Successfully ejected disk image for: \(ipaInfo.bundleID)")
+                    } catch {
+                        Logger.installation("Normal eject failed, trying force eject: \(error)")
+                        // Force eject if normal fails
+                        try? await diskImageService.ejectDiskImage(for: mountPoint, force: true)
+                    }
+                }
+                
+                // Step 4: Remove the incomplete .app bundle
+                try? FileManager.default.removeItem(at: appURL)
+                Logger.installation("Removed incomplete app bundle: \(appURL.path)")
                 }
                 
                 break
             }
+        }
+    }
+    
+    /// Kill all processes for a specific bundle ID
+    private func killProcessesForBundleID(_ bundleID: String) async {
+        // Find running app processes with this bundle ID
+        let runningApps = await MainActor.run {
+            NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == bundleID }
+        }
+        
+        for app in runningApps {
+            Logger.installation("Terminating process for \(bundleID), PID: \(app.processIdentifier)")
+            
+            // Try graceful termination first
+            let terminated = app.terminate()
+            
+            if !terminated {
+                // If graceful termination fails, force kill
+                Logger.installation("Graceful termination failed, force killing PID: \(app.processIdentifier)")
+                let killProcess = Process()
+                killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
+                killProcess.arguments = ["-9", "\(app.processIdentifier)"]
+                try? killProcess.run()
+                killProcess.waitUntilExit()
+            }
+        }
+        
+        // Also check for any lingering processes using lsof
+        await killProcessesUsingMountPoint(bundleID: bundleID)
+    }
+    
+    /// Kill processes that are using files in the mount point
+    private func killProcessesUsingMountPoint(bundleID: String) async {
+        let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
+            .appendingPathComponent("Library/Containers/\(bundleID)", isDirectory: true)
+        
+        guard FileManager.default.fileExists(atPath: mountPoint.path) else {
+            return
+        }
+        
+        // Use lsof to find processes using this mount point
+        let lsofProcess = Process()
+        lsofProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
+        lsofProcess.arguments = ["-t", "+D", mountPoint.path]
+        
+        let pipe = Pipe()
+        lsofProcess.standardOutput = pipe
+        lsofProcess.standardError = Pipe()
+        
+        do {
+            try lsofProcess.run()
+            lsofProcess.waitUntilExit()
+            
+            if lsofProcess.terminationStatus == 0 {
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                if let output = String(data: data, encoding: .utf8) {
+                    let pids = output.split(separator: "\n").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+                    
+                    for pid in pids {
+                        Logger.installation("Force killing process using mount point, PID: \(pid)")
+                        let killProcess = Process()
+                        killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
+                        killProcess.arguments = ["-9", "\(pid)"]
+                        try? killProcess.run()
+                        killProcess.waitUntilExit()
+                    }
+                }
+            }
+        } catch {
+            Logger.installation("Failed to check for processes using mount point: \(error)")
         }
     }
 }
