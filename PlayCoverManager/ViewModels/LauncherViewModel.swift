@@ -382,11 +382,18 @@ final class LauncherViewModel {
             Logger.lifecycle("Successfully launched \(app.displayName)")
             pendingLaunchContext = nil
             
-            // Refresh after a short delay to allow the app to start
-            // Swift 6.2: Task.immediate for responsive UI update
+            // Cancel any pending unmount task (user relaunched before unmount)
+            if let task = activeUnmountTasks[app.bundleIdentifier] {
+                task.cancel()
+                activeUnmountTasks.removeValue(forKey: app.bundleIdentifier)
+                Logger.lifecycle("Cancelled auto-unmount for \(app.bundleIdentifier) due to launch")
+            }
+            
+            // Update status immediately after launch
+            // This ensures UI updates even if KVO is delayed
             Task.immediate {
                 try? await Task.sleep(for: .seconds(0.5))
-                await refresh()
+                await updateAppStatus(bundleID: app.bundleIdentifier)
             }
         } catch let error as AppError {
             self.error = error
