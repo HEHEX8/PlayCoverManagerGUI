@@ -719,18 +719,48 @@ private struct iOSAppIconView: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                if app.isRunning {
-                    // Running indicator - adaptive for light/dark mode
-                    ZStack {
-                        Circle()
-                            .fill(Color.green)
-                            .frame(width: 14, height: 14)
-                        Circle()
-                            .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
-                            .frame(width: 14, height: 14)
+                // Status indicator with 3 states
+                // 🟢 Green: App is running
+                // 🟠 Orange: App terminated, auto-unmount pending (30s grace period)
+                // 🔴 Red: App completely stopped, container unmounted
+                Group {
+                    switch app.status {
+                    case .running:
+                        ZStack {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 14, height: 14)
+                            Circle()
+                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                                .frame(width: 14, height: 14)
+                        }
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .offset(x: 6, y: -6)
+                        
+                    case .unmountPending:
+                        ZStack {
+                            Circle()
+                                .fill(Color.orange)
+                                .frame(width: 14, height: 14)
+                            Circle()
+                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                                .frame(width: 14, height: 14)
+                        }
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .offset(x: 6, y: -6)
+                        
+                    case .stopped:
+                        ZStack {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 14, height: 14)
+                            Circle()
+                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
+                                .frame(width: 14, height: 14)
+                        }
+                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                        .offset(x: 6, y: -6)
                     }
-                    .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                    .offset(x: 6, y: -6)
                 }
             }
             // Bounce animation
@@ -792,6 +822,7 @@ private struct iOSAppIconView: View {
                     isAnimating = false
                 }
             }
+            .disabled(app.status == .unmountPending)
             Button("デバッグコンソールで起動") {
                 launchInDebugConsole(app: app)
             }

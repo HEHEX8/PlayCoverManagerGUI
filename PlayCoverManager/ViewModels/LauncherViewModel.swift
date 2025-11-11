@@ -158,6 +158,9 @@ final class LauncherViewModel {
     }
     
     private func handleAppTerminated(bundleID: String) async {
+        // Immediately update status to unmountPending
+        await refresh()
+        
         // Cancel any existing unmount task for this bundle ID
         activeUnmountTasks[bundleID]?.cancel()
         
@@ -171,7 +174,7 @@ final class LauncherViewModel {
         await task.value
         activeUnmountTasks.removeValue(forKey: bundleID)
         
-        // Refresh to update UI (green dot disappears)
+        // Refresh to update UI (status becomes stopped after unmount completes)
         await refresh()
     }
     
@@ -212,7 +215,27 @@ final class LauncherViewModel {
         do {
             // Refresh app list (includes isRunning check via LauncherService)
             let refreshed = try launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
-            apps = refreshed
+            
+            // Update status based on active unmount tasks
+            apps = refreshed.map { app in
+                var updatedApp = app
+                if activeUnmountTasks[app.bundleIdentifier] != nil {
+                    // App has active unmount task - set to unmountPending
+                    updatedApp = PlayCoverApp(
+                        bundleIdentifier: app.bundleIdentifier,
+                        displayName: app.displayName,
+                        standardName: app.standardName,
+                        version: app.version,
+                        appURL: app.appURL,
+                        icon: app.icon,
+                        lastLaunchedFlag: app.lastLaunchedFlag,
+                        isRunning: app.isRunning,
+                        status: .unmountPending
+                    )
+                }
+                return updatedApp
+            }
+            
             applySearch()
             
             // Update running apps set for consistency
