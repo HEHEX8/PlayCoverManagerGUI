@@ -416,12 +416,17 @@ final class LauncherViewModel {
     }
 
     private func createImageAndResume(app: PlayCoverApp, context: LaunchContext) async {
+        await CriticalOperationService.shared.beginOperation("ディスクイメージ作成")
+        
         isBusy = true
         isShowingStatus = true  // Show status for disk image creation (time-consuming)
         statusMessage = String(localized: "\(app.displayName) 用のディスクイメージを作成しています…")
         defer { 
             isBusy = false
             isShowingStatus = false
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
         }
         do {
             _ = try await diskImageService.ensureDiskImageExists(for: app.bundleIdentifier, volumeName: app.bundleIdentifier)
@@ -445,12 +450,17 @@ final class LauncherViewModel {
     }
 
     private func handleInternalData(strategy: SettingsStore.InternalDataStrategy, request: DataHandlingRequest, context: LaunchContext) async {
+        await CriticalOperationService.shared.beginOperation("内部データ処理")
+        
         isBusy = true
         isShowingStatus = true  // Show status for data handling (time-consuming)
         statusMessage = String(localized: "内部データを処理しています…")
         defer { 
             isBusy = false
             isShowingStatus = false
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
         }
         let containerURL = context.containerURL
         do {
@@ -485,6 +495,13 @@ final class LauncherViewModel {
     }
 
     private func mergeInternalData(bundleIdentifier: String, internalItems: [URL], containerURL: URL) async throws {
+        await CriticalOperationService.shared.beginOperation("内部データマージ")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
+        }
+        
         let tempBase = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/PlayCoverManager/TemporaryMounts", isDirectory: true)
         try fileManager.createDirectory(at: tempBase, withIntermediateDirectories: true)
@@ -682,6 +699,13 @@ final class LauncherViewModel {
     }
 
     private func performUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
+        await CriticalOperationService.shared.beginOperation("全てのディスクイメージをアンマウント")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
+        }
+        
         Logger.unmount("Starting unmount all and quit flow (includePlayCover: \(applyToPlayCoverContainer))")
         
         // Cancel all active auto-unmount tasks to prevent conflicts
@@ -949,6 +973,13 @@ final class LauncherViewModel {
     
     /// Perform force unmount for storage change (does not quit)
     private func performForceUnmountForStorageChange() async {
+        await CriticalOperationService.shared.beginOperation("ストレージ変更の強制アンマウント")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
+        }
+        
         // Cancel all active auto-unmount tasks
         Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for force unmount")
         for (_, task) in activeUnmountTasks {
@@ -1024,6 +1055,13 @@ final class LauncherViewModel {
     }
     
     private func performForceUnmountAllAndQuit(applyToPlayCoverContainer: Bool) async {
+        await CriticalOperationService.shared.beginOperation("強制アンマウント")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
+        }
+        
         // Cancel all active auto-unmount tasks
         Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for force unmount and quit")
         for (_, task) in activeUnmountTasks {
@@ -1264,6 +1302,13 @@ final class LauncherViewModel {
     
     /// Perform unmount all for storage location change (does not quit)
     private func performUnmountForStorageChange() async {
+        await CriticalOperationService.shared.beginOperation("ストレージ変更のアンマウント")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
+        }
+        
         // Cancel all active auto-unmount tasks
         Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for storage change")
         for (_, task) in activeUnmountTasks {

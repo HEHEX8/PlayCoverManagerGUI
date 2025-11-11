@@ -127,6 +127,13 @@ final class AppViewModel {
     }
 
     private func ensureContainerMounted(for playCoverPaths: PlayCoverPaths, diskImageURL: URL) async throws {
+        await CriticalOperationService.shared.beginOperation("PlayCover コンテナマウント")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
+        }
+        
         let mountPoint = playCoverPaths.containerRootURL
         do {
             // Use PlayCover's own mount method (not our helper since this is PlayCover's container)
@@ -253,6 +260,13 @@ final class AppViewModel {
     func unmountPlayCoverContainer() async {
         guard let playCoverPaths = playCoverPaths else { return }
         
+        await CriticalOperationService.shared.beginOperation("PlayCover コンテナアンマウント")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
+        }
+        
         let containerURL = playCoverPaths.containerRootURL
         
         // Check if mounted
@@ -275,6 +289,13 @@ final class AppViewModel {
         guard let launcherVM = launcherViewModel,
               let playCoverPaths = playCoverPaths else {
             return (success: true, failedCount: 0, runningApps: [])
+        }
+        
+        await CriticalOperationService.shared.beginOperation("終了時の全コンテナアンマウント")
+        defer {
+            Task { @MainActor in
+                await CriticalOperationService.shared.endOperation()
+            }
         }
         
         var failedCount = 0
