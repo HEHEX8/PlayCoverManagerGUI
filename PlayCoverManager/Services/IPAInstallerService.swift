@@ -497,8 +497,8 @@ class IPAInstallerService {
                     }
                     Logger.installation("Installation complete with valid signature")
                     
-                    // Terminate PlayCover gracefully
-                    await terminatePlayCover()
+                    // Don't terminate PlayCover here - will be handled by caller
+                    // (for batch installs, we want to keep it open for next app)
                     return
                 }
             }
@@ -776,8 +776,10 @@ class IPAInstallerService {
             currentStatus = String(localized: "完了")
             currentAppName = ""  // Clear current app name after all installations complete
             currentAppIcon = nil  // Clear current app icon
-            
         }
+        
+        // Terminate PlayCover after all installations are complete
+        await terminatePlayCover()
     }
     
     // MARK: - Get Installed App Details
