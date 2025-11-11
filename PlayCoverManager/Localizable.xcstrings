@@ -87,7 +87,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "未找到匹配的應用程序。"
+            "value": "未找到匹配的應用程式。"
           }
         }
       }
@@ -132,7 +132,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "未找到與“%@”匹配的應用程序。"
+            "value": "未找到與“%@”匹配的應用程式。"
           }
         }
       }
@@ -155,7 +155,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "(包括 PlayCover 容器和關聯的應用程序容器)"
+            "value": "(包括 PlayCover 容器和關聯的應用程式容器)"
           }
         }
       }
@@ -292,7 +292,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇“不彈出”以退出應用程序而不彈出。"
+            "value": "選擇“不彈出”以退出應用程式而不彈出。"
           }
         }
       }
@@ -338,7 +338,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "你想安裝 \\(analyzedIPAs.count) 個應用程序嗎？"
+            "value": "你想安裝 \\(analyzedIPAs.count) 個應用程式嗎？"
           }
         }
       }
@@ -706,7 +706,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "你想卸載\\(selectedAppInfos.count)個應用程序嗎？"
+            "value": "你想卸載\\(selectedAppInfos.count)個應用程式嗎？"
           }
         }
       }
@@ -992,7 +992,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "你想卸載 %lld 個應用程序嗎？"
+            "value": "你想卸載 %lld 個應用程式嗎？"
           }
         }
       }
@@ -1014,7 +1014,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "你想安裝 %lld 個應用程序嗎？"
+            "value": "你想安裝 %lld 個應用程式嗎？"
           }
         }
       }
@@ -1125,7 +1125,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "* 應用程序主體+磁盤鏡像文件"
+            "value": "* 應用程式主體+磁盤鏡像文件"
           }
         }
       }
@@ -1194,7 +1194,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "*總計 = 應用程序本身 + 磁盤映像文件"
+            "value": "*總計 = 應用程式本身 + 磁盤映像文件"
           }
         }
       }
@@ -1373,7 +1373,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "安裝到 ~/Library/Containers/ 需要“完全磁盤訪問”權限。\n\n解決方法:\n1.打開系統設定（使用 ⌘+空格 搜尋“系統設置”)\n2. 隱私和安全 > 全磁盤訪問\n3. 使用“+”按鈕添加 PlayCover Manager\n4. 請重新啟動應用程序\n\n安裝到:%@"
+            "value": "安裝到 ~/Library/Containers/ 需要“完全磁盤訪問”權限。\n\n解決方法:\n1.打開系統設定（使用 ⌘+空格 搜尋“系統設置”)\n2. 隱私和安全 > 全磁盤訪問\n3. 使用“+”按鈕添加 PlayCover Manager\n4. 請重新啟動應用程式\n\n安裝到:%@"
           }
         }
       }
@@ -1715,7 +1715,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 Finder 中顯示應用程序"
+            "value": "在 Finder 中顯示應用程式"
           }
         }
       }
@@ -1967,7 +1967,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "IPA安裝程序"
+            "value": "IPA安裝程式"
           }
         }
       }
@@ -2197,7 +2197,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "適用於 iPhone 專屬應用程序"
+            "value": "適用於 iPhone 專屬應用程式"
           }
         }
       }
@@ -2231,7 +2231,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS Tahoe 26.0 or later"
+            "value": "MacOS Tahoe 26.0 or later"
           }
         },
         "zh-Hans": {
@@ -2253,7 +2253,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS security settings have denied access to the destination directory.\n\nHow to deal with it:\n1. System Settings > Privacy and Security > Full Disk Access\n2. Click the “+” button and add PlayCover Manager\n3. Restart the app\n\nPath: %@"
+            "value": "MacOS security settings have denied access to the destination directory.\n\nHow to deal with it:\n1. System Settings > Privacy and Security > Full Disk Access\n2. Click the “+” button and add PlayCover Manager\n3. Restart the app\n\nPath: %@"
           }
         },
         "zh-Hans": {
@@ -2265,7 +2265,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS 安全設置拒絕訪問目標目錄。\n\n解決方法:\n1. 系統設置 > 隱私和安全 > 全磁盤訪問\n2. 點擊“+”按鈕並添加 PlayCover Manager\n3. 重新啟動應用程序\n\n路徑:%@"
+            "value": "macOS 安全設置拒絕訪問目標目錄。\n\n解決方法:\n1. 系統設置 > 隱私和安全 > 全磁盤訪問\n2. 點擊“+”按鈕並添加 PlayCover Manager\n3. 重新啟動應用程式\n\n路徑:%@"
           }
         }
       }
@@ -2276,7 +2276,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS security settings have denied access to the destination directory.\\n\\nSolution:\\n1. System Settings > Privacy & Security > Full Disk Access\\n2. Click the \"+\" button and add PlayCover Manager\\n3. Restart the app\\n\\nPath: \\(parentDir.path)"
+            "value": "MacOS security settings have denied access to the destination directory.\\n\\nSolution:\\n1. System Settings > Privacy & Security > Full Disk Access\\n2. Click the \"+\" button and add PlayCover Manager\\n3. Restart the app\\n\\nPath: \\(parentDir.path)"
           }
         },
         "zh-Hans": {
@@ -2299,7 +2299,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS version is too old"
+            "value": "MacOS version is too old"
           }
         },
         "zh-Hans": {
@@ -2423,7 +2423,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "PlayCover Manager 是一款對 PlayCover 進行補充的應用程序。\n\n輕鬆管理磁盤映像和 IPA 安裝。"
+            "value": "PlayCover Manager 是一款對 PlayCover 進行補充的應用程式。\n\n輕鬆管理磁盤映像和 IPA 安裝。"
           }
         }
       }
@@ -2446,7 +2446,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "PlayCover Manager 是一款對 PlayCover 進行補充的應用程序。\\n\\n輕鬆的磁盤映像管理和 IPA 安裝。"
+            "value": "PlayCover Manager 是一款對 PlayCover 進行補充的應用程式。\\n\\n輕鬆的磁盤映像管理和 IPA 安裝。"
           }
         }
       }
@@ -2469,7 +2469,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "PlayCover Manager 是一個 GUI 工具，用於全面管理隨 PlayCover 安裝的 iOS 應用程序。"
+            "value": "PlayCover Manager 是一個 GUI 工具，用於全面管理隨 PlayCover 安裝的 iOS 應用程式。"
           }
         }
       }
@@ -3552,7 +3552,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "應用程序:\\(app.displayName)"
+            "value": "應用程式:\\(app.displayName)"
           }
         }
       }
@@ -3597,7 +3597,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "清除應用程序圖標緩存。將在下次啟動時重新加載。"
+            "value": "清除應用程式圖標緩存。將在下次啟動時重新加載。"
           }
         }
       }
@@ -3620,7 +3620,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "應用程序卸載程序"
+            "value": "應用程式卸載程式"
           }
         }
       }
@@ -3643,7 +3643,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "該應用程序將重新啟動並顯示初始設置嚮導。"
+            "value": "該應用程式將重新啟動並顯示初始設置嚮導。"
           }
         }
       }
@@ -3666,7 +3666,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "無法卸載，因為應用程序正在運行"
+            "value": "無法卸載，因為應用程式正在運行"
           }
         }
       }
@@ -3689,7 +3689,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "無法安裝，因為應用程序正在運行"
+            "value": "無法安裝，因為應用程式正在運行"
           }
         }
       }
@@ -3712,7 +3712,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "找不到應用程序"
+            "value": "找不到應用程式"
           }
         }
       }
@@ -3735,7 +3735,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在卸載應用程序容器..."
+            "value": "正在卸載應用程式容器..."
           }
         }
       }
@@ -3780,7 +3780,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "應用程序大小:"
+            "value": "應用程式大小:"
           }
         }
       }
@@ -3803,7 +3803,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "當內部數據保留在應用程序容器中時，這是默認過程。從啟動器啟動時你可以更改它。"
+            "value": "當內部數據保留在應用程式容器中時，這是默認過程。從啟動器啟動時你可以更改它。"
           }
         }
       }
@@ -3849,7 +3849,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "檢查應用程序的運行狀態"
+            "value": "檢查應用程式的運行狀態"
           }
         }
       }
@@ -3895,7 +3895,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "無法啟動應用程序"
+            "value": "無法啟動應用程式"
           }
         }
       }
@@ -3918,7 +3918,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "打開應用程序文件夾"
+            "value": "打開應用程式文件夾"
           }
         }
       }
@@ -3941,7 +3941,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "卸載應用程序"
+            "value": "卸載應用程式"
           }
         }
       }
@@ -3964,7 +3964,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "卸載應用程序 (⌘D)"
+            "value": "卸載應用程式 (⌘D)"
           }
         }
       }
@@ -3987,7 +3987,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "重新啟動應用程序，圖標將重新加載。"
+            "value": "重新啟動應用程式，圖標將重新加載。"
           }
         }
       }
@@ -4010,7 +4010,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在刪除應用程序:\\(app.appName)"
+            "value": "正在刪除應用程式:\\(app.appName)"
           }
         }
       }
@@ -4032,7 +4032,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在刪除應用程序:%@"
+            "value": "正在刪除應用程式:%@"
           }
         }
       }
@@ -4055,7 +4055,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在刪除應用程序..."
+            "value": "正在刪除應用程式..."
           }
         }
       }
@@ -4078,7 +4078,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "搜索應用程序"
+            "value": "搜索應用程式"
           }
         }
       }
@@ -4101,7 +4101,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在搜索應用程序..."
+            "value": "正在搜索應用程式..."
           }
         }
       }
@@ -4146,7 +4146,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "請關閉應用程序並重試"
+            "value": "請關閉應用程式並重試"
           }
         }
       }
@@ -4175,7 +4175,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "請關閉應用程序並重試。"
+            "value": "請關閉應用程式並重試。"
           }
         }
       }
@@ -4198,7 +4198,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "分析你的應用程序並查看詳細信息"
+            "value": "分析你的應用程式並查看詳細信息"
           }
         }
       }
@@ -4267,7 +4267,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "更新的應用程序列表"
+            "value": "更新的應用程式列表"
           }
         }
       }
@@ -4290,7 +4290,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在加載應用程序列表..."
+            "value": "正在加載應用程式列表..."
           }
         }
       }
@@ -4359,7 +4359,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "應用程序特定設置"
+            "value": "應用程式特定設置"
           }
         }
       }
@@ -4382,7 +4382,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "未找到應用程序信息"
+            "value": "未找到應用程式信息"
           }
         }
       }
@@ -4405,7 +4405,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在獲取應用程序信息..."
+            "value": "正在獲取應用程式信息..."
           }
         }
       }
@@ -4428,7 +4428,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "應用程序本身"
+            "value": "應用程式本身"
           }
         }
       }
@@ -4563,7 +4563,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "應用程序設置"
+            "value": "應用程式設置"
           }
         }
       }
@@ -4586,7 +4586,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "正在刪除應用程序設置..."
+            "value": "正在刪除應用程式設置..."
           }
         }
       }
@@ -4609,7 +4609,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "關閉應用程序設置 (Esc)"
+            "value": "關閉應用程式設置 (Esc)"
           }
         }
       }
@@ -4632,7 +4632,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "在應用程序之間移動"
+            "value": "在應用程式之間移動"
           }
         }
       }
@@ -4776,7 +4776,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "沒有可以卸載的應用程序"
+            "value": "沒有可以卸載的應用程式"
           }
         }
       }
@@ -5278,7 +5278,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "已安裝的應用程序 (\\(apps.count))"
+            "value": "已安裝的應用程式 (\\(apps.count))"
           }
         }
       }
@@ -5301,7 +5301,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "已安裝的應用程序 (%lld)"
+            "value": "已安裝的應用程式 (%lld)"
           }
         }
       }
@@ -5324,7 +5324,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "沒有安裝的應用程序"
+            "value": "沒有安裝的應用程式"
           }
         }
       }
@@ -5829,7 +5829,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "設置是否在 Finder 中顯示該應用程序的磁盤映像。"
+            "value": "設置是否在 Finder 中顯示該應用程式的磁盤映像。"
           }
         }
       }
@@ -5874,7 +5874,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "此應用程序使用 ASIF 磁盤映像格式，僅適用於 macOS Tahoe(版本 26)或更高版本。"
+            "value": "此應用程式使用 ASIF 磁盤映像格式，僅適用於 macOS Tahoe(版本 26)或更高版本。"
           }
         }
       }
@@ -5897,7 +5897,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "此應用程序需要 macOS Tahoe 26.0 或更高版本"
+            "value": "此應用程式需要 macOS Tahoe 26.0 或更高版本"
           }
         }
       }
@@ -5919,7 +5919,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "此應用程序需要 macOS Tahoe 26.0 或更高版本。\n\n當前版本:macOS %@\n所需版本:macOS Tahoe 26.0 或更高版本\n\n請更新你的系統並重試。"
+            "value": "此應用程式需要 macOS Tahoe 26.0 或更高版本。\n\n當前版本:macOS %@\n所需版本:macOS Tahoe 26.0 或更高版本\n\n請更新你的系統並重試。"
           }
         }
       }
@@ -5942,7 +5942,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "此應用程序需要 macOS Tahoe 26.0 或更高版本。\\n\\n當前版本:macOS \\(versionString)\\n所需版本:macOS Tahoe 26.0 或更高版本\\n\\n請更新你的系統並重試。"
+            "value": "此應用程式需要 macOS Tahoe 26.0 或更高版本。\\n\\n當前版本:macOS \\(versionString)\\n所需版本:macOS Tahoe 26.0 或更高版本\\n\\n請更新你的系統並重試。"
           }
         }
       }
@@ -5965,7 +5965,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "你想卸載這個應用程序嗎？"
+            "value": "你想卸載這個應用程式嗎？"
           }
         }
       }
@@ -5988,7 +5988,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "重新安裝此應用程序。"
+            "value": "重新安裝此應用程式。"
           }
         }
       }
@@ -6400,7 +6400,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "卸載前請關閉所有應用程序。"
+            "value": "卸載前請關閉所有應用程式。"
           }
         }
       }
@@ -6445,7 +6445,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "卸載所有磁盤映像並退出應用程序。\n\n對於外部驅動器，請確保每個驅動器都可以安全移除。"
+            "value": "卸載所有磁盤映像並退出應用程式。\n\n對於外部驅動器，請確保每個驅動器都可以安全移除。"
           }
         }
       }
@@ -6468,7 +6468,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "卸載所有磁盤映像並退出應用程序。\\n\\n對於外部驅動器，請確保你可以安全地刪除整個驅動器。"
+            "value": "卸載所有磁盤映像並退出應用程式。\\n\\n對於外部驅動器，請確保你可以安全地刪除整個驅動器。"
           }
         }
       }
@@ -6514,7 +6514,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "將所有設置恢復為默認值(磁盤映像和應用程序不被刪除)。"
+            "value": "將所有設置恢復為默認值(磁盤映像和應用程式不被刪除)。"
           }
         }
       }
@@ -8251,7 +8251,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "啟動重點應用程序"
+            "value": "啟動重點應用程式"
           }
         }
       }
@@ -9061,7 +9061,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "interchangeability emphasis"
+            "value": "Interchangeability emphasis"
           }
         },
         "zh-Hans": {
@@ -9141,7 +9141,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "當前正在運行以下應用程序。卸載前請關閉這些應用程序。\\n\\n\\(應用程序列表)"
+            "value": "當前正在運行以下應用程式。卸載前請關閉這些應用程式。\\n\\n\\(應用程式列表)"
           }
         }
       }
@@ -9673,7 +9673,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "要更改保存位置，請先關閉這些應用程序。\n\n%@"
+            "value": "要更改保存位置，請先關閉這些應用程式。\n\n%@"
           }
         }
       }
@@ -9696,7 +9696,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "要更改保存位置，請先關閉這些應用程序。\\n\\n\\(應用程序列表)"
+            "value": "要更改保存位置，請先關閉這些應用程式。\\n\\n\\(應用程式列表)"
           }
         }
       }
@@ -10528,7 +10528,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "最後啟動的應用程序"
+            "value": "最後啟動的應用程式"
           }
         }
       }
@@ -11144,7 +11144,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "運行應用程序:"
+            "value": "運行應用程式:"
           }
         }
       }
@@ -11167,7 +11167,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "我有一個正在運行的應用程序"
+            "value": "我有一個正在運行的應用程式"
           }
         }
       }
@@ -11614,7 +11614,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "technical information"
+            "value": "Technical information"
           }
         },
         "zh-Hans": {
@@ -11786,7 +11786,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "將你現有的應用程序降級到舊版本。"
+            "value": "將你現有的應用程式降級到舊版本。"
           }
         }
       }
@@ -11809,7 +11809,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "將現有應用程序升級到新版本。"
+            "value": "將現有應用程式升級到新版本。"
           }
         }
       }
@@ -12771,7 +12771,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "必須重新啟動應用程序才能使語言更改完全生效。"
+            "value": "必須重新啟動應用程式才能使語言更改完全生效。"
           }
         }
       }
@@ -12817,7 +12817,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "更改語言需要重新啟動應用程序。"
+            "value": "更改語言需要重新啟動應用程式。"
           }
         }
       }
