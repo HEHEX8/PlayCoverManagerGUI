@@ -2007,13 +2007,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "安装 IPA 文件后，它将出现在此处。"
+            "value": "安装 IPA 文件后，将出现在此处。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "安裝 IPA 文件後，它將出現在此處。"
+            "value": "安裝 IPA 文件後，將出現在此處。"
           }
         }
       }
@@ -3148,13 +3148,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 /Applications 中安装 PlayCover.app"
+            "value": "请在 /Applications 中安装 PlayCover.app"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "在 /Applications 中安裝 PlayCover.app"
+            "value": "請在 /Applications 中安裝 PlayCover.app"
           }
         }
       }
@@ -3591,13 +3591,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "清除应用图标缓存。它将在下次启动时重新加载。"
+            "value": "清除应用图标缓存。将在下次启动时重新加载。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "清除應用程序圖標緩存。它將在下次啟動時重新加載。"
+            "value": "清除應用程序圖標緩存。將在下次啟動時重新加載。"
           }
         }
       }
@@ -3906,7 +3906,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Open app folder"
+            "value": "Open App Folder"
           }
         },
         "zh-Hans": {
