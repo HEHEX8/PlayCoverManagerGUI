@@ -308,13 +308,16 @@ final class AppViewModel {
             return (success: false, failedCount: failedCount, runningApps: runningApps)
         }
         
+        // Suspend KVO monitoring to prevent race conditions
+        // This prevents new auto-unmount tasks from being created during termination
+        await launcherVM.suspendKVOMonitoring()
+        
         // Cancel all active auto-unmount tasks to prevent conflicts
         let activeTaskCount = launcherVM.activeUnmountTaskCount
         if activeTaskCount > 0 {
             Logger.unmount("Cancelling \(activeTaskCount) active auto-unmount tasks")
             await launcherVM.cancelAllAutoUnmountTasks()
-            // Brief wait for KVO event processing to prevent duplicate task creation
-            try? await Task.sleep(for: .milliseconds(100))
+            // No wait needed - KVO is suspended, so no new tasks will be created
         }
         
         // Explicitly release all locks to ensure no file handles remain

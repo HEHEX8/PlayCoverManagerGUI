@@ -99,6 +99,23 @@ final class LauncherViewModel {
         runningAppsObservation?.invalidate()
     }
     
+    // MARK: - KVO Monitoring Control
+    
+    /// Temporarily suspend KVO monitoring to prevent race conditions during app termination
+    @MainActor
+    func suspendKVOMonitoring() {
+        Logger.lifecycle("Suspending KVO monitoring for termination sequence")
+        runningAppsObservation?.invalidate()
+        runningAppsObservation = nil
+    }
+    
+    /// Resume KVO monitoring (typically not needed as app is terminating)
+    @MainActor
+    func resumeKVOMonitoring() {
+        Logger.lifecycle("Resuming KVO monitoring")
+        setupAppLifecycleMonitoring()
+    }
+    
     private func setupAppLifecycleMonitoring() {
         let workspace = NSWorkspace.shared
         
@@ -121,6 +138,12 @@ final class LauncherViewModel {
             
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
+                
+                // Skip processing if termination sequence is active
+                guard !self.isTerminationSequenceActive else {
+                    Logger.lifecycle("KVO event suppressed - termination sequence active")
+                    return
+                }
                 
                 // Build Set of managed bundle IDs for O(1) lookup
                 let managedBundleIDs = Set(self.apps.map { $0.bundleIdentifier })
@@ -237,6 +260,19 @@ final class LauncherViewModel {
             Logger.unmount("Cancelled auto-unmount for: \(bundleID)")
         }
         activeUnmountTasks.removeAll()
+    }
+    
+    /// Suppress KVO handling during app termination sequence
+    /// Call this before starting termination unmount to prevent race conditions
+    func enterTerminationSequence() {
+        isTerminationSequenceActive = true
+        Logger.lifecycle("Termination sequence started - KVO handling suppressed")
+    }
+    
+    /// Resume normal KVO handling (typically not needed as app is terminating)
+    func exitTerminationSequence() {
+        isTerminationSequenceActive = false
+        Logger.lifecycle("Termination sequence ended - KVO handling resumed")
     }
     
     private func cleanupStaleLockFiles() {
