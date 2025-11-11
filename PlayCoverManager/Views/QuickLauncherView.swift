@@ -2283,10 +2283,18 @@ private struct SettingsView: View {
             Logger.debug("Found CFBundleDevelopmentRegion: \(devRegion)")
         }
         
-        // Check for .lproj directories as fallback
-        if languages.isEmpty {
-            Logger.debug("No languages found in Info.plist, checking .lproj directories...")
-            languages = scanLprojDirectories()
+        // Always scan for .lproj directories as primary source if Info.plist doesn't have full list
+        // Many iOS apps don't populate CFBundleLocalizations properly
+        if languages.count < 3 {  // If we only have 1-2 languages, likely Info.plist is incomplete
+            Logger.debug("Info.plist has limited language info (\(languages.count) languages), scanning .lproj directories...")
+            let lprojLanguages = scanLprojDirectories()
+            
+            // Merge with existing languages
+            for lang in lprojLanguages {
+                if !languages.contains(lang) {
+                    languages.append(lang)
+                }
+            }
         }
         
         supportedLanguages = languages
@@ -2294,27 +2302,30 @@ private struct SettingsView: View {
     }
     
     private func scanLprojDirectories() -> [String] {
-        var languages: [String] = []
+        var languages: Set<String> = []
         
-        guard let contents = try? FileManager.default.contentsOfDirectory(
+        // Recursively scan for .lproj directories (same as analysis)
+        guard let enumerator = FileManager.default.enumerator(
             at: app.appURL,
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
-        ) else { return languages }
+        ) else {
+            Logger.debug("Failed to create enumerator for \(app.appURL.path)")
+            return []
+        }
         
-        for url in contents {
-            if url.pathExtension == "lproj" {
-                let langCode = url.deletingPathExtension().lastPathComponent
+        for case let fileURL as URL in enumerator {
+            if fileURL.pathExtension == "lproj" {
+                let langCode = fileURL.deletingPathExtension().lastPathComponent
                 // Convert Base.lproj to en
                 let normalizedCode = langCode == "Base" ? "en" : langCode
-                if !languages.contains(normalizedCode) {
-                    languages.append(normalizedCode)
-                }
+                languages.insert(normalizedCode)
             }
         }
         
-        Logger.debug("Found .lproj directories: \(languages)")
-        return languages.sorted()
+        let sortedLanguages = languages.sorted()
+        Logger.debug("Found .lproj directories (recursive scan): \(sortedLanguages)")
+        return sortedLanguages
     }
     
     private func getLanguageDisplayName(_ code: String) -> String {
