@@ -39,6 +39,7 @@ struct SetupWizardView: View {
                         RoundedRectangle(cornerRadius: 20)
                             .glassEffect(.regular.tint(.accentColor.opacity(0.15)), in: RoundedRectangle(cornerRadius: 20))
                     }
+                    .allowsHitTesting(false)
                 )
                 .overlay {
                     // Elegant shine effect
@@ -48,6 +49,7 @@ struct SetupWizardView: View {
                         endPoint: .bottomTrailing
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .allowsHitTesting(false)
                 }
                 .shadow(color: .accentColor.opacity(0.2), radius: 40, x: 0, y: 15)
                 

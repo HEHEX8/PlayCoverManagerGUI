@@ -179,8 +179,9 @@ private struct GeneralSettingsView: View {
                         LinearGradient(colors: [.purple.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
                         RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.purple.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
+                    .allowsHitTesting(false)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
                 .shadow(color: .purple.opacity(0.15), radius: 12, x: 0, y: 4)
                 
 
@@ -226,8 +227,9 @@ private struct GeneralSettingsView: View {
                         LinearGradient(colors: [.green.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
                         RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.green.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
+                    .allowsHitTesting(false)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
                 .shadow(color: .green.opacity(0.15), radius: 12, x: 0, y: 4)
             }
             .padding(20)
@@ -373,8 +375,9 @@ private struct DataSettingsView: View {
                         LinearGradient(colors: [.orange.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
                         RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.orange.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
+                    .allowsHitTesting(false)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
                 .shadow(color: .orange.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 Spacer()
@@ -1906,8 +1909,9 @@ private struct MaintenanceSettingsView: View {
                         LinearGradient(colors: [.blue.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
                         RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.blue.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
+                    .allowsHitTesting(false)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
                 .shadow(color: .blue.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 // PlayCover Shortcuts Card
@@ -1939,8 +1943,9 @@ private struct MaintenanceSettingsView: View {
                         LinearGradient(colors: [.orange.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
                         RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.orange.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
+                    .allowsHitTesting(false)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
                 .shadow(color: .orange.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 // Reset Card
@@ -1972,8 +1977,9 @@ private struct MaintenanceSettingsView: View {
                         LinearGradient(colors: [.red.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
                         RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.red.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
                     }
+                    .allowsHitTesting(false)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)) }
+                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
                 .shadow(color: .red.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 Spacer()

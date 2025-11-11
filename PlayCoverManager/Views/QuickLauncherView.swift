@@ -222,6 +222,7 @@ struct QuickLauncherView: View {
                     Spacer()
                 }
             }
+            .allowsHitTesting(false)  // Allow clicks to pass through background
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -307,6 +308,7 @@ struct QuickLauncherView: View {
                         Rectangle()
                             .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
                     }
+                    .allowsHitTesting(false)  // Allow clicks to pass through to buttons
                 )
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
                 .overlay(alignment: .bottom) {
@@ -318,6 +320,7 @@ struct QuickLauncherView: View {
                             endPoint: .trailing
                         ))
                         .frame(height: 0.5)
+                        .allowsHitTesting(false)  // Allow clicks through separator
                 }
             
             // Recently launched app button (fixed at bottom)
@@ -438,6 +441,7 @@ struct QuickLauncherView: View {
                                 Rectangle()
                                     .glassEffect(.regular.tint(.accentColor.opacity(0.12)), in: .rect)
                             }
+                            .allowsHitTesting(false)  // Allow clicks through to button
                         )
                         .shadow(color: .accentColor.opacity(0.15), radius: 12, x: 0, y: -4)
                         .overlay(alignment: .top) {
@@ -449,6 +453,7 @@ struct QuickLauncherView: View {
                             )
                             .frame(height: 60)
                             .blur(radius: 10)
+                            .allowsHitTesting(false)  // Allow clicks through shine
                         }
                     }
                 }
@@ -797,6 +802,7 @@ private struct ModernToolbarButton: View {
                                 in: RoundedRectangle(cornerRadius: 12)
                             )
                     }
+                    .allowsHitTesting(false)  // Allow clicks through to button
                 )
                 .shadow(
                     color: isHovered ? color.opacity(0.3) : .black.opacity(0.1), 
@@ -813,6 +819,7 @@ private struct ModernToolbarButton: View {
                             endPoint: .bottomTrailing
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .allowsHitTesting(false)  // Allow clicks through shine
                     }
                 }
                 .contentShape(Rectangle())  // Ensure entire area is tappable
@@ -3663,6 +3670,7 @@ private struct DrawerPanel: View {
                 Rectangle()
                     .glassEffect(.regular.tint(.primary.opacity(0.08)), in: .rect)
             }
+            .allowsHitTesting(false)  // Allow clicks through to drawer items
         )
         .overlay(alignment: .trailing) {
             // Enhanced separator with gradient
@@ -3673,6 +3681,7 @@ private struct DrawerPanel: View {
                     endPoint: .bottom
                 ))
                 .frame(width: 1)
+                .allowsHitTesting(false)  // Allow clicks through separator
         }
         .shadow(color: .black.opacity(0.2), radius: 20, x: 4, y: 0)
         .shadow(color: .black.opacity(0.3), radius: 10, x: 2, y: 0)
