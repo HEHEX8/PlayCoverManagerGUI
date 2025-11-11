@@ -170,15 +170,58 @@ struct QuickLauncherView: View {
                 .focusEffectDisabled()  // Disable blue focus ring
                 .opacity(0.01)  // Nearly invisible but still present
             
-            // Modern gradient background
-            LinearGradient(
-                colors: [
-                    Color(nsColor: .windowBackgroundColor),
-                    Color(nsColor: .controlBackgroundColor).opacity(0.3)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
+            // Rich multi-layer gradient background with depth
+            ZStack {
+                // Base gradient
+                LinearGradient(
+                    colors: [
+                        Color(nsColor: .windowBackgroundColor),
+                        Color(nsColor: .controlBackgroundColor).opacity(0.3)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                
+                // Radial glow from center
+                RadialGradient(
+                    colors: [
+                        .accentColor.opacity(0.03),
+                        .purple.opacity(0.02),
+                        .clear
+                    ],
+                    center: .center,
+                    startRadius: 100,
+                    endRadius: 600
+                )
+                
+                // Ambient corner glows
+                VStack {
+                    HStack {
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [.blue.opacity(0.08), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 200
+                            ))
+                            .frame(width: 400, height: 400)
+                            .blur(radius: 60)
+                        
+                        Spacer()
+                        
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [.purple.opacity(0.06), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 180
+                            ))
+                            .frame(width: 350, height: 350)
+                            .blur(radius: 50)
+                    }
+                    Spacer()
+                }
+            }
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -217,8 +260,16 @@ struct QuickLauncherView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: 280)
-                    .glassEffect(.regular.tint(.accentColor.opacity(0.3)), in: RoundedRectangle(cornerRadius: 12))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    .glassEffect(
+                        isSearchFieldFocused 
+                        ? .regular.tint(.accentColor.opacity(0.4))
+                        : .regular.tint(.accentColor.opacity(0.2)), 
+                        in: RoundedRectangle(cornerRadius: 12)
+                    )
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
+                    .shadow(color: isSearchFieldFocused ? .accentColor.opacity(0.3) : .black.opacity(0.1), radius: isSearchFieldFocused ? 8 : 4, x: 0, y: 2)
+                    .scaleEffect(isSearchFieldFocused ? 1.02 : 1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
                     .onTapGesture {
                         // Focus search field when clicked
                         isSearchFieldFocused = true
@@ -240,8 +291,34 @@ struct QuickLauncherView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
-                .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .background(
+                    // Multi-layer glass effect for depth
+                    ZStack {
+                        // Bottom layer - subtle glow
+                        Rectangle()
+                            .fill(LinearGradient(
+                                colors: [.accentColor.opacity(0.03), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
+                            .blur(radius: 20)
+                        
+                        // Top layer - main glass
+                        Rectangle()
+                            .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
+                    }
+                )
+                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+                .overlay(alignment: .bottom) {
+                    // Subtle separator line
+                    Rectangle()
+                        .fill(LinearGradient(
+                            colors: [.clear, .primary.opacity(0.1), .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ))
+                        .frame(height: 0.5)
+                }
             
             // Recently launched app button (fixed at bottom)
             if let recentApp = viewModel.filteredApps.first(where: { $0.lastLaunchedFlag }) {
@@ -316,9 +393,17 @@ struct QuickLauncherView: View {
                         }
                     }
                     
-                    // Modern recently launched app button
+                    // Modern recently launched app button with rich glass effect
                     VStack(spacing: 0) {
-                        Divider()
+                        // Glowing separator
+                        Rectangle()
+                            .fill(LinearGradient(
+                                colors: [.clear, .accentColor.opacity(0.3), .purple.opacity(0.2), .accentColor.opacity(0.3), .clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ))
+                            .frame(height: 1)
+                            .blur(radius: 2)
                         
                         RecentAppLaunchButton(
                             app: recentApp,
@@ -338,8 +423,33 @@ struct QuickLauncherView: View {
                                 }
                             }
                         )
-                        .glassEffect(.regular.tint(.accentColor.opacity(0.1)), in: .rect)
-                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -2)
+                        .background(
+                            // Multi-layer glass for depth
+                            ZStack {
+                                // Animated gradient glow
+                                LinearGradient(
+                                    colors: [.accentColor.opacity(0.08), .purple.opacity(0.05), .blue.opacity(0.05)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                                .blur(radius: 20)
+                                
+                                // Main glass layer
+                                Rectangle()
+                                    .glassEffect(.regular.tint(.accentColor.opacity(0.12)), in: .rect)
+                            }
+                        )
+                        .shadow(color: .accentColor.opacity(0.15), radius: 12, x: 0, y: -4)
+                        .overlay(alignment: .top) {
+                            // Shine effect
+                            LinearGradient(
+                                colors: [.white.opacity(0.15), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 60)
+                            .blur(radius: 10)
+                        }
                     }
                 }
             } else {
@@ -666,22 +776,52 @@ private struct ModernToolbarButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(color)
+                .foregroundStyle(isHovered ? color.opacity(0.9) : color)
                 .rotationEffect(.degrees(rotation))
                 .frame(width: 44, height: 44)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    ZStack {
+                        // Glow effect when hovered
+                        if isHovered {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(color.opacity(0.15))
+                                .blur(radius: 8)
+                        }
+                        
+                        // Main glass button
+                        RoundedRectangle(cornerRadius: 12)
+                            .glassEffect(
+                                isHovered 
+                                ? .regular.tint(color.opacity(0.15))
+                                : .regular, 
+                                in: RoundedRectangle(cornerRadius: 12)
+                            )
+                    }
                 )
+                .shadow(
+                    color: isHovered ? color.opacity(0.3) : .black.opacity(0.1), 
+                    radius: isHovered ? 8 : 4, 
+                    x: 0, 
+                    y: 2
+                )
+                .overlay {
+                    // Shine effect on hover
+                    if isHovered {
+                        LinearGradient(
+                            colors: [.white.opacity(0.2), .clear],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
                 .contentShape(Rectangle())  // Ensure entire area is tappable
-                .scaleEffect(isHovered ? 1.05 : 1.0)
-                .brightness(isHovered ? 0.05 : 0)
+                .scaleEffect(isHovered ? 1.08 : 1.0)
         }
         .buttonStyle(.plain)
         .help(help)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 isHovered = hovering
             }
         }
@@ -3508,12 +3648,33 @@ private struct DrawerPanel: View {
         }
         .frame(width: 260)
         .frame(maxHeight: .infinity)
-        .glassEffect(.regular, in: .rect)
+        .background(
+            // Enhanced drawer with gradient glass
+            ZStack {
+                // Background glow
+                LinearGradient(
+                    colors: [.blue.opacity(0.05), .purple.opacity(0.03), .clear],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .blur(radius: 30)
+                
+                // Main glass layer
+                Rectangle()
+                    .glassEffect(.regular.tint(.primary.opacity(0.08)), in: .rect)
+            }
+        )
         .overlay(alignment: .trailing) {
+            // Enhanced separator with gradient
             Rectangle()
-                .fill(Color(nsColor: .separatorColor))
+                .fill(LinearGradient(
+                    colors: [.clear, .primary.opacity(0.15), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                ))
                 .frame(width: 1)
         }
+        .shadow(color: .black.opacity(0.2), radius: 20, x: 4, y: 0)
         .shadow(color: .black.opacity(0.3), radius: 10, x: 2, y: 0)
     }
 }
