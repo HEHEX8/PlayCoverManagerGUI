@@ -182,7 +182,38 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
     
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        // When dock icon is clicked and no windows are visible, show main window
+        if !flag {
+            for window in sender.windows {
+                window.makeKeyAndOrderFront(nil)
+            }
+        }
+        return true
+    }
+    
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Check if critical operation is in progress
+        Task { @MainActor in
+            if CriticalOperationService.shared.isOperationInProgress {
+                let description = CriticalOperationService.shared.currentOperationDescription ?? "処理"
+                Logger.lifecycle("Termination blocked: Critical operation in progress - \(description)")
+                
+                // Show alert that termination is not allowed
+                let alert = NSAlert()
+                alert.messageText = String(localized: "処理中のため終了できません")
+                alert.informativeText = String(localized: "\(description)が完了するまでお待ちください。")
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: String(localized: "OK"))
+                alert.runModal()
+            }
+        }
+        
+        // Block termination if critical operation is in progress
+        if CriticalOperationService.shared.isOperationInProgress {
+            return .terminateCancel
+        }
+        
         // ⌘Q: Unmount all containers before terminating
         guard let viewModel = Self.shared else {
             return .terminateNow

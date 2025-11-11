@@ -350,8 +350,6 @@ struct IPAInstallerSheet: View {
     @State private var showResults = false
     @State private var currentPhase: InstallPhase = .selection
     @State private var statusUpdateTask: Task<Void, Never>?
-    @State private var installTask: Task<Void, Never>?
-    @State private var showingCancelConfirmation = false
     
     enum InstallPhase {
         case selection      // IPA選択
@@ -390,16 +388,6 @@ struct IPAInstallerSheet: View {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
             installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore, launcherService: launcherService)
-        }
-        .alert("インストールをキャンセルしますか？", isPresented: $showingCancelConfirmation) {
-            Button("キャンセルを続行", role: .destructive) {
-                cancelInstallation()
-            }
-            Button("インストールを続ける", role: .cancel) {
-                // Do nothing - continue installation
-            }
-        } message: {
-            Text("現在インストール中です。キャンセルすると、インストール済みのアプリはそのまま残りますが、進行中の処理が中断されます。")
         }
     }
     
@@ -990,10 +978,13 @@ struct IPAInstallerSheet: View {
     // MARK: - Bottom Buttons
     private var bottomButtons: some View {
         HStack {
-            Button(currentPhase == .results ? "閉じる" : "キャンセル") {
-                handleCancel()
+            // Hide cancel button during installation - too complex to safely cancel
+            if currentPhase != .installing && currentPhase != .analyzing {
+                Button(currentPhase == .results ? "閉じる" : "キャンセル") {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
             }
-            .keyboardShortcut(.cancelAction)
             
             Spacer()
             
@@ -1004,7 +995,7 @@ struct IPAInstallerSheet: View {
                 }
                 
                 Button("インストール開始") {
-                    installTask = Task {
+                    Task {
                         await startInstallation()
                     }
                 }
@@ -1096,6 +1087,9 @@ struct IPAInstallerSheet: View {
     private func startInstallation() async {
         guard let service = installerService, !analyzedIPAs.isEmpty else { return }
         
+        // Mark as critical operation to prevent app termination
+        await CriticalOperationService.shared.beginOperation("IPA インストール")
+        
         currentPhase = .installing
         isInstalling = true
         
@@ -1106,6 +1100,9 @@ struct IPAInstallerSheet: View {
                 isInstalling = false
                 currentPhase = .results
                 showResults = true
+                
+                // End critical operation
+                await CriticalOperationService.shared.endOperation()
                 
                 // Refresh launcher to show newly installed apps (in background)
                 Task {
@@ -1124,206 +1121,6 @@ struct IPAInstallerSheet: View {
                     service.failedApps.append(String(localized: "致命的なエラー: \(error.localizedDescription)"))
                 }
             }
-        }
-    }
-    
-    private func handleCancel() {
-        // If installing, show confirmation dialog
-        if currentPhase == .installing {
-            showingCancelConfirmation = true
-        } else {
-            // For other phases, close immediately
-            dismiss()
-        }
-    }
-    
-    private func cancelInstallation() {
-        // Cancel the installation task
-        installTask?.cancel()
-        
-        // Stop status updater
-        stopStatusUpdater()
-        
-        // Clean up incomplete installations (only for new installs, not upgrades)
-        Task {
-            await cleanupIncompleteInstallations()
-        }
-        
-        // Close the sheet
-        dismiss()
-    }
-    
-    private func cleanupIncompleteInstallations() async {
-        guard let service = installerService else { return }
-        
-        let playCoverBundleID = "io.playcover.PlayCover"
-        let applicationsDir = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(playCoverBundleID)/Applications", isDirectory: true)
-        
-        // Get list of apps that were supposed to be installed
-        let installedBundleIDs = Set(service.installedApps.compactMap { appName in
-            analyzedIPAs.first(where: { $0.appName == appName })?.bundleID
-        })
-        
-        // Check each app in the queue
-        for ipaInfo in analyzedIPAs {
-            // Skip if already successfully installed
-            if installedBundleIDs.contains(ipaInfo.bundleID) {
-                continue
-            }
-            
-            // Only clean up new installs (don't remove existing apps during upgrade)
-            if ipaInfo.installType != .newInstall {
-                continue
-            }
-            
-            // Find and remove incomplete .app bundle
-            guard let appDirs = try? FileManager.default.contentsOfDirectory(
-                at: applicationsDir,
-                includingPropertiesForKeys: nil
-            ) else {
-                continue
-            }
-            
-            for appURL in appDirs where appURL.pathExtension == "app" {
-                let infoPlist = appURL.appendingPathComponent("Info.plist")
-                guard let plistData = try? Data(contentsOf: infoPlist),
-                      let plist = plistData.parsePlist(),
-                      let installedBundleID = plist["CFBundleIdentifier"] as? String,
-                      installedBundleID == ipaInfo.bundleID else {
-                    continue
-                }
-                
-                // Found incomplete installation - need to clean up
-                Logger.installation("Cleaning up incomplete installation: \(appURL.path)")
-                
-                // Step 1: Kill any running processes for this bundle ID
-                await killProcessesForBundleID(ipaInfo.bundleID)
-                
-                // Step 2: Wait a moment for processes to fully terminate
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-                
-                // Step 3: Try to eject the disk image if mounted (before removing .app)
-                let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
-                    .appendingPathComponent("Library/Containers", isDirectory: true)
-                    .appendingPathComponent(ipaInfo.bundleID, isDirectory: true)
-                
-                if FileManager.default.fileExists(atPath: mountPoint.path) {
-                    let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
-                    
-                    // Try normal eject first
-                    do {
-                        try await diskImageService.ejectDiskImage(for: mountPoint, force: false)
-                        Logger.installation("Successfully ejected disk image for: \(ipaInfo.bundleID)")
-                    } catch {
-                        Logger.installation("Normal eject failed, trying force eject: \(error)")
-                        // Force eject if normal fails
-                        try? await diskImageService.ejectDiskImage(for: mountPoint, force: true)
-                    }
-                }
-                
-                // Step 4: Remove the incomplete .app bundle
-                try? FileManager.default.removeItem(at: appURL)
-                Logger.installation("Removed incomplete app bundle: \(appURL.path)")
-                
-                break
-            }
-        }
-        
-        // After cleaning up all incomplete installations, terminate PlayCover
-        await terminatePlayCover()
-    }
-    
-    /// Terminate PlayCover app after cleanup
-    private func terminatePlayCover() async {
-        let playCoverBundleID = "io.playcover.PlayCover"
-        
-        let runningApps = await MainActor.run {
-            NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == playCoverBundleID }
-        }
-        
-        for playCoverApp in runningApps {
-            Logger.installation("Terminating PlayCover (PID: \(playCoverApp.processIdentifier))")
-            let terminated = playCoverApp.terminate()
-            
-            if !terminated {
-                Logger.installation("Force killing PlayCover (PID: \(playCoverApp.processIdentifier))")
-                let killProcess = Process()
-                killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
-                killProcess.arguments = ["-9", "\(playCoverApp.processIdentifier)"]
-                try? killProcess.run()
-                killProcess.waitUntilExit()
-            }
-        }
-    }
-    
-    /// Kill all processes for a specific bundle ID
-    private func killProcessesForBundleID(_ bundleID: String) async {
-        // Find running app processes with this bundle ID
-        let runningApps = await MainActor.run {
-            NSWorkspace.shared.runningApplications.filter { $0.bundleIdentifier == bundleID }
-        }
-        
-        for app in runningApps {
-            Logger.installation("Terminating process for \(bundleID), PID: \(app.processIdentifier)")
-            
-            // Try graceful termination first
-            let terminated = app.terminate()
-            
-            if !terminated {
-                // If graceful termination fails, force kill
-                Logger.installation("Graceful termination failed, force killing PID: \(app.processIdentifier)")
-                let killProcess = Process()
-                killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
-                killProcess.arguments = ["-9", "\(app.processIdentifier)"]
-                try? killProcess.run()
-                killProcess.waitUntilExit()
-            }
-        }
-        
-        // Also check for any lingering processes using lsof
-        await killProcessesUsingMountPoint(bundleID: bundleID)
-    }
-    
-    /// Kill processes that are using files in the mount point
-    private func killProcessesUsingMountPoint(bundleID: String) async {
-        let mountPoint = URL(fileURLWithPath: NSHomeDirectory())
-            .appendingPathComponent("Library/Containers/\(bundleID)", isDirectory: true)
-        
-        guard FileManager.default.fileExists(atPath: mountPoint.path) else {
-            return
-        }
-        
-        // Use lsof to find processes using this mount point
-        let lsofProcess = Process()
-        lsofProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/lsof")
-        lsofProcess.arguments = ["-t", "+D", mountPoint.path]
-        
-        let pipe = Pipe()
-        lsofProcess.standardOutput = pipe
-        lsofProcess.standardError = Pipe()
-        
-        do {
-            try lsofProcess.run()
-            lsofProcess.waitUntilExit()
-            
-            if lsofProcess.terminationStatus == 0 {
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                if let output = String(data: data, encoding: .utf8) {
-                    let pids = output.split(separator: "\n").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-                    
-                    for pid in pids {
-                        Logger.installation("Force killing process using mount point, PID: \(pid)")
-                        let killProcess = Process()
-                        killProcess.executableURL = URL(fileURLWithPath: "/bin/kill")
-                        killProcess.arguments = ["-9", "\(pid)"]
-                        try? killProcess.run()
-                        killProcess.waitUntilExit()
-                    }
-                }
-            }
-        } catch {
-            Logger.installation("Failed to check for processes using mount point: \(error)")
         }
     }
 }
@@ -1899,7 +1696,7 @@ struct AppUninstallerSheet: View {
                 }
                 .keyboardShortcut(.cancelAction)
             } else if currentPhase != .uninstalling {
-                // Hide cancel button during uninstallation (too fast to safely cancel)
+                // Hide cancel button during uninstallation
                 Button(currentPhase == .results ? "閉じる" : "キャンセル") {
                     dismiss()
                 }
@@ -1996,6 +1793,9 @@ struct AppUninstallerSheet: View {
         let appsToUninstall = apps.filter { selectedApps.contains($0.bundleID) }
         guard !appsToUninstall.isEmpty else { return }
         
+        // Mark as critical operation to prevent app termination
+        await CriticalOperationService.shared.beginOperation("アプリのアンインストール")
+        
         currentPhase = .uninstalling
         
         // Ensure results screen is always shown, even if error occurs
@@ -2003,6 +1803,9 @@ struct AppUninstallerSheet: View {
             Task { @MainActor in
                 currentPhase = .results
                 stopStatusUpdater()
+                
+                // End critical operation
+                await CriticalOperationService.shared.endOperation()
                 
                 // Update quick launcher
                 if let launcher = appViewModel.launcherViewModel {
