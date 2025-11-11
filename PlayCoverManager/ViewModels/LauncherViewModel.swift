@@ -663,20 +663,15 @@ final class LauncherViewModel {
         // Release our lock
         await lockService.unlockContainer(for: bundleID)
         
-        // Check if another process has a lock
-        let canLock = await lockService.canLockContainer(for: bundleID, at: containerURL)
-        if !canLock {
-            Logger.unmount("⚠️ Another process has a lock on \(bundleID), skipping eject - container remains MOUNTED")
-            return
-        }
-        
-        // Single eject attempt (silent failure is OK - will mount on next launch)
+        // Try to eject directly - if another process has a lock, eject will fail gracefully
+        // Don't check canLock() because it can give false positives
         do {
             try await diskImageService.ejectDiskImage(for: containerURL, force: false)
             Logger.unmount("Successfully ejected container for: \(bundleID)")
         } catch {
             Logger.unmount("Failed to eject container for \(bundleID), will remain mounted: \(error)")
             // Silent failure - no user notification needed
+            // Container will be unmounted on next launch or manual unmount
         }
     }
 
