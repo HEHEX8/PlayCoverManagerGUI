@@ -350,8 +350,16 @@ final class AppViewModel {
                 try await diskImageService.ejectDiskImage(for: container, force: false)
                 Logger.unmount("Successfully ejected container for \(app.bundleIdentifier)")
             } catch {
-                Logger.unmount("Normal eject failed for \(app.bundleIdentifier), marking as failed: \(error)")
-                failedCount += 1
+                Logger.unmount("Normal eject failed for \(app.bundleIdentifier): \(error)")
+                // Try force eject during app termination
+                Logger.unmount("Attempting force eject for \(app.bundleIdentifier)...")
+                do {
+                    try await diskImageService.ejectDiskImage(for: container, force: true)
+                    Logger.unmount("Successfully force ejected container for \(app.bundleIdentifier)")
+                } catch {
+                    Logger.unmount("Force eject also failed for \(app.bundleIdentifier): \(error)")
+                    failedCount += 1
+                }
             }
         }
         
@@ -367,16 +375,24 @@ final class AppViewModel {
             _ = await lockService.confirmUnlockCompleted()
             Logger.unmount("Released PlayCover container lock")
             
-            // Sync filesystem
+            // Sync filesystem and wait longer for system processes to release
             sync()
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(for: .seconds(1.0))  // Increased wait time for PlayCover container
             
             do {
                 try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
                 Logger.unmount("Successfully ejected PlayCover container")
             } catch {
                 Logger.unmount("Normal eject failed for PlayCover container: \(error)")
-                failedCount += 1
+                // Try force eject as last resort during app termination
+                Logger.unmount("Attempting force eject for PlayCover container...")
+                do {
+                    try await diskImageService.ejectDiskImage(for: playCoverContainer, force: true)
+                    Logger.unmount("Successfully force ejected PlayCover container")
+                } catch {
+                    Logger.unmount("Force eject also failed for PlayCover container: \(error)")
+                    failedCount += 1
+                }
             }
         }
         

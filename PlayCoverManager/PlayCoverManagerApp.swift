@@ -219,8 +219,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return .terminateNow
         }
         
-        // Set up 5-second timeout for force termination
-        forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+        // Set up 10-second timeout for force termination (allow time for force eject)
+        forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.handleTimeout()
             }
@@ -260,7 +260,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @MainActor
     func extendTimeout() {
         forceTerminateTimer?.invalidate()
-        forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+        forceTerminateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.handleTimeout()
             }
