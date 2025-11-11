@@ -13449,6 +13449,50 @@
           }
         }
       }
+    },
+    "中国語 (簡体字)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chinese (Simplified)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中文 (简体)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中文 (簡體)"
+          }
+        }
+      }
+    },
+    "中国語 (繁体字)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chinese (Traditional)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中文 (繁体)"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "中文 (繁體)"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
