@@ -248,6 +248,25 @@ final class DiskImageService {
     /// - Parameter url: URL to check
     /// - Returns: true if the volume is mounted
     func isMounted(at url: URL) throws -> Bool {
+        // Use statfs to check mount status - more reliable than diskutil
+        var stat = statfs()
+        let result = statfs(url.path, &stat)
+        
+        if result == 0 {
+            // Successfully got file system stats
+            // Check if this is a mount point by comparing device IDs with parent
+            let parentURL = url.deletingLastPathComponent()
+            var parentStat = statfs()
+            let parentResult = statfs(parentURL.path, &parentStat)
+            
+            if parentResult == 0 {
+                // If device IDs differ, this is a mount point
+                return stat.f_fsid.val.0 != parentStat.f_fsid.val.0 || 
+                       stat.f_fsid.val.1 != parentStat.f_fsid.val.1
+            }
+        }
+        
+        // Fallback to diskutil if statfs fails
         do {
             let output = try processRunner.runSync("/usr/sbin/diskutil", ["info", "-plist", url.path])
             if let plist = output.parsePlist(),
