@@ -36,6 +36,14 @@ struct SettingsRootView: View {
                 }
                 .help(String(localized: "設定を閉じる (Esc)"))
             }
+            
+            ToolbarSpacer()
+            
+            ToolbarItem(placement: .automatic) {
+                Text("PlayCover Manager 設定")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .onKeyPress(.escape) {
             dismiss()
