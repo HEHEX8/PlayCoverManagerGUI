@@ -196,9 +196,12 @@ final class LauncherService {
     }
     
     func openApp(_ app: PlayCoverApp, preferredLanguage: String? = nil) async throws {
-        // Set app-specific language preference if specified
+        // Set or clear app-specific language preference
         if let language = preferredLanguage {
             setAppLanguage(bundleID: app.bundleIdentifier, language: language)
+        } else {
+            // Clear language preference to use system default
+            clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
         // Use 'open' command for compatibility with PlayCover apps
@@ -231,6 +234,27 @@ final class LauncherService {
             }
         } catch {
             Logger.error("Failed to execute defaults write: \(error)")
+        }
+    }
+    
+    /// Clear app-specific language preference to use system default
+    private func clearAppLanguage(bundleID: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        // Delete AppleLanguages key to revert to system language
+        process.arguments = ["delete", bundleID, "AppleLanguages"]
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            if process.terminationStatus == 0 {
+                Logger.debug("Successfully cleared language preference for \(bundleID)")
+            } else {
+                // Exit code 1 just means the key didn't exist, which is fine
+                Logger.debug("Language preference key didn't exist for \(bundleID) (or delete failed)")
+            }
+        } catch {
+            Logger.error("Failed to execute defaults delete: \(error)")
         }
     }
 
