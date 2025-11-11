@@ -218,6 +218,15 @@ final class LauncherViewModel {
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
                 
+                // Debug log for status indicator
+                if !app.isRunning && isMounted {
+                    Logger.lifecycle("🟠 [\(app.displayName)] NOT running but MOUNTED - should show ORANGE")
+                } else if app.isRunning {
+                    Logger.lifecycle("🟢 [\(app.displayName)] RUNNING - should show GREEN")
+                } else {
+                    Logger.lifecycle("🔴 [\(app.displayName)] NOT running and NOT mounted - should show RED")
+                }
+                
                 return PlayCoverApp(
                     bundleIdentifier: app.bundleIdentifier,
                     displayName: app.displayName,
