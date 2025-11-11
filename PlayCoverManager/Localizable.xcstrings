@@ -3096,7 +3096,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "PlayCover.app cannot be detected"
+            "value": "Cannot detect PlayCover.app"
           }
         },
         "zh-Hans": {
@@ -4597,7 +4597,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Close app settings (Esc)"
+            "value": "Close App Settings (Esc)"
           }
         },
         "zh-Hans": {
@@ -9129,7 +9129,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The following apps are currently running.Please close these apps before unmounting.\\n\\n\\(appsList)."
+            "value": "The following apps are running. Please close these apps before unmounting.\\n\\n\\(appsList)."
           }
         },
         "zh-Hans": {
