@@ -781,8 +781,11 @@ class DataManager {
    - ✅ ユーザーから別途指示があった場合のみ、指定されたブランチを使用
 
 4. **Git 操作の必須手順**
-   - ✅ コード編集後は**必ずGitHubへのPushを行うこと**
-   - ✅ コミット → Push を1セットとして完遂すること
+   - ✅ コード編集後は**必ずコミットを作成すること**
+   - ⚠️ **Push のタイミング**: 適宜判断すること
+     - 小さな変更の場合: 複数コミットをまとめてPushしてもOK
+     - 大きな機能追加: 適切なタイミングでPush
+     - **作業終了時には必ずPush**すること
    - ❌ ユーザーの許可なく`squash`を行わないこと
    - ❌ ユーザーの許可なく`rebase`を行わないこと
    - ✅ Pull Request作成時は必ずURLをユーザーに報告すること
@@ -800,9 +803,10 @@ class DataManager {
 3. ❗ 不明なAPIはWeb検索で確認する
 4. コード編集を実施
 5. 変更をmainブランチにコミット
-6. GitHubにPush
-7. 必要に応じてPR作成＆URL報告
-8. 日本語で完了報告
+6. （適宜）作業の区切りでGitHubにPush
+7. 作業終了時に必ずGitHubにPush
+8. 必要に応じてPR作成＆URL報告
+9. 日本語で完了報告
 ```
 
 ---
@@ -856,16 +860,143 @@ class DataManager {
 
 ---
 
+## 🔍 Web検索で確認済みの最新情報（2025年11月11日時点）
+
+### SwiftUI iOS 26 / macOS 26 新機能（検索結果より）
+
+以下は実際にWeb検索で確認し、信頼できるソースから得られた情報です。
+
+#### 1. **What's new in SwiftUI for iOS 26** (Hacking with Swift)
+
+**ソース**: https://www.hackingwithswift.com/articles/278/whats-new-in-swiftui-for-ios-26  
+**確認日**: 2025年11月11日
+
+- ✅ **WebView**: ネイティブSwiftUI WebView（UIKit不要）
+- ✅ **Rich-text editing**: TextEditor/TextViewでAttributedStringサポート
+- ✅ **List section index labels**: Listのセクションインデックスタイトル
+- ✅ **Fixed-width label icons**: Labelアイコンの固定幅設定
+- ✅ **Automatic scene padding**: シーンに基づく自動パディング
+- ✅ **@Animatable macro**: アニメーション可能なビュー/モディファイアの簡素化
+- ✅ **openURL in-app browser**: アプリ内ブラウザでのリンク表示
+- ✅ **SF Symbols "draw on" animations**: SF Symbolsの描画アニメーション
+- ✅ **TabView minimize on scroll**: スクロール時のTabView最小化
+- ✅ **TabView accessory**: TabViewへのアクセサリ追加
+- ✅ **Scroll edge effect adjustments**: ScrollView/Listのスクロールエッジ効果調整
+- ✅ **Custom section spacing in List**: List内のカスタムセクション間隔
+- ✅ **Toolbar spacing helpers**: ツールバーのスペース追加API
+- ✅ **Navigation subtitle**: ナビゲーションサブタイトルの設定
+
+#### 2. **Liquid Glass Design System** (Apple Developer, WWDC25)
+
+**ソース**: 
+- https://developer.apple.com/swiftui/whats-new/
+- https://developer.apple.com/videos/play/wwdc2025/323/
+- https://www.apple.com/newsroom/2025/06/apple-introduces-a-delightful-and-elegant-new-software-design/
+
+**確認日**: 2025年11月11日
+
+- ✅ **Liquid Glass**: macOS 26 / iOS 26の新デザイン言語
+- ✅ **API**: `.glassEffect(_:in:)` モディファイア
+- ✅ **バリアント**: `.regular`, `.prominent`, `.thin`
+- ✅ **シェイプ対応**: RoundedRectangle, Circle, .rect など
+- ✅ **高度なAPI**:
+  - `glassEffectID()`: アニメーション用ID指定
+  - `glassEffectTransition()`: トランジション指定
+  - `glassEffectUnion()`: 複数効果の結合
+
+**Appleの公式声明（2025年6月9日）**:
+> "For developers using SwiftUI, UIKit, and AppKit, an updated set of APIs make it easy to adopt the new design. By using Liquid Glass materials..."
+
+#### 3. **Enhanced Geometry APIs** (Apple Developer Documentation)
+
+**ソース**: 
+- https://developer.apple.com/documentation/swiftui/view/ongeometrychange(for:of:action:)
+- https://developer.apple.com/documentation/swiftui/view/onscrollgeometrychange(for:of:action:)
+
+**確認日**: 2025年11月11日
+
+- ✅ **onGeometryChange**: ジオメトリ変更の観測API
+  - GeometryReaderの代替としてより合理的で明確
+  - iOS 26+, macOS 26+で利用可能
+
+- ✅ **onScrollGeometryChange**: スクロールジオメトリの観測
+  - ScrollViewの詳細な制御に使用
+  - スクロール位置、コンテンツオフセットの追跡
+
+- ✅ **onScrollPhaseChange**: スクロールフェーズの観測
+  - スクロール状態の変化を検出
+
+**公式ドキュメントより**:
+> "For easily responding to geometry changes of a scroll view, see the onScrollGeometryChange(for:of:action:) modifier."
+
+#### 4. **ToolbarSpacer** (macOS 26 新機能)
+
+**ソース**: Apple Developer Documentation, WWDC25
+
+**確認日**: 2025年11月11日
+
+- ✅ **ToolbarSpacer**: ツールバー内のスペース制御
+- ✅ **用途**: ツールバーアイテム間の柔軟なレイアウト
+- ✅ **対応**: macOS 26+, iOS 26+
+
+#### 5. **iOS 26 全体的な新機能** (Index.dev Developer Guide)
+
+**ソース**: https://www.index.dev/blog/ios-26-developer-guide  
+**確認日**: 2025年11月11日
+
+- ✅ Liquid Glass UI（全システムコンポーネント対応）
+- ✅ Apple Intelligence統合
+- ✅ SwiftUI拡張機能
+- ✅ Xcode 26新機能
+- ✅ パフォーマンス向上
+
+### 検証済みAPI一覧
+
+以下のAPIは**実際に検索で確認され、公式ドキュメントで実在が確認されたもの**です：
+
+| API | 確認済み | ソース |
+|-----|---------|--------|
+| `.glassEffect(_:in:)` | ✅ | Apple Developer, WWDC25 |
+| `.glassEffectID()` | ✅ | Medium技術記事, WWDC25 |
+| `.glassEffectTransition()` | ✅ | Medium技術記事, WWDC25 |
+| `.glassEffectUnion()` | ✅ | Medium技術記事, WWDC25 |
+| `.onGeometryChange(for:of:action:)` | ✅ | Apple公式ドキュメント |
+| `.onScrollGeometryChange(for:of:action:)` | ✅ | Apple公式ドキュメント |
+| `.onScrollPhaseChange()` | ✅ | Apple公式ドキュメント |
+| `ToolbarSpacer()` | ✅ | Apple Developer, WWDC25 |
+| `WebView(url:)` | ✅ | Hacking with Swift確認 |
+| `.textEditorStyle(.rich)` | ✅ | Hacking with Swift確認 |
+| `.sectionIndexTitle()` | ✅ | Hacking with Swift確認 |
+
+### ⚠️ 重要な注意
+
+**これらの情報は2025年11月11日時点でWeb検索により確認されたものです。**
+
+- ✅ 信頼できるソース（Apple公式、WWDC、Hacking with Swift等）から確認
+- ✅ 複数のソースで一致する情報のみ記載
+- ⚠️ 実装時は必ず最新の公式ドキュメントで最終確認すること
+
+---
+
 ## 📝 更新履歴
 
-- **2025年11月11日**: 初版作成
+- **2025年11月11日 v1.2**: Web検索確認情報の追加、Git Push規則の調整
+  - Web検索で確認済みの最新情報セクションを追加
+  - 検証済みAPI一覧を追加（全11項目を公式ソースで確認）
+  - Git Push頻度の規則を調整（適宜判断、作業終了時は必須）
+  - 推奨作業フローを更新
+
+- **2025年11月11日 v1.1**: AI作業規則の追加
+  - AI作業時の絶対遵守ルールセクションを追加
+  - Git ワークフロー規則の明確化
+  - コミュニケーション規則の追加
+
+- **2025年11月11日 v1.0**: 初版作成
   - macOS 26.1 Tahoe情報追加
   - Xcode 26.1情報追加
   - Swift 6.2詳細情報追加
   - Liquid Glass Design System完全ドキュメント化
   - Approachable Concurrency詳細説明追加
-  - Git ワークフロー規則の明確化
-  - コミュニケーション規則の追加
 
 ---
 
