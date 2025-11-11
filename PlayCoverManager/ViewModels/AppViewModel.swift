@@ -309,12 +309,15 @@ final class AppViewModel {
         }
         
         // Cancel all active auto-unmount tasks to prevent conflicts
-        Logger.unmount("Cancelling \(launcherVM.activeUnmountTaskCount) active auto-unmount tasks")
-        await launcherVM.cancelAllAutoUnmountTasks()
-        
-        // Wait for tasks to clean up and release locks
-        Logger.unmount("Waiting for lock cleanup...")
-        try? await Task.sleep(for: .seconds(1.0))
+        let activeTaskCount = launcherVM.activeUnmountTaskCount
+        if activeTaskCount > 0 {
+            Logger.unmount("Cancelling \(activeTaskCount) active auto-unmount tasks")
+            await launcherVM.cancelAllAutoUnmountTasks()
+            
+            // Wait for tasks to clean up and release locks
+            Logger.unmount("Waiting for lock cleanup...")
+            try? await Task.sleep(for: .milliseconds(500))  // Reduced: 1s → 500ms
+        }
         
         // Explicitly release all locks to ensure no file handles remain
         Logger.unmount("Releasing all container locks...")
@@ -375,9 +378,9 @@ final class AppViewModel {
             _ = await lockService.confirmUnlockCompleted()
             Logger.unmount("Released PlayCover container lock")
             
-            // Sync filesystem and wait longer for system processes to release
+            // Sync filesystem - brief wait only if needed
             sync()
-            try? await Task.sleep(for: .seconds(1.0))  // Increased wait time for PlayCover container
+            try? await Task.sleep(for: .milliseconds(200))  // Reduced: 1s → 200ms (just for sync completion)
             
             do {
                 try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
