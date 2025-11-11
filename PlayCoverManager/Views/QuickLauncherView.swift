@@ -2405,15 +2405,30 @@ private struct SettingsView: View {
     }
     
     private func getLanguageDisplayName(_ code: String) -> String {
-        // Use hardcoded names for Chinese variants - system locale doesn't differentiate properly
-        if code == "zh-Hans" {
-            return String(localized: "中国語 (簡体字)")
-        } else if code == "zh-Hant" {
-            return String(localized: "中国語 (繁体字)")
-        }
-        
-        // For other languages, use system localization
         let locale = Locale.current
+        
+        // Use explicit names for Chinese variants based on UI language
+        if code == "zh-Hans" {
+            let currentLang = locale.language.languageCode?.identifier ?? "en"
+            switch currentLang {
+            case "ja":
+                return "中国語 (簡体字)"
+            case "zh":
+                return "中文 (简体)"
+            default:
+                return "Chinese (Simplified)"
+            }
+        } else if code == "zh-Hant" {
+            let currentLang = locale.language.languageCode?.identifier ?? "en"
+            switch currentLang {
+            case "ja":
+                return "中国語 (繁体字)"
+            case "zh":
+                return "中文 (繁體)"
+            default:
+                return "Chinese (Traditional)"
+            }
+        }
         
         if code == "pt-BR" {
             let baseName = locale.localizedString(forLanguageCode: "pt") ?? "Português"
