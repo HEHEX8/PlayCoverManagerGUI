@@ -1088,26 +1088,24 @@ struct IPAInstallerSheet: View {
         guard let service = installerService, !analyzedIPAs.isEmpty else { return }
         
         // Mark as critical operation to prevent app termination
-        await CriticalOperationService.shared.beginOperation("IPA インストール")
+        CriticalOperationService.shared.beginOperation("IPA インストール")
         
         currentPhase = .installing
         isInstalling = true
         
         // Ensure results screen is always shown, even if unexpected error occurs
         defer {
-            Task { @MainActor in
-                stopStatusUpdater()
-                isInstalling = false
-                currentPhase = .results
-                showResults = true
-                
-                // End critical operation
-                await CriticalOperationService.shared.endOperation()
-                
-                // Refresh launcher to show newly installed apps (in background)
-                Task {
-                    await launcherViewModel.refresh()
-                }
+            stopStatusUpdater()
+            isInstalling = false
+            currentPhase = .results
+            showResults = true
+            
+            // End critical operation
+            CriticalOperationService.shared.endOperation()
+            
+            // Refresh launcher to show newly installed apps (in background)
+            Task {
+                await launcherViewModel.refresh()
             }
         }
         
@@ -1794,20 +1792,20 @@ struct AppUninstallerSheet: View {
         guard !appsToUninstall.isEmpty else { return }
         
         // Mark as critical operation to prevent app termination
-        await CriticalOperationService.shared.beginOperation("アプリのアンインストール")
+        CriticalOperationService.shared.beginOperation("アプリのアンインストール")
         
         currentPhase = .uninstalling
         
         // Ensure results screen is always shown, even if error occurs
         defer {
-            Task { @MainActor in
-                currentPhase = .results
-                stopStatusUpdater()
-                
-                // End critical operation
-                await CriticalOperationService.shared.endOperation()
-                
-                // Update quick launcher
+            currentPhase = .results
+            stopStatusUpdater()
+            
+            // End critical operation
+            CriticalOperationService.shared.endOperation()
+            
+            // Update quick launcher
+            Task {
                 if let launcher = appViewModel.launcherViewModel {
                     await launcher.refresh()
                 }

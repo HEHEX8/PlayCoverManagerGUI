@@ -143,11 +143,9 @@ final class SetupWizardViewModel {
     }
 
     private func prepareDiskImage(bundleID: String, mountPoint: URL) async {
-        await CriticalOperationService.shared.beginOperation("セットアップのディスクイメージ作成")
+        CriticalOperationService.shared.beginOperation("セットアップのディスクイメージ作成")
         defer {
-            Task { @MainActor in
-                await CriticalOperationService.shared.endOperation()
-            }
+            CriticalOperationService.shared.endOperation()
         }
         
         isBusy = true
