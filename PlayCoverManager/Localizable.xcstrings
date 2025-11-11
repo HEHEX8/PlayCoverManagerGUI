@@ -654,13 +654,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "数据存在于内部存储中的\\(request.app.displayName)。如何处理？"
+            "value": "数据存在于内部存储中的\\(request.app.displayName)。处理方法？"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "數據存在於內部存儲中的\\(request.app.displayName)。如何處理？"
+            "value": "數據存在於內部存儲中的\\(request.app.displayName)。處理方法？"
           }
         }
       }
@@ -773,13 +773,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "数据存在于%@的内部存储器中。如何处理？"
+            "value": "数据存在于%@的内部存储器中。处理方法？"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "數據存在於%@的內部存儲器中。如何處理？"
+            "value": "數據存在於%@的內部存儲器中。處理方法？"
           }
         }
       }
@@ -3797,13 +3797,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "当内部数据保留在应用容器中时，这是默认过程。从启动器启动时您可以更改它。"
+            "value": "当内部数据保留在应用容器中时，这是默认过程。从启动器启动时你可以更改它。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "當內部數據保留在應用程序容器中時，這是默認過程。從啟動器啟動時您可以更改它。"
+            "value": "當內部數據保留在應用程序容器中時，這是默認過程。從啟動器啟動時你可以更改它。"
           }
         }
       }
@@ -4192,13 +4192,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "分析您的应用并查看详细信息"
+            "value": "分析你的应用并查看详细信息"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "分析您的應用程序並查看詳細信息"
+            "value": "分析你的應用程序並查看詳細信息"
           }
         }
       }
@@ -5432,13 +5432,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的 macOS 版本:\\(Self.currentOSVersion)。"
+            "value": "你的 macOS 版本:\\(Self.currentOSVersion)。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的 macOS 版本:\\(Self.currentOSVersion)。"
+            "value": "你的 macOS 版本:\\(Self.currentOSVersion)。"
           }
         }
       }
@@ -5455,13 +5455,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的 macOS 版本:%@"
+            "value": "你的 macOS 版本:%@"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您的 macOS 版本:%@"
+            "value": "你的 macOS 版本:%@"
           }
         }
       }
@@ -8540,13 +8540,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您无权访问挂载目标"
+            "value": "你无权访问挂载目标"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您無權訪問掛載目標"
+            "value": "你無權訪問掛載目標"
           }
         }
       }
@@ -9456,13 +9456,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您没有保存目的地的写入权限"
+            "value": "你没有保存目的地的写入权限"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您沒有保存目的地的寫入權限"
+            "value": "你沒有保存目的地的寫入權限"
           }
         }
       }
@@ -9547,13 +9547,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "您无权访问存储位置"
+            "value": "你无权访问存储位置"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "您無權訪問存儲位置"
+            "value": "你無權訪問存儲位置"
           }
         }
       }
@@ -9713,13 +9713,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "要更改存储位置，您必须卸载当前安装的所有磁盘映像。"
+            "value": "要更改存储位置，你必须卸载当前安装的所有磁盘映像。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "要更改存儲位置，您必須卸載當前安裝的所有磁盤映像。"
+            "value": "要更改存儲位置，你必須卸載當前安裝的所有磁盤映像。"
           }
         }
       }
@@ -11780,13 +11780,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "将您现有的应用降级到旧版本。"
+            "value": "将你现有的应用降级到旧版本。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "將您現有的應用程序降級到舊版本。"
+            "value": "將你現有的應用程序降級到舊版本。"
           }
         }
       }
@@ -13191,13 +13191,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置在启动期间发现内部数据时要执行的操作。"
+            "value": "设置在启动期间发现内部数据时要执行操作。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "設置在啟動期間發現內部數據時要執行的操作。"
+            "value": "設置在啟動期間發現內部數據時要執行操作。"
           }
         }
       }
