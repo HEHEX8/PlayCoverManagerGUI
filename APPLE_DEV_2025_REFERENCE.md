@@ -1,7 +1,52 @@
 # 📚 Apple開発環境 2025年11月版 完全リファレンス
 
-**最終更新**: 2025年11月11日  
+**最終更新**: 2025年11月11日 (v1.8)  
 **対象バージョン**: macOS 26.1 Tahoe / Xcode 26.1 / Swift 6.2
+
+---
+
+## 🚫 プロジェクトステータス: ユニバーサルデザイン実装中止
+
+**決定日**: 2025年11月11日
+
+### 中止理由
+
+Swift 6.2のユニバーサルデザイン（アクセシビリティ）実装において、以下の技術的課題により実装コストが高すぎると判断：
+
+1. **@Environment型推論の複雑性**
+   - Swift 6.2では`@Environment`プロパティラッパーの型推論が厳格化
+   - `ColorSchemeContrast`型が正しく認識されない問題
+   - エラー: "Initializer 'init(_:)' requires that 'ColorSchemeContrast' be a class type"
+   - エラー: "Binary operator '==' cannot be applied to operands of type 'ColorSchemeContrast' and 'TaskPriority'"
+
+2. **Observable vs EnvironmentValues の混乱**
+   - Swift 6の新しい`@Observable`マクロと従来の`EnvironmentValues`の構文が混在
+   - `@Environment(\.keyPath)`（EnvironmentValues）と`@Environment(Type.self)`（Observable）の2つの異なる構文
+   - 型システムが正しく型を推論できない
+
+3. **実装範囲の広さ**
+   - 全ビューファイル（QuickLauncherView 3833行、SettingsRootView、SetupWizardView等）への変更が必要
+   - 新規ユーティリティファイル（SemanticColors.swift、AccessibleGlassEffect.swift、AccessibilityEnvironment.swift）の追加
+   - 既存のGlass Effect APIとの互換性問題
+
+### 実施した作業
+
+- ✅ ボタン応答性の問題修正（`.interactive()`削除）
+- ✅ ユニバーサルデザインガイドラインの文書化（ACCESSIBILITY_MIGRATION_GUIDE.md）
+- ✅ Swift 6.2の型システムに関する知見の蓄積
+- ❌ 実装コミット（53ba4b7〜4e16501）をロールバック
+
+### コードベースの状態
+
+**現在のHEAD**: `d7e3982` - fix(ui): remove .interactive() modifier to fix button responsiveness
+
+- ボタン応答性の問題は解決済み
+- ユニバーサルデザイン関連の実装コードは削除
+- ドキュメント（APPLE_DEV_2025_REFERENCE.md、ACCESSIBILITY_MIGRATION_GUIDE.md）は保持
+
+### 今後の方針
+
+ユニバーサルデザイン実装は、Swift/SwiftUIの型システムが安定し、より明確なベストプラクティスが確立されるまで**保留**とします。
 
 ---
 
@@ -1003,7 +1048,35 @@ class DataManager {
 - `.tint(Color)` - ガラスに色を付ける
 - `.interactive()` - タップ、ドラッグなどのジェスチャー対応を有効化
 
-**使用例（確認済み）**:
+**⚠️ .interactive() の既知の問題（2025年11月11日確認）**:
+
+`.interactive()` modifierには**クリックイベントを阻害する既知のバグ**があります：
+
+- **症状**: ボタン上にカーソルを置くと色変化（hover effect）は起こるが、クリックが反応しない
+- **影響範囲**: ツールバーボタン、カード内ボタン、その他インタラクティブ要素全般
+- **根本原因**: `.interactive()`がhit testingを妨害し、クリックイベントを素通りさせる
+- **対処法**: `.interactive()`を削除し、視覚的フィードバックには`.tint()`のみを使用
+
+**推奨される実装パターン**:
+```swift
+// ❌ 避けるべき - クリックが反応しない可能性
+.glassEffect(.regular.tint(.accentColor).interactive(), in: shape)
+
+// ✅ 推奨 - 視覚的フィードバックは維持しつつクリックを確実に
+.glassEffect(.regular.tint(.accentColor.opacity(0.1)), in: shape)
+
+// ✅ ボタン要素の場合は .contentShape() を追加してhit testing改善
+Button(action: action) {
+    // content
+}
+.background(
+    RoundedRectangle(cornerRadius: 12)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+)
+.contentShape(Rectangle())  // hit testing領域を明示
+```
+
+**使用例（更新版）**:
 ```swift
 // 基本
 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
@@ -1011,8 +1084,8 @@ class DataManager {
 // 色付き
 .glassEffect(.regular.tint(.purple), in: .capsule)
 
-// インタラクティブ（強調効果）
-.glassEffect(.regular.tint(.accentColor).interactive(), in: .capsule)
+// 強調効果（.interactive()は使用しない）
+.glassEffect(.regular.tint(.accentColor.opacity(0.1)), in: .capsule)
 
 // 透明度調整
 .glassEffect(.regular.tint(.purple.opacity(0.8)), in: .rect)
@@ -1022,8 +1095,8 @@ class DataManager {
 ```
 
 **重要**: 
-「prominent」な効果を得るには `.prominent` enum値ではなく、
-`.regular.tint(.accentColor).interactive()` を使用すること。
+- 「prominent」な効果を得るには `.prominent` enum値ではなく、`.regular.tint(.accentColor.opacity(0.1))` を使用
+- **`.interactive()`は現時点では使用を避けること**（Appleのバグ修正待ち）
 
 #### 4. **ToolbarSpacer** (macOS 26 新機能)
 
@@ -1079,7 +1152,389 @@ class DataManager {
 
 ---
 
+## ♿ ユニバーサルデザイン & アクセシビリティガイドライン
+
+### 🎯 概要
+
+macOS 26 Tahoe / iOS 26では、**全ユーザーがアクセス可能なデザイン**が必須要件です。
+Liquid Glass Design Systemを採用する際は、以下のアクセシビリティ基準を満たす必要があります。
+
+**法的要件**:
+- 🇪🇺 **European Accessibility Act** (2025年6月28日施行): WCAG 2.1準拠が必須
+- 🇺🇸 **ADA Section 508**: 連邦機関向けアクセシビリティ基準
+- 🍎 **Apple HIG**: Human Interface Guidelines準拠推奨
+
+**ソース**: 
+- macOS Tahoe 26 Accessibility Complete Guide (2025年11月6日)
+- European Accessibility Act完全施行情報 (2025年6月28日)
+- 確認日: 2025年11月11日
+
+---
+
+### 🔍 Liquid Glassの既知のアクセシビリティ問題
+
+#### ❌ 主な問題点
+
+1. **低コントラスト / 可読性の低下**
+   - 半透明背景により、テキスト・アイコン・コントロールのコントラストが可変
+   - 背景コンテンツによって色が変化し、WCAG基準を満たせない場合がある
+
+2. **テキストと��イコンの色シフト**
+   - vibrancyと動的ブレンドにより、認識される色/コントラストが背景に依存
+
+3. **モーション & 視覚的混乱**
+   - パララックス、vibrancy変化、アニメーションblurが視覚的負荷を増加
+   - 前庭障害（めまい等）を持つユーザーに悪影響
+
+4. **ヒットターゲットの視認性低下**
+   - 半透明コントロールと細いボーダーは低視力ユーザーが認識困難
+
+5. **色のみへの依存**
+   - 背景が変わると色による区別が機能しない
+
+6. **支援技術との競合**
+   - 重いGlass effectがGPU負荷を増やし、スクリーンリーダーの応答性を低下
+   - ローエンドマシンでパフォーマンス問題
+
+7. **フォーカスリングの視認性**
+   - 動的背景上でフォーカスインジケータが見えにくくなる
+
+---
+
+### ✅ Appleの実装済みアクセシビリティ解決策
+
+#### 1. High Contrast Glass Mode
+
+Apple公式の高コントラストモード。Liquid Glassの美観を保ちつつアクセシビリティを確保。
+
+**特徴**:
+- ガラス効果を維持しながらコントラストと不透明度を向上
+- より強いストローク/ボーダーを追加
+- vibrancyを減らしてコンテンツを読みやすく
+- WCAG AAA基準を満たす
+
+**有効化**: 
+```
+システム設定 > アクセシビリティ > ディスプレイ > コントラストを上げる
+```
+
+#### 2. Reduce Transparency（透明度を下げる）
+
+**効果**:
+- 半透明マテリアルを高コントラストな不透明背景に置換
+- ガラス効果を完全に無効化
+- テキストと背景の明確な分離を保証
+
+**SwiftUI環境値**: `@Environment(\.accessibilityReduceTransparency)`
+
+#### 3. Increase Contrast（コントラストを上げる）
+
+**効果**:
+- より強い境界線とセパレーター
+- フォーカスインジケータの視認性向上
+- システムカラーのコントラスト自動調整
+
+**SwiftUI環境値**: `@Environment(\.accessibilityContrast)`
+
+#### 4. Reduce Motion（視差効果を減らす）
+
+**効果**:
+- パララックスとアニメーションblurを停止
+- 静的な（ただし高コントラストな）ビジュアルに置換
+- 前庭障害のあるユーザーを保護
+
+**SwiftUI環境値**: `@Environment(\.accessibilityReduceMotion)`
+
+#### 5. システム自動フォールバック
+
+**動作**:
+- アクセシビリティ設定検出時、システムマテリアルが自動的に切り替わる
+- より重い/不透明なバリアント、または完全不透明背景に変更
+- フォーカスインジケータの視認性を自動向上
+
+---
+
+### 📐 WCAG 2.1 コントラスト要件（数値基準）
+
+#### テキストコントラスト
+
+| 要素 | WCAG AA (最小) | WCAG AAA (推奨) |
+|------|---------------|----------------|
+| 通常テキスト | **4.5:1** | **7:1** |
+| 大きいテキスト（18pt bold / 24pt regular以上） | **3:1** | **4.5:1** |
+
+#### UIコンポーネント
+
+| 要素 | 最小コントラスト |
+|------|---------------|
+| ボタン、アイコン、フォーム要素 | **3:1** |
+| フォーカスリング、アウトライン | **3:1** |
+| セパレーター（重要情報の場合） | **4.5:1** |
+
+**⚠️ 重要**: Liquid Glass使用時は**合成後の実効コントラスト**を測定すること。
+デザインツール上の値ではなく、実際の背景との合成結果を検証。
+
+---
+
+### 💻 開発者向け実装ガイドライン
+
+#### 1. システムアクセシビリティ設定の尊重
+
+**必須実装**: すべてのビューで以下の環境値を検出し対応
+
+```swift
+import SwiftUI
+
+struct AccessibleGlassCard<Content: View>: View {
+    @Environment(\.accessibilityReduceTransparency) var reduceTransparency
+    @Environment(\.accessibilityContrast) var contrast
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+    
+    var body: some View {
+        Group {
+            if reduceTransparency || contrast == .high {
+                // 高コントラスト・不透明フォールバック
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(nsColor: .windowBackgroundColor))
+                    .overlay(content.padding())
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.primary.opacity(0.2), lineWidth: 1.5)
+                    )
+            } else {
+                // Liquid Glass（通常モード）
+                content
+                    .padding()
+                    .glassEffect(.regular.tint(.primary.opacity(0.05)), 
+                                in: RoundedRectangle(cornerRadius: 12))
+            }
+        }
+        .animation(reduceMotion ? .none : .easeInOut(duration: 0.2), value: reduceTransparency)
+    }
+}
+```
+
+#### 2. セマンティックカラーの使用
+
+**❌ 避けるべき**: 固定カラー値
+
+```swift
+// ❌ 悪い例 - ダークモード・高コントラストで破綻
+.foregroundColor(Color(red: 0.2, green: 0.3, blue: 0.8))
+.background(Color(white: 0.95))
+```
+
+**✅ 推奨**: システムセマンティックカラー
+
+```swift
+// ✅ 良い例 - システムが自動調整
+.foregroundColor(.primary)           // ラベル・本文テキスト
+.foregroundColor(.secondary)         // 補助テキスト
+.background(Color(nsColor: .windowBackgroundColor))
+.tint(.accentColor)                  // インタラクティブ要素
+```
+
+**利用可能なセマンティックカラー**:
+- `.primary` / `.secondary` / `.tertiary` - テキスト階層
+- `.accentColor` - インタラクティブ要素
+- `Color(nsColor: .windowBackgroundColor)` - 背景
+- `Color(nsColor: .controlBackgroundColor)` - コントロール背景
+- `Color(nsColor: .separatorColor)` - 境界線
+
+#### 3. テキストスクリム（Scrim）の追加
+
+半透明背景上のテキストには、必ずコントラスト保証用のスクリムを追加：
+
+```swift
+Text("重要な情報")
+    .font(.headline)
+    .padding(8)
+    .background(
+        Group {
+            if reduceTransparency {
+                Color(nsColor: .windowBackgroundColor).opacity(0.95)
+            } else {
+                // 暗いスクリムで明るい背景上でもコントラスト確保
+                Color.black.opacity(0.3)
+                    .background(.ultraThinMaterial)
+            }
+        }
+    )
+    .cornerRadius(6)
+```
+
+#### 4. ヒットターゲットサイズの確保
+
+**Apple HIG要件**: 最小 44×44 pt
+
+```swift
+Button(action: action) {
+    Image(systemName: "trash")
+        .font(.system(size: 17))
+}
+.frame(minWidth: 44, minHeight: 44)  // 最小サイズ保証
+.contentShape(Rectangle())           // タップ領域明示
+```
+
+#### 5. フォーカスインジケータの強化
+
+```swift
+Button("アクション") { }
+    .focusable()
+    .overlay(
+        RoundedRectangle(cornerRadius: 8)
+            .stroke(Color.accentColor, lineWidth: contrast == .high ? 3 : 2)
+            .opacity(isFocused ? 1 : 0)
+    )
+```
+
+#### 6. モーションの条件付き無効化
+
+```swift
+.animation(reduceMotion ? .none : .spring(response: 0.3), value: someState)
+
+// パララックス効果の条件付き適用
+.offset(y: reduceMotion ? 0 : parallaxOffset)
+```
+
+#### 7. VoiceOverサポート
+
+```swift
+Image(systemName: "gear")
+    .accessibilityLabel("設定")
+    .accessibilityHint("アプリの設定を開きます")
+    .accessibilityAddTraits(.isButton)
+
+// 装飾的要素は隠す
+Divider()
+    .accessibilityHidden(true)
+```
+
+---
+
+### 🧪 テスト必須項目
+
+#### システム設定の組み合わせテスト
+
+すべての組み合わせでUIが機能することを確認：
+
+- [ ] **通常モード** (すべてOFF)
+- [ ] **Reduce Transparency** ON
+- [ ] **Increase Contrast** ON
+- [ ] **Reduce Motion** ON
+- [ ] **High Contrast Glass Mode** ON
+- [ ] **Reduce Transparency + Increase Contrast** 組み合わせ
+- [ ] **ライトモード / ダークモード** 両方
+- [ ] **VoiceOver** 有効
+
+#### コントラスト測定ツール
+
+- **macOS標準**: Accessibility Inspector (Xcode)
+- **Web**: WebAIM Contrast Checker
+- **手動確認**: 実際の背景コンテンツで視覚確認
+
+#### 支援技術テスト
+
+- [ ] VoiceOverですべての要素が読み上げられる
+- [ ] キーボードのみですべての操作が可能
+- [ ] Switch Control対応
+- [ ] Voice Control対応
+
+---
+
+### 📚 参考リソース
+
+#### 公式ドキュメント
+
+- [Apple Accessibility HIG](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+- [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
+- [European Accessibility Act](https://ec.europa.eu/social/main.jsp?catId=1202)
+
+#### 検索で確認済みの情報源
+
+- **macOS Tahoe 26 Accessibility Complete Guide** (2025年11月6日)
+  - URL: https://macos-tahoe.com/blog/macos-tahoe-accessibility-complete-guide-2025/
+  - High Contrast Glass Mode、アクセシビリティ要件の詳細
+
+- **Liquid Glass Design Controversy Analysis** (2025年9月22日)
+  - URL: https://macos-tahoe.com/blog/liquid-glass-design-controversy-analysis-macos-tahoe-2025/
+  - Liquid Glassの問題点とApple実装解決策
+
+- **The Accessibility Paradox: EU Standards vs Apple** (2025年11月4日)
+  - URL: https://medium.com/design-bootcamp/the-accessibility-paradox-eu-sets-the-standards-while-apple-steps-3a799a76f70c
+  - European Accessibility Act施行状況
+
+**確認日**: 2025年11月11日
+
+---
+
+### ✅ ユニバーサルデザイン実装チェックリスト
+
+#### 必須項目（すべて満たすこと）
+
+- [ ] システムアクセシビリティ設定を検出し対応
+- [ ] WCAG AA コントラスト基準を満たす（4.5:1 / 3:1）
+- [ ] セマンティックカラーのみ使用
+- [ ] ヒットターゲット 44×44 pt以上
+- [ ] VoiceOverですべての要素がアクセス可能
+- [ ] キーボードのみで完全操作可能
+- [ ] Reduce Transparency / Increase Contrast 対応
+- [ ] Reduce Motion 対応
+- [ ] ライト/ダークモード両対応
+
+#### 推奨項目
+
+- [ ] WCAG AAA コントラスト基準を満たす（7:1 / 4.5:1）
+- [ ] High Contrast Glass Mode 専用スタイル提供
+- [ ] アプリ内アクセシビリティ設定の提供
+- [ ] 色覚異常シミュレーションでテスト
+- [ ] Switch Control / Voice Control テスト
+- [ ] パフォーマンステスト（ローエンドマシン）
+
+---
+
 ## 📝 更新履歴
+
+- **2025年11月11日 v1.7**: デバッグで発見した実装上の注意点を追記
+  - **Animation型の制約**: `Animation`は具体型（concrete type）であり、ジェネリック制約として使用不可
+  - 誤: `func animation<A: Animation>(_ normalAnimation: A?) -> A?`
+  - 正: `func animation(_ normalAnimation: Animation?) -> Animation?`
+  - **MultiEditツールの制限**: 複数行の置換時に`\n`が文字列リテラルとして挿入される可能性
+  - 対処: `sed 's/\\n/\n/g'`で実際の改行に変換
+  - **⚠️ sed置換の副作用**: `sed 's/\\n/\n/g'`は**文字列コンテンツ内の`\n`にも影響**
+  - 問題: テキストメッセージ内の改行エスケープも実際の改行に変換され、文字列リテラルが壊れる
+  - 解決: 影響を受けた文字列リテラルを手動で`\n`エスケープシーケンスに戻す
+  - 教訓: **blanket regex置換は避け、targetedなEdit commandsを使用すること**
+  - **構文エラーパターン**: 余分な閉じ括弧が挿入されることがある
+  - 根拠: PlayCoverManagerのユニバーサルデザイン実装中に発見（2025年11月11日）
+  - 目的: 同様のエラーを防止するための知識データベース構築
+
+- **2025年11月11日 v1.6**: ユニバーサルデザイン & アクセシビリティガイドライン追加
+  - **新規セクション**: 完全なアクセシビリティガイドラインを追加
+  - Liquid Glassの既知のアクセシビリティ問題を文書化
+  - Apple実装済み解決策の詳細（High Contrast Glass Mode等）
+  - WCAG 2.1コントラスト要件の数値基準
+  - 開発者向け実装ガイドライン（コード例付き）
+  - テスト必須項目とチェックリスト
+  - European Accessibility Act (2025年6月28日施行) 情報
+  - 根拠: Web検索で確認した最新情報（2025年11月11日）
+  - ソース: macOS Tahoe 26 Accessibility Guide, EU Accessibility Act
+
+- **2025年11月11日 v1.5**: `.interactive()` modifierの既知の問題を追記
+
+- **2025年11月11日 v1.5**: `.interactive()` modifierの既知の問題を追記
+  - **重大な発見**: `.interactive()`がクリックイベントを阻害するバグを確認
+  - 症状の詳細: hover effectは機能するがclick eventが反応しない
+  - 対処法の追加: `.interactive()`を削除し`.tint()`のみ使用
+  - `.contentShape(Rectangle())`によるhit testing改善方法を追加
+  - 推奨実装パターンの更新（安全なパターンを明示）
+  - 根拠: PlayCoverManagerの実装テストで確認（2025年11月11日）
 
 - **2025年11月11日 v1.4**: サンドボックス環境制約の明記
   - **新規追加**: サンドボックス環境の制約セクション
