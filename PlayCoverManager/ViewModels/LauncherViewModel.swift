@@ -210,7 +210,7 @@ final class LauncherViewModel {
             Logger.lifecycle("🔴 [\(app.displayName)] Status update: NOT running and NOT mounted")
         }
         
-        apps[index] = PlayCoverApp(
+        let updatedApp = PlayCoverApp(
             bundleIdentifier: app.bundleIdentifier,
             displayName: app.displayName,
             standardName: app.standardName,
@@ -221,6 +221,11 @@ final class LauncherViewModel {
             isRunning: isRunning,
             isMounted: isMounted
         )
+        
+        // Force SwiftUI update by replacing entire array
+        var newApps = apps
+        newApps[index] = updatedApp
+        apps = newApps
         
         applySearch()
     }
