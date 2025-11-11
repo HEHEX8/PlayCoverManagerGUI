@@ -488,7 +488,9 @@ struct RunningAppsBlockingView: View {
         _ = launcherService.terminateApp(bundleID: app.bundleIdentifier ?? "")
         
         // Wait a moment and check if app is still running
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // Using Swift 6.2 structured concurrency instead of DispatchQueue
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
             loadRunningApps()
             
             // If all apps are closed, automatically proceed
@@ -507,7 +509,9 @@ struct RunningAppsBlockingView: View {
         }
         
         // Wait a moment and check if all apps are closed
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        // Using Swift 6.2 structured concurrency instead of DispatchQueue
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
             loadRunningApps()
             
             // If all apps are closed, automatically proceed
@@ -534,7 +538,9 @@ struct RunningAppsBlockingView: View {
         }
         
         // Wait for termination and auto-eject, then retry
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        // Using Swift 6.2 structured concurrency instead of DispatchQueue
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1500))
             onRetry()
         }
     }

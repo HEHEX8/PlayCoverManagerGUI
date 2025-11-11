@@ -13,64 +13,58 @@ enum ProcessRunnerError: Error {
 }
 
 final class ProcessRunner: Sendable {
-    // Dedicated serial queue for process execution with optimal QoS
-    // .utility is appropriate for disk I/O operations (diskutil, hdiutil)
-    // Serial queue prevents overwhelming the system with concurrent processes
-    private static let processQueue = DispatchQueue(
-        label: "com.playcover.processrunner",
-        qos: .utility,
-        attributes: [],
-        autoreleaseFrequency: .workItem
-    )
-    
-    func run(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            Self.processQueue.async {
-                let process = Process()
-                process.launchPath = launchPath
-                process.arguments = arguments
-                if let currentDirectoryURL {
-                    process.currentDirectoryURL = currentDirectoryURL
-                }
-                if let environment {
-                    process.environment = environment
-                }
+    // Swift 6.2 optimization: Serial actor for process execution
+    // Replaces DispatchQueue with structured concurrency
+    // Actor provides thread-safe serialization with lower overhead
+    private actor ProcessExecutor {
+        func execute(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL?, environment: [String: String]?) throws -> String {
+            let process = Process()
+            process.launchPath = launchPath
+            process.arguments = arguments
+            if let currentDirectoryURL {
+                process.currentDirectoryURL = currentDirectoryURL
+            }
+            if let environment {
+                process.environment = environment
+            }
 
-                let stdoutPipe = Pipe()
-                let stderrPipe = Pipe()
-                process.standardOutput = stdoutPipe
-                process.standardError = stderrPipe
-                
-                // Get file handles and ensure they're closed after use
-                let stdoutHandle = stdoutPipe.fileHandleForReading
-                let stderrHandle = stderrPipe.fileHandleForReading
-                defer {
-                    // Automatically close file handles to prevent resource leaks
-                    try? stdoutHandle.close()
-                    try? stderrHandle.close()
-                }
+            let stdoutPipe = Pipe()
+            let stderrPipe = Pipe()
+            process.standardOutput = stdoutPipe
+            process.standardError = stderrPipe
+            
+            // Get file handles and ensure they're closed after use
+            let stdoutHandle = stdoutPipe.fileHandleForReading
+            let stderrHandle = stderrPipe.fileHandleForReading
+            defer {
+                // Automatically close file handles to prevent resource leaks
+                try? stdoutHandle.close()
+                try? stderrHandle.close()
+            }
 
-                do {
-                    try process.run()
-                } catch {
-                    continuation.resume(throwing: error)
-                    return
-                }
+            try process.run()
+            process.waitUntilExit()
 
-                process.waitUntilExit()
+            let stdoutData = stdoutHandle.readDataToEndOfFile()
+            let stderrData = stderrHandle.readDataToEndOfFile()
+            let stdoutString = String(data: stdoutData, encoding: .utf8) ?? ""
+            let stderrString = String(data: stderrData, encoding: .utf8) ?? ""
 
-                let stdoutData = stdoutHandle.readDataToEndOfFile()
-                let stderrData = stderrHandle.readDataToEndOfFile()
-                let stdoutString = String(data: stdoutData, encoding: .utf8) ?? ""
-                let stderrString = String(data: stderrData, encoding: .utf8) ?? ""
-
-                if process.terminationStatus == 0 {
-                    continuation.resume(returning: stdoutString)
-                } else {
-                    continuation.resume(throwing: ProcessRunnerError.commandFailed(command: [launchPath] + arguments, exitCode: process.terminationStatus, stderr: stderrString))
-                }
+            if process.terminationStatus == 0 {
+                return stdoutString
+            } else {
+                throw ProcessRunnerError.commandFailed(command: [launchPath] + arguments, exitCode: process.terminationStatus, stderr: stderrString)
             }
         }
+    }
+    
+    private let executor = ProcessExecutor()
+    
+    /// Execute process asynchronously using Swift 6.2 structured concurrency
+    /// Marked as @concurrent to explicitly run on concurrent executor (not caller's actor)
+    @concurrent
+    func run(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil) async throws -> String {
+        try await executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
     }
 
     func runSync(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil) throws -> String {

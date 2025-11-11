@@ -1379,7 +1379,9 @@ private struct RecentAppLaunchButton: View {
             }
             previousAppID = newValue
             // Update current icon after animation starts
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            // Using Swift 6.2 structured concurrency
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(50))
                 currentIcon = app.icon
             }
         }
@@ -1402,7 +1404,9 @@ private struct RecentAppLaunchButton: View {
         }
         
         // Fall down with bounce
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        // Using Swift 6.2 structured concurrency for animation timing
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
             withAnimation(.interpolatingSpring(stiffness: 200, damping: 12)) {
                 iconOffsetY = 0
                 iconScale = 1.0
@@ -1410,7 +1414,8 @@ private struct RecentAppLaunchButton: View {
         }
         
         // Trigger ripple on landing at icon position
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
             rippleTrigger += 1
         }
     }
@@ -1431,60 +1436,61 @@ private struct RecentAppLaunchButton: View {
         // Text stays visible (shows OLD title during animation)
         textOpacity = 1.0
         
-        // Drop new icon
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        // Drop new icon - Using Swift 6.2 structured concurrency for animation sequencing
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
+            
             withAnimation(.easeIn(duration: 0.3)) {
                 iconOffsetY = 0  // Falls to collision point
             }
             
             // COLLISION! Both icons react
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                // New icon squashes
-                withAnimation(.easeOut(duration: 0.1)) {
-                    iconScale = 0.95
-                }
-                
-                // Old icon gets pushed down and flies away
-                withAnimation(.easeOut(duration: 0.35)) {
-                    oldIconOffsetY = 120  // Pushed down
-                    oldIconScale = 0.6
-                    oldIconOpacity = 0.0
-                }
-                
-                // New icon bounces back
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
-                        iconScale = 1.0
-                    }
-                }
-                
-                // After new icon lands (0.45s), update title
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                    // Fade out old title
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        textOpacity = 0.0
-                    }
-                    
-                    // Update displayed title while faded out (triggers layout animation)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            displayedTitle = app.displayName
-                        }
-                        
-                        // Fade in new title after layout settles
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            withAnimation(.easeIn(duration: 0.25)) {
-                                textOpacity = 1.0
-                            }
-                        }
-                    }
-                    
-                    // Clean up old icon
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        oldIcon = nil
-                    }
+            try? await Task.sleep(for: .milliseconds(300))
+            
+            // New icon squashes
+            withAnimation(.easeOut(duration: 0.1)) {
+                iconScale = 0.95
+            }
+            
+            // Old icon gets pushed down and flies away
+            withAnimation(.easeOut(duration: 0.35)) {
+                oldIconOffsetY = 120  // Pushed down
+                oldIconScale = 0.6
+                oldIconOpacity = 0.0
+            }
+            
+            // New icon bounces back (parallel task)
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
+                withAnimation(.interpolatingSpring(stiffness: 300, damping: 15)) {
+                    iconScale = 1.0
                 }
             }
+            
+            // After new icon lands (0.45s), update title
+            try? await Task.sleep(for: .milliseconds(450))
+            
+            // Fade out old title
+            withAnimation(.easeOut(duration: 0.2)) {
+                textOpacity = 0.0
+            }
+            
+            // Update displayed title while faded out (triggers layout animation)
+            try? await Task.sleep(for: .milliseconds(200))
+            
+            withAnimation(.easeInOut(duration: 0.3)) {
+                displayedTitle = app.displayName
+            }
+            
+            // Fade in new title after layout settles
+            try? await Task.sleep(for: .milliseconds(100))
+            withAnimation(.easeIn(duration: 0.25)) {
+                textOpacity = 1.0
+            }
+            
+            // Clean up old icon
+            try? await Task.sleep(for: .milliseconds(500))
+            oldIcon = nil
         }
     }
 }
@@ -1519,7 +1525,9 @@ private struct RippleEffect: View {
         }
         
         // Remove after animation completes
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        // Using Swift 6.2 structured concurrency
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
             ripples.removeAll(where: { $0.id == newRipple.id })
         }
     }

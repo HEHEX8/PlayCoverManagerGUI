@@ -171,7 +171,8 @@ final class SettingsStore {
         } else {
             UserDefaults.standard.removeObject(forKey: "AppleLanguages")
         }
-        UserDefaults.standard.synchronize()
+        // Note: synchronize() is unnecessary on macOS 10.14+ / iOS 12+
+        // UserDefaults automatically persists changes asynchronously
     }
 
     private func saveDiskImageDirectory() {
