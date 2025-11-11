@@ -382,11 +382,11 @@ final class LauncherViewModel {
                 Logger.lifecycle("Cancelled auto-unmount for \(app.bundleIdentifier) due to launch")
             }
             
-            // Update status immediately after launch
-            // This ensures UI updates even if KVO is delayed
+            // Refresh to update lastLaunchedFlag and status
+            // This ensures the launched app becomes the "recent app"
             Task.immediate {
                 try? await Task.sleep(for: .seconds(0.5))
-                await updateAppStatus(bundleID: app.bundleIdentifier)
+                await refresh()
             }
         } catch let error as AppError {
             self.error = error
