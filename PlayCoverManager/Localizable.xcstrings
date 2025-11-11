@@ -1549,13 +1549,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择 ASIF 磁盘映像的目标。建议使用外部存储，但不是必需的。"
+            "value": "请选择 ASIF 磁盘映像的目标。建议使用外部存储，但不是必需的。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇 ASIF 磁盤映像的目標。建議使用外部存儲，但不是必需的。"
+            "value": "請選擇 ASIF 磁盤映像的目標。建議使用外部存儲，但不是必需的。"
           }
         }
       }
@@ -1572,13 +1572,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择一个文件夹来保存 ASIF 磁盘映像。"
+            "value": "请选择一个文件夹来保存 ASIF 磁盘映像。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇一個文件夾來保存 ASIF 磁盤映像。"
+            "value": "請選擇一個文件夾來保存 ASIF 磁盤映像。"
           }
         }
       }
@@ -5203,13 +5203,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择要安装的IPA文件"
+            "value": "请选择要安装的IPA文件"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇要安裝的IPA文件"
+            "value": "請選擇要安裝的IPA文件"
           }
         }
       }
@@ -6987,7 +6987,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Failed to create disk image"
+            "value": "Failed to create a disk image"
           }
         },
         "zh-Hans": {
@@ -7062,13 +7062,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "选择保存磁盘映像的位置"
+            "value": "请选择保存磁盘映像的位置"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "選擇保存磁盤映像的位置"
+            "value": "請選擇保存磁盤映像的位置"
           }
         }
       }
