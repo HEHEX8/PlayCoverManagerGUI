@@ -10,7 +10,6 @@ import Foundation
 import AppKit
 import Observation
 
-@MainActor
 @Observable
 class AppUninstallerService {
     let processRunner: ProcessRunner

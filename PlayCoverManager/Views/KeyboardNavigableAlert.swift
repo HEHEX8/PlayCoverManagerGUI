@@ -59,7 +59,7 @@ struct KeyboardNavigableAlert: View {
         }
         .padding(32)
         .frame(minWidth: 400)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.3), radius: 20)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }

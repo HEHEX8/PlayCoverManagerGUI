@@ -97,10 +97,11 @@ Click "Install IPA" → Select IPA file → Confirm → Install
 
 ## Technical Details
 
-- **Language**: Swift 6.0+
-- **UI**: SwiftUI
+- **Language**: Swift 6.2 with Approachable Concurrency
+- **UI**: SwiftUI with Liquid Glass Design System
 - **Architecture**: MVVM + Service Layer
 - **Storage**: ASIF (Apple Sparse Image Format)
+- **Minimum Target**: macOS 26.0 Tahoe
 
 ### Project Structure
 
@@ -214,10 +215,11 @@ cd PlayCoverManagerGUI
 
 ## 技術詳細
 
-- **言語**：Swift 6.0+
-- **UI**：SwiftUI
+- **言語**：Swift 6.2 + Approachable Concurrency
+- **UI**：SwiftUI + Liquid Glass Design System
 - **アーキテクチャ**：MVVM + Service Layer
 - **ストレージ**：ASIF (Apple Sparse Image Format)
+- **最小ターゲット**：macOS 26.0 Tahoe
 
 ### プロジェクト構造
 

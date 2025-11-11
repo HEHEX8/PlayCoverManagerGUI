@@ -11,7 +11,6 @@ import AppKit
 import Observation
 import CoreServices
 
-@MainActor
 @Observable
 class IPAInstallerService {
     let processRunner: ProcessRunner
