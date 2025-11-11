@@ -165,9 +165,6 @@ final class LauncherViewModel {
     }
     
     private func handleAppTerminated(bundleID: String) async {
-        // Update status immediately (will show orange while mounted)
-        await updateAppStatus(bundleID: bundleID)
-        
         // If there's already an unmount task for this app, don't create another one
         // This prevents duplicate unmount attempts from KVO firing multiple times
         guard activeUnmountTasks[bundleID] == nil else {
@@ -181,6 +178,9 @@ final class LauncherViewModel {
         }
         activeUnmountTasks[bundleID] = task
         
+        // Update status immediately after creating task (will show orange while mounted)
+        await updateAppStatus(bundleID: bundleID)
+        
         // Wait for completion and cleanup tracking
         await task.value
         activeUnmountTasks.removeValue(forKey: bundleID)
@@ -192,6 +192,7 @@ final class LauncherViewModel {
     /// Update status for a single app (efficient, doesn't check all apps)
     private func updateAppStatus(bundleID: String) async {
         guard let index = apps.firstIndex(where: { $0.bundleIdentifier == bundleID }) else {
+            Logger.error("updateAppStatus: App not found for \(bundleID)")
             return
         }
         
@@ -199,6 +200,15 @@ final class LauncherViewModel {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         let isRunning = launcherService.isAppRunning(bundleID: bundleID)
         let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
+        
+        // Debug log
+        if !isRunning && isMounted {
+            Logger.lifecycle("🟠 [\(app.displayName)] Status update: NOT running but MOUNTED")
+        } else if isRunning {
+            Logger.lifecycle("🟢 [\(app.displayName)] Status update: RUNNING")
+        } else {
+            Logger.lifecycle("🔴 [\(app.displayName)] Status update: NOT running and NOT mounted")
+        }
         
         apps[index] = PlayCoverApp(
             bundleIdentifier: app.bundleIdentifier,
