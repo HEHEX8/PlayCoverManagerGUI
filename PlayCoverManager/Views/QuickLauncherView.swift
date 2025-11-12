@@ -77,6 +77,51 @@ struct QuickLauncherView: View {
         return iconSize * 0.2
     }
     
+    // MARK: - UI Scale Calculations
+    
+    // Calculate overall UI scale factor based on window size
+    // Base size: 960x640 (minimum) = scale 1.0
+    // Returns scale factor between 1.0 and 2.0
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 960.0
+        let baseHeight: CGFloat = 640.0
+        
+        // Calculate scale based on both width and height, use the smaller one
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        // Clamp between 1.0 and 2.0 for reasonable scaling
+        return max(1.0, min(2.0, scale))
+    }
+    
+    // Calculated scaled values for UI elements
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
+    
+    // Toolbar dimensions
+    private var toolbarHeight: CGFloat { 16 * uiScale }
+    private var toolbarHorizontalPadding: CGFloat { 24 * uiScale }
+    private var toolbarButtonSize: CGFloat { 44 * uiScale }
+    private var toolbarButtonIconSize: CGFloat { 17 * uiScale }
+    
+    // Search field dimensions
+    private var searchFieldMaxWidth: CGFloat { 400 * uiScale }
+    private var searchFieldFontSize: CGFloat { 14 * uiScale }
+    private var searchFieldPadding: CGFloat { 12 * uiScale }
+    private var searchFieldVerticalPadding: CGFloat { 10 * uiScale }
+    
+    // Recent app button dimensions
+    private var recentAppIconSize: CGFloat { 56 * uiScale }
+    private var recentAppTitleFontSize: CGFloat { 17 * uiScale }
+    private var recentAppSubtitleFontSize: CGFloat { 13 * uiScale }
+    private var recentAppPadding: CGFloat { 20 * uiScale }
+    
+    // General spacing
+    private var contentHorizontalPadding: CGFloat { 32 * uiScale }
+    private var contentVerticalPadding: CGFloat { 24 * uiScale }
+    
     // Current focused row (for multi-row navigation)
     @State private var focusedRow: Int = 0
     
@@ -286,12 +331,14 @@ struct QuickLauncherView: View {
     
     @ViewBuilder
     private var toolbarView: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 16 * uiScale) {
             // Hamburger menu button
             ModernToolbarButton(
                 icon: "line.3.horizontal",
                 color: .primary,
-                help: String(localized: "メニュー (⌘M)")
+                help: String(localized: "メニュー (⌘M)"),
+                size: toolbarButtonSize,
+                iconSize: toolbarButtonIconSize
             ) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     isDrawerOpen.toggle()
@@ -307,7 +354,9 @@ struct QuickLauncherView: View {
             ModernToolbarButton(
                 icon: "questionmark.circle",
                 color: .secondary,
-                help: String(localized: "キーボードショートカット (⌘?)")
+                help: String(localized: "キーボードショートカット (⌘?)"),
+                size: toolbarButtonSize,
+                iconSize: toolbarButtonIconSize
             ) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     showingShortcutGuide.toggle()
@@ -319,16 +368,18 @@ struct QuickLauncherView: View {
             ModernToolbarButton(
                 icon: "trash",
                 color: .red,
-                help: String(localized: "アンインストール (⌘⇧U)")
+                help: String(localized: "アンインストール (⌘⇧U)"),
+                size: toolbarButtonSize,
+                iconSize: toolbarButtonIconSize
             ) {
                 showingUninstaller = true
             }
             .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
+        .padding(.horizontal, toolbarHorizontalPadding)
+        .padding(.vertical, toolbarHeight)
         .background(toolbarBackground)
-        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.08), radius: 12 * uiScale, x: 0, y: 4 * uiScale)
         .overlay(alignment: .bottom) {
             toolbarSeparator
         }
@@ -336,13 +387,14 @@ struct QuickLauncherView: View {
     
     @ViewBuilder
     private var searchField: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 8 * uiScale) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: searchFieldFontSize, weight: .medium))
                 .foregroundStyle(.secondary)
             
             TextField(String(localized: "アプリを検索"), text: $viewModel.searchText)
                 .textFieldStyle(.plain)
+                .font(.system(size: searchFieldFontSize))
                 .disabled(isDrawerOpen)
                 .focused($isSearchFieldFocused)
                 .onSubmit {
@@ -353,27 +405,27 @@ struct QuickLauncherView: View {
                     }
                 }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, searchFieldPadding)
+        .padding(.vertical, searchFieldVerticalPadding)
         .background(
-            RoundedRectangle(cornerRadius: 10)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
+            RoundedRectangle(cornerRadius: 10 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10 * uiScale))
         )
         .overlay {
-            RoundedRectangle(cornerRadius: 10)
+            RoundedRectangle(cornerRadius: 10 * uiScale)
                 .strokeBorder(
                     isSearchFieldFocused ? Color.accentColor.opacity(0.5) : Color.primary.opacity(0.1),
-                    lineWidth: isSearchFieldFocused ? 2 : 1
+                    lineWidth: isSearchFieldFocused ? 2 * uiScale : 1 * uiScale
                 )
         }
         .shadow(
             color: isSearchFieldFocused ? .accentColor.opacity(0.2) : .clear,
-            radius: isSearchFieldFocused ? 8 : 0,
+            radius: isSearchFieldFocused ? 8 * uiScale : 0,
             x: 0,
-            y: 2
+            y: 2 * uiScale
         )
         .animation(.easeOut(duration: 0.2), value: isSearchFieldFocused)
-        .frame(maxWidth: 400)
+        .frame(maxWidth: searchFieldMaxWidth)
     }
     
     @ViewBuilder
@@ -466,11 +518,15 @@ struct QuickLauncherView: View {
                     startPoint: .leading,
                     endPoint: .trailing
                 ))
-                .frame(height: 1)
-                .blur(radius: 2)
+                .frame(height: 1 * uiScale)
+                .blur(radius: 2 * uiScale)
             
             RecentAppLaunchButton(
                 app: recentApp,
+                iconSize: recentAppIconSize,
+                titleFontSize: recentAppTitleFontSize,
+                subtitleFontSize: recentAppSubtitleFontSize,
+                padding: recentAppPadding,
                 onLaunch: {
                     viewModel.launch(app: recentApp)
                     Task { @MainActor in
@@ -484,7 +540,7 @@ struct QuickLauncherView: View {
                 }
             )
             .background(recentAppButtonBackground)
-            .shadow(color: .accentColor.opacity(0.15), radius: 12, x: 0, y: -4)
+            .shadow(color: .accentColor.opacity(0.15), radius: 12 * uiScale, x: 0, y: -4 * uiScale)
             .overlay(alignment: .top) {
                 recentAppButtonShine
             }
@@ -500,7 +556,7 @@ struct QuickLauncherView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            .blur(radius: 20)
+            .blur(radius: 20 * uiScale)
             
             // Main glass layer
             Rectangle()
@@ -516,7 +572,7 @@ struct QuickLauncherView: View {
             startPoint: .top,
             endPoint: .bottom
         )
-        .frame(height: 40)
+        .frame(height: 40 * uiScale)
         .allowsHitTesting(false)
     }
 
@@ -743,42 +799,46 @@ private struct ModernToolbarButton: View {
     let color: Color
     let help: String
     var rotation: Double = 0  // Optional rotation angle for animations
+    var size: CGFloat = 44  // Button size (dynamic)
+    var iconSize: CGFloat = 17  // Icon size (dynamic)
     let action: () -> Void
     
     @State private var isHovered = false
     
     var body: some View {
+        let cornerRadius = size * 0.27  // 12/44 ≈ 0.27
+        
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: iconSize, weight: .semibold))
                 .foregroundStyle(isHovered ? color.opacity(0.9) : color)
                 .rotationEffect(.degrees(rotation))
-                .frame(width: 44, height: 44)
+                .frame(width: size, height: size)
                 .background(
                     ZStack {
                         // Glow effect when hovered
                         if isHovered {
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: cornerRadius)
                                 .fill(color.opacity(0.15))
-                                .blur(radius: 8)
+                                .blur(radius: size * 0.18)
                         }
                         
                         // Main glass button
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: cornerRadius)
                             .glassEffect(
                                 isHovered 
                                 ? .regular.tint(color.opacity(0.15))
                                 : .regular, 
-                                in: RoundedRectangle(cornerRadius: 12)
+                                in: RoundedRectangle(cornerRadius: cornerRadius)
                             )
                     }
                     .allowsHitTesting(false)  // Allow clicks through to button
                 )
                 .shadow(
                     color: isHovered ? color.opacity(0.3) : .black.opacity(0.1), 
-                    radius: isHovered ? 8 : 4, 
+                    radius: isHovered ? size * 0.18 : size * 0.09, 
                     x: 0, 
-                    y: 2
+                    y: size * 0.045
                 )
                 .overlay {
                     // Shine effect on hover
@@ -788,7 +848,7 @@ private struct ModernToolbarButton: View {
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                         .allowsHitTesting(false)  // Allow clicks through shine
                     }
                 }
@@ -1468,6 +1528,10 @@ private struct IPAInstallerSheetWrapper: View {
 // Recent app launch button with rich animations
 private struct RecentAppLaunchButton: View {
     let app: PlayCoverApp
+    var iconSize: CGFloat = 56
+    var titleFontSize: CGFloat = 17
+    var subtitleFontSize: CGFloat = 13
+    var padding: CGFloat = 20
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
@@ -1497,16 +1561,19 @@ private struct RecentAppLaunchButton: View {
             
             onLaunch()
         } label: {
-            HStack(spacing: 20) {
+            let cornerRadius = iconSize * 0.21  // 12/56 ≈ 0.21
+            let iconSpacing = padding * 1.0
+            
+            HStack(spacing: iconSpacing) {
                 // Icon with animations - ZStack layers old icon, ripple, and new icon
                 ZStack {
                     // Old icon (during transition) - bottom layer
                     if let oldIcon = oldIcon {
                         Image(nsImage: oldIcon)
                             .resizable()
-                            .frame(width: 56, height: 56)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                            .frame(width: iconSize, height: iconSize)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                            .shadow(color: .black.opacity(0.2), radius: iconSize * 0.11, x: 0, y: iconSize * 0.05)
                             .offset(x: oldIconOffsetX, y: oldIconOffsetY)
                             .scaleEffect(oldIconScale)
                             .opacity(oldIconOpacity)
@@ -1514,44 +1581,44 @@ private struct RecentAppLaunchButton: View {
                     
                     // Ripple effect - middle layer, centered on icon
                     RippleEffect(trigger: rippleTrigger)
-                        .frame(width: 56, height: 56)
+                        .frame(width: iconSize, height: iconSize)
                     
                     // Current icon - top layer with modern shadow
                     if let icon = app.icon {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: 56, height: 56)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                            .frame(width: iconSize, height: iconSize)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                            .shadow(color: .black.opacity(0.2), radius: iconSize * 0.11, x: 0, y: iconSize * 0.05)
                             .offset(x: iconOffsetX, y: iconOffsetY)
                             .scaleEffect(iconScale)
                     } else {
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: cornerRadius)
                             .fill(Color.gray.opacity(0.3))
-                            .frame(width: 56, height: 56)
+                            .frame(width: iconSize, height: iconSize)
                             .overlay {
                                 Image(systemName: "app.fill")
-                                    .font(.system(size: 28))
+                                    .font(.system(size: iconSize * 0.5))
                                     .foregroundStyle(.tertiary)
                             }
                             .offset(x: iconOffsetX, y: iconOffsetY)
                             .scaleEffect(iconScale)
                     }
                 }
-                .frame(width: 56, height: 56)
+                .frame(width: iconSize, height: iconSize)
                 
                 // App info with modern styling
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: iconSize * 0.11) {
                     Text(displayedTitle)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: titleFontSize, weight: .semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(2)
                     
-                    HStack(spacing: 6) {
+                    HStack(spacing: iconSize * 0.11) {
                         Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: subtitleFontSize * 0.85, weight: .medium))
                         Text("前回起動したアプリ")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: subtitleFontSize, weight: .medium))
                     }
                     .foregroundStyle(.secondary)
                 }
@@ -1561,24 +1628,24 @@ private struct RecentAppLaunchButton: View {
                 Spacer()
                 
                 // Modern Enter key hint with glassmorphism
-                HStack(spacing: 6) {
+                HStack(spacing: iconSize * 0.11) {
                     Image(systemName: "return")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: subtitleFontSize * 0.85, weight: .bold))
                     Text("Enter")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: subtitleFontSize * 0.92, weight: .semibold))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 8))
+                .padding(.horizontal, padding * 0.6)
+                .padding(.vertical, padding * 0.3)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: padding * 0.4))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: padding * 0.4)
                         .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
                 )
                 .foregroundStyle(.secondary)
-                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+                .shadow(color: .black.opacity(0.05), radius: padding * 0.1, x: 0, y: 1)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
+            .padding(.horizontal, padding * 1.2)
+            .padding(.vertical, padding * 0.8)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
             .background(
