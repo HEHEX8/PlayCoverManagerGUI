@@ -249,10 +249,10 @@ struct CustomPicker<SelectionValue: Hashable, Content: View>: View {
         .padding(.horizontal, 12 * uiScale)
         .padding(.vertical, 8 * uiScale)
         .background(
-            RoundedRectangle(cornerRadius: 8 * uiScale)
+            RoundedRectangle.standard(.small, scale: uiScale)
                 .fill(Color(nsColor: .controlBackgroundColor))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8 * uiScale)
+                    RoundedRectangle.standard(.small, scale: uiScale)
                         .strokeBorder(Color.primary.opacity(0.2), lineWidth: uiScale)
                 }
         )
@@ -291,7 +291,7 @@ struct CustomToggle: View {
         }
         .padding(16 * uiScale)
         .background(
-            RoundedRectangle(cornerRadius: 12 * uiScale)
+            RoundedRectangle.standard(.regular, scale: uiScale)
                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
         )
     }
@@ -328,6 +328,35 @@ extension View {
     }
 }
 
+// MARK: - Shape Helpers
+// Swift 6.2: Common shape factory functions to reduce repetition
+
+extension RoundedRectangle {
+    /// Standard corner radius values scaled for UI
+    enum StandardRadius {
+        case small      // 8pt
+        case medium     // 10pt
+        case regular    // 12pt
+        case large      // 16pt
+        case extraLarge // 22pt
+        
+        var value: CGFloat {
+            switch self {
+            case .small: 8
+            case .medium: 10
+            case .regular: 12
+            case .large: 16
+            case .extraLarge: 22
+            }
+        }
+    }
+    
+    /// Create RoundedRectangle with standard radius scaled for UI
+    static func standard(_ radius: StandardRadius, scale: CGFloat = 1.0) -> RoundedRectangle {
+        RoundedRectangle(cornerRadius: radius.value * scale)
+    }
+}
+
 // MARK: - Custom Section Card
 
 /// Modern section card container - Swift 6.2 optimized
@@ -359,7 +388,7 @@ struct SectionCard<Content: View>: View {
             content
         }
         .padding(24 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+        .glassEffect(.regular, in: RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, y: 4 * uiScale)
     }
     
@@ -420,7 +449,7 @@ struct InfoBadge: View {
         }
         .padding(12 * uiScale)
         .background(
-            RoundedRectangle(cornerRadius: 8 * uiScale)
+            RoundedRectangle.standard(.small, scale: uiScale)
                 .fill(color.opacity(0.05))
         )
     }

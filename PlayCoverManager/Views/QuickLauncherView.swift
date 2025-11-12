@@ -440,11 +440,11 @@ struct QuickLauncherView: View {
         .padding(.horizontal, searchFieldPadding)
         .padding(.vertical, searchFieldVerticalPadding)
         .background(
-            RoundedRectangle(cornerRadius: 10 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10 * uiScale))
+            RoundedRectangle.standard(.medium, scale: uiScale)
+                .glassEffect(.regular, in: RoundedRectangle.standard(.medium, scale: uiScale))
         )
         .overlay {
-            RoundedRectangle(cornerRadius: 10 * uiScale)
+            RoundedRectangle.standard(.medium, scale: uiScale)
                 .strokeBorder(
                     isSearchFieldFocused ? Color.accentColor.opacity(0.5) : Color.primary.opacity(0.1),
                     lineWidth: isSearchFieldFocused ? 2 * uiScale : 1 * uiScale
@@ -728,7 +728,7 @@ struct QuickLauncherView: View {
                     }
                 }
                 .padding()
-                .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle(cornerRadius: 12 * uiScale))
+                .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle.standard(.regular, scale: uiScale))
                 .shadow(radius: 12 * uiScale)
             }
         }
@@ -1519,7 +1519,7 @@ private struct AppDetailSheet: View {
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16 * uiScale)
                                     .background(
-                                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                                        RoundedRectangle.standard(.regular, scale: uiScale)
                                             .fill(selectedTab == tab ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
                                     )
                                     .foregroundStyle(selectedTab == tab ? .white : .primary)
@@ -1568,7 +1568,7 @@ private struct AppDetailSheet: View {
             windowSize = newSize
         }
         .frame(minWidth: 800, minHeight: 650)
-        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .clipShape(RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
     }
 }
@@ -4104,7 +4104,7 @@ private struct KeyboardShortcutGuide: View {
         }
         .frame(width: 600 * uiScale, height: 500 * uiScale)
         .background(Color(nsColor: .windowBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .clipShape(RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 10 * uiScale)
     }
     
@@ -4234,12 +4234,12 @@ private struct DataHandlingAlertView: View {
                             .padding(12 * uiScale)
                             .frame(maxWidth: .infinity)
                             .background(
-                                RoundedRectangle(cornerRadius: 8 * uiScale)
+                                RoundedRectangle.standard(.small, scale: uiScale)
                                     .fill(selectedIndex == index ? Color.blue.opacity(0.1) : Color.clear)
                             )
                             .overlay {
                                 if selectedIndex == index {
-                                    RoundedRectangle(cornerRadius: 8 * uiScale)
+                                    RoundedRectangle.standard(.small, scale: uiScale)
                                         .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
                                 }
                             }
@@ -4260,7 +4260,7 @@ private struct DataHandlingAlertView: View {
             }
             .padding(32 * uiScale)
             .frame(maxWidth: 600 * uiScale)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .glassEffect(.regular, in: RoundedRectangle.standard(.large, scale: uiScale))
             .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
         }
         .onAppear { setupKeyboardMonitor() }

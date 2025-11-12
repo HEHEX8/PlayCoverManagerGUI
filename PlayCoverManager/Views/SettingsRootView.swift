@@ -118,7 +118,7 @@ struct SettingsRootView: View {
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 16 * uiScale)
                                     .background(
-                                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                                        RoundedRectangle.standard(.regular, scale: uiScale)
                                             .fill(selectedTab == tab ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
                                     )
                                     .foregroundStyle(selectedTab == tab ? .white : .primary)
@@ -154,7 +154,7 @@ struct SettingsRootView: View {
             windowSize = newSize
         }
         .frame(minWidth: 800, minHeight: 600)
-        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .clipShape(RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
     }
 }
@@ -232,7 +232,7 @@ private struct GeneralSettingsView: View {
                                 .padding(12 * uiScale)
                                 .frame(maxWidth: .infinity)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 8 * uiScale)
+                                    RoundedRectangle.standard(.small, scale: uiScale)
                                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                                 )
                                 
@@ -281,7 +281,7 @@ private struct GeneralSettingsView: View {
                         }
                         .padding(12 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                            RoundedRectangle.standard(.small, scale: uiScale)
                                 .fill(Color.blue.opacity(0.05))
                         )
                     }
@@ -345,7 +345,7 @@ private struct GeneralSettingsView: View {
                         }
                         .padding(16 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                            RoundedRectangle.standard(.regular, scale: uiScale)
                                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                         )
                     }
@@ -415,7 +415,7 @@ private struct GeneralSettingsView: View {
                         }
                         .padding(16 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                            RoundedRectangle.standard(.regular, scale: uiScale)
                                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                         )
                         
@@ -431,7 +431,7 @@ private struct GeneralSettingsView: View {
                         }
                         .padding(12 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                            RoundedRectangle.standard(.small, scale: uiScale)
                                 .fill(Color.green.opacity(0.05))
                         )
                     }
@@ -588,7 +588,7 @@ private struct DataSettingsView: View {
                         }
                         .padding(16 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                            RoundedRectangle.standard(.regular, scale: uiScale)
                                 .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                         )
                         
@@ -604,7 +604,7 @@ private struct DataSettingsView: View {
                         }
                         .padding(12 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                            RoundedRectangle.standard(.small, scale: uiScale)
                                 .fill(Color.orange.opacity(0.05))
                         )
                     }
@@ -751,7 +751,7 @@ struct IPAInstallerSheet: View {
             windowSize = newSize
         }
         .frame(minWidth: 800, minHeight: 600)
-        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .clipShape(RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
@@ -877,7 +877,7 @@ struct IPAInstallerSheet: View {
                             Image(nsImage: icon)
                                 .resizable()
                                 .frame(width: 100 * uiScale, height: 100 * uiScale)
-                                .clipShape(RoundedRectangle(cornerRadius: 22 * uiScale))
+                                .clipShape(RoundedRectangle.standard(.extraLarge, scale: uiScale))
                                 .shadow(color: .black.opacity(0.25), radius: 12 * uiScale, x: 0, y: 6 * uiScale)
                         }
                         
@@ -909,7 +909,7 @@ struct IPAInstallerSheet: View {
                     .frame(maxWidth: .infinity)
                     .padding(20 * uiScale)
                     .background(
-                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                        RoundedRectangle.standard(.regular, scale: uiScale)
                             .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                     )
                     
@@ -945,7 +945,7 @@ struct IPAInstallerSheet: View {
                     }
                     .padding(20 * uiScale)
                     .background(
-                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                        RoundedRectangle.standard(.regular, scale: uiScale)
                             .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                     )
                 
@@ -1031,7 +1031,7 @@ struct IPAInstallerSheet: View {
                     }
                     .padding(20 * uiScale)
                     .background(
-                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                        RoundedRectangle.standard(.regular, scale: uiScale)
                             .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                     )
                     
@@ -1044,10 +1044,10 @@ struct IPAInstallerSheet: View {
                                     Image(nsImage: icon)
                                         .resizable()
                                         .frame(width: 52 * uiScale, height: 52 * uiScale)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
+                                        .clipShape(RoundedRectangle.standard(.regular, scale: uiScale))
                                         .shadow(color: .black.opacity(0.2), radius: 4 * uiScale, x: 0, y: 2)
                                 } else {
-                                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                                    RoundedRectangle.standard(.regular, scale: uiScale)
                                         .fill(Color.gray.opacity(0.3))
                                         .frame(width: 52 * uiScale, height: 52 * uiScale)
                                         .overlay {
@@ -1121,7 +1121,7 @@ struct IPAInstallerSheet: View {
                             }
                             .padding(16 * uiScale)
                             .background(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                             )
                         }
@@ -1208,9 +1208,9 @@ struct IPAInstallerSheet: View {
                                         Image(nsImage: icon)
                                             .resizable()
                                             .frame(width: 52 * uiScale, height: 52 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
+                                            .clipShape(RoundedRectangle.standard(.regular, scale: uiScale))
                                     } else {
-                                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                                        RoundedRectangle.standard(.regular, scale: uiScale)
                                             .fill(Color.gray.opacity(0.3))
                                             .frame(width: 52 * uiScale, height: 52 * uiScale)
                                     }
@@ -1240,7 +1240,7 @@ struct IPAInstallerSheet: View {
                             }
                             .padding(16 * uiScale)
                             .background(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color.green.opacity(0.1))
                             )
                         }
@@ -1253,10 +1253,10 @@ struct IPAInstallerSheet: View {
                                         Image(nsImage: icon)
                                             .resizable()
                                             .frame(width: 52 * uiScale, height: 52 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
+                                            .clipShape(RoundedRectangle.standard(.regular, scale: uiScale))
                                             .opacity(0.6)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                                        RoundedRectangle.standard(.regular, scale: uiScale)
                                             .fill(Color.gray.opacity(0.3))
                                             .frame(width: 52 * uiScale, height: 52 * uiScale)
                                     }
@@ -1280,7 +1280,7 @@ struct IPAInstallerSheet: View {
                             }
                             .padding(16 * uiScale)
                             .background(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color.blue.opacity(0.1))
                             )
                         }
@@ -1311,7 +1311,7 @@ struct IPAInstallerSheet: View {
                             }
                             .padding(16 * uiScale)
                             .background(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color.red.opacity(0.1))
                             )
                         }
@@ -1392,9 +1392,9 @@ struct IPAInstallerSheet: View {
                                             Image(nsImage: icon)
                                                 .resizable()
                                                 .frame(width: 52 * uiScale, height: 52 * uiScale)
-                                                .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
+                                                .clipShape(RoundedRectangle.standard(.regular, scale: uiScale))
                                         } else {
-                                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                                            RoundedRectangle.standard(.regular, scale: uiScale)
                                                 .fill(Color.gray.opacity(0.3))
                                                 .frame(width: 52 * uiScale, height: 52 * uiScale)
                                         }
@@ -1424,7 +1424,7 @@ struct IPAInstallerSheet: View {
                                 }
                                 .padding(16 * uiScale)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                                    RoundedRectangle.standard(.regular, scale: uiScale)
                                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                                 )
                             }
@@ -1463,7 +1463,7 @@ struct IPAInstallerSheet: View {
                                 }
                                 .padding(16 * uiScale)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                                    RoundedRectangle.standard(.regular, scale: uiScale)
                                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                                 )
                             }
@@ -1831,7 +1831,7 @@ struct AppUninstallerSheet: View {
             windowSize = newSize
         }
         .frame(minWidth: 800, minHeight: 600)
-        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .clipShape(RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         .onAppear {
             Task {
@@ -1895,7 +1895,7 @@ struct AppUninstallerSheet: View {
                         Image(nsImage: icon)
                             .resizable()
                             .frame(width: 100 * uiScale, height: 100 * uiScale)
-                            .clipShape(RoundedRectangle(cornerRadius: 22 * uiScale))
+                            .clipShape(RoundedRectangle.standard(.extraLarge, scale: uiScale))
                             .shadow(color: .black.opacity(0.2), radius: 12 * uiScale, x: 0, y: 6 * uiScale)
                     }
                     
@@ -1952,11 +1952,11 @@ struct AppUninstallerSheet: View {
                 }
                 .padding(24 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 16 * uiScale)
+                    RoundedRectangle.standard(.large, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16 * uiScale)
+                    RoundedRectangle.standard(.large, scale: uiScale)
                         .stroke(Color.orange.opacity(0.3), lineWidth: 1)
                 )
                 
@@ -1989,7 +1989,7 @@ struct AppUninstallerSheet: View {
                 .font(.system(size: 15 * uiScale))
                 .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                    RoundedRectangle.standard(.regular, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                 )
                 .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
@@ -2038,7 +2038,7 @@ struct AppUninstallerSheet: View {
                 }
                 .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 16 * uiScale)
+                    RoundedRectangle.standard(.large, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                 )
                 .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
@@ -2059,10 +2059,10 @@ struct AppUninstallerSheet: View {
                                         Image(nsImage: icon)
                                             .resizable()
                                             .frame(width: 48 * uiScale, height: 48 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
+                                            .clipShape(RoundedRectangle.standard(.medium, scale: uiScale))
                                             .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2 * uiScale)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10 * uiScale)
+                                        RoundedRectangle.standard(.medium, scale: uiScale)
                                             .fill(Color.gray.opacity(0.2))
                                             .frame(width: 48 * uiScale, height: 48 * uiScale)
                                             .overlay {
@@ -2099,7 +2099,7 @@ struct AppUninstallerSheet: View {
                                 }
                                 .padding(12 * uiScale)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 10 * uiScale)
+                                    RoundedRectangle.standard(.medium, scale: uiScale)
                                         .fill(Color(nsColor: .windowBackgroundColor))
                                 )
                             }
@@ -2109,7 +2109,7 @@ struct AppUninstallerSheet: View {
                 }
                 .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 16 * uiScale)
+                    RoundedRectangle.standard(.large, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                 )
                 .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
@@ -2152,11 +2152,11 @@ struct AppUninstallerSheet: View {
                 }
                 .padding(24 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 16 * uiScale)
+                    RoundedRectangle.standard(.large, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16 * uiScale)
+                    RoundedRectangle.standard(.large, scale: uiScale)
                         .stroke(Color.orange.opacity(0.3), lineWidth: 1)
                 )
                 
@@ -2193,7 +2193,7 @@ struct AppUninstallerSheet: View {
                 .font(.system(size: 15 * uiScale))
                 .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                    RoundedRectangle.standard(.regular, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                 )
                 .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
@@ -2234,9 +2234,9 @@ struct AppUninstallerSheet: View {
                             Image(nsImage: icon)
                                 .resizable()
                                 .frame(width: 48 * uiScale, height: 48 * uiScale)
-                                .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
+                                .clipShape(RoundedRectangle.standard(.medium, scale: uiScale))
                         } else {
-                            RoundedRectangle(cornerRadius: 10 * uiScale)
+                            RoundedRectangle.standard(.medium, scale: uiScale)
                                 .fill(Color.gray.opacity(0.3))
                                 .frame(width: 48 * uiScale, height: 48 * uiScale)
                         }
@@ -2338,7 +2338,7 @@ struct AppUninstallerSheet: View {
                     }
                     .padding(20 * uiScale)
                     .background(
-                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                        RoundedRectangle.standard(.regular, scale: uiScale)
                             .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                     )
                 }
@@ -2376,11 +2376,11 @@ struct AppUninstallerSheet: View {
                             }
                             .padding(16 * uiScale)
                             .background(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .stroke(Color.green.opacity(0.2), lineWidth: 1)
                             )
                         }
@@ -2413,11 +2413,11 @@ struct AppUninstallerSheet: View {
                             }
                             .padding(16 * uiScale)
                             .background(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .stroke(Color.blue.opacity(0.2), lineWidth: 1)
                             )
                         }
@@ -2451,11 +2451,11 @@ struct AppUninstallerSheet: View {
                             }
                             .padding(16 * uiScale)
                             .background(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                RoundedRectangle.standard(.regular, scale: uiScale)
                                     .stroke(Color.red.opacity(0.2), lineWidth: 1)
                             )
                         }
@@ -2549,11 +2549,11 @@ struct AppUninstallerSheet: View {
             }
             .padding(20 * uiScale)
             .background(
-                RoundedRectangle(cornerRadius: 16 * uiScale)
+                RoundedRectangle.standard(.large, scale: uiScale)
                     .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 16 * uiScale)
+                RoundedRectangle.standard(.large, scale: uiScale)
                     .stroke(Color.green.opacity(0.2), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
@@ -2588,7 +2588,7 @@ struct AppUninstallerSheet: View {
                 }
                 .padding(14 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 10 * uiScale)
+                    RoundedRectangle.standard(.medium, scale: uiScale)
                         .fill(Color(nsColor: .windowBackgroundColor))
                 )
             }
@@ -2616,11 +2616,11 @@ struct AppUninstallerSheet: View {
             }
             .padding(20 * uiScale)
             .background(
-                RoundedRectangle(cornerRadius: 16 * uiScale)
+                RoundedRectangle.standard(.large, scale: uiScale)
                     .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 16 * uiScale)
+                RoundedRectangle.standard(.large, scale: uiScale)
                     .stroke(Color.red.opacity(0.2), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
@@ -2656,7 +2656,7 @@ struct AppUninstallerSheet: View {
                 }
                 .padding(14 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 10 * uiScale)
+                    RoundedRectangle.standard(.medium, scale: uiScale)
                         .fill(Color(nsColor: .windowBackgroundColor))
                 )
             }
@@ -2881,7 +2881,7 @@ private struct MaintenanceSettingsView: View {
                         }
                         .padding(12 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                            RoundedRectangle.standard(.small, scale: uiScale)
                                 .fill(Color.cyan.opacity(0.05))
                         )
                     }
@@ -2945,7 +2945,7 @@ private struct MaintenanceSettingsView: View {
                         }
                         .padding(12 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                            RoundedRectangle.standard(.small, scale: uiScale)
                                 .fill(Color.yellow.opacity(0.05))
                         )
                     }
@@ -3010,7 +3010,7 @@ private struct MaintenanceSettingsView: View {
                         }
                         .padding(12 * uiScale)
                         .background(
-                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                            RoundedRectangle.standard(.small, scale: uiScale)
                                 .fill(Color.red.opacity(0.05))
                         )
                     }
@@ -3129,7 +3129,7 @@ private struct AboutView: View {
                         Image(nsImage: icon)
                             .resizable()
                             .frame(width: 100 * uiScale, height: 100 * uiScale)
-                            .clipShape(RoundedRectangle(cornerRadius: 22 * uiScale))
+                            .clipShape(RoundedRectangle.standard(.extraLarge, scale: uiScale))
                             .shadow(color: .black.opacity(0.2), radius: 10 * uiScale, x: 0, y: 5 * uiScale)
                     }
                     
@@ -3145,7 +3145,7 @@ private struct AboutView: View {
                 .frame(maxWidth: .infinity)
                 .padding(24 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                    RoundedRectangle.standard(.regular, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
                         .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
@@ -3171,7 +3171,7 @@ private struct AboutView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                    RoundedRectangle.standard(.regular, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
                         .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
@@ -3193,7 +3193,7 @@ private struct AboutView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                    RoundedRectangle.standard(.regular, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
                         .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
@@ -3215,7 +3215,7 @@ private struct AboutView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                    RoundedRectangle.standard(.regular, scale: uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
                         .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
@@ -3277,7 +3277,7 @@ private struct LinkButton: View {
                     .foregroundStyle(.secondary)
             }
             .padding(12 * uiScale)
-            .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8 * uiScale))
+            .background(Color.blue.opacity(0.1), in: RoundedRectangle.standard(.small, scale: uiScale))
         }
         .buttonStyle(.plain)
     }

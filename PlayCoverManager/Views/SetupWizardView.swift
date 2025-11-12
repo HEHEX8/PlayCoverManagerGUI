@@ -309,7 +309,7 @@ private struct PlayCoverStepView: View {
                     }
                     .padding(20 * uiScale)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 12 * uiScale))
+                    .background(Color.green.opacity(0.1), in: RoundedRectangle.standard(.regular, scale: uiScale))
                     
                     Text("PlayCover Manager は PlayCover を補完するアプリです。\n\nディスクイメージの管理と IPA インストールを簡単にします。")
                         .font(.system(size: 15 * uiScale))
@@ -335,7 +335,7 @@ private struct PlayCoverStepView: View {
                     }
                     .padding(20 * uiScale)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12 * uiScale))
+                    .background(Color.orange.opacity(0.1), in: RoundedRectangle.standard(.regular, scale: uiScale))
                     
                     CustomButton(
                         title: "PlayCover サイトを開く",
@@ -402,7 +402,7 @@ private struct StorageStepView: View {
                             }
                             .padding(20 * uiScale)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 12 * uiScale))
+                            .background(Color.green.opacity(0.1), in: RoundedRectangle.standard(.regular, scale: uiScale))
                         } else {
                             // Path doesn't exist - show warning
                             VStack(spacing: 8 * uiScale) {
@@ -423,7 +423,7 @@ private struct StorageStepView: View {
                                 }
                                 .padding(20 * uiScale)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12 * uiScale))
+                                .background(Color.orange.opacity(0.1), in: RoundedRectangle.standard(.regular, scale: uiScale))
                                 
                                 Text("ドライブが接続されていないか、パスが無効です。\n別の保存先を選択してください。")
                                     .font(.system(size: 12 * uiScale))
@@ -523,7 +523,7 @@ private struct DiskImageStepView: View {
                             }
                         }
                         .padding(20 * uiScale)
-                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5), in: RoundedRectangle(cornerRadius: 12 * uiScale))
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5), in: RoundedRectangle.standard(.regular, scale: uiScale))
                         
                         Text("実行すると、ディスクイメージの作成とマウントを行います。")
                             .font(.system(size: 12 * uiScale))
