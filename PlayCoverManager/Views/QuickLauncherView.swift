@@ -669,8 +669,10 @@ struct QuickLauncherView: View {
             
             // Handle arrow keys (keyCode: 123=left, 124=right, 125=down, 126=up)
             // Handle space (49), return (36), and escape (53)
+            // Handle number keys (18=1, 19=2, 20=3, 21=4, 23=5, 22=6, 26=7, 28=8, 25=9, 29=0)
             switch event.keyCode {
-            case 123, 124, 125, 126, 36, 49, 53:
+            case 123, 124, 125, 126, 36, 49, 53,
+                 18, 19, 20, 21, 22, 23, 25, 26, 28, 29:  // Number keys 1-0
                 let handled = handleKeyCode(event.keyCode)
                 if handled {
                     return nil  // Suppress the event (no beep)

@@ -41,7 +41,7 @@ struct AppRootView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .frame(minWidth: 960, minHeight: 640)
+        .frame(minWidth: 1400, minHeight: 640)
         .onAppear { appViewModel.onAppear() }
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
