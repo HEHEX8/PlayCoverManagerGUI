@@ -4014,7 +4014,7 @@ private struct KeyboardShortcutGuide: View {
                     HStack(spacing: itemSpacing) {
                         // Key combination
                         Text(shortcut.keys)
-                            .font(.system(size: itemFontSize, design: .monospaced, weight: .semibold))
+                            .font(.system(size: itemFontSize, weight: .semibold, design: .monospaced))
                             .foregroundStyle(.primary)
                             .padding(.horizontal, itemHorizontalPadding)
                             .padding(.vertical, itemVerticalPadding)
