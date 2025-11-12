@@ -931,7 +931,7 @@ private struct iOSAppIconView: View {
                 // Simple focus border (keyboard focus only)
                 if isFocused {
                     RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(.accentColor, lineWidth: 3)
+                        .strokeBorder(Color.accentColor, lineWidth: 3)
                 }
             }
             .overlay {
