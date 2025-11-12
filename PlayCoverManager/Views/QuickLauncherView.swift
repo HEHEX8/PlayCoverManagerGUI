@@ -3701,7 +3701,6 @@ actor AppAnalyzer {
 // MARK: - Drawer Panel
 
 private struct DrawerPanel: View {
-    @Environment(\.uiScale) var uiScale
     @Binding var showingSettings: Bool
     @Binding var showingInstaller: Bool
     @Binding var showingUninstaller: Bool
