@@ -1532,7 +1532,6 @@ private struct AppDetailSheet: View {
                             .controlSize(.large)
                         }
                         .padding(.bottom, 24 * uiScale)
-            }
                     }
                     .padding(.horizontal, 32 * uiScale)
                     .padding(.vertical, 24 * uiScale)
