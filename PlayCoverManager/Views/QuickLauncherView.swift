@@ -895,7 +895,7 @@ private struct iOSAppIconView: View {
                                 lineWidth: 8
                             )
                             .blur(radius: 4)
-                            .opacity(0.6 + sin(focusGlowPhase) * 0.3)
+                            .opacity(0.6 + CGFloat(sin(Double(focusGlowPhase))) * 0.3)
                         
                         // Middle glow layer
                         RoundedRectangle(cornerRadius: 19)
