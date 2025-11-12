@@ -126,30 +126,10 @@ private struct GeneralSettingsView: View {
                 }
                 .padding(20)
                 .background(
-                    ZStack {
-                        // Gradient glow
-                        LinearGradient(
-                            colors: [.blue.opacity(0.06), .clear],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .blur(radius: 20)
-                        
-                        // Simple background
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(nsColor: .controlBackgroundColor))
-                    }
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
-                .overlay {
-                    // Shine effect
-                    LinearGradient(
-                        colors: [.white.opacity(0.1), .clear],
-                        startPoint: .topLeading,
-                        endPoint: .center
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .shadow(color: .blue.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 // Mount Settings Card
                 VStack(alignment: .leading, spacing: 16) {
