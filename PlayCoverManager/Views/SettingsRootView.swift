@@ -45,7 +45,7 @@ struct SettingsRootView: View {
         }
         .uiScale(uiScale)  // Inject UI scale into environment for all tabs
         .padding(24 * uiScale)
-        .frame(width: 600 * uiScale, height: 500 * uiScale)
+        .frame(minWidth: 600, minHeight: 500)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("閉じる") {
@@ -443,7 +443,7 @@ struct IPAInstallerSheet: View {
             bottomButtons
         }
         .padding(20 * uiScale)
-        .frame(width: 700 * uiScale, height: 600 * uiScale)
+        .frame(minWidth: 700, minHeight: 600)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
@@ -1257,7 +1257,7 @@ struct AppUninstallerSheet: View {
             bottomButtons
         }
         .padding(20 * uiScale)
-        .frame(width: 700 * uiScale, height: 600 * uiScale)
+        .frame(minWidth: 700, minHeight: 600)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
