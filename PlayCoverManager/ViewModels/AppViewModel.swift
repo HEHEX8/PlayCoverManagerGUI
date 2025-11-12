@@ -148,7 +148,7 @@ final class AppViewModel {
 
     private func loadLauncher(playCoverPaths: PlayCoverPaths) async {
         do {
-            let apps = try launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
+            let apps = try await launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
             let vm = LauncherViewModel(apps: apps,
                                        playCoverPaths: playCoverPaths,
                                        diskImageService: diskImageService,
@@ -297,7 +297,7 @@ final class AppViewModel {
         
         // Step 1: Check for running apps
         for app in launcherVM.apps {
-            if launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
+            if await launcherService.isAppRunning(bundleID: app.bundleIdentifier) {
                 runningApps.append(app.bundleIdentifier)
                 failedCount += 1
             }

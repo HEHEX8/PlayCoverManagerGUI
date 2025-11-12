@@ -215,7 +215,7 @@ final class LauncherViewModel {
         
         let app = apps[index]
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
-        let isRunning = launcherService.isAppRunning(bundleID: bundleID)
+        let isRunning = await launcherService.isAppRunning(bundleID: bundleID)
         let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
         
 
@@ -276,7 +276,7 @@ final class LauncherViewModel {
     func refresh() async {
         do {
             // Refresh app list (includes isRunning check via LauncherService)
-            let refreshed = try launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
+            let refreshed = try await launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
             
             // Update isMounted status for each app
             apps = refreshed.map { app in
@@ -561,17 +561,35 @@ final class LauncherViewModel {
         // Store for later use (even if apps are running)
         pendingUnmountTask = applyToPlayCoverContainer
         
-        // Check for running apps first
-        let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
-        
-        if !runningApps.isEmpty {
-            let runningBundleIDs = runningApps.map { $0.bundleIdentifier }
-            unmountFlowState = .runningAppsBlocking(runningAppBundleIDs: runningBundleIDs)
-            return
+        // Swift 6.2: Check running apps asynchronously
+        Task {
+            // Swift 6.2: Use TaskGroup for parallel running state checks
+            let runningApps = await withTaskGroup(of: (String, Bool).self) { group in
+                for app in apps {
+                    group.addTask { [weak self] in
+                        guard let self else { return (app.bundleIdentifier, false) }
+                        return (app.bundleIdentifier, await self.launcherService.isAppRunning(bundleID: app.bundleIdentifier))
+                    }
+                }
+                
+                var running: [PlayCoverApp] = []
+                for await (bundleID, isRunning) in group {
+                    if isRunning, let app = apps.first(where: { $0.bundleIdentifier == bundleID }) {
+                        running.append(app)
+                    }
+                }
+                return running
+            }
+            
+            if !runningApps.isEmpty {
+                let runningBundleIDs = runningApps.map { $0.bundleIdentifier }
+                unmountFlowState = .runningAppsBlocking(runningAppBundleIDs: runningBundleIDs)
+                return
+            }
+            
+            // Show confirmation overlay
+            unmountFlowState = .confirming(volumeDisplayName: "")
         }
-        
-        // Show confirmation overlay
-        unmountFlowState = .confirming(volumeDisplayName: "")
     }
     
     func confirmUnmount() {
@@ -773,7 +791,7 @@ final class LauncherViewModel {
                 let bundleID = app.bundleIdentifier
                 
                 // Check if app is currently running
-                if launcherService.isAppRunning(bundleID: bundleID) {
+                if await launcherService.isAppRunning(bundleID: bundleID) {
                     continue
                 }
                 
@@ -1268,38 +1286,56 @@ final class LauncherViewModel {
     /// 3. Unmount all containers
     /// 4. Notify AppViewModel to show storage selection
     func initiateStorageLocationChange() {
-        // Check for running apps first
-        let runningApps = apps.filter { launcherService.isAppRunning(bundleID: $0.bundleIdentifier) }
-        
-        if !runningApps.isEmpty {
-            let appsList = runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
-            unmountFlowState = .error(
-                title: String(localized: "実行中のアプリがあります"),
-                message: String(localized: "保存先を変更するには、先にこれらのアプリを終了してください。\n\n\(appsList)")
-            )
-            return
-        }
-        
-        // Count currently mounted containers
-        var mountedCount = 0
-        
-        // Check app containers
-        for app in apps {
-            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-            let isMounted = (try? diskImageService.isMounted(at: container)) ?? false
+        // Swift 6.2: Check running apps asynchronously
+        Task {
+            // Swift 6.2: Parallel running state checks
+            let runningApps = await withTaskGroup(of: (String, Bool).self) { group in
+                for app in apps {
+                    group.addTask { [weak self] in
+                        guard let self else { return (app.bundleIdentifier, false) }
+                        return (app.bundleIdentifier, await self.launcherService.isAppRunning(bundleID: app.bundleIdentifier))
+                    }
+                }
+                
+                var running: [PlayCoverApp] = []
+                for await (bundleID, isRunning) in group {
+                    if isRunning, let app = apps.first(where: { $0.bundleIdentifier == bundleID }) {
+                        running.append(app)
+                    }
+                }
+                return running
+            }
+            
+            if !runningApps.isEmpty {
+                let appsList = runningApps.map { "• \($0.displayName)" }.joined(separator: "\n")
+                unmountFlowState = .error(
+                    title: String(localized: "実行中のアプリがあります"),
+                    message: String(localized: "保存先を変更するには、先にこれらのアプリを終了してください。\n\n\(appsList)")
+                )
+                return
+            }
+            
+            // Count currently mounted containers
+            var mountedCount = 0
+            
+            // Check app containers
+            for app in apps {
+                let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                let isMounted = (try? diskImageService.isMounted(at: container)) ?? false
+                if isMounted {
+                    mountedCount += 1
+                }
+            }
+            
+            // Check PlayCover container
+            let isMounted = (try? diskImageService.isMounted(at: playCoverPaths.containerRootURL)) ?? false
             if isMounted {
                 mountedCount += 1
             }
+            
+            // Show storage change confirmation
+            unmountFlowState = .storageChangeConfirming(mountedCount: mountedCount)
         }
-        
-        // Check PlayCover container
-        let isMounted = (try? diskImageService.isMounted(at: playCoverPaths.containerRootURL)) ?? false
-        if isMounted {
-            mountedCount += 1
-        }
-        
-        // Show storage change confirmation
-        unmountFlowState = .storageChangeConfirming(mountedCount: mountedCount)
     }
     
     /// Confirm storage location change and proceed with unmounting

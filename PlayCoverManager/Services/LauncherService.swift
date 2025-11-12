@@ -53,38 +53,60 @@ final class LauncherService {
         iconCache.name = "PlayCoverManager.IconCache"  // For debugging and instruments
     }
 
-    func fetchInstalledApps(at applicationsRoot: URL) throws -> [PlayCoverApp] {
+    // Swift 6.2: Use async/await with TaskGroup for parallel app processing
+    func fetchInstalledApps(at applicationsRoot: URL) async throws -> [PlayCoverApp] {
         // Create Applications directory if it doesn't exist
         if !fileManager.fileExists(atPath: applicationsRoot.path) {
             try fileManager.createDirectory(at: applicationsRoot, withIntermediateDirectories: true)
         }
         
         let contents = try fileManager.contentsOfDirectory(at: applicationsRoot, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
-        var apps: [PlayCoverApp] = []
-        for url in contents where url.pathExtension == "app" {
-            guard let bundle = Bundle(url: url) else { continue }
-            let bundleID = bundle.bundleIdentifier ?? url.deletingPathExtension().lastPathComponent
+        
+        // Swift 6.2: Parallel processing with TaskGroup
+        return try await withThrowingTaskGroup(of: PlayCoverApp?.self) { group in
+            for url in contents where url.pathExtension == "app" {
+                group.addTask { [self] in
+                    try? await self.processApp(url: url)
+                }
+            }
             
-            // Get display name with proper localization
-            // Try multiple methods to get the best localized name
-            let displayName = getLocalizedAppName(for: bundle, url: url)
+            var apps: [PlayCoverApp] = []
+            for try await app in group {
+                if let app { apps.append(app) }
+            }
             
-            // Get standard (English) name from Info.plist
-            let standardName = getStandardAppName(for: bundle)
-            
-            let info = bundle.infoDictionary
-            let version = info?["CFBundleShortVersionString"] as? String
-            let icon = getCachedIcon(for: bundleID, appURL: url)
-            let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
-            let isRunning = isAppRunning(bundleID: bundleID)
-            // isMounted will be set by LauncherViewModel
-            let app = PlayCoverApp(bundleIdentifier: bundleID, displayName: displayName, standardName: standardName, version: version, appURL: url, icon: icon, lastLaunchedFlag: lastLaunchFlag, isRunning: isRunning, isMounted: false)
-            apps.append(app)
+            return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
         }
-        return apps.sorted { $0.displayName.lowercased() < $1.displayName.lowercased() }
+    }
+    
+    // Swift 6.2: Extract app processing for parallel execution with async let for concurrent operations
+    private func processApp(url: URL) async throws -> PlayCoverApp? {
+        guard let bundle = Bundle(url: url) else { return nil }
+        let bundleID = bundle.bundleIdentifier ?? url.deletingPathExtension().lastPathComponent
+        let info = bundle.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String
+        
+        // Swift 6.2: Use async let for concurrent property fetching
+        async let displayName = getLocalizedAppName(for: bundle, url: url)
+        async let standardName = getStandardAppName(for: bundle)
+        async let icon = getCachedIcon(for: bundleID, appURL: url)
+        async let lastLaunchFlag = readLastLaunchFlag(for: bundleID)
+        async let isRunning = isAppRunning(bundleID: bundleID)
+        
+        return PlayCoverApp(
+            bundleIdentifier: bundleID,
+            displayName: await displayName,
+            standardName: await standardName,
+            version: version,
+            appURL: url,
+            icon: await icon,
+            lastLaunchedFlag: await lastLaunchFlag,
+            isRunning: await isRunning,
+            isMounted: false
+        )
     }
 
-    private func getLocalizedAppName(for bundle: Bundle, url: URL) -> String {
+    private func getLocalizedAppName(for bundle: Bundle, url: URL) async -> String {
         // Get app's configured language (respects user's language setting in app)
         let appLanguages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? []
         let primaryLanguage = appLanguages.first ?? Locale.preferredLanguages.first ?? "en"
@@ -129,7 +151,7 @@ final class LauncherService {
         return url.deletingPathExtension().lastPathComponent
     }
     
-    private func getStandardAppName(for bundle: Bundle) -> String? {
+    private func getStandardAppName(for bundle: Bundle) async -> String? {
         // Get English/standard name from en.lproj (iOS apps typically have English as base language)
         // Note: bundle.infoDictionary may return localized values based on system language
         
@@ -181,7 +203,7 @@ final class LauncherService {
     ///   - bundleID: The bundle identifier to use as cache key
     ///   - appURL: The app URL to load the icon from if not cached
     /// - Returns: The cached or newly loaded icon
-    private func getCachedIcon(for bundleID: String, appURL: URL) -> NSImage? {
+    private func getCachedIcon(for bundleID: String, appURL: URL) async -> NSImage? {
         let cacheKey = bundleID as NSString
         
         // Return cached icon if available
@@ -270,7 +292,7 @@ final class LauncherService {
     /// Check if an app is currently running
     /// - Parameter bundleID: The bundle identifier of the app to check
     /// - Returns: true if the app is running and not terminated
-    public func isAppRunning(bundleID: String) -> Bool {
+    public func isAppRunning(bundleID: String) async -> Bool {
         let runningApps = NSWorkspace.shared.runningApplications
         return runningApps.contains { app in
             app.bundleIdentifier == bundleID && !app.isTerminated
@@ -317,7 +339,7 @@ final class LauncherService {
         return success
     }
     
-    private func readLastLaunchFlag(for bundleID: String) -> Bool {
+    private func readLastLaunchFlag(for bundleID: String) async -> Bool {
         guard let data = try? Data(contentsOf: mapDataURL()), let text = String(data: data, encoding: .utf8) else {
             return false
         }

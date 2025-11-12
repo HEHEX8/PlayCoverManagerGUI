@@ -195,7 +195,7 @@ final class DiskImageHelper {
             // Stage 2: If app is provided and running, terminate it normally
             if let bundleID = bundleID, 
                let launcherService = launcherService,
-               launcherService.isAppRunning(bundleID: bundleID) {
+               await launcherService.isAppRunning(bundleID: bundleID) {
                 Logger.diskImage("Stage 2 - App \(bundleID) is running, sending SIGTERM")
                 _ = launcherService.terminateApp(bundleID: bundleID)
                 
@@ -216,7 +216,7 @@ final class DiskImageHelper {
             // Stage 3: Force terminate app if still running, then force eject
             if let bundleID = bundleID,
                let launcherService = launcherService,
-               launcherService.isAppRunning(bundleID: bundleID) {
+               await launcherService.isAppRunning(bundleID: bundleID) {
                 Logger.diskImage("Stage 3 - App \(bundleID) still running, sending SIGKILL")
                 _ = launcherService.forceTerminateApp(bundleID: bundleID)
                 

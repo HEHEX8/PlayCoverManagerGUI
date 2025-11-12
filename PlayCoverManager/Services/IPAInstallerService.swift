@@ -660,7 +660,7 @@ class IPAInstallerService {
             await MainActor.run {
                 currentStatus = String(localized: "アプリの実行状態を確認中")
             }
-            let isRunning = await MainActor.run { launcherService.isAppRunning(bundleID: info.bundleID) }
+            let isRunning = await launcherService.isAppRunning(bundleID: info.bundleID)
             if isRunning {
                 throw AppError.installation(String(localized: "アプリが実行中のため、インストールできません"), message: "アプリを終了してから再度お試しください")
             }

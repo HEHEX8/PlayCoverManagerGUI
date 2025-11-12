@@ -211,7 +211,7 @@ class AppUninstallerService {
         }
         
         // Check if app is running using NSRunningApplication
-        let isRunning = await MainActor.run { launcherService.isAppRunning(bundleID: app.bundleID) }
+        let isRunning = await launcherService.isAppRunning(bundleID: app.bundleID)
         if isRunning {
             Logger.warning("Cannot uninstall running app: \(app.bundleID)")
             throw AppError.installation(String(localized: "アプリが実行中のため、アンインストールできません"), message: "アプリを終了してから再度お試しください")
