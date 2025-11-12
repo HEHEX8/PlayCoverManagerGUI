@@ -15,6 +15,8 @@ struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedAppForDetail: PlayCoverApp?
     @State private var hasPerformedInitialAnimation = false
     @State private var showingSettings = false
@@ -170,59 +172,82 @@ struct QuickLauncherView: View {
                 .focusEffectDisabled()  // Disable blue focus ring
                 .opacity(0.01)  // Nearly invisible but still present
             
-            // Rich multi-layer gradient background with depth
+            // Ultra-rich multi-layer ambient background (M4-optimized, visibility-safe)
             ZStack {
-                // Base gradient
+                // Base gradient with depth
                 LinearGradient(
                     colors: [
                         Color(nsColor: .windowBackgroundColor),
-                        Color(nsColor: .controlBackgroundColor).opacity(0.3)
+                        Color(nsColor: .controlBackgroundColor).opacity(0.4),
+                        Color(nsColor: .windowBackgroundColor).opacity(0.8)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 
-                // Radial glow from center
+                // Enhanced radial glow from center
                 RadialGradient(
                     colors: [
-                        .accentColor.opacity(0.03),
-                        .purple.opacity(0.02),
+                        .accentColor.opacity(0.08),
+                        .purple.opacity(0.06),
+                        .blue.opacity(0.04),
                         .clear
                     ],
                     center: .center,
-                    startRadius: 100,
-                    endRadius: 600
+                    startRadius: 80,
+                    endRadius: 700
                 )
                 
-                // Ambient corner glows
+                // Ambient corner glows (enhanced but controlled)
                 VStack {
                     HStack {
+                        // Top-left: blue/cyan glow
                         Circle()
                             .fill(RadialGradient(
-                                colors: [.blue.opacity(0.08), .clear],
+                                colors: [.blue.opacity(0.12), .cyan.opacity(0.06), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 250
+                            ))
+                            .frame(width: 500, height: 500)
+                            .blur(radius: 70)
+                            .offset(x: -100, y: -100)
+                        
+                        Spacer()
+                        
+                        // Top-right: purple/pink glow
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [.purple.opacity(0.10), .pink.opacity(0.05), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 220
+                            ))
+                            .frame(width: 450, height: 450)
+                            .blur(radius: 60)
+                            .offset(x: 100, y: -100)
+                    }
+                    
+                    Spacer()
+                    
+                    // Bottom center: accent/orange glow
+                    HStack {
+                        Spacer()
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [.accentColor.opacity(0.08), .orange.opacity(0.04), .clear],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 200
                             ))
                             .frame(width: 400, height: 400)
-                            .blur(radius: 60)
-                        
+                            .blur(radius: 55)
+                            .offset(y: 100)
                         Spacer()
-                        
-                        Circle()
-                            .fill(RadialGradient(
-                                colors: [.purple.opacity(0.06), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 180
-                            ))
-                            .frame(width: 350, height: 350)
-                            .blur(radius: 50)
                     }
-                    Spacer()
                 }
             }
-            .allowsHitTesting(false)  // Allow clicks to pass through background
+            .allowsHitTesting(false)
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -261,16 +286,53 @@ struct QuickLauncherView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: 280)
-                    .glassEffect(
-                        isSearchFieldFocused 
-                        ? .regular.tint(.accentColor.opacity(0.4))
-                        : .regular.tint(.accentColor.opacity(0.2)), 
-                        in: RoundedRectangle(cornerRadius: 12)
+                    .background {
+                        // Visibility-safe rich search field
+                        ZStack {
+                            // Solid base for readability
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(nsColor: .controlBackgroundColor).opacity(colorScheme == .dark ? 0.75 : 0.65))
+                            
+                            // Animated glow on focus
+                            if isSearchFieldFocused {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(RadialGradient(
+                                        colors: [.accentColor.opacity(0.35), .purple.opacity(0.18), .clear],
+                                        center: .center,
+                                        startRadius: 10,
+                                        endRadius: 140
+                                    ))
+                                    .blur(radius: 18)
+                                    .scaleEffect(1.15)
+                            }
+                            
+                            // Glass layer
+                            RoundedRectangle(cornerRadius: 12)
+                                .glassEffect(
+                                    isSearchFieldFocused 
+                                    ? .regular.tint(.accentColor.opacity(0.5))
+                                    : .regular.tint(.accentColor.opacity(0.3)), 
+                                    in: RoundedRectangle(cornerRadius: 12)
+                                )
+                            
+                            // Shimmer overlay
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(LinearGradient(
+                                    colors: [.white.opacity(isSearchFieldFocused ? 0.20 : 0.12), .clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ))
+                        }
+                    }
+                    .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSearchFieldFocused)
+                    .shadow(
+                        color: isSearchFieldFocused ? .accentColor.opacity(0.4) : .black.opacity(0.12), 
+                        radius: isSearchFieldFocused ? 16 : 6, 
+                        x: 0, 
+                        y: isSearchFieldFocused ? 6 : 3
                     )
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
-                    .shadow(color: isSearchFieldFocused ? .accentColor.opacity(0.3) : .black.opacity(0.1), radius: isSearchFieldFocused ? 8 : 4, x: 0, y: 2)
-                    .scaleEffect(isSearchFieldFocused ? 1.02 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
+                    .scaleEffect(isSearchFieldFocused ? 1.04 : 1.0)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.68), value: isSearchFieldFocused)
                     .onTapGesture {
                         // Focus search field when clicked
                         isSearchFieldFocused = true
@@ -293,22 +355,35 @@ struct QuickLauncherView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
                 .background(
-                    // Multi-layer glass effect for depth
+                    // Visibility-safe rich glass toolbar (best practices compliant)
                     ZStack {
-                        // Bottom layer - subtle glow
+                        // Solid base for visibility (critical for dark mode)
+                        Rectangle()
+                            .fill(Color(nsColor: .windowBackgroundColor).opacity(colorScheme == .dark ? 0.85 : 0.75))
+                        
+                        // Controlled glow layer
                         Rectangle()
                             .fill(LinearGradient(
-                                colors: [.accentColor.opacity(0.03), .clear],
+                                colors: [.accentColor.opacity(0.10), .purple.opacity(0.06), .clear],
                                 startPoint: .top,
                                 endPoint: .bottom
                             ))
-                            .blur(radius: 20)
+                            .blur(radius: 22)
                         
-                        // Top layer - main glass
+                        // Shimmer layer for richness
                         Rectangle()
-                            .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
+                            .fill(LinearGradient(
+                                colors: [.white.opacity(0.12), .clear, .accentColor.opacity(0.05)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                            .blur(radius: 12)
+                        
+                        // System material on top
+                        Rectangle()
+                            .glassEffect(.regular.tint(.primary.opacity(0.12)), in: .rect)
                     }
-                    .allowsHitTesting(false)  // Allow clicks to pass through to buttons
+                    .allowsHitTesting(false)
                 )
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
                 .overlay(alignment: .bottom) {
@@ -427,33 +502,50 @@ struct QuickLauncherView: View {
                             }
                         )
                         .background(
-                            // Multi-layer glass for depth
+                            // Visibility-safe rich glass for recent app button
                             ZStack {
-                                // Animated gradient glow
+                                // Solid base for visibility
+                                Rectangle()
+                                    .fill(Color(nsColor: .windowBackgroundColor).opacity(colorScheme == .dark ? 0.80 : 0.70))
+                                
+                                // Enhanced gradient glow (4-color)
                                 LinearGradient(
-                                    colors: [.accentColor.opacity(0.08), .purple.opacity(0.05), .blue.opacity(0.05)],
+                                    colors: [
+                                        .accentColor.opacity(0.16), 
+                                        .purple.opacity(0.12), 
+                                        .blue.opacity(0.10),
+                                        .pink.opacity(0.06)
+                                    ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
-                                .blur(radius: 20)
+                                .blur(radius: 25)
                                 
-                                // Main glass layer
+                                // Shimmer layer
+                                LinearGradient(
+                                    colors: [.white.opacity(0.15), .clear, .accentColor.opacity(0.10), .clear],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .blur(radius: 12)
+                                
+                                // Glass layer on top
                                 Rectangle()
-                                    .glassEffect(.regular.tint(.accentColor.opacity(0.12)), in: .rect)
+                                    .glassEffect(.regular.tint(.accentColor.opacity(0.20)), in: .rect)
                             }
-                            .allowsHitTesting(false)  // Allow clicks through to button
+                            .allowsHitTesting(false)
                         )
-                        .shadow(color: .accentColor.opacity(0.15), radius: 12, x: 0, y: -4)
+                        .shadow(color: .accentColor.opacity(0.18), radius: 14, x: 0, y: -4)
                         .overlay(alignment: .top) {
-                            // Shine effect
+                            // Enhanced shine
                             LinearGradient(
-                                colors: [.white.opacity(0.15), .clear],
+                                colors: [.white.opacity(0.18), .clear],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                             .frame(height: 60)
                             .blur(radius: 10)
-                            .allowsHitTesting(false)  // Allow clicks through shine
+                            .allowsHitTesting(false)
                         }
                     }
                 }
@@ -786,44 +878,52 @@ private struct ModernToolbarButton: View {
                 .frame(width: 44, height: 44)
                 .background(
                     ZStack {
-                        // Glow effect when hovered
+                        // Enhanced glow on hover
                         if isHovered {
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(color.opacity(0.15))
-                                .blur(radius: 8)
+                                .fill(RadialGradient(
+                                    colors: [color.opacity(0.35), color.opacity(0.18), .clear],
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: 45
+                                ))
+                                .blur(radius: 12)
+                                .scaleEffect(1.2)
                         }
                         
-                        // Main glass button
+                        // Solid base for visibility
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(nsColor: .controlBackgroundColor).opacity(isHovered ? 0.80 : 0.70))
+                        
+                        // Glass button on top
                         RoundedRectangle(cornerRadius: 12)
                             .glassEffect(
                                 isHovered 
-                                ? .regular.tint(color.opacity(0.15))
-                                : .regular, 
+                                ? .regular.tint(color.opacity(0.25))
+                                : .regular.tint(.primary.opacity(0.08)), 
                                 in: RoundedRectangle(cornerRadius: 12)
                             )
+                        
+                        // Shimmer overlay on hover
+                        if isHovered {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(LinearGradient(
+                                    colors: [.white.opacity(0.25), .clear, color.opacity(0.08)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ))
+                        }
                     }
-                    .allowsHitTesting(false)  // Allow clicks through to button
+                    .allowsHitTesting(false)
                 )
                 .shadow(
-                    color: isHovered ? color.opacity(0.3) : .black.opacity(0.1), 
-                    radius: isHovered ? 8 : 4, 
+                    color: isHovered ? color.opacity(0.4) : .black.opacity(0.12), 
+                    radius: isHovered ? 10 : 5, 
                     x: 0, 
-                    y: 2
+                    y: isHovered ? 4 : 2
                 )
-                .overlay {
-                    // Shine effect on hover
-                    if isHovered {
-                        LinearGradient(
-                            colors: [.white.opacity(0.2), .clear],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .allowsHitTesting(false)  // Allow clicks through shine
-                    }
-                }
-                .contentShape(Rectangle())  // Ensure entire area is tappable
-                .scaleEffect(isHovered ? 1.08 : 1.0)
+                .contentShape(Rectangle())
+                .scaleEffect(isHovered ? 1.10 : 1.0)
         }
         .buttonStyle(.plain)
         .help(help)
@@ -847,33 +947,86 @@ private struct iOSAppIconView: View {
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
+    @State private var isHovered = false
     
     var body: some View {
         VStack(spacing: 8) {
-            // iOS-style app icon (rounded square)
-            Group {
-                if let icon = app.icon {
-                    Image(nsImage: icon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } else {
+            // iOS-style app icon with rich hover/focus effects
+            ZStack {
+                // Epic glow on hover or focus
+                if isHovered || isFocused {
                     RoundedRectangle(cornerRadius: 18)
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay {
-                            Image(systemName: "app.dashed")
-                                .font(.system(size: 32))
-                                .foregroundStyle(.secondary)
-                        }
+                        .fill(RadialGradient(
+                            colors: [
+                                .accentColor.opacity(isFocused ? 0.45 : 0.30), 
+                                .purple.opacity(isFocused ? 0.28 : 0.15), 
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 75
+                        ))
+                        .blur(radius: isFocused ? 22 : 18)
+                        .scaleEffect(isFocused ? 1.35 : 1.25)
+                        .opacity(isFocused ? 0.85 : 1.0)
+                        .animation(isFocused ? .easeInOut(duration: 1.4).repeatForever(autoreverses: true) : .default, value: isFocused)
                 }
-            }
-            .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
-            .overlay {
-                // Keyboard focus ring only
+                
+                // Icon
+                Group {
+                    if let icon = app.icon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(Color.gray.opacity(0.3))
+                            .overlay {
+                                Image(systemName: "app.dashed")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(.secondary)
+                            }
+                    }
+                }
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .shadow(
+                    color: isHovered ? .accentColor.opacity(0.35) : .black.opacity(0.2), 
+                    radius: isHovered ? 10 : 3, 
+                    x: 0, 
+                    y: isHovered ? 5 : 2
+                )
+                
+                // Shimmer on hover
+                if isHovered {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(LinearGradient(
+                            colors: [.white.opacity(0.35), .clear, .accentColor.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 18))
+                }
+                
+                // Animated focus ring
                 if isFocused {
                     RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(Color.accentColor, lineWidth: 3)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [.accentColor, .purple, .blue, .accentColor],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 3
+                        )
+                        .frame(width: 80, height: 80)
+                }
+            }
+            .scaleEffect(isHovered ? 1.06 : 1.0)
+            .onHover { hovering in
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.65)) {
+                    isHovered = hovering
                 }
             }
             .overlay(alignment: .topTrailing) {
