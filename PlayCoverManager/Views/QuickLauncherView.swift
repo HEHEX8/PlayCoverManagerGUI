@@ -3868,7 +3868,6 @@ private struct DrawerPanel: View {
 
 // MARK: - Drawer Menu Item with Hover Effect
 private struct DrawerMenuItem: View {
-    @Environment(\.uiScale) var uiScale
     let icon: AnyView
     let title: String
     let help: String
