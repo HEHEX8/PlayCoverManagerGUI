@@ -897,7 +897,7 @@ private struct iOSAppIconView: View {
                             .blur(radius: 4)
                             .opacity(0.6 + CGFloat(sin(Double(focusGlowPhase))) * 0.3)
                         
-                        // Middle glow layer
+                        // Middle glow layer (seamless rotation)
                         RoundedRectangle(cornerRadius: 19)
                             .strokeBorder(
                                 LinearGradient(
@@ -906,16 +906,20 @@ private struct iOSAppIconView: View {
                                         .purple.opacity(0.4),
                                         .blue.opacity(0.4),
                                         .cyan.opacity(0.4),
+                                        .accentColor.opacity(0.5),
+                                        .purple.opacity(0.4),
+                                        .blue.opacity(0.4),
+                                        .cyan.opacity(0.4),
                                         .accentColor.opacity(0.5)
                                     ],
                                     startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 0),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 1, y: 1)
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0)
                                 ),
                                 lineWidth: 4
                             )
                             .blur(radius: 2)
                         
-                        // Inner sharp border
+                        // Inner sharp border (seamless rotation)
                         RoundedRectangle(cornerRadius: 18)
                             .strokeBorder(
                                 LinearGradient(
@@ -924,10 +928,14 @@ private struct iOSAppIconView: View {
                                         .purple,
                                         .blue,
                                         .cyan,
+                                        .accentColor,
+                                        .purple,
+                                        .blue,
+                                        .cyan,
                                         .accentColor
                                     ],
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 4), y: 0),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 4) + 0.5, y: 0.5)
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 0),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0)
                                 ),
                                 lineWidth: 3
                             )
