@@ -333,8 +333,13 @@ struct QuickLauncherView: View {
                         ScrollView {
                             LazyVGrid(columns: gridColumns, spacing: 32) {
                                 ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                                    Button {
-                                        // Single tap - launch
+                                    iOSAppIconView(
+                                        app: app, 
+                                        index: index,
+                                        shouldAnimate: !hasPerformedInitialAnimation,
+                                        isFocused: focusedAppIndex == index
+                                    ) {
+                                        // Tap action - called by DragGesture on valid release
                                         // Clear search focus and focus this app
                                         isSearchFieldFocused = false
                                         focusedAppIndex = index
@@ -354,32 +359,13 @@ struct QuickLauncherView: View {
                                                 object: nil
                                             )
                                         }
-                                    } label: {
-                                        iOSAppIconView(
-                                            app: app, 
-                                            index: index,
-                                            shouldAnimate: !hasPerformedInitialAnimation,
-                                            isFocused: focusedAppIndex == index
-                                        ) {
-                                            // This tap action is now only called by DragGesture
-                                            // (for drag-based interactions)
-                                            viewModel.launch(app: app)
-                                            
-                                            if app.lastLaunchedFlag {
-                                                NotificationCenter.default.post(
-                                                    name: NSNotification.Name("TriggerRecentAppBounce"),
-                                                    object: nil
-                                                )
-                                            }
-                                        } rightClickAction: {
-                                            // Right click - show detail/settings
-                                            selectedAppForDetail = app
-                                        } uninstallAction: {
-                                            // Uninstall action - open uninstaller with pre-selected app
-                                            selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
-                                        }
+                                    } rightClickAction: {
+                                        // Right click - show detail/settings
+                                        selectedAppForDetail = app
+                                    } uninstallAction: {
+                                        // Uninstall action - open uninstaller with pre-selected app
+                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(32)
@@ -465,8 +451,13 @@ struct QuickLauncherView: View {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 32) {
                             ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                                Button {
-                                    // Single tap - launch
+                                iOSAppIconView(
+                                    app: app, 
+                                    index: index,
+                                    shouldAnimate: !hasPerformedInitialAnimation,
+                                    isFocused: focusedAppIndex == index
+                                ) {
+                                    // Tap action - called by DragGesture on valid release
                                     // Clear search focus and focus this app
                                     isSearchFieldFocused = false
                                     focusedAppIndex = index
@@ -486,32 +477,13 @@ struct QuickLauncherView: View {
                                             object: nil
                                         )
                                     }
-                                } label: {
-                                    iOSAppIconView(
-                                        app: app, 
-                                        index: index,
-                                        shouldAnimate: !hasPerformedInitialAnimation,
-                                        isFocused: focusedAppIndex == index
-                                    ) {
-                                        // This tap action is now only called by DragGesture
-                                        // (for drag-based interactions)
-                                        viewModel.launch(app: app)
-                                        
-                                        if app.lastLaunchedFlag {
-                                            NotificationCenter.default.post(
-                                                name: NSNotification.Name("TriggerRecentAppBounce"),
-                                                object: nil
-                                            )
-                                        }
-                                    } rightClickAction: {
-                                        // Right click - show detail/settings
-                                        selectedAppForDetail = app
-                                    } uninstallAction: {
-                                        // Uninstall action - open uninstaller with pre-selected app
-                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
-                                    }
+                                } rightClickAction: {
+                                    // Right click - show detail/settings
+                                    selectedAppForDetail = app
+                                } uninstallAction: {
+                                    // Uninstall action - open uninstaller with pre-selected app
+                                    selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                         .padding(32)
@@ -847,6 +819,10 @@ private struct iOSAppIconView: View {
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
+    // Press & bounce animation states
+    @State private var isPressing = false
+    @State private var isBouncing = false
+    @State private var pressLocation: CGPoint?
     
     var body: some View {
         VStack(spacing: 8) {
@@ -921,14 +897,67 @@ private struct iOSAppIconView: View {
                     }
                 }
             }
-            // Bounce animation
-            .scaleEffect(isAnimating ? 0.85 : 1.0)
+            // Press & bounce animation
+            .scaleEffect(
+                isPressing ? 0.85 : (isBouncing ? 1.15 : (isAnimating ? 0.85 : 1.0))
+            )
+            .animation(
+                isPressing ? .easeOut(duration: 0.15) :
+                isBouncing ? .interpolatingSpring(stiffness: 400, damping: 8) :
+                isAnimating ? Animation.interpolatingSpring(stiffness: 300, damping: 10)
+                    .repeatCount(3, autoreverses: true) :
+                .easeOut(duration: 0.2),
+                value: isPressing
+            )
+            .animation(
+                isBouncing ? .interpolatingSpring(stiffness: 400, damping: 8) : .easeOut(duration: 0.2),
+                value: isBouncing
+            )
             .animation(
                 isAnimating ? 
                     Animation.interpolatingSpring(stiffness: 300, damping: 10)
                         .repeatCount(3, autoreverses: true) :
                     .easeOut(duration: 0.2),
                 value: isAnimating
+            )
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        if !isPressing {
+                            isPressing = true
+                            pressLocation = value.location
+                        }
+                    }
+                    .onEnded { value in
+                        isPressing = false
+                        
+                        // Check if release location is within icon bounds (100x100 frame)
+                        let isWithinBounds = value.location.x >= 0 && value.location.x <= 100 &&
+                                           value.location.y >= 0 && value.location.y <= 120
+                        
+                        if isWithinBounds {
+                            // Valid release - trigger bounce and launch
+                            withAnimation(.interpolatingSpring(stiffness: 400, damping: 8)) {
+                                isBouncing = true
+                            }
+                            
+                            // Trigger launch action
+                            tapAction()
+                            
+                            // Reset bounce after animation
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(400))
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    isBouncing = false
+                                }
+                            }
+                        } else {
+                            // Invalid release - just return to normal without bounce
+                            // No action triggered
+                        }
+                        
+                        pressLocation = nil
+                    }
             )
             
             // App name below icon
