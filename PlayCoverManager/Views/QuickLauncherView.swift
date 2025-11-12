@@ -28,6 +28,9 @@ struct QuickLauncherView: View {
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     @State private var windowSize: CGSize = CGSize(width: 960, height: 640)  // Track window size for responsive UI
+    @State private var hoveredAppIndex: Int? = nil  // Track hovered app for enhanced feedback
+    @State private var searchHistory: [String] = []  // Search history for quick access
+    @State private var showingSearchSuggestions = false  // Show search suggestions dropdown
     
     // Fixed 10 columns per row (iOS Dock style)
     private var columnsPerRow: Int {
