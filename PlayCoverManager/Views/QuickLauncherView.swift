@@ -1005,19 +1005,19 @@ private struct iOSAppIconView: View {
                             .strokeBorder(
                                 LinearGradient(
                                     colors: [
+                                        .clear,
+                                        .clear,
                                         .accentColor.opacity(isHovering ? 0.3 : 0.5),
                                         .purple.opacity(isHovering ? 0.25 : 0.4),
                                         .blue.opacity(isHovering ? 0.25 : 0.4),
                                         .cyan.opacity(isHovering ? 0.25 : 0.4),
                                         .accentColor.opacity(isHovering ? 0.3 : 0.5),
-                                        .purple.opacity(isHovering ? 0.25 : 0.4),
-                                        .blue.opacity(isHovering ? 0.25 : 0.4),
-                                        .cyan.opacity(isHovering ? 0.25 : 0.4),
-                                        .accentColor.opacity(isHovering ? 0.3 : 0.5)
+                                        .clear,
+                                        .clear
                                     ],
-                                    // Gradient flows from off-screen (bottom-left) to off-screen (top-right)
+                                    // Gradient with clear padding: nothing→colors→nothing
                                     startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) - 0.5, y: 1.5 - focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 1.0, y: -focusGlowPhase / (.pi * 2))
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
                                 ),
                                 lineWidth: isHovering ? 2 : 4
                             )
@@ -1028,19 +1028,19 @@ private struct iOSAppIconView: View {
                             .strokeBorder(
                                 LinearGradient(
                                     colors: [
+                                        .clear,
+                                        .clear,
                                         .accentColor,
                                         .purple,
                                         .blue,
                                         .cyan,
                                         .accentColor,
-                                        .purple,
-                                        .blue,
-                                        .cyan,
-                                        .accentColor
+                                        .clear,
+                                        .clear
                                     ],
-                                    // Gradient flows from off-screen (bottom-left) to off-screen (top-right)
+                                    // Gradient with clear padding: nothing→colors→nothing
                                     startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) - 0.5, y: 1.5 - focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 1.0, y: -focusGlowPhase / (.pi * 2))
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
                                 ),
                                 lineWidth: 3
                             )
@@ -1216,22 +1216,22 @@ private struct iOSAppIconView: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
+                                .clear,
+                                .clear,
                                 .accentColor,
                                 .purple,
                                 .blue,
                                 .cyan,
                                 .accentColor,
-                                .purple,
-                                .blue,
-                                .cyan,
-                                .accentColor
+                                .clear,
+                                .clear
                             ],
-                            // Offset -0.5 to 1.5: gradient flows from off-screen (bottom-left) to off-screen (top-right)
-                            // At 0: gradient starts off-screen bottom-left
-                            // At 0.5: gradient passes through center
-                            // At 1: gradient exits off-screen top-right
+                            // Gradient with clear padding on both ends
+                            // At offset=0: only clear colors visible (nothing)
+                            // At offset=0.5: colored portion passes through center
+                            // At offset=1.0: only clear colors visible (nothing)
                             startPoint: UnitPoint(x: gradientOffset - 0.5, y: 1.5 - gradientOffset),
-                            endPoint: UnitPoint(x: gradientOffset + 1.0, y: -gradientOffset)
+                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0.5 - gradientOffset)
                         )
                     )
                     .opacity(showHoverEffect ? 1 : 0)
