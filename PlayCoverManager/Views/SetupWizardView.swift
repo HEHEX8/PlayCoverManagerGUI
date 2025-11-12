@@ -66,29 +66,27 @@ struct SetupWizardView: View {
                 // Navigation buttons
                 HStack(spacing: buttonSpacing) {
                     if viewModel.currentStep != .installPlayCover {
-                        Button {
-                            viewModel.back()
-                        } label: {
-                            Label("戻る", systemImage: "chevron.left")
-                                .font(.system(size: buttonFontSize, weight: .medium))
-                                .frame(minWidth: buttonMinWidth)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        CustomButton(
+                            title: "戻る",
+                            action: { viewModel.back() },
+                            isPrimary: false,
+                            icon: "chevron.left",
+                            uiScale: uiScale
+                        )
+                        .frame(minWidth: buttonMinWidth)
                     }
                     
                     Spacer()
                     
-                    Button {
-                        viewModel.continueAction(playCoverPaths: playCoverPaths)
-                    } label: {
-                        Label(buttonTitle, systemImage: buttonIcon)
-                            .font(.system(size: buttonFontSize, weight: .semibold))
-                            .frame(minWidth: buttonMinWidthLarge)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(viewModel.isBusy || !canContinue)
+                    CustomButton(
+                        title: buttonTitle,
+                        action: { viewModel.continueAction(playCoverPaths: playCoverPaths) },
+                        isPrimary: true,
+                        icon: buttonIcon,
+                        uiScale: uiScale,
+                        isEnabled: !viewModel.isBusy && canContinue
+                    )
+                    .frame(minWidth: buttonMinWidthLarge)
                     .keyboardShortcut(.defaultAction)
                 }
                 .padding(.horizontal, horizontalPadding)
@@ -339,14 +337,13 @@ private struct PlayCoverStepView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12 * uiScale))
                     
-                    Button {
-                        openPlayCoverWebsite()
-                    } label: {
-                        Label("PlayCover サイトを開く", systemImage: "arrow.up.forward.app")
-                            .font(.system(size: 14 * uiScale, weight: .medium))
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    CustomButton(
+                        title: "PlayCover サイトを開く",
+                        action: openPlayCoverWebsite,
+                        isPrimary: false,
+                        icon: "arrow.up.forward.app",
+                        uiScale: uiScale
+                    )
                 }
             }
         }
@@ -444,15 +441,14 @@ private struct StorageStepView: View {
                 }
                 
                 // Select button
-                Button {
-                    chooseStorageDirectory()
-                } label: {
-                    Label(storageURL == nil ? "保存先を選択" : "保存先を変更", systemImage: "folder.badge.gearshape")
-                        .font(.system(size: 14 * uiScale, weight: .medium))
-                        .frame(minWidth: 160 * uiScale)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                CustomButton(
+                    title: storageURL == nil ? "保存先を選択" : "保存先を変更",
+                    action: chooseStorageDirectory,
+                    isPrimary: false,
+                    icon: "folder.badge.gearshape",
+                    uiScale: uiScale
+                )
+                .frame(minWidth: 160 * uiScale)
                 
                 // Info
                 VStack(spacing: 8 * uiScale) {
