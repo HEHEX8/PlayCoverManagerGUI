@@ -887,177 +887,198 @@ struct IPAInstallerSheet: View {
                         }
                     }
                 }
+            } else {
+                Text("アプリ情報が見つかりません")
+                    .font(.system(size: 16 * uiScale))
+                    .foregroundStyle(.secondary)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 24 * uiScale)
     }
     
     // MARK: - Installing View
     private var installingView: some View {
-        VStack(spacing: 20 * uiScale) {
-            // Header with progress indicator
-            VStack(spacing: 12 * uiScale) {
-                Image(systemName: "arrow.down.circle.fill")
-                    .font(.system(size: 48 * uiScale))
-                    .foregroundStyle(.blue)
-                
-                Text("インストール中")
-                    .font(.system(size: 22 * uiScale, weight: .bold))
-                    .fontWeight(.semibold)
-                
-                if let service = installerService, !service.currentStatus.isEmpty {
-                    Text(service.currentStatus)
-                        .font(.system(size: 15 * uiScale))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
+        VStack(spacing: 24 * uiScale) {
+            // Header with animated icon
+            VStack(spacing: 16 * uiScale) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue.opacity(0.2), Color.cyan.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 100 * uiScale, height: 100 * uiScale)
+                    
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 48 * uiScale, weight: .semibold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .symbolRenderingMode(.hierarchical)
                 }
                 
-                // Overall progress bar (indeterminate animation)
+                VStack(spacing: 8 * uiScale) {
+                    Text("インストール中")
+                        .font(.system(size: 28 * uiScale, weight: .bold))
+                    
+                    if let service = installerService, !service.currentStatus.isEmpty {
+                        Text(service.currentStatus)
+                            .font(.system(size: 14 * uiScale))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                
+                // Progress indicator
                 if let service = installerService {
                     let totalItems = analyzedIPAs.count
                     let completed = service.installedApps.count + service.failedApps.count
                     
-                    VStack(spacing: 8 * uiScale) {
-                        // Indeterminate progress bar (animated)
+                    VStack(spacing: 12 * uiScale) {
                         ProgressView()
                             .progressViewStyle(.linear)
                             .frame(width: 400 * uiScale)
                         
                         Text("\(completed) / \(totalItems) 完了")
-                            .font(.system(size: 11 * uiScale))
+                            .font(.system(size: 13 * uiScale, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
                 }
             }
+            .padding(.top, 20 * uiScale)
             
-            Divider()
-                .padding(.horizontal, 40 * uiScale)
-            
-            // Installation log
+            // Installation log with cards
             ScrollView {
-                VStack(alignment: .leading, spacing: 12 * uiScale) {
+                VStack(spacing: 12 * uiScale) {
                     if let service = installerService {
-                        // Completed installations (with icons)
+                        // Completed installations
                         ForEach(service.installedAppDetails) { detail in
-                            HStack(spacing: 12 * uiScale) {
-                                // App icon with checkmark badge
+                            HStack(spacing: 14 * uiScale) {
+                                // App icon with checkmark
                                 ZStack(alignment: .bottomTrailing) {
                                     if let icon = detail.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
+                                            .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10 * uiScale)
+                                        RoundedRectangle(cornerRadius: 12 * uiScale)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                            .frame(width: 52 * uiScale, height: 52 * uiScale)
                                     }
                                     
-                                    // Checkmark badge
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 16 * uiScale))
-                                        .foregroundStyle(.white)
-                                        .background(
-                                            Circle()
-                                                .fill(.green)
-                                                .frame(width: 18 * uiScale, height: 18 * uiScale)
-                                        )
-                                        .offset(x: 2, y: 2)
+                                    Circle()
+                                        .fill(.green)
+                                        .frame(width: 22 * uiScale, height: 22 * uiScale)
+                                        .overlay {
+                                            Image(systemName: "checkmark")
+                                                .font(.system(size: 12 * uiScale, weight: .bold))
+                                                .foregroundStyle(.white)
+                                        }
+                                        .offset(x: 4, y: 4)
                                 }
-                                .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                .frame(width: 52 * uiScale, height: 52 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2 * uiScale) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
                                     Text(detail.appName)
-                                        .font(.system(size: 15 * uiScale))
-                                        .fontWeight(.medium)
-                                        .lineLimit(2)
+                                        .font(.system(size: 15 * uiScale, weight: .medium))
+                                        .lineLimit(1)
                                     Text("インストール完了")
-                                        .font(.system(size: 11 * uiScale))
-                                        .foregroundStyle(.secondary)
+                                        .font(.system(size: 13 * uiScale))
+                                        .foregroundStyle(.green)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16 * uiScale)
-                            .padding(.vertical, 8 * uiScale)
-                            .background(Color.green.opacity(0.1))
-                            .cornerRadius(8 * uiScale)
+                            .padding(16 * uiScale)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                    .fill(Color.green.opacity(0.1))
+                            )
                         }
                         
-                        // Currently installing (if any)
+                        // Currently installing
                         if !service.currentAppName.isEmpty && !service.installedAppDetails.contains(where: { $0.appName == service.currentAppName }) {
-                            HStack(spacing: 12 * uiScale) {
-                                // App icon or progress spinner
+                            HStack(spacing: 14 * uiScale) {
                                 ZStack {
                                     if let icon = service.currentAppIcon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
-                                            .opacity(0.7)  // Slightly faded during install
+                                            .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                            .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
+                                            .opacity(0.6)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10 * uiScale)
+                                        RoundedRectangle(cornerRadius: 12 * uiScale)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                            .frame(width: 52 * uiScale, height: 52 * uiScale)
                                     }
                                     
-                                    // Overlay progress spinner on icon
                                     ProgressView()
-                                        .controlSize(.regular)
+                                        .controlSize(.large)
                                 }
-                                .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                .frame(width: 52 * uiScale, height: 52 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2 * uiScale) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
                                     Text(service.currentAppName)
-                                        .font(.system(size: 15 * uiScale))
-                                        .fontWeight(.medium)
-                                        .lineLimit(2)
+                                        .font(.system(size: 15 * uiScale, weight: .medium))
+                                        .lineLimit(1)
                                     Text(service.currentStatus)
-                                        .font(.system(size: 11 * uiScale))
-                                        .foregroundStyle(.secondary)
+                                        .font(.system(size: 13 * uiScale))
+                                        .foregroundStyle(.blue)
                                         .lineLimit(1)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16 * uiScale)
-                            .padding(.vertical, 8 * uiScale)
-                            .background(Color.blue.opacity(0.1))
-                            .cornerRadius(8 * uiScale)
+                            .padding(16 * uiScale)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                    .fill(Color.blue.opacity(0.1))
+                            )
                         }
                         
                         // Failed installations
                         ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 12 * uiScale) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 20 * uiScale, weight: .semibold))
-                                    .foregroundStyle(.red)
-                                    .frame(width: 32 * uiScale)
+                            HStack(spacing: 14 * uiScale) {
+                                Circle()
+                                    .fill(.red)
+                                    .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                    .overlay {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 24 * uiScale, weight: .bold))
+                                            .foregroundStyle(.white)
+                                    }
                                 
-                                VStack(alignment: .leading, spacing: 2 * uiScale) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
                                     Text(error.components(separatedBy: ":").first ?? error)
-                                        .font(.system(size: 15 * uiScale))
-                                        .fontWeight(.medium)
-                                        .lineLimit(2)
+                                        .font(.system(size: 15 * uiScale, weight: .medium))
+                                        .lineLimit(1)
                                     Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
-                                        .font(.system(size: 11 * uiScale))
-                                        .foregroundStyle(.secondary)
+                                        .font(.system(size: 13 * uiScale))
+                                        .foregroundStyle(.red)
                                         .lineLimit(2)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16 * uiScale)
-                            .padding(.vertical, 8 * uiScale)
-                            .background(Color.red.opacity(0.1))
-                            .cornerRadius(8 * uiScale)
+                            .padding(16 * uiScale)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                    .fill(Color.red.opacity(0.1))
+                            )
                         }
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 24 * uiScale)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             startStatusUpdater()
         }
@@ -1068,95 +1089,149 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Results View
     private var resultsView: some View {
-        VStack(spacing: 16 * uiScale) {
-            HStack {
-                Image(systemName: "checkmark.seal.fill")
-                    .font(.system(size: 22 * uiScale, weight: .bold))
-                    .foregroundStyle(.green)
-                Text("インストール結果")
-                    .font(.system(size: 22 * uiScale, weight: .bold))
-                    .fontWeight(.semibold)
-            }
-            
-            ScrollView {
-                VStack(spacing: 12 * uiScale) {
-                    if let service = installerService {
-                        // Success list
-                        ForEach(service.installedAppDetails) { detail in
-                            HStack(spacing: 12 * uiScale) {
-                                // App icon with checkmark overlay
-                                ZStack(alignment: .bottomTrailing) {
-                                    if let icon = detail.icon {
-                                        Image(nsImage: icon)
-                                            .resizable()
-                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 10 * uiScale)
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
-                                    }
-                                    
-                                    // Checkmark badge
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 20 * uiScale))
-                                        .foregroundStyle(.white)
-                                        .background(
-                                            Circle()
-                                                .fill(.green)
-                                                .frame(width: 22 * uiScale, height: 22 * uiScale)
-                                        )
-                                        .offset(x: 4, y: 4)
-                                }
-                                .frame(width: 48 * uiScale, height: 48 * uiScale)
-                                
-                                VStack(alignment: .leading, spacing: 4 * uiScale) {
-                                    Text(detail.appName)
-                                        .font(.system(size: 15 * uiScale))
-                                        .fontWeight(.medium)
-                                        .lineLimit(2)
-                                    Text("インストール完了")
-                                        .font(.system(size: 11 * uiScale))
-                                        .foregroundStyle(.secondary)
-                                }
-                                
-                                Spacer()
-                            }
-                            .padding()
-                            .background(Color(nsColor: .controlBackgroundColor))
-                            .cornerRadius(8 * uiScale)
+        ScrollView {
+            VStack(spacing: 24 * uiScale) {
+                // Success icon
+                if let service = installerService {
+                    let hasFailures = !service.failedApps.isEmpty
+                    let hasSuccess = !service.installedAppDetails.isEmpty
+                    
+                    VStack(spacing: 16 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: hasFailures ? [Color.orange.opacity(0.2), Color.yellow.opacity(0.1)] : [Color.green.opacity(0.2), Color.mint.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 100 * uiScale, height: 100 * uiScale)
+                            
+                            Image(systemName: hasFailures ? "exclamationmark.triangle.fill" : "checkmark.seal.fill")
+                                .font(.system(size: 48 * uiScale, weight: .semibold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: hasFailures ? [.orange, .yellow] : [.green, .mint],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
                         }
                         
-                        // Failure list
-                        ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 12 * uiScale) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 20 * uiScale, weight: .semibold))
-                                    .foregroundStyle(.red)
-                                    .frame(width: 48 * uiScale)
-                                
-                                VStack(alignment: .leading, spacing: 4 * uiScale) {
-                                    Text(error.components(separatedBy: ":").first ?? error)
-                                        .font(.system(size: 15 * uiScale))
-                                        .fontWeight(.medium)
-                                    Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
-                                        .font(.system(size: 11 * uiScale))
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(2)
-                                }
-                                
-                                Spacer()
+                        VStack(spacing: 8 * uiScale) {
+                            Text(hasFailures ? "インストール完了（一部失敗）" : "インストール完了")
+                                .font(.system(size: 28 * uiScale, weight: .bold))
+                            
+                            if hasSuccess && hasFailures {
+                                Text("\(service.installedAppDetails.count) 個成功、\(service.failedApps.count) 個失敗")
+                                    .font(.system(size: 14 * uiScale))
+                                    .foregroundStyle(.secondary)
+                            } else if hasSuccess {
+                                Text("\(service.installedAppDetails.count) 個のアプリをインストールしました")
+                                    .font(.system(size: 14 * uiScale))
+                                    .foregroundStyle(.secondary)
                             }
-                            .padding()
-                            .background(Color(nsColor: .controlBackgroundColor))
-                            .cornerRadius(8 * uiScale)
+                        }
+                    }
+                    .padding(.top, 20 * uiScale)
+                    
+                    // Success list
+                    if !service.installedAppDetails.isEmpty {
+                        VStack(alignment: .leading, spacing: 12 * uiScale) {
+                            Text("成功")
+                                .font(.system(size: 18 * uiScale, weight: .semibold))
+                                .foregroundStyle(.green)
+                            
+                            ForEach(service.installedAppDetails) { detail in
+                                HStack(spacing: 14 * uiScale) {
+                                    ZStack(alignment: .bottomTrailing) {
+                                        if let icon = detail.icon {
+                                            Image(nsImage: icon)
+                                                .resizable()
+                                                .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                                .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
+                                        } else {
+                                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                                                .fill(Color.gray.opacity(0.3))
+                                                .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                        }
+                                        
+                                        Circle()
+                                            .fill(.green)
+                                            .frame(width: 22 * uiScale, height: 22 * uiScale)
+                                            .overlay {
+                                                Image(systemName: "checkmark")
+                                                    .font(.system(size: 12 * uiScale, weight: .bold))
+                                                    .foregroundStyle(.white)
+                                            }
+                                            .offset(x: 4, y: 4)
+                                    }
+                                    .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                    
+                                    VStack(alignment: .leading, spacing: 4 * uiScale) {
+                                        Text(detail.appName)
+                                            .font(.system(size: 15 * uiScale, weight: .medium))
+                                            .lineLimit(1)
+                                        Text("インストール完了")
+                                            .font(.system(size: 13 * uiScale))
+                                            .foregroundStyle(.green)
+                                    }
+                                    
+                                    Spacer()
+                                }
+                                .padding(16 * uiScale)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                                        .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Failure list
+                    if !service.failedApps.isEmpty {
+                        VStack(alignment: .leading, spacing: 12 * uiScale) {
+                            Text("失敗")
+                                .font(.system(size: 18 * uiScale, weight: .semibold))
+                                .foregroundStyle(.red)
+                            
+                            ForEach(service.failedApps, id: \.self) { error in
+                                HStack(spacing: 14 * uiScale) {
+                                    Circle()
+                                        .fill(.red)
+                                        .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                        .overlay {
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 24 * uiScale, weight: .bold))
+                                                .foregroundStyle(.white)
+                                        }
+                                    
+                                    VStack(alignment: .leading, spacing: 4 * uiScale) {
+                                        Text(error.components(separatedBy: ":").first ?? error)
+                                            .font(.system(size: 15 * uiScale, weight: .medium))
+                                            .lineLimit(1)
+                                        Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
+                                            .font(.system(size: 13 * uiScale))
+                                            .foregroundStyle(.red)
+                                            .lineLimit(2)
+                                    }
+                                    
+                                    Spacer()
+                                }
+                                .padding(16 * uiScale)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                                        .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                                )
+                            }
                         }
                     }
                 }
             }
+            .padding(.horizontal, 24 * uiScale)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
     
     // MARK: - Helper Views
