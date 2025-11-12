@@ -1501,6 +1501,21 @@ Divider()
 
 ## 📝 更新履歴
 
+- **2025年11月12日 v1.8**: SwiftUI List表示問題のデバッグ情報を追加
+  - **SwiftUI List inside ScrollView 問題** (macOS 26で確認)
+  - **症状**: ScrollView > VStack > List の階層構造で、Listが空白表示される
+  - **根本原因**: ScrollView内のListは自身の高さを正しく計算できない（SwiftUI既知の問題）
+  - **解決策1**: List に明示的な `.frame(minHeight:maxHeight:)` を追加
+    - 例: `.frame(minHeight: 200, maxHeight: .infinity)`
+  - **解決策2**: ScrollViewからListを取り出し、直接配置する（理想的だが設計変更が必要）
+  - **Web検索ソース**:
+    - Stack Overflow: "List frame-height is not changing when the list items are increased"
+    - Reddit SwiftUI: "VStack doesn't fully adapt to content's height"
+    - Better Programming: "SwiftUI Lists Are Broken And Can't Be Fixed" (iOS 16以降の問題)
+  - **検証日**: 2025年11月12日
+  - **プロジェクト**: PlayCoverManager AppUninstallerSheet実装で発見
+  - **追加対応**: List項目に `.padding(.vertical, 4 * uiScale)` でスペーシング改善
+
 - **2025年11月11日 v1.7**: デバッグで発見した実装上の注意点を追記
   - **Animation型の制約**: `Animation`は具体型（concrete type）であり、ジェネリック制約として使用不可
   - 誤: `func animation<A: Animation>(_ normalAnimation: A?) -> A?`
