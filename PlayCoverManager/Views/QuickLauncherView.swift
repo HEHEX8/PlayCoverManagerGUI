@@ -828,6 +828,11 @@ private struct iOSAppIconView: View {
     @State private var gradientOffset: CGFloat = 0
     @State private var focusGlowPhase: CGFloat = 0
     
+    // Show hover effect when hovering OR when focused (keyboard)
+    private var showHoverEffect: Bool {
+        isHovering || isFocused
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
@@ -850,7 +855,8 @@ private struct iOSAppIconView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .background {
                 // Hover glow effect behind the icon (doesn't cover image)
-                if isHovering {
+                // Shows when hovering OR keyboard focused
+                if showHoverEffect {
                     RoundedRectangle(cornerRadius: 18)
                         .fill(
                             RadialGradient(
@@ -870,54 +876,57 @@ private struct iOSAppIconView: View {
                 }
             }
             .shadow(
-                color: isHovering ? .accentColor.opacity(0.5) : .black.opacity(0.2), 
-                radius: isHovering ? 16 : 3, 
+                color: showHoverEffect ? .accentColor.opacity(0.5) : .black.opacity(0.2), 
+                radius: showHoverEffect ? 16 : 3, 
                 x: 0, 
-                y: isHovering ? 6 : 2
+                y: showHoverEffect ? 6 : 2
             )
             .overlay {
                 // Rich keyboard focus ring with animated glow
+                // More subtle when also hovering to avoid visual overload
                 if isFocused {
                     ZStack {
-                        // Outer glow layer (pulsing)
-                        RoundedRectangle(cornerRadius: 20)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        .accentColor.opacity(0.3),
-                                        .purple.opacity(0.2),
-                                        .blue.opacity(0.2),
-                                        .accentColor.opacity(0.3)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 8
-                            )
-                            .blur(radius: 4)
-                            .opacity(0.6 + CGFloat(sin(Double(focusGlowPhase))) * 0.3)
+                        // Outer glow layer (pulsing) - hidden when hovering to reduce clutter
+                        if !isHovering {
+                            RoundedRectangle(cornerRadius: 20)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [
+                                            .accentColor.opacity(0.3),
+                                            .purple.opacity(0.2),
+                                            .blue.opacity(0.2),
+                                            .accentColor.opacity(0.3)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 8
+                                )
+                                .blur(radius: 4)
+                                .opacity(0.6 + CGFloat(sin(Double(focusGlowPhase))) * 0.3)
+                        }
                         
-                        // Middle glow layer (seamless rotation)
+                        // Middle glow layer (seamless rotation) - thinner when hovering
                         RoundedRectangle(cornerRadius: 19)
                             .strokeBorder(
                                 LinearGradient(
                                     colors: [
-                                        .accentColor.opacity(0.5),
-                                        .purple.opacity(0.4),
-                                        .blue.opacity(0.4),
-                                        .cyan.opacity(0.4),
-                                        .accentColor.opacity(0.5),
-                                        .purple.opacity(0.4),
-                                        .blue.opacity(0.4),
-                                        .cyan.opacity(0.4),
-                                        .accentColor.opacity(0.5)
+                                        .accentColor.opacity(isHovering ? 0.3 : 0.5),
+                                        .purple.opacity(isHovering ? 0.25 : 0.4),
+                                        .blue.opacity(isHovering ? 0.25 : 0.4),
+                                        .cyan.opacity(isHovering ? 0.25 : 0.4),
+                                        .accentColor.opacity(isHovering ? 0.3 : 0.5),
+                                        .purple.opacity(isHovering ? 0.25 : 0.4),
+                                        .blue.opacity(isHovering ? 0.25 : 0.4),
+                                        .cyan.opacity(isHovering ? 0.25 : 0.4),
+                                        .accentColor.opacity(isHovering ? 0.3 : 0.5)
                                     ],
                                     startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 0),
                                     endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0)
                                 ),
-                                lineWidth: 4
+                                lineWidth: isHovering ? 2 : 4
                             )
-                            .blur(radius: 2)
+                            .blur(radius: isHovering ? 1 : 2)
                         
                         // Inner sharp border (seamless rotation)
                         RoundedRectangle(cornerRadius: 18)
@@ -943,8 +952,9 @@ private struct iOSAppIconView: View {
                 }
             }
             .overlay {
-                // Hover border glow outside the icon
-                if isHovering {
+                // Hover border glow outside the icon (only when not focused)
+                // When focused, the animated focus ring takes precedence
+                if isHovering && !isFocused {
                     RoundedRectangle(cornerRadius: 18)
                         .strokeBorder(
                             LinearGradient(
@@ -1007,12 +1017,12 @@ private struct iOSAppIconView: View {
                     }
                 }
             }
-            // Press & bounce & hover animation
+            // Press & bounce & hover/focus animation
             .scaleEffect(
                 isPressing ? 0.85 : 
                 isBouncing ? 1.15 : 
                 isAnimating ? 0.85 : 
-                isHovering ? 1.05 : 1.0
+                showHoverEffect ? 1.05 : 1.0
             )
             .animation(
                 isPressing ? .easeOut(duration: 0.15) :
@@ -1035,18 +1045,19 @@ private struct iOSAppIconView: View {
             )
             .animation(
                 .interpolatingSpring(stiffness: 350, damping: 12),
-                value: isHovering
+                value: showHoverEffect
             )
             .onHover { hovering in
                 isHovering = hovering
                 
-                if hovering {
+                // Start/stop gradient animation based on hover OR focus state
+                if showHoverEffect {
                     // Start seamless gradient animation (0 to 1 loop with duplicated colors)
                     withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
                         gradientOffset = 1.0
                     }
-                } else {
-                    // Stop gradient animation smoothly
+                } else if !isFocused {
+                    // Stop gradient animation smoothly (only if not focused)
                     withAnimation(.linear(duration: 0.5)) {
                         gradientOffset = 0
                     }
@@ -1092,7 +1103,7 @@ private struct iOSAppIconView: View {
                     }
             )
             
-            // App name below icon with animated gradient on hover
+            // App name below icon with animated gradient on hover/focus
             ZStack {
                 // Base text (always visible)
                 Text(app.displayName)
@@ -1102,9 +1113,9 @@ private struct iOSAppIconView: View {
                     .frame(width: 90, height: 28)
                     .fixedSize(horizontal: false, vertical: true)
                     .foregroundStyle(.primary)
-                    .opacity(isHovering ? 0 : 1)
+                    .opacity(showHoverEffect ? 0 : 1)
                 
-                // Gradient text (fades in on hover with animated gradient)
+                // Gradient text (fades in on hover/focus with animated gradient)
                 Text(app.displayName)
                     .font(.system(size: 11, weight: .medium))
                     .lineLimit(2)
@@ -1128,9 +1139,9 @@ private struct iOSAppIconView: View {
                             endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0)
                         )
                     )
-                    .opacity(isHovering ? 1 : 0)
+                    .opacity(showHoverEffect ? 1 : 0)
             }
-            .animation(.easeInOut(duration: 0.4), value: isHovering)
+            .animation(.easeInOut(duration: 0.4), value: showHoverEffect)
         }
         .frame(width: 100, height: 120)
         .contentShape(Rectangle())
@@ -1162,10 +1173,22 @@ private struct iOSAppIconView: View {
                 withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
                     focusGlowPhase = .pi * 2
                 }
+                // Also start app name gradient animation
+                if !isHovering {
+                    withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
+                        gradientOffset = 1.0
+                    }
+                }
             } else {
                 // Stop focus ring animation
                 withAnimation(.linear(duration: 0.3)) {
                     focusGlowPhase = 0
+                }
+                // Stop gradient animation only if not hovering
+                if !isHovering {
+                    withAnimation(.linear(duration: 0.5)) {
+                        gradientOffset = 0
+                    }
                 }
             }
         }
