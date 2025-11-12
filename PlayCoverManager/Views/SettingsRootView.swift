@@ -2304,175 +2304,193 @@ struct AppUninstallerSheet: View {
     private var resultsView: some View {
         ScrollView {
             VStack(spacing: 24 * uiScale) {
-                let hasFailures = uninstallerService?.failedApps.isEmpty == false
-                
-                // Header with dynamic icon
-                VStack(spacing: 20 * uiScale) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: hasFailures ? 
-                                        [Color.orange.opacity(0.2), Color.yellow.opacity(0.1)] :
-                                        [Color.green.opacity(0.2), Color.mint.opacity(0.1)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 100 * uiScale, height: 100 * uiScale)
-                        
-                        Image(systemName: hasFailures ? "exclamationmark.triangle.fill" : "checkmark.seal.fill")
-                            .font(.system(size: 48 * uiScale, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: hasFailures ? [.orange, .yellow] : [.green, .mint],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    
-                    VStack(spacing: 8 * uiScale) {
-                        Text(hasFailures ? "一部のアプリで問題が発生しました" : "アンインストール完了")
-                            .font(.system(size: 28 * uiScale, weight: .bold))
-                            .foregroundStyle(.primary)
-                            .multilineTextAlignment(.center)
-                        
-                        if let service = uninstallerService {
-                            Text("\(service.uninstalledApps.count) 個成功" + (hasFailures ? " • \(service.failedApps.count) 個失敗" : ""))
-                                .font(.system(size: 15 * uiScale))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                
-                // Success section
-                if let service = uninstallerService, !service.uninstalledApps.isEmpty {
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
-                        HStack(spacing: 8 * uiScale) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 16 * uiScale))
-                                .foregroundStyle(.green)
-                            Text("アンインストール成功")
-                                .font(.system(size: 16 * uiScale, weight: .semibold))
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Text("\(service.uninstalledApps.count)")
-                                .font(.system(size: 15 * uiScale, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        VStack(spacing: 8 * uiScale) {
-                            ForEach(service.uninstalledApps, id: \.self) { appName in
-                                HStack(spacing: 12 * uiScale) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.green.opacity(0.15))
-                                            .frame(width: 36 * uiScale, height: 36 * uiScale)
-                                        
-                                        Image(systemName: "checkmark")
-                                            .font(.system(size: 16 * uiScale, weight: .semibold))
-                                            .foregroundStyle(.green)
-                                    }
-                                    
-                                    VStack(alignment: .leading, spacing: 2 * uiScale) {
-                                        Text(appName)
-                                            .font(.system(size: 15 * uiScale, weight: .medium))
-                                            .foregroundStyle(.primary)
-                                            .lineLimit(1)
-                                        Text("正常にアンインストールされました")
-                                            .font(.system(size: 12 * uiScale))
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                }
-                                .padding(14 * uiScale)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10 * uiScale)
-                                        .fill(Color(nsColor: .windowBackgroundColor))
-                                )
-                            }
-                        }
-                    }
-                    .padding(20 * uiScale)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16 * uiScale)
-                            .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16 * uiScale)
-                            .stroke(Color.green.opacity(0.2), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
-                }
-                
-                // Failure section
-                if let service = uninstallerService, !service.failedApps.isEmpty {
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
-                        HStack(spacing: 8 * uiScale) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 16 * uiScale))
-                                .foregroundStyle(.red)
-                            Text("アンインストール失敗")
-                                .font(.system(size: 16 * uiScale, weight: .semibold))
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Text("\(service.failedApps.count)")
-                                .font(.system(size: 15 * uiScale, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        VStack(spacing: 8 * uiScale) {
-                            ForEach(service.failedApps, id: \.self) { error in
-                                HStack(spacing: 12 * uiScale) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.red.opacity(0.15))
-                                            .frame(width: 36 * uiScale, height: 36 * uiScale)
-                                        
-                                        Image(systemName: "xmark")
-                                            .font(.system(size: 16 * uiScale, weight: .semibold))
-                                            .foregroundStyle(.red)
-                                    }
-                                    
-                                    VStack(alignment: .leading, spacing: 2 * uiScale) {
-                                        Text(error.components(separatedBy: ":").first ?? error)
-                                            .font(.system(size: 15 * uiScale, weight: .medium))
-                                            .foregroundStyle(.primary)
-                                            .lineLimit(1)
-                                        Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
-                                            .font(.system(size: 12 * uiScale))
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(2)
-                                    }
-                                    
-                                    Spacer()
-                                }
-                                .padding(14 * uiScale)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 10 * uiScale)
-                                        .fill(Color(nsColor: .windowBackgroundColor))
-                                )
-                            }
-                        }
-                    }
-                    .padding(20 * uiScale)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16 * uiScale)
-                            .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16 * uiScale)
-                            .stroke(Color.red.opacity(0.2), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
-                }
+                resultsHeaderView
+                resultsSuccessSection
+                resultsFailureSection
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+    
+    private var resultsHeaderView: some View {
+        let hasFailures = uninstallerService?.failedApps.isEmpty == false
+        
+        return VStack(spacing: 20 * uiScale) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: hasFailures ? 
+                                [Color.orange.opacity(0.2), Color.yellow.opacity(0.1)] :
+                                [Color.green.opacity(0.2), Color.mint.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 100 * uiScale, height: 100 * uiScale)
+                
+                Image(systemName: hasFailures ? "exclamationmark.triangle.fill" : "checkmark.seal.fill")
+                    .font(.system(size: 48 * uiScale, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: hasFailures ? [.orange, .yellow] : [.green, .mint],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .symbolRenderingMode(.hierarchical)
+            }
+            
+            VStack(spacing: 8 * uiScale) {
+                Text(hasFailures ? "一部のアプリで問題が発生しました" : "アンインストール完了")
+                    .font(.system(size: 28 * uiScale, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .multilineTextAlignment(.center)
+                
+                if let service = uninstallerService {
+                    Text("\(service.uninstalledApps.count) 個成功" + (hasFailures ? " • \(service.failedApps.count) 個失敗" : ""))
+                        .font(.system(size: 15 * uiScale))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var resultsSuccessSection: some View {
+        if let service = uninstallerService, !service.uninstalledApps.isEmpty {
+            VStack(alignment: .leading, spacing: 12 * uiScale) {
+                HStack(spacing: 8 * uiScale) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16 * uiScale))
+                        .foregroundStyle(.green)
+                    Text("アンインストール成功")
+                        .font(.system(size: 16 * uiScale, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text("\(service.uninstalledApps.count)")
+                        .font(.system(size: 15 * uiScale, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                
+                resultsSuccessAppsList(apps: service.uninstalledApps)
+            }
+            .padding(20 * uiScale)
+            .background(
+                RoundedRectangle(cornerRadius: 16 * uiScale)
+                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16 * uiScale)
+                    .stroke(Color.green.opacity(0.2), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
+        }
+    }
+    
+    private func resultsSuccessAppsList(apps: [String]) -> some View {
+        VStack(spacing: 8 * uiScale) {
+            ForEach(apps, id: \.self) { appName in
+                HStack(spacing: 12 * uiScale) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.green.opacity(0.15))
+                            .frame(width: 36 * uiScale, height: 36 * uiScale)
+                        
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16 * uiScale, weight: .semibold))
+                            .foregroundStyle(.green)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2 * uiScale) {
+                        Text(appName)
+                            .font(.system(size: 15 * uiScale, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        Text("正常にアンインストールされました")
+                            .font(.system(size: 12 * uiScale))
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(14 * uiScale)
+                .background(
+                    RoundedRectangle(cornerRadius: 10 * uiScale)
+                        .fill(Color(nsColor: .windowBackgroundColor))
+                )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var resultsFailureSection: some View {
+        if let service = uninstallerService, !service.failedApps.isEmpty {
+            VStack(alignment: .leading, spacing: 12 * uiScale) {
+                HStack(spacing: 8 * uiScale) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16 * uiScale))
+                        .foregroundStyle(.red)
+                    Text("アンインストール失敗")
+                        .font(.system(size: 16 * uiScale, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text("\(service.failedApps.count)")
+                        .font(.system(size: 15 * uiScale, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                
+                resultsFailureAppsList(errors: service.failedApps)
+            }
+            .padding(20 * uiScale)
+            .background(
+                RoundedRectangle(cornerRadius: 16 * uiScale)
+                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16 * uiScale)
+                    .stroke(Color.red.opacity(0.2), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
+        }
+    }
+    
+    private func resultsFailureAppsList(errors: [String]) -> some View {
+        VStack(spacing: 8 * uiScale) {
+            ForEach(errors, id: \.self) { error in
+                HStack(spacing: 12 * uiScale) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.red.opacity(0.15))
+                            .frame(width: 36 * uiScale, height: 36 * uiScale)
+                        
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16 * uiScale, weight: .semibold))
+                            .foregroundStyle(.red)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2 * uiScale) {
+                        Text(error.components(separatedBy: ":").first ?? error)
+                            .font(.system(size: 15 * uiScale, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
+                            .font(.system(size: 12 * uiScale))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(14 * uiScale)
+                .background(
+                    RoundedRectangle(cornerRadius: 10 * uiScale)
+                        .fill(Color(nsColor: .windowBackgroundColor))
+                )
+            }
+        }
+    }
+
     
     // MARK: - Bottom Buttons
     private var bottomButtons: some View {
