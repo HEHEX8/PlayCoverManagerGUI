@@ -892,8 +892,9 @@ struct IPAInstallerSheet: View {
                     .font(.system(size: 16 * uiScale))
                     .foregroundStyle(.secondary)
             }
+            }
+            .padding(.horizontal, 24 * uiScale)
         }
-        .padding(.horizontal, 24 * uiScale)
     }
     
     // MARK: - Installing View
