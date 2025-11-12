@@ -1033,8 +1033,8 @@ private struct iOSAppIconView: View {
                 isHovering = hovering
                 
                 if hovering {
-                    // Start smooth gradient animation when hovering (-1 to 1 and back)
-                    withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: true)) {
+                    // Start seamless gradient animation (0 to 1 loop with duplicated colors)
+                    withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
                         gradientOffset = 1.0
                     }
                 } else {
@@ -1110,10 +1110,13 @@ private struct iOSAppIconView: View {
                                 .purple,
                                 .blue,
                                 .cyan,
+                                .accentColor,
                                 .purple,
+                                .blue,
+                                .cyan,
                                 .accentColor
                             ],
-                            startPoint: UnitPoint(x: gradientOffset - 0.5, y: 0),
+                            startPoint: UnitPoint(x: gradientOffset, y: 0),
                             endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0)
                         )
                     )
