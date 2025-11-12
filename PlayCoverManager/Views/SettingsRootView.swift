@@ -2929,12 +2929,13 @@ private struct MaintenanceSettingsView: View {
                     VStack(alignment: .leading, spacing: 16 * uiScale) {
                         CustomLargeButton(
                             title: "~/Applications/PlayCover を削除",
-                            icon: "trash",
+                            action: {
+                                removePlayCoverShortcuts()
+                            },
                             isPrimary: false,
+                            icon: "trash",
                             uiScale: uiScale
-                        ) {
-                            removePlayCoverShortcuts()
-                        }
+                        )
                         
                         HStack(spacing: 6 * uiScale) {
                             Image(systemName: "info.circle.fill")
