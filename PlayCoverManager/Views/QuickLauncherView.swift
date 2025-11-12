@@ -97,7 +97,9 @@ struct QuickLauncherView: View {
     
     // Calculated scaled values for UI elements
     private var uiScale: CGFloat {
-        calculateUIScale(for: windowSize)
+        let scale = calculateUIScale(for: windowSize)
+        print("🎯 uiScale computed property accessed: windowSize=\(windowSize.width)x\(windowSize.height), scale=\(scale)")
+        return scale
     }
     
     // Toolbar dimensions
@@ -620,9 +622,10 @@ struct QuickLauncherView: View {
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
+            print("📏 onGeometryChange fired: \(newSize.width)x\(newSize.height)")
             windowSize = newSize
             let scale = calculateUIScale(for: newSize)
-            print("🔍 QuickLauncher window size: \(newSize.width)x\(newSize.height), uiScale: \(scale)")
+            print("🔍 QuickLauncher window size updated: \(windowSize.width)x\(windowSize.height), calculated scale: \(scale)")
         }
         .overlay(alignment: .center) {
             if viewModel.unmountFlowState != .idle {
