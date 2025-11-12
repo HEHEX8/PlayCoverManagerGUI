@@ -307,8 +307,8 @@ struct QuickLauncherView: View {
                             startRadius: 0,
                             endRadius: 200
                         ))
-                        .frame(width: 400, height: 400)
-                        .blur(radius: 60)
+                        .frame(width: 400 * uiScale, height: 400 * uiScale)
+                        .blur(radius: 60 * uiScale)
                     
                     Spacer()
                     
@@ -319,8 +319,8 @@ struct QuickLauncherView: View {
                             startRadius: 0,
                             endRadius: 180
                         ))
-                        .frame(width: 350, height: 350)
-                        .blur(radius: 50)
+                        .frame(width: 350 * uiScale, height: 350 * uiScale)
+                        .blur(radius: 50 * uiScale)
                 }
                 Spacer()
             }
@@ -438,7 +438,7 @@ struct QuickLauncherView: View {
                     startPoint: .top,
                     endPoint: .bottom
                 ))
-                .blur(radius: 20)
+                .blur(radius: 20 * uiScale)
             
             // Top layer - main glass
             Rectangle()
@@ -455,14 +455,14 @@ struct QuickLauncherView: View {
                 startPoint: .leading,
                 endPoint: .trailing
             ))
-            .frame(height: 0.5)
+            .frame(height: 0.5 * uiScale)
             .allowsHitTesting(false)
     }
     
     @ViewBuilder
     private var mainContent: some View {
         if let recentApp = viewModel.filteredApps.first(where: { $0.lastLaunchedFlag }) {
-            VStack(spacing: 0) {
+            VStack(spacing: 0 * uiScale) {
                 // Main app grid
                 if viewModel.filteredApps.isEmpty {
                     EmptyAppListView(searchText: viewModel.searchText)
@@ -510,7 +510,7 @@ struct QuickLauncherView: View {
     
     @ViewBuilder
     private func recentAppButton(_ recentApp: PlayCoverApp) -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 0 * uiScale) {
             // Glowing separator
             Rectangle()
                 .fill(LinearGradient(
@@ -586,7 +586,7 @@ struct QuickLauncherView: View {
             
             backgroundLayer
             
-            VStack(spacing: 0) {
+            VStack(spacing: 0 * uiScale) {
                 toolbarView
                 mainContent
             }
@@ -635,15 +635,15 @@ struct QuickLauncherView: View {
                 .transition(.opacity)
                 .zIndex(998)
             } else if viewModel.isBusy && viewModel.isShowingStatus {
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     ProgressView()
                     if !viewModel.statusMessage.isEmpty {
                         Text(viewModel.statusMessage)
                     }
                 }
                 .padding()
-                .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle(cornerRadius: 12))
-                .shadow(radius: 12)
+                .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle(cornerRadius: 12 * uiScale))
+                .shadow(radius: 12 * uiScale)
             }
         }
         .keyboardNavigableAlert(
@@ -930,7 +930,7 @@ private struct iOSAppIconView: View {
                 .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: borderWidth)
                 .frame(width: circleSize, height: circleSize)
         }
-        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+        .shadow(color: .black.opacity(0.2), radius: 3 * uiScale, x: 0, y: 1)
         .offset(x: 6, y: -6)
     }
     
@@ -1312,7 +1312,7 @@ private struct AppDetailSheet: View {
             Color(nsColor: .windowBackgroundColor)
                 .ignoresSafeArea()
             
-            VStack(spacing: 0) {
+            VStack(spacing: 0 * uiScale) {
                 // Modern header card
                 VStack(spacing: 16 * uiScale) {
                     HStack(spacing: 16 * uiScale) {
@@ -1329,28 +1329,28 @@ private struct AppDetailSheet: View {
                                 .frame(width: 80 * uiScale, height: 80 * uiScale)
                                 .overlay {
                                     Image(systemName: "app.dashed")
-                                        .font(.system(size: 32))
+                                        .font(.system(size: 32 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                         }
                         
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 6 * uiScale) {
                             Text(app.displayName)
-                                .font(.title2.bold())
+                                .font(.system(size: 22 * uiScale, weight: .bold))
                                 .lineLimit(2)
                             
                             if let version = app.version {
-                                HStack(spacing: 4) {
+                                HStack(spacing: 4 * uiScale) {
                                     Image(systemName: "tag.fill")
-                                        .font(.caption2)
+                                        .font(.system(size: 10 * uiScale))
                                     Text("バージョン \(version)")
-                                        .font(.subheadline)
+                                        .font(.system(size: 13 * uiScale))
                                 }
                                 .foregroundStyle(.secondary)
                             }
                             
                             Text(app.bundleIdentifier)
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.tertiary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
@@ -1364,20 +1364,20 @@ private struct AppDetailSheet: View {
                             viewModel.launch(app: app)
                         } label: {
                             Label("起動", systemImage: "play.circle.fill")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.system(size: 15 * uiScale, weight: .semibold))
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
                     }
                 }
-                .padding(24)
+                .padding(24 * uiScale)
                 .glassEffect(.regular, in: .rect)
                 
                 Divider()
                 
                 // Modern tab selector with icons
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 8 * uiScale) {
                         ForEach(SettingsTab.allCases) { tab in
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -1385,21 +1385,21 @@ private struct AppDetailSheet: View {
                                 }
                             } label: {
                                 Label(tab.localizedTitle, systemImage: tab.icon)
-                                    .font(.system(size: 13, weight: selectedTab == tab ? .semibold : .regular))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
+                                    .font(.system(size: 13 * uiScale, weight: selectedTab == tab ? .semibold : .regular))
+                                    .padding(.horizontal, 16 * uiScale)
+                                    .padding(.vertical, 8 * uiScale)
                                     .background(
                                         selectedTab == tab ?
-                                            AnyView(RoundedRectangle(cornerRadius: 8).fill(.blue)) :
-                                            AnyView(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .controlBackgroundColor).opacity(0.5)))
+                                            AnyView(RoundedRectangle(cornerRadius: 8 * uiScale).fill(.blue)) :
+                                            AnyView(RoundedRectangle(cornerRadius: 8 * uiScale).fill(Color(nsColor: .controlBackgroundColor).opacity(0.5)))
                                     )
                                     .foregroundStyle(selectedTab == tab ? .white : .primary)
                             }
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, 24 * uiScale)
+                    .padding(.vertical, 12 * uiScale)
                 }
                 .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
                 
@@ -1417,7 +1417,7 @@ private struct AppDetailSheet: View {
                             DetailsView(app: app, viewModel: viewModel)
                         }
                     }
-                    .padding(24)
+                    .padding(24 * uiScale)
                 }
                 
                 Divider()
@@ -1468,51 +1468,51 @@ private struct EmptyAppListView: View {
             Color(nsColor: .windowBackgroundColor)
                 .ignoresSafeArea()
             
-            VStack(spacing: 32) {
+            VStack(spacing: 32 * uiScale) {
                 // Icon and title card
-                VStack(spacing: 24) {
+                VStack(spacing: 24 * uiScale) {
                     Image(systemName: isSearchEmpty ? "magnifyingglass" : "tray")
-                        .font(.system(size: 80))
+                        .font(.system(size: 80 * uiScale))
                         .foregroundStyle(isSearchEmpty ? .blue : .secondary)
                     
-                    VStack(spacing: 12) {
+                    VStack(spacing: 12 * uiScale) {
                         Text(isSearchEmpty ? "検索結果が見つかりません" : "インストール済みアプリがありません")
-                            .font(.title.bold())
+                            .font(.system(size: 28 * uiScale, weight: .bold))
                         
                         if isSearchEmpty {
                             // Search empty state
-                            VStack(spacing: 8) {
+                            VStack(spacing: 8 * uiScale) {
                                 Text("\"\(searchText)\" に一致するアプリが見つかりませんでした。")
-                                    .font(.body)
+                                    .font(.system(size: 15 * uiScale))
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
                                 
                                 Text("別のキーワードで検索してみてください。")
-                                    .font(.callout)
+                                    .font(.system(size: 15 * uiScale))
                                     .foregroundStyle(.tertiary)
                                     .multilineTextAlignment(.center)
                             }
-                            .frame(maxWidth: 450)
+                            .frame(maxWidth: 450 * uiScale)
                         } else {
                             // No apps installed state
-                            VStack(spacing: 8) {
+                            VStack(spacing: 8 * uiScale) {
                                 Text("IPA ファイルをインストールすると、ここに表示されます。")
-                                    .font(.body)
+                                    .font(.system(size: 15 * uiScale))
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
                                 
                                 Text("下のボタンから IPA をインストールしてください。")
-                                    .font(.callout)
+                                    .font(.system(size: 15 * uiScale))
                                     .foregroundStyle(.tertiary)
                                     .multilineTextAlignment(.center)
                             }
-                            .frame(maxWidth: 450)
+                            .frame(maxWidth: 450 * uiScale)
                         }
                     }
                 }
-                .padding(40)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
-                .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
+                .padding(40 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20 * uiScale))
+                .shadow(color: .black.opacity(0.15), radius: 30 * uiScale, x: 0, y: 10 * uiScale)
                 
                 // Action buttons (only for non-search empty state)
                 if !isSearchEmpty {
@@ -1520,15 +1520,15 @@ private struct EmptyAppListView: View {
                         showingInstaller = true
                     } label: {
                         Label("IPA をインストール", systemImage: "square.and.arrow.down")
-                            .font(.system(size: 16, weight: .semibold))
-                            .frame(minWidth: 200)
+                            .font(.system(size: 16 * uiScale, weight: .semibold))
+                            .frame(minWidth: 200 * uiScale)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .keyboardShortcut(.defaultAction)
                 }
             }
-            .frame(maxWidth: 600)
+            .frame(maxWidth: 600 * uiScale)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .sheet(isPresented: $showingInstaller) {
@@ -1663,7 +1663,7 @@ private struct RecentAppLaunchButton: View {
                 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: padding * 0.4))
                 .overlay(
                     RoundedRectangle(cornerRadius: padding * 0.4)
-                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                        .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1 * uiScale)
                 )
                 .foregroundStyle(.secondary)
                 .shadow(color: .black.opacity(0.05), radius: padding * 0.1, x: 0, y: 1)
@@ -1673,7 +1673,7 @@ private struct RecentAppLaunchButton: View {
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
             .background(
-                RoundedRectangle(cornerRadius: 0)
+                RoundedRectangle(cornerRadius: 0 * uiScale)
                     .fill(Color.accentColor.opacity(isHovered ? 0.08 : 0))
             )
             .brightness(isHovered ? 0.02 : 0)
@@ -1882,7 +1882,7 @@ private struct RippleLayer: View {
                     )
                 )
                 .scaleEffect(ripple.scale * 1.05)
-                .blur(radius: 8)
+                .blur(radius: 8 * uiScale)
                 .opacity(ripple.opacity)
             
             // Middle layer with stronger color
@@ -1900,7 +1900,7 @@ private struct RippleLayer: View {
                     )
                 )
                 .scaleEffect(ripple.scale)
-                .blur(radius: 4)
+                .blur(radius: 4 * uiScale)
                 .opacity(ripple.opacity)
             
             // Sharp ring layer (main visible ring)
@@ -1914,11 +1914,11 @@ private struct RippleLayer: View {
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    lineWidth: 4
+                    lineWidth: 4 * uiScale
                 )
                 .scaleEffect(ripple.scale)
                 .opacity(ripple.opacity)
-                .shadow(color: rippleColor.opacity(ripple.opacity * 0.5), radius: 6, x: 0, y: 2)
+                .shadow(color: rippleColor.opacity(ripple.opacity * 0.5), radius: 6 * uiScale, x: 0, y: 2)
             
             // Inner glow
             Circle()
@@ -1934,7 +1934,7 @@ private struct RippleLayer: View {
                     )
                 )
                 .scaleEffect(ripple.scale * 0.3)
-                .blur(radius: 10)
+                .blur(radius: 10 * uiScale)
                 .opacity(ripple.opacity)
         }
     }
@@ -1954,39 +1954,39 @@ private struct OverviewView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 20 * uiScale) {
             Text("アプリ概要")
-                .font(.headline)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
             
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     // App Card
-                    HStack(spacing: 16) {
+                    HStack(spacing: 16 * uiScale) {
                         if let icon = app.icon {
                             Image(nsImage: icon)
                                 .resizable()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
-                                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                .frame(width: 80 * uiScale, height: 80 * uiScale)
+                                .clipShape(RoundedRectangle(cornerRadius: 18 * uiScale))
+                                .shadow(color: .black.opacity(0.2), radius: 8 * uiScale, x: 0, y: 4)
                         }
                         
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 4 * uiScale) {
                             Text(app.displayName)
-                                .font(.title2)
+                                .font(.system(size: 22 * uiScale, weight: .bold))
                                 .fontWeight(.bold)
                             
                             if let version = app.version {
                                 Text("バージョン \(version)")
-                                    .font(.subheadline)
+                                    .font(.system(size: 13 * uiScale))
                                     .foregroundStyle(.secondary)
                             }
                             
                             if let minOS = infoPlist?["MinimumOSVersion"] as? String {
-                                HStack(spacing: 4) {
+                                HStack(spacing: 4 * uiScale) {
                                     Image(systemName: "iphone")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                     Text("iOS \(minOS)+")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                 }
                                 .foregroundStyle(.secondary)
                             }
@@ -1996,10 +1996,10 @@ private struct OverviewView: View {
                     }
                     .padding()
                     .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                    .cornerRadius(12)
+                    .cornerRadius(12 * uiScale)
                     
                     // Quick Stats
-                    HStack(spacing: 12) {
+                    HStack(spacing: 12 * uiScale) {
                         // Storage stat
                         StatCard(
                             icon: "internaldrive",
@@ -2021,12 +2021,12 @@ private struct OverviewView: View {
                     
                     // Storage Breakdown
                     if let storage = storageInfo {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 8 * uiScale) {
                             Text("ストレージ内訳")
-                                .font(.subheadline)
+                                .font(.system(size: 13 * uiScale))
                                 .fontWeight(.semibold)
                             
-                            VStack(spacing: 8) {
+                            VStack(spacing: 8 * uiScale) {
                                 StorageRow(label: String(localized: "アプリ本体"), size: storage.appSize, color: .blue)
                                 StorageRow(
                                     label: storage.isMounted ? String(localized: "ディスクイメージ (マウント中)") : "ディスクイメージ",
@@ -2039,11 +2039,11 @@ private struct OverviewView: View {
                                         .opacity(0.7)
                                 }
                             }
-                            .padding(12)
+                            .padding(12 * uiScale)
                             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                             
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 4 * uiScale) {
                                 Text("※ 合計 = アプリ本体 + ディスクイメージファイル")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
@@ -2057,12 +2057,12 @@ private struct OverviewView: View {
                     }
                     
                     // Quick Info
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         Text("基本情報")
-                            .font(.subheadline)
+                            .font(.system(size: 13 * uiScale))
                             .fontWeight(.semibold)
                         
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 6 * uiScale) {
                             QuickInfoRow(icon: "checkmark.seal.fill", label: "Bundle ID", value: app.bundleIdentifier)
                             
                             if let executableName = infoPlist?["CFBundleExecutable"] as? String {
@@ -2073,13 +2073,13 @@ private struct OverviewView: View {
                                 QuickInfoRow(icon: "lock.shield.fill", label: String(localized: "権限要求"), value: "\(capabilities) 個")
                             }
                         }
-                        .padding(12)
+                        .padding(12 * uiScale)
                         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                        .cornerRadius(8)
+                        .cornerRadius(8 * uiScale)
                     }
                     
                     // Quick Actions
-                    VStack(spacing: 8) {
+                    VStack(spacing: 8 * uiScale) {
                         Button {
                             NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
                         } label: {
@@ -2088,7 +2088,7 @@ private struct OverviewView: View {
                                 Text("アプリ本体を Finder で表示")
                                 Spacer()
                                 Image(systemName: "chevron.right")
-                                    .font(.caption)
+                                    .font(.system(size: 11 * uiScale))
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -2105,7 +2105,7 @@ private struct OverviewView: View {
                                 Text("コンテナを Finder で表示")
                                 Spacer()
                                 Image(systemName: "chevron.right")
-                                    .font(.caption)
+                                    .font(.system(size: 11 * uiScale))
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -2281,26 +2281,26 @@ private struct StatCard: View {
     let color: Color
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
+        VStack(alignment: .leading, spacing: 8 * uiScale) {
+            HStack(spacing: 6 * uiScale) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(.system(size: 20 * uiScale, weight: .semibold))
                     .foregroundStyle(color)
                 Text(title)
-                    .font(.caption)
+                    .font(.system(size: 11 * uiScale))
                     .foregroundStyle(.secondary)
             }
             
             Text(value)
-                .font(.title3)
+                .font(.system(size: 20 * uiScale, weight: .semibold))
                 .fontWeight(.semibold)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
+        .padding(12 * uiScale)
         .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-        .cornerRadius(8)
+        .cornerRadius(8 * uiScale)
     }
 }
 
@@ -2313,16 +2313,16 @@ private struct StorageRow: View {
         HStack {
             Circle()
                 .fill(color)
-                .frame(width: 8, height: 8)
+                .frame(width: 8 * uiScale, height: 8 * uiScale)
             
             Text(label)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .foregroundStyle(.secondary)
             
             Spacer()
             
             Text(size)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .fontWeight(.medium)
         }
     }
@@ -2334,19 +2334,19 @@ private struct QuickInfoRow: View {
     let value: String
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 8 * uiScale) {
             Image(systemName: icon)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .foregroundStyle(.blue)
-                .frame(width: 16)
+                .frame(width: 16 * uiScale)
             
             Text(label)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .foregroundStyle(.secondary)
-                .frame(width: 90, alignment: .leading)
+                .frame(width: 90 * uiScale, alignment: .leading)
             
             Text(value)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .fontWeight(.medium)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -2420,14 +2420,14 @@ private struct SettingsView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 20 * uiScale) {
             Text("アプリ設定")
-                .font(.headline)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
             
             // Nobrowse setting
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 8 * uiScale) {
                 Text("Finder での表示設定")
-                    .font(.subheadline)
+                    .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
                 Picker("", selection: $nobrowseOverride) {
@@ -2441,12 +2441,12 @@ private struct SettingsView: View {
                 }
                 
                 Text("このアプリのディスクイメージを Finder に表示するかどうかを設定します。")
-                    .font(.caption)
+                    .font(.system(size: 11 * uiScale))
                     .foregroundStyle(.secondary)
                 
                 if nobrowseOverride == .useGlobal {
                     Text("現在のグローバル設定: \(settingsStore.nobrowseEnabled ? "Finderに表示しない" : "Finderに表示する")")
-                        .font(.caption)
+                        .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -2454,9 +2454,9 @@ private struct SettingsView: View {
             Divider()
             
             // Data handling strategy
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 8 * uiScale) {
                 Text("内部データ処理方法")
-                    .font(.subheadline)
+                    .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
                 Picker("", selection: $dataHandlingOverride) {
@@ -2470,12 +2470,12 @@ private struct SettingsView: View {
                 }
                 
                 Text("起動時に内部データが見つかった場合の処理方法を設定します。")
-                    .font(.caption)
+                    .font(.system(size: 11 * uiScale))
                     .foregroundStyle(.secondary)
                 
                 if dataHandlingOverride == .useGlobal {
                     Text("現在のグローバル設定: \(settingsStore.defaultDataHandling.localizedDescription)")
-                        .font(.caption)
+                        .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                 }
             }
@@ -2484,9 +2484,9 @@ private struct SettingsView: View {
             
             // Language setting
             if !supportedLanguages.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     Text("アプリの言語設定")
-                        .font(.subheadline)
+                        .font(.system(size: 13 * uiScale))
                         .fontWeight(.medium)
                     
                     Picker("", selection: $languageOverride) {
@@ -2501,7 +2501,7 @@ private struct SettingsView: View {
                     }
                     
                     Text("このアプリで使用する言語を設定します。")
-                        .font(.caption)
+                        .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                     
                     if languageOverride == nil {
@@ -2510,7 +2510,7 @@ private struct SettingsView: View {
                             // Extract language code from locale identifier (e.g., "ja-JP" -> "ja")
                             let langCode = primaryLang.components(separatedBy: "-").first ?? primaryLang
                             Text("現在のシステム言語: \(getLanguageDisplayName(langCode))")
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -2816,9 +2816,9 @@ private struct DetailsView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 16 * uiScale) {
             Text("詳細情報")
-                .font(.headline)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
             
             // Sub-section selector
             Picker("", selection: $selectedSection) {
@@ -2858,7 +2858,7 @@ private struct InfoContentView: View {
     @Binding var infoPlist: [String: Any]?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 16 * uiScale) {
             // Basic Info Section
             infoSection(title: String(localized: "基本情報")) {
                 infoRow(label: String(localized: "アプリ名"), value: app.displayName)
@@ -2895,7 +2895,7 @@ private struct InfoContentView: View {
                 infoSection(title: String(localized: "機能・権限")) {
                     ForEach(Array(capabilities.enumerated()), id: \.offset) { _, capability in
                         Text("• \(capability)")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -2915,9 +2915,9 @@ private struct InfoContentView: View {
             if let storageInfo = getStorageInfo() {
                 infoSection(title: String(localized: "ストレージ情報")) {
                     // App bundle
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 4 * uiScale) {
                         Text("アプリ本体")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .fontWeight(.medium)
                         infoRow(label: String(localized: "所在地"), value: storageInfo.appPath)
                         infoRow(label: String(localized: "使用容量"), value: storageInfo.appSize)
@@ -2929,12 +2929,12 @@ private struct InfoContentView: View {
                     }
                     
                     Divider()
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 4 * uiScale)
                     
                     // Disk image
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 4 * uiScale) {
                         Text("ディスクイメージ")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .fontWeight(.medium)
                         infoRow(label: String(localized: "所在地"), value: storageInfo.containerPath)
                         infoRow(label: String(localized: "ファイルサイズ"), value: storageInfo.containerSize)
@@ -2949,11 +2949,11 @@ private struct InfoContentView: View {
                     // Internal data usage (reference only, when unmounted)
                     if let internalSize = storageInfo.internalDataSize {
                         Divider()
-                            .padding(.vertical, 4)
+                            .padding(.vertical, 4 * uiScale)
                         
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 4 * uiScale) {
                             Text("内部データ (参考情報)")
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
                             infoRow(label: String(localized: "使用量"), value: internalSize)
@@ -2961,22 +2961,22 @@ private struct InfoContentView: View {
                             Text("※ イメージ内のデータ使用量（合計に含まれません）")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
-                                .padding(.top, 2)
+                                .padding(.top, 2 * uiScale)
                         }
                     }
                     
                     Divider()
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 4 * uiScale)
                     
                     // Total
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 4 * uiScale) {
                         HStack {
                             Text("合計使用容量:")
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .fontWeight(.semibold)
                             Spacer()
                             Text(storageInfo.totalSize)
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .fontWeight(.bold)
                                 .foregroundStyle(.blue)
                         }
@@ -2992,31 +2992,31 @@ private struct InfoContentView: View {
     
     @ViewBuilder
     private func infoSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8 * uiScale) {
             Text(title)
-                .font(.subheadline)
+                .font(.system(size: 13 * uiScale))
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 4 * uiScale) {
                 content()
             }
-            .padding(12)
+            .padding(12 * uiScale)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-            .cornerRadius(8)
+            .cornerRadius(8 * uiScale)
         }
     }
     
     private func infoRow(label: String, value: String) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: 8 * uiScale) {
             Text("\(label):")
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .foregroundStyle(.secondary)
-                .frame(width: 100, alignment: .trailing)
+                .frame(width: 100 * uiScale, alignment: .trailing)
             
             Text(value)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -3242,10 +3242,10 @@ private struct AnalysisContentView: View {
     @State private var analysisResult: AppAnalysisResult?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 16 * uiScale) {
             HStack {
                 Text("アプリ解析")
-                    .font(.subheadline)
+                    .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
                 Spacer()
@@ -3265,7 +3265,7 @@ private struct AnalysisContentView: View {
             
             if let result = analysisResult {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 16 * uiScale) {
                         // Bundle Structure
                         analysisSection(title: String(localized: "バンドル構造"), icon: "folder.fill") {
                             infoRow(label: String(localized: "総ファイル数"), value: "\(result.totalFiles) 個")
@@ -3279,7 +3279,7 @@ private struct AnalysisContentView: View {
                             analysisSection(title: String(localized: "対応言語 (\(result.localizations.count))"), icon: "globe") {
                                 ForEach(result.localizations.sorted(), id: \.self) { lang in
                                     Text("• \(getLanguageName(lang))")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -3290,7 +3290,7 @@ private struct AnalysisContentView: View {
                             analysisSection(title: String(localized: "フレームワーク (\(result.frameworks.count))"), icon: "shippingbox.fill") {
                                 ForEach(result.frameworks.sorted(), id: \.self) { framework in
                                     Text("• \(framework)")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -3312,7 +3312,7 @@ private struct AnalysisContentView: View {
                             analysisSection(title: "Entitlements (\(result.entitlements.count))", icon: "key.fill") {
                                 ForEach(result.entitlements.sorted(), id: \.self) { entitlement in
                                     Text("• \(entitlement)")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -3335,14 +3335,14 @@ private struct AnalysisContentView: View {
                                 ForEach(result.fileTypes.sorted(by: { $0.count > $1.count }), id: \.fileExtension) { fileType in
                                     HStack {
                                         Text(fileType.fileExtension.isEmpty ? "(拡張子なし)" : ".\(fileType.fileExtension)")
-                                            .font(.caption)
-                                            .frame(width: 80, alignment: .leading)
+                                            .font(.system(size: 11 * uiScale))
+                                            .frame(width: 80 * uiScale, alignment: .leading)
                                         Text("\(fileType.count) 個")
-                                            .font(.caption)
+                                            .font(.system(size: 11 * uiScale))
                                             .foregroundStyle(.secondary)
                                         Spacer()
                                         Text(fileType.totalSize)
-                                            .font(.caption)
+                                            .font(.system(size: 11 * uiScale))
                                             .foregroundStyle(.secondary)
                                     }
                                 }
@@ -3352,13 +3352,13 @@ private struct AnalysisContentView: View {
                     .padding()
                 }
             } else {
-                VStack(spacing: 16) {
+                VStack(spacing: 16 * uiScale) {
                     Image(systemName: "magnifyingglass.circle")
-                        .font(.system(size: 64))
+                        .font(.system(size: 64 * uiScale))
                         .foregroundStyle(.secondary)
                     
                     Text("アプリを解析して詳細情報を表示します")
-                        .font(.subheadline)
+                        .font(.system(size: 13 * uiScale))
                         .foregroundStyle(.secondary)
                     
                     Button("解析開始") {
@@ -3379,37 +3379,37 @@ private struct AnalysisContentView: View {
     
     @ViewBuilder
     private func analysisSection<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8 * uiScale) {
+            HStack(spacing: 8 * uiScale) {
                 Image(systemName: icon)
-                    .font(.subheadline)
+                    .font(.system(size: 13 * uiScale))
                     .foregroundStyle(.blue)
                 
                 Text(title)
-                    .font(.subheadline)
+                    .font(.system(size: 13 * uiScale))
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 4 * uiScale) {
                 content()
             }
-            .padding(12)
+            .padding(12 * uiScale)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-            .cornerRadius(8)
+            .cornerRadius(8 * uiScale)
         }
     }
     
     private func infoRow(label: String, value: String) -> some View {
-        HStack(alignment: .top, spacing: 8) {
+        HStack(alignment: .top, spacing: 8 * uiScale) {
             Text("\(label):")
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .foregroundStyle(.secondary)
-                .frame(width: 120, alignment: .trailing)
+                .frame(width: 120 * uiScale, alignment: .trailing)
             
             Text(value)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -3696,7 +3696,7 @@ private struct DrawerPanel: View {
     let uiScale: CGFloat
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0 * uiScale) {
             // Header
             HStack {
                 Text("メニュー")
@@ -3719,7 +3719,7 @@ private struct DrawerPanel: View {
             
             Divider()
             
-            VStack(spacing: 0) {
+            VStack(spacing: 0 * uiScale) {
                 Spacer()
                     .frame(height: 20 * uiScale)
             
@@ -3844,7 +3844,7 @@ private struct DrawerPanel: View {
                     startPoint: .top,
                     endPoint: .bottom
                 ))
-                .frame(width: 1)
+                .frame(width: 1 * uiScale)
                 .allowsHitTesting(false)  // Allow clicks through separator
         }
         .shadow(color: .black.opacity(0.2), radius: 20 * uiScale, x: 4 * uiScale, y: 0)
@@ -3874,7 +3874,7 @@ private struct DrawerMenuItem: View {
             .padding(.vertical, 12 * uiScale)
             .contentShape(Rectangle())
             .background(
-                RoundedRectangle(cornerRadius: 0)
+                RoundedRectangle(cornerRadius: 0 * uiScale)
                     .fill(Color.accentColor.opacity(isHovered ? 0.1 : 0))
             )
         }
@@ -3917,7 +3917,7 @@ private struct KeyboardShortcutGuide: View {
     ]
     
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 0 * uiScale) {
             // Header
             HStack {
                 Image(systemName: "keyboard")
@@ -3948,7 +3948,7 @@ private struct KeyboardShortcutGuide: View {
             
             // Shortcuts list
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: 0 * uiScale) {
                     ForEach([String(localized: "グローバル"), "ナビゲーション"], id: \.self) { category in
                         shortcutCategoryView(for: category)
                     }
@@ -4009,7 +4009,7 @@ private struct KeyboardShortcutGuide: View {
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, topPadding)
             
-            VStack(spacing: 0) {
+            VStack(spacing: 0 * uiScale) {
                 ForEach(shortcuts.filter { $0.category == category }, id: \.keys) { shortcut in
                     HStack(spacing: itemSpacing) {
                         // Key combination
@@ -4059,44 +4059,44 @@ private struct DataHandlingAlertView: View {
                 }
             
             // Alert content
-            VStack(spacing: 20) {
+            VStack(spacing: 20 * uiScale) {
                 Image(systemName: "folder.fill.badge.questionmark")
-                    .font(.system(size: 64))
+                    .font(.system(size: 64 * uiScale))
                     .foregroundStyle(.blue)
                 
                 Text("内部データが見つかりました")
-                    .font(.title2)
+                    .font(.system(size: 22 * uiScale, weight: .bold))
                     .fontWeight(.semibold)
                 
                 Text("\(request.app.displayName) の内部ストレージにデータが存在します。どのように処理しますか？")
-                    .font(.body)
+                    .font(.system(size: 15 * uiScale))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: 400)
+                    .frame(maxWidth: 400 * uiScale)
                 
                 // Strategy selection buttons
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     ForEach(Array(SettingsStore.InternalDataStrategy.allCases.enumerated()), id: \.offset) { index, strategy in
                         Button {
                             onSelect(strategy)
                         } label: {
                             HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    HStack(spacing: 6) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
+                                    HStack(spacing: 6 * uiScale) {
                                         Text(strategy.localizedDescription)
-                                            .font(.body)
+                                            .font(.system(size: 15 * uiScale))
                                             .fontWeight(.medium)
                                         
                                         if strategy == defaultStrategy {
                                             Text("（既定）")
-                                                .font(.caption)
+                                                .font(.system(size: 11 * uiScale))
                                                 .foregroundStyle(.secondary)
                                         }
                                     }
                                     
                                     // Add description for each strategy
                                     Text(strategyDescription(for: strategy))
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                         .multilineTextAlignment(.leading)
                                 }
@@ -4108,23 +4108,23 @@ private struct DataHandlingAlertView: View {
                                         .foregroundStyle(.blue)
                                 }
                             }
-                            .padding(12)
+                            .padding(12 * uiScale)
                             .frame(maxWidth: .infinity)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 8 * uiScale)
                                     .fill(selectedIndex == index ? Color.blue.opacity(0.1) : Color.clear)
                             )
                             .overlay {
                                 if selectedIndex == index {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .strokeBorder(Color.blue, lineWidth: 2)
+                                    RoundedRectangle(cornerRadius: 8 * uiScale)
+                                        .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
                                 }
                             }
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .frame(maxWidth: 500)
+                .frame(maxWidth: 500 * uiScale)
                 
                 // Cancel button
                 Button("キャンセル") {
@@ -4133,10 +4133,10 @@ private struct DataHandlingAlertView: View {
                 .buttonStyle(.bordered)
                 .keyboardShortcut(.cancelAction)
             }
-            .padding(32)
-            .frame(maxWidth: 600)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
-            .shadow(color: .black.opacity(0.3), radius: 20)
+            .padding(32 * uiScale)
+            .frame(maxWidth: 600 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
         }
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
@@ -4234,8 +4234,8 @@ private struct ResponsiveAppGrid: View {
                         )
                     }
                 }
-                .padding(.horizontal, 32)
-                .padding(.vertical, 24)
+                .padding(.horizontal, 32 * uiScale)
+                .padding(.vertical, 24 * uiScale)
                 .onAppear {
                     if !hasPerformedInitialAnimation {
                         Task { @MainActor in
@@ -4363,7 +4363,7 @@ private struct AppGridCell: View {
                         Circle()
                             .fill(Color.accentColor)
                     )
-                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                    .shadow(color: .black.opacity(0.3), radius: 2 * uiScale, x: 0, y: 1)
                     .offset(x: -5, y: -5)
             }
         }

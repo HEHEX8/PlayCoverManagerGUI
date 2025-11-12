@@ -120,15 +120,15 @@ private struct GeneralSettingsView: View {
                                         .controlSize(.small)
                                 } else if totalDiskUsage > 0 {
                                     Text(ByteCountFormatter.string(fromByteCount: totalDiskUsage, countStyle: .file))
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+                                        .padding(.horizontal, 8 * uiScale)
+                                        .padding(.vertical, 4 * uiScale)
+                                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6 * uiScale))
                                 }
                             }
-                            .padding(12)
-                            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+                            .padding(12 * uiScale)
+                            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5), in: RoundedRectangle(cornerRadius: 8 * uiScale))
                         }
                         
                         Button {
@@ -136,65 +136,65 @@ private struct GeneralSettingsView: View {
                             appViewModel.requestStorageLocationChange()
                         } label: {
                             Label("保存先を変更", systemImage: "folder.badge.gearshape")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: 14 * uiScale, weight: .medium))
                         }
                         .buttonStyle(.bordered)
                         .help(String(localized: "すべてのコンテナをアンマウントしてから保存先を変更します"))
                         
                         Text("保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 // Mount Settings Card
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     Label("マウント設定", systemImage: "internaldrive")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.purple)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12 * uiScale) {
                         Toggle(isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 })) {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 4 * uiScale) {
                                 Text("Finder に表示しない (-nobrowse)")
-                                    .font(.subheadline)
+                                    .font(.system(size: 13 * uiScale))
                                     .fontWeight(.medium)
                                 Text("有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。")
-                                    .font(.caption)
+                                    .font(.system(size: 11 * uiScale))
                                     .foregroundStyle(.secondary)
                             }
                         }
                         .toggleStyle(.switch)
                     }
                 }
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
 
                 // Language Card
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     Label("言語", systemImage: "globe")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.green)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 12 * uiScale) {
+                        VStack(alignment: .leading, spacing: 8 * uiScale) {
                             Text("アプリの言語")
-                                .font(.subheadline)
+                                .font(.system(size: 13 * uiScale))
                                 .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
                             
@@ -215,18 +215,18 @@ private struct GeneralSettingsView: View {
                         }
                         
                         Text("言語を変更すると、アプリを再起動する必要があります。")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
             }
-            .padding(20)
+            .padding(20 * uiScale)
         }
         .onAppear {
             previousLanguage = settingsStore.appLanguage
@@ -329,7 +329,7 @@ private struct DataSettingsView: View {
                         VStack(alignment: .leading, spacing: 8 * uiScale) {
                             Text("既定の処理")
                                 .font(.system(size: 15 * uiScale))
-                                .font(.subheadline)
+                                .font(.system(size: 13 * uiScale))
                                 .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
                             
@@ -345,36 +345,36 @@ private struct DataSettingsView: View {
                         }
                         
                         // Description with info icon
-                        HStack(alignment: .top, spacing: 12) {
+                        HStack(alignment: .top, spacing: 12 * uiScale) {
                             Image(systemName: "info.circle.fill")
-                                .font(.title3)
+                                .font(.system(size: 20 * uiScale, weight: .semibold))
                                 .foregroundStyle(.blue)
                             
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 4 * uiScale) {
                                 Text("説明")
-                                    .font(.subheadline)
+                                    .font(.system(size: 13 * uiScale))
                                     .fontWeight(.semibold)
                                 
                                 Text("アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。")
-                                    .font(.callout)
+                                    .font(.system(size: 15 * uiScale))
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        .padding(12)
-                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                        .padding(12 * uiScale)
+                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8 * uiScale))
                     }
                 }
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 Spacer()
             }
-            .padding(20)
+            .padding(20 * uiScale)
         }
     }
 }
@@ -422,7 +422,7 @@ struct IPAInstallerSheet: View {
     var body: some View {
         VStack(spacing: 16 * uiScale) {
             Text("IPA インストーラー")
-                .font(.title3)
+                .font(.system(size: 20 * uiScale, weight: .semibold))
                 .fontWeight(.semibold)
             
             switch currentPhase {
@@ -459,13 +459,13 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Selection View
     private var selectionView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             Image(systemName: "doc.badge.arrow.up")
-                .font(.system(size: 48))
+                .font(.system(size: 48 * uiScale))
                 .foregroundStyle(.secondary)
             
             Text("IPA ファイルを選択してください")
-                .font(.headline)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
             
             Button("IPA を選択") {
                 selectIPAFiles()
@@ -478,12 +478,12 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Analyzing View
     private var analyzingView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             ProgressView()
             Text("IPA ファイルを解析中...")
-                .font(.headline)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
             Text(statusMessage)
-                .font(.caption)
+                .font(.system(size: 11 * uiScale))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -491,28 +491,28 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Confirmation View
     private var confirmationView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 24 * uiScale) {
             // Single or multiple app confirmation
             if analyzedIPAs.count == 1, let info = analyzedIPAs.first {
                 // Single app confirmation
-                VStack(spacing: 16) {
+                VStack(spacing: 16 * uiScale) {
                     // App icon
                     if let icon = info.icon {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: 80, height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            .frame(width: 80 * uiScale, height: 80 * uiScale)
+                            .clipShape(RoundedRectangle(cornerRadius: 18 * uiScale))
+                            .shadow(color: .black.opacity(0.2), radius: 8 * uiScale, x: 0, y: 4)
                     }
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: 8 * uiScale) {
                         Text(info.appName)
-                            .font(.title2)
+                            .font(.system(size: 22 * uiScale, weight: .bold))
                             .fontWeight(.semibold)
                             .lineLimit(2)
                         
                         Text(info.bundleID)
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -522,18 +522,18 @@ struct IPAInstallerSheet: View {
                 Divider()
                 
                 // Install type indicator
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     installTypeIndicator(for: info)
                     
                     Text(installTypeMessage(for: info))
-                        .font(.subheadline)
+                        .font(.system(size: 13 * uiScale))
                         .foregroundStyle(.secondary)
                 }
                 
                 Divider()
                 
                 // Details
-                VStack(spacing: 8) {
+                VStack(spacing: 8 * uiScale) {
                     HStack {
                         Text("バージョン(ラベル)")
                             .foregroundStyle(.secondary)
@@ -553,23 +553,23 @@ struct IPAInstallerSheet: View {
                         Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
                     }
                 }
-                .font(.callout)
+                .font(.system(size: 15 * uiScale))
                 .padding()
                 .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
                 
             } else if analyzedIPAs.count > 1 {
                 // Multiple apps confirmation with expanded list view
-                VStack(spacing: 0) {
+                VStack(spacing: 0 * uiScale) {
                     // Compact header with summary
-                    VStack(spacing: 8) {
-                        HStack(spacing: 10) {
+                    VStack(spacing: 8 * uiScale) {
+                        HStack(spacing: 10 * uiScale) {
                             Image(systemName: "square.and.arrow.down.fill")
-                                .font(.system(size: 24))
+                                .font(.system(size: 24 * uiScale))
                                 .foregroundStyle(.blue)
                             
                             Text("\(analyzedIPAs.count) 個のアプリをインストールしますか？")
-                                .font(.headline)
+                                .font(.system(size: 17 * uiScale, weight: .semibold))
                             
                             Spacer()
                         }
@@ -580,105 +580,105 @@ struct IPAInstallerSheet: View {
                         let others = analyzedIPAs.count - newInstalls - upgrades
                         let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
                         
-                        HStack(spacing: 10) {
+                        HStack(spacing: 10 * uiScale) {
                             if newInstalls > 0 {
-                                HStack(spacing: 3) {
+                                HStack(spacing: 3 * uiScale) {
                                     Image(systemName: "sparkles")
                                         .font(.caption2)
                                     Text("\(newInstalls)")
                                 }
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.blue)
                             }
                             if upgrades > 0 {
-                                HStack(spacing: 3) {
+                                HStack(spacing: 3 * uiScale) {
                                     Image(systemName: "arrow.up.circle.fill")
                                         .font(.caption2)
                                     Text("\(upgrades)")
                                 }
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.green)
                             }
                             if others > 0 {
-                                HStack(spacing: 3) {
+                                HStack(spacing: 3 * uiScale) {
                                     Image(systemName: "arrow.clockwise.circle.fill")
                                         .font(.caption2)
                                     Text("\(others)")
                                 }
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.secondary)
                             }
                             
                             Text("・")
                                 .foregroundStyle(.tertiary)
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                             
                             Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
                             
                             Spacer()
                         }
                     }
-                    .padding(12)
+                    .padding(12 * uiScale)
                     .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
                     
                     // Expanded scrollable list of apps with optimized spacing
                     ScrollView {
-                        VStack(spacing: 6) {
+                        VStack(spacing: 6 * uiScale) {
                             ForEach(analyzedIPAs) { info in
-                                HStack(spacing: 10) {
+                                HStack(spacing: 10 * uiScale) {
                                     // App icon (slightly smaller)
                                     if let icon = info.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 42, height: 42)
-                                            .clipShape(RoundedRectangle(cornerRadius: 9))
-                                            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                                            .frame(width: 42 * uiScale, height: 42 * uiScale)
+                                            .clipShape(RoundedRectangle(cornerRadius: 9 * uiScale))
+                                            .shadow(color: .black.opacity(0.2), radius: 3 * uiScale, x: 0, y: 1)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 9)
+                                        RoundedRectangle(cornerRadius: 9 * uiScale)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 42, height: 42)
+                                            .frame(width: 42 * uiScale, height: 42 * uiScale)
                                             .overlay {
                                                 Image(systemName: "app.dashed")
-                                                    .font(.caption)
+                                                    .font(.system(size: 11 * uiScale))
                                                     .foregroundStyle(.secondary)
                                             }
                                     }
                                     
                                     // App info (compact layout)
-                                    VStack(alignment: .leading, spacing: 2) {
+                                    VStack(alignment: .leading, spacing: 2 * uiScale) {
                                         Text(info.appName)
-                                            .font(.callout)
+                                            .font(.system(size: 15 * uiScale))
                                             .fontWeight(.medium)
                                             .lineLimit(1)
                                         
-                                        HStack(spacing: 6) {
+                                        HStack(spacing: 6 * uiScale) {
                                             // Install type badge
                                             Group {
                                                 switch info.installType {
                                                 case .newInstall:
-                                                    HStack(spacing: 2) {
+                                                    HStack(spacing: 2 * uiScale) {
                                                         Image(systemName: "sparkles")
                                                         Text("新規")
                                                     }
                                                     .foregroundStyle(.blue)
                                                 case .upgrade:
-                                                    HStack(spacing: 2) {
+                                                    HStack(spacing: 2 * uiScale) {
                                                         Image(systemName: "arrow.up.circle.fill")
                                                         Text("更新")
                                                     }
                                                     .foregroundStyle(.green)
                                                 case .downgrade:
-                                                    HStack(spacing: 2) {
+                                                    HStack(spacing: 2 * uiScale) {
                                                         Image(systemName: "arrow.down.circle.fill")
                                                         Text("ダウン")
                                                     }
                                                     .foregroundStyle(.orange)
                                                 case .reinstall:
-                                                    HStack(spacing: 2) {
+                                                    HStack(spacing: 2 * uiScale) {
                                                         Image(systemName: "arrow.clockwise.circle.fill")
                                                         Text("上書き")
                                                     }
@@ -704,18 +704,18 @@ struct IPAInstallerSheet: View {
                                         removeIPAFromList(info)
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.body)
+                                            .font(.system(size: 15 * uiScale))
                                             .foregroundStyle(.secondary)
                                     }
                                     .buttonStyle(.plain)
                                     .help("リストから外す")
                                 }
-                                .padding(10)
+                                .padding(10 * uiScale)
                                 .background(Color(nsColor: .controlBackgroundColor))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
                             }
                         }
-                        .padding(.top, 8)
+                        .padding(.top, 8 * uiScale)
                     }
                 }
             }
@@ -725,20 +725,20 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Installing View
     private var installingView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 20 * uiScale) {
             // Header with progress indicator
-            VStack(spacing: 12) {
+            VStack(spacing: 12 * uiScale) {
                 Image(systemName: "arrow.down.circle.fill")
-                    .font(.system(size: 48))
+                    .font(.system(size: 48 * uiScale))
                     .foregroundStyle(.blue)
                 
                 Text("インストール中")
-                    .font(.title2)
+                    .font(.system(size: 22 * uiScale, weight: .bold))
                     .fontWeight(.semibold)
                 
                 if let service = installerService, !service.currentStatus.isEmpty {
                     Text(service.currentStatus)
-                        .font(.body)
+                        .font(.system(size: 15 * uiScale))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -748,140 +748,140 @@ struct IPAInstallerSheet: View {
                     let totalItems = analyzedIPAs.count
                     let completed = service.installedApps.count + service.failedApps.count
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: 8 * uiScale) {
                         // Indeterminate progress bar (animated)
                         ProgressView()
                             .progressViewStyle(.linear)
-                            .frame(width: 400)
+                            .frame(width: 400 * uiScale)
                         
                         Text("\(completed) / \(totalItems) 完了")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
             }
             
             Divider()
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 40 * uiScale)
             
             // Installation log
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 12 * uiScale) {
                     if let service = installerService {
                         // Completed installations (with icons)
                         ForEach(service.installedAppDetails) { detail in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 // App icon with checkmark badge
                                 ZStack(alignment: .bottomTrailing) {
                                     if let icon = detail.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 48, height: 48)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10)
+                                        RoundedRectangle(cornerRadius: 10 * uiScale)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48, height: 48)
+                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
                                     }
                                     
                                     // Checkmark badge
                                     Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 16))
+                                        .font(.system(size: 16 * uiScale))
                                         .foregroundStyle(.white)
                                         .background(
                                             Circle()
                                                 .fill(.green)
-                                                .frame(width: 18, height: 18)
+                                                .frame(width: 18 * uiScale, height: 18 * uiScale)
                                         )
                                         .offset(x: 2, y: 2)
                                 }
-                                .frame(width: 48, height: 48)
+                                .frame(width: 48 * uiScale, height: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 2 * uiScale) {
                                     Text(detail.appName)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text("インストール完了")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16 * uiScale)
+                            .padding(.vertical, 8 * uiScale)
                             .background(Color.green.opacity(0.1))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                         
                         // Currently installing (if any)
                         if !service.currentAppName.isEmpty && !service.installedAppDetails.contains(where: { $0.appName == service.currentAppName }) {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 // App icon or progress spinner
                                 ZStack {
                                     if let icon = service.currentAppIcon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 48, height: 48)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
                                             .opacity(0.7)  // Slightly faded during install
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10)
+                                        RoundedRectangle(cornerRadius: 10 * uiScale)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48, height: 48)
+                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
                                     }
                                     
                                     // Overlay progress spinner on icon
                                     ProgressView()
                                         .controlSize(.regular)
                                 }
-                                .frame(width: 48, height: 48)
+                                .frame(width: 48 * uiScale, height: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 2 * uiScale) {
                                     Text(service.currentAppName)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text(service.currentStatus)
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16 * uiScale)
+                            .padding(.vertical, 8 * uiScale)
                             .background(Color.blue.opacity(0.1))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                         
                         // Failed installations
                         ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
+                                    .font(.system(size: 20 * uiScale, weight: .semibold))
                                     .foregroundStyle(.red)
-                                    .frame(width: 32)
+                                    .frame(width: 32 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 2 * uiScale) {
                                     Text(error.components(separatedBy: ":").first ?? error)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16 * uiScale)
+                            .padding(.vertical, 8 * uiScale)
                             .background(Color.red.opacity(0.1))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                     }
                 }
@@ -899,55 +899,55 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Results View
     private var resultsView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             HStack {
                 Image(systemName: "checkmark.seal.fill")
-                    .font(.title2)
+                    .font(.system(size: 22 * uiScale, weight: .bold))
                     .foregroundStyle(.green)
                 Text("インストール結果")
-                    .font(.title2)
+                    .font(.system(size: 22 * uiScale, weight: .bold))
                     .fontWeight(.semibold)
             }
             
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     if let service = installerService {
                         // Success list
                         ForEach(service.installedAppDetails) { detail in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 // App icon with checkmark overlay
                                 ZStack(alignment: .bottomTrailing) {
                                     if let icon = detail.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 48, height: 48)
-                                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                            .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
                                     } else {
-                                        RoundedRectangle(cornerRadius: 10)
+                                        RoundedRectangle(cornerRadius: 10 * uiScale)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 48, height: 48)
+                                            .frame(width: 48 * uiScale, height: 48 * uiScale)
                                     }
                                     
                                     // Checkmark badge
                                     Image(systemName: "checkmark.circle.fill")
-                                        .font(.system(size: 20))
+                                        .font(.system(size: 20 * uiScale))
                                         .foregroundStyle(.white)
                                         .background(
                                             Circle()
                                                 .fill(.green)
-                                                .frame(width: 22, height: 22)
+                                                .frame(width: 22 * uiScale, height: 22 * uiScale)
                                         )
                                         .offset(x: 4, y: 4)
                                 }
-                                .frame(width: 48, height: 48)
+                                .frame(width: 48 * uiScale, height: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
                                     Text(detail.appName)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text("インストール完了")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                                 
@@ -955,23 +955,23 @@ struct IPAInstallerSheet: View {
                             }
                             .padding()
                             .background(Color(nsColor: .controlBackgroundColor))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                         
                         // Failure list
                         ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
+                                    .font(.system(size: 20 * uiScale, weight: .semibold))
                                     .foregroundStyle(.red)
-                                    .frame(width: 48)
+                                    .frame(width: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
                                     Text(error.components(separatedBy: ":").first ?? error)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                     Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
                                 }
@@ -980,7 +980,7 @@ struct IPAInstallerSheet: View {
                             }
                             .padding()
                             .background(Color(nsColor: .controlBackgroundColor))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                     }
                 }
@@ -994,35 +994,35 @@ struct IPAInstallerSheet: View {
     
     @ViewBuilder
     private func installTypeIndicator(for info: IPAInstallerService.IPAInfo) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 8 * uiScale) {
             switch info.installType {
             case .newInstall:
                 Image(systemName: "sparkles")
-                    .font(.system(size: 32))
+                    .font(.system(size: 32 * uiScale))
                     .foregroundStyle(.blue)
                 Text("新規インストール")
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.blue)
             case .upgrade:
                 Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 32))
+                    .font(.system(size: 32 * uiScale))
                     .foregroundStyle(.green)
                 Text("アップグレード")
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.green)
             case .downgrade:
                 Image(systemName: "arrow.down.circle.fill")
-                    .font(.system(size: 32))
+                    .font(.system(size: 32 * uiScale))
                     .foregroundStyle(.orange)
                 Text("ダウングレード")
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.orange)
             case .reinstall:
                 Image(systemName: "arrow.clockwise.circle.fill")
-                    .font(.system(size: 32))
+                    .font(.system(size: 32 * uiScale))
                     .foregroundStyle(.secondary)
                 Text("再インストール")
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
         }
@@ -1236,7 +1236,7 @@ struct AppUninstallerSheet: View {
     var body: some View {
         VStack(spacing: 16 * uiScale) {
             Text("アプリアンインストーラー")
-                .font(.title3)
+                .font(.system(size: 20 * uiScale, weight: .semibold))
                 .fontWeight(.semibold)
             
             switch currentPhase {
@@ -1273,40 +1273,40 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Loading View
     private var loadingView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             ProgressView()
             Text("アプリ一覧を読み込み中...")
-                .font(.headline)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Confirming View (Single or Multiple)
     private var confirmingView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             let selectedAppInfos = apps.filter { selectedApps.contains($0.bundleID) }
             
             if selectedAppInfos.count == 1, let app = selectedAppInfos.first {
                 // Single app confirmation
                 
                 // App icon and info
-                VStack(spacing: 16) {
+                VStack(spacing: 16 * uiScale) {
                     if let icon = app.icon {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: 80, height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: 18))
-                            .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                            .frame(width: 80 * uiScale, height: 80 * uiScale)
+                            .clipShape(RoundedRectangle(cornerRadius: 18 * uiScale))
+                            .shadow(color: .black.opacity(0.2), radius: 8 * uiScale, x: 0, y: 4)
                     }
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: 8 * uiScale) {
                         Text(app.appName)
-                            .font(.title2)
+                            .font(.system(size: 22 * uiScale, weight: .bold))
                             .fontWeight(.semibold)
                             .lineLimit(2)
                         
                         Text(app.bundleID)
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -1316,23 +1316,23 @@ struct AppUninstallerSheet: View {
                 Divider()
                 
                 // Confirmation message
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 48))
+                        .font(.system(size: 48 * uiScale))
                         .foregroundStyle(.orange)
                     
                     Text("このアプリをアンインストールしますか？")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                     
                     Text("この操作は取り消せません。")
-                        .font(.subheadline)
+                        .font(.system(size: 13 * uiScale))
                         .foregroundStyle(.secondary)
                 }
                 
                 Divider()
                 
                 // Size info
-                VStack(spacing: 8) {
+                VStack(spacing: 8 * uiScale) {
                     HStack {
                         Text("アプリサイズ:")
                             .foregroundStyle(.secondary)
@@ -1354,48 +1354,48 @@ struct AppUninstallerSheet: View {
                             .fontWeight(.semibold)
                     }
                 }
-                .font(.callout)
+                .font(.system(size: 15 * uiScale))
                 .padding()
                 .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
                 
             } else if selectedAppInfos.count > 1 {
                 // Multiple apps confirmation with compact list
-                VStack(spacing: 10) {
+                VStack(spacing: 10 * uiScale) {
                     Text("\(selectedAppInfos.count) 個のアプリ")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                     
                     // Scrollable list of selected apps with optimized spacing
                     ScrollView {
-                        VStack(spacing: 6) {
+                        VStack(spacing: 6 * uiScale) {
                             ForEach(selectedAppInfos, id: \.bundleID) { app in
-                                HStack(spacing: 10) {
+                                HStack(spacing: 10 * uiScale) {
                                     // App icon (slightly smaller)
                                     if let icon = app.icon {
                                         Image(nsImage: icon)
                                             .resizable()
-                                            .frame(width: 42, height: 42)
-                                            .clipShape(RoundedRectangle(cornerRadius: 9))
-                                            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+                                            .frame(width: 42 * uiScale, height: 42 * uiScale)
+                                            .clipShape(RoundedRectangle(cornerRadius: 9 * uiScale))
+                                            .shadow(color: .black.opacity(0.2), radius: 3 * uiScale, x: 0, y: 1)
                                     } else {
-                                        RoundedRectangle(cornerRadius: 9)
+                                        RoundedRectangle(cornerRadius: 9 * uiScale)
                                             .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 42, height: 42)
+                                            .frame(width: 42 * uiScale, height: 42 * uiScale)
                                             .overlay {
                                                 Image(systemName: "app.dashed")
-                                                    .font(.caption)
+                                                    .font(.system(size: 11 * uiScale))
                                                     .foregroundStyle(.secondary)
                                             }
                                     }
                                     
                                     // App info (compact layout)
-                                    VStack(alignment: .leading, spacing: 2) {
+                                    VStack(alignment: .leading, spacing: 2 * uiScale) {
                                         Text(app.appName)
-                                            .font(.callout)
+                                            .font(.system(size: 15 * uiScale))
                                             .fontWeight(.medium)
                                             .lineLimit(1)
                                         
-                                        HStack(spacing: 4) {
+                                        HStack(spacing: 4 * uiScale) {
                                             Text("アプリ:")
                                                 .font(.caption2)
                                                 .foregroundStyle(.tertiary)
@@ -1423,34 +1423,34 @@ struct AppUninstallerSheet: View {
                                         removeAppFromSelection(app.bundleID)
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.body)
+                                            .font(.system(size: 15 * uiScale))
                                             .foregroundStyle(.secondary)
                                     }
                                     .buttonStyle(.plain)
                                     .help("選択を解除")
                                 }
-                                .padding(10)
+                                .padding(10 * uiScale)
                                 .background(Color(nsColor: .controlBackgroundColor))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
                             }
                         }
                     }
-                    .frame(maxHeight: 280)
+                    .frame(maxHeight: 280 * uiScale)
                 }
                 
                 Divider()
                 
                 // Confirmation message
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 48))
+                        .font(.system(size: 48 * uiScale))
                         .foregroundStyle(.orange)
                     
                     Text("\(selectedAppInfos.count) 個のアプリをアンインストールしますか？")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                     
                     Text("この操作は取り消せません。")
-                        .font(.subheadline)
+                        .font(.system(size: 13 * uiScale))
                         .foregroundStyle(.secondary)
                 }
                 
@@ -1461,7 +1461,7 @@ struct AppUninstallerSheet: View {
                 let totalDiskImageSize = selectedAppInfos.reduce(0) { $0 + $1.diskImageSize }
                 let totalSelectedSize = totalAppSize + totalDiskImageSize
                 
-                VStack(spacing: 8) {
+                VStack(spacing: 8 * uiScale) {
                     HStack {
                         Text("アプリサイズ:")
                             .foregroundStyle(.secondary)
@@ -1483,10 +1483,10 @@ struct AppUninstallerSheet: View {
                             .fontWeight(.semibold)
                     }
                 }
-                .font(.callout)
+                .font(.system(size: 15 * uiScale))
                 .padding()
                 .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
                 
             } else {
                 Text("アプリ情報が見つかりません")
@@ -1498,11 +1498,11 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Selection View
     private var selectionView: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 12 * uiScale) {
             if apps.isEmpty {
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     Image(systemName: "tray")
-                        .font(.system(size: 48))
+                        .font(.system(size: 48 * uiScale))
                         .foregroundStyle(.secondary)
                     Text("アンインストール可能なアプリがありません")
                         .foregroundStyle(.secondary)
@@ -1511,32 +1511,32 @@ struct AppUninstallerSheet: View {
             } else {
                 HStack {
                     Text("インストール済みアプリ (\(apps.count) 個)")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                     Spacer()
                     Text("合計: \(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))")
-                        .font(.caption)
+                        .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                 }
                 
                 List(apps, id: \.bundleID, selection: $selectedApps) { app in
-                    HStack(spacing: 12) {
+                    HStack(spacing: 12 * uiScale) {
                         if let icon = app.icon {
                             Image(nsImage: icon)
                                 .resizable()
-                                .frame(width: 48, height: 48)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
                         } else {
-                            RoundedRectangle(cornerRadius: 10)
+                            RoundedRectangle(cornerRadius: 10 * uiScale)
                                 .fill(Color.gray.opacity(0.3))
-                                .frame(width: 48, height: 48)
+                                .frame(width: 48 * uiScale, height: 48 * uiScale)
                         }
                         
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 4 * uiScale) {
                             Text(app.appName)
-                                .font(.body)
+                                .font(.system(size: 15 * uiScale))
                                 .lineLimit(2)
                             Text(app.bundleID)
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)
@@ -1544,9 +1544,9 @@ struct AppUninstallerSheet: View {
                         
                         Spacer()
                         
-                        VStack(alignment: .trailing, spacing: 2) {
+                        VStack(alignment: .trailing, spacing: 2 * uiScale) {
                             Text(ByteCountFormatter.string(fromByteCount: app.appSize + app.diskImageSize, countStyle: .file))
-                                .font(.caption)
+                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.secondary)
                             Text("App: \(ByteCountFormatter.string(fromByteCount: app.appSize, countStyle: .file))")
                                 .font(.caption2)
@@ -1561,20 +1561,20 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Uninstalling View
     private var uninstallingView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 20 * uiScale) {
             // Header with progress
-            VStack(spacing: 12) {
+            VStack(spacing: 12 * uiScale) {
                 Image(systemName: "trash.circle.fill")
-                    .font(.system(size: 48))
+                    .font(.system(size: 48 * uiScale))
                     .foregroundStyle(.red)
                 
                 Text("アンインストール中")
-                    .font(.title2)
+                    .font(.system(size: 22 * uiScale, weight: .bold))
                     .fontWeight(.semibold)
                 
                 if let service = uninstallerService, !service.currentStatus.isEmpty {
                     Text(service.currentStatus)
-                        .font(.body)
+                        .font(.system(size: 15 * uiScale))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
@@ -1585,101 +1585,101 @@ struct AppUninstallerSheet: View {
                     let completed = service.uninstalledApps.count + service.failedApps.count
                     let progressValue = totalItems > 0 ? Double(completed) / Double(totalItems) : 0
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: 8 * uiScale) {
                         ProgressView(value: progressValue)
-                            .frame(width: 400)
+                            .frame(width: 400 * uiScale)
                         
                         Text("\(completed) / \(totalItems) 完了")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
             }
             
             Divider()
-                .padding(.horizontal, 40)
+                .padding(.horizontal, 40 * uiScale)
             
             // Uninstall log
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 12 * uiScale) {
                     if let service = uninstallerService {
                         // Completed uninstalls
                         ForEach(service.uninstalledApps, id: \.self) { appName in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.title3)
+                                    .font(.system(size: 20 * uiScale, weight: .semibold))
                                     .foregroundStyle(.green)
-                                    .frame(width: 48)
+                                    .frame(width: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 2 * uiScale) {
                                     Text(appName)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text("アンインストール完了")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16 * uiScale)
+                            .padding(.vertical, 8 * uiScale)
                             .background(Color.green.opacity(0.1))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                         
                         // Currently uninstalling (if any)
                         if !service.currentStatus.isEmpty && service.currentStatus != String(localized: "完了") && 
                            !service.uninstalledApps.contains(where: { service.currentStatus.contains($0) }) {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 ProgressView()
                                     .controlSize(.regular)
-                                    .frame(width: 48)
+                                    .frame(width: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 2 * uiScale) {
                                     Text(service.currentStatus)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text("処理中...")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16 * uiScale)
+                            .padding(.vertical, 8 * uiScale)
                             .background(Color.blue.opacity(0.1))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                         
                         // Failed uninstalls
                         ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
+                                    .font(.system(size: 20 * uiScale, weight: .semibold))
                                     .foregroundStyle(.red)
-                                    .frame(width: 48)
+                                    .frame(width: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 2) {
+                                VStack(alignment: .leading, spacing: 2 * uiScale) {
                                     Text(error.components(separatedBy: ":").first ?? error)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
                                 }
                                 
                                 Spacer()
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 16 * uiScale)
+                            .padding(.vertical, 8 * uiScale)
                             .background(Color.red.opacity(0.1))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                     }
                 }
@@ -1697,40 +1697,40 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Results View  
     private var resultsView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             HStack {
                 if let service = uninstallerService, !service.failedApps.isEmpty {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.title2)
+                        .font(.system(size: 22 * uiScale, weight: .bold))
                         .foregroundStyle(.orange)
                 } else {
                     Image(systemName: "checkmark.seal.fill")
-                        .font(.title2)
+                        .font(.system(size: 22 * uiScale, weight: .bold))
                         .foregroundStyle(.green)
                 }
                 Text("アンインストール結果")
-                    .font(.title2)
+                    .font(.system(size: 22 * uiScale, weight: .bold))
                     .fontWeight(.semibold)
             }
             
             ScrollView {
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     if let service = uninstallerService {
                         // Success list
                         ForEach(service.uninstalledApps, id: \.self) { appName in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.title3)
+                                    .font(.system(size: 20 * uiScale, weight: .semibold))
                                     .foregroundStyle(.green)
-                                    .frame(width: 48)
+                                    .frame(width: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
                                     Text(appName)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                         .lineLimit(2)
                                     Text("アンインストール完了")
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                 }
                                 
@@ -1738,23 +1738,23 @@ struct AppUninstallerSheet: View {
                             }
                             .padding()
                             .background(Color(nsColor: .controlBackgroundColor))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                         
                         // Failure list
                         ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.title3)
+                                    .font(.system(size: 20 * uiScale, weight: .semibold))
                                     .foregroundStyle(.red)
-                                    .frame(width: 48)
+                                    .frame(width: 48 * uiScale)
                                 
-                                VStack(alignment: .leading, spacing: 4) {
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
                                     Text(error.components(separatedBy: ":").first ?? error)
-                                        .font(.body)
+                                        .font(.system(size: 15 * uiScale))
                                         .fontWeight(.medium)
                                     Text(error.components(separatedBy: ":").dropFirst().joined(separator: ":").trimmingCharacters(in: .whitespaces))
-                                        .font(.caption)
+                                        .font(.system(size: 11 * uiScale))
                                         .foregroundStyle(.secondary)
                                         .lineLimit(2)
                                 }
@@ -1763,7 +1763,7 @@ struct AppUninstallerSheet: View {
                             }
                             .padding()
                             .background(Color(nsColor: .controlBackgroundColor))
-                            .cornerRadius(8)
+                            .cornerRadius(8 * uiScale)
                         }
                     }
                 }
@@ -1931,85 +1931,85 @@ private struct MaintenanceSettingsView: View {
                             showingClearCacheConfirmation = true
                         } label: {
                             Label("アイコンキャッシュをクリア", systemImage: "trash")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: 14 * uiScale, weight: .medium))
                         }
                         .buttonStyle(.bordered)
                         
                         Text("アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 // PlayCover Shortcuts Card
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     Label("PlayCover ショートカット", systemImage: "folder.badge.questionmark")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.yellow)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12 * uiScale) {
                         Button {
                             removePlayCoverShortcuts()
                         } label: {
                             Label("~/Applications/PlayCover を削除", systemImage: "trash")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: 14 * uiScale, weight: .medium))
                         }
                         .buttonStyle(.bordered)
                         .tint(.yellow)
                         
                         Text("PlayCover が作成する不要なショートカットを削除します。PlayCover.app 起動時に再作成されます。")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 // Reset Card
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     Label("リセット", systemImage: "arrow.counterclockwise.circle.fill")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.red)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12 * uiScale) {
                         Button {
                             showingResetConfirmation = true
                         } label: {
                             Label("設定をリセット", systemImage: "exclamationmark.triangle.fill")
-                                .font(.system(size: 14, weight: .medium))
+                                .font(.system(size: 14 * uiScale, weight: .medium))
                         }
                         .buttonStyle(.bordered)
                         .tint(.red)
                         
                         Text("すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。")
-                            .font(.caption)
+                            .font(.system(size: 11 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 Spacer()
             }
-            .padding(20)
+            .padding(20 * uiScale)
         }
         .keyboardNavigableAlert(
             isPresented: $showingResetConfirmation,
@@ -2130,96 +2130,96 @@ private struct AboutView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(24)
+                .padding(24 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 // Description Card
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 12 * uiScale) {
                     Label("概要", systemImage: "info.circle.fill")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.blue)
                     
                     Divider()
                     
                     Text("PlayCover Manager は、PlayCover でインストールした iOS アプリを統合的に管理するための GUI ツールです。")
-                        .font(.callout)
+                        .font(.system(size: 15 * uiScale))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                     
                     Text("IPA インストール、アプリ起動、アンインストール、ストレージ管理などの機能を提供します。")
-                        .font(.callout)
+                        .font(.system(size: 15 * uiScale))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 // System Requirements Card
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 12 * uiScale) {
                     Label("システム要件", systemImage: "checkmark.shield.fill")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.green)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 10 * uiScale) {
                         RequirementRow(icon: "desktopcomputer", text: String(localized: "macOS Tahoe 26.0 以降"))
                         RequirementRow(icon: "cpu", text: String(localized: "Apple Silicon Mac 専用"))
                         RequirementRow(icon: "square.stack.3d.down.right", text: String(localized: "ASIF ディスクイメージ形式対応"))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 // Links Card
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: 12 * uiScale) {
                     Label("リンク", systemImage: "link.circle.fill")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.purple)
                     
                     Divider()
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: 8 * uiScale) {
                         LinkButton(icon: "link", text: String(localized: "GitHub リポジトリ"), url: "https://github.com/HEHEX8/PlayCoverManagerGUI")
                         LinkButton(icon: "exclamationmark.bubble", text: String(localized: "問題を報告"), url: "https://github.com/HEHEX8/PlayCoverManagerGUI/issues")
                         LinkButton(icon: "gamecontroller", text: String(localized: "PlayCover プロジェクト"), url: "https://github.com/PlayCover/PlayCover")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(20)
+                .padding(20 * uiScale)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12 * uiScale)
                         .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
                 // Copyright
-                VStack(spacing: 4) {
+                VStack(spacing: 4 * uiScale) {
                     Text("© 2025 HEHEX8")
-                        .font(.caption)
+                        .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                     
                     Text("MIT ライセンスで提供")
-                        .font(.caption)
+                        .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 8 * uiScale)
             }
-            .padding(20)
+            .padding(20 * uiScale)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -2231,13 +2231,13 @@ private struct RequirementRow: View {
     let text: String
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 12 * uiScale) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(.system(size: 20 * uiScale, weight: .semibold))
                 .foregroundStyle(.green)
-                .frame(width: 24)
+                .frame(width: 24 * uiScale)
             Text(text)
-                .font(.callout)
+                .font(.system(size: 15 * uiScale))
         }
     }
 }
@@ -2249,20 +2249,20 @@ private struct LinkButton: View {
     
     var body: some View {
         Link(destination: URL(string: url)!) {
-            HStack(spacing: 12) {
+            HStack(spacing: 12 * uiScale) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(.system(size: 20 * uiScale, weight: .semibold))
                     .foregroundStyle(.blue)
-                    .frame(width: 24)
+                    .frame(width: 24 * uiScale)
                 Text(text)
-                    .font(.callout)
+                    .font(.system(size: 15 * uiScale))
                 Spacer()
                 Image(systemName: "arrow.up.forward")
-                    .font(.caption)
+                    .font(.system(size: 11 * uiScale))
                     .foregroundStyle(.secondary)
             }
-            .padding(12)
-            .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+            .padding(12 * uiScale)
+            .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8 * uiScale))
         }
         .buttonStyle(.plain)
     }

@@ -11,6 +11,7 @@ struct KeyboardNavigableAlert: View {
     
     @State private var selectedButtonIndex: Int
     @State private var eventMonitor: Any?
+    @Environment(\.uiScale) var uiScale
     
     init(
         title: String,
@@ -29,11 +30,11 @@ struct KeyboardNavigableAlert: View {
     }
     
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 20 * uiScale) {
             // Icon (optional)
             if let icon = icon {
                 Image(systemName: icon.systemName)
-                    .font(.system(size: 64))
+                    .font(.system(size: 64 * uiScale))
                     .foregroundStyle(icon.color)
             }
             
@@ -48,19 +49,19 @@ struct KeyboardNavigableAlert: View {
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 400)
+                .frame(maxWidth: 400 * uiScale)
             
             // Buttons
-            HStack(spacing: 12) {
+            HStack(spacing: 12 * uiScale) {
                 ForEach(Array(buttons.enumerated()), id: \.offset) { index, button in
                     makeButton(for: button, at: index)
                 }
             }
         }
-        .padding(32)
-        .frame(minWidth: 400)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.3), radius: 20)
+        .padding(32 * uiScale)
+        .frame(minWidth: 400 * uiScale)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
@@ -83,8 +84,8 @@ struct KeyboardNavigableAlert: View {
             .tint(tintColor)
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 6)
-                        .strokeBorder(Color.blue, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: 6 * uiScale)
+                        .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
                 }
             }
             .applyKeyboardShortcut(button.keyEquivalent)
@@ -96,8 +97,8 @@ struct KeyboardNavigableAlert: View {
             .tint(tintColor)
             .overlay {
                 if isSelected {
-                    RoundedRectangle(cornerRadius: 6)
-                        .strokeBorder(Color.blue, lineWidth: 2)
+                    RoundedRectangle(cornerRadius: 6 * uiScale)
+                        .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
                 }
             }
             .applyKeyboardShortcut(button.keyEquivalent)
