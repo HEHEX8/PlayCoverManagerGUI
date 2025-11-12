@@ -835,15 +835,41 @@ private struct iOSAppIconView: View {
         isHovering || isFocused
     }
     
-    // Start gradient animation loop with wait period
-    // Continues from current position if interrupted
-    private func startGradientAnimation() {
+    // Start gradient animation from beginning (always resets to 0)
+    // Used for hover - always starts fresh
+    private func startGradientAnimationFromBeginning() {
         gradientAnimationTask?.cancel()
+        gradientOffset = 0  // Reset to beginning
+        
+        gradientAnimationTask = Task { @MainActor in
+            while !Task.isCancelled {
+                // Animate 0 → 1 (3 seconds)
+                withAnimation(.linear(duration: 3.0)) {
+                    gradientOffset = 1.0
+                }
+                try? await Task.sleep(for: .seconds(3.0))
+                if Task.isCancelled { break }
+                
+                // Wait (800ms)
+                try? await Task.sleep(for: .milliseconds(800))
+                if Task.isCancelled { break }
+                
+                // Reset to 0 instantly
+                gradientOffset = 0
+            }
+        }
+    }
+    
+    // Continue gradient animation from current position
+    // Used for keyboard navigation - seamless continuation
+    private func continueGradientAnimation() {
+        gradientAnimationTask?.cancel()
+        
         gradientAnimationTask = Task { @MainActor in
             while !Task.isCancelled {
                 // Calculate remaining distance and time from current position
                 let remainingDistance = 1.0 - gradientOffset
-                let remainingTime = remainingDistance * 3.0  // Proportional to distance
+                let remainingTime = remainingDistance * 3.0
                 
                 if remainingDistance > 0.01 {
                     // Continue animation to 1.0
@@ -858,40 +884,34 @@ private struct iOSAppIconView: View {
                 try? await Task.sleep(for: .milliseconds(800))
                 if Task.isCancelled { break }
                 
-                // Reset to 0 instantly (no animation)
+                // Reset to 0 instantly
                 gradientOffset = 0
             }
         }
     }
     
-    // Stop gradient animation (keeps current position, doesn't rewind)
-    private func stopGradientAnimation() {
+    // Stop and reset gradient animation to beginning
+    private func stopAndResetGradientAnimation() {
         gradientAnimationTask?.cancel()
-        // Don't animate back to 0, just stop where it is
-        // This allows seamless continuation when re-entering
+        gradientOffset = 0  // Reset to beginning
     }
     
-    // Start focus ring animation with wait period: 0→2π→wait→repeat
-    // Continues from current position if interrupted
-    private func startFocusRingAnimation() {
+    // Start focus ring animation from beginning
+    // Used when focus first appears or after ESC
+    private func startFocusRingAnimationFromBeginning() {
         focusRingAnimationTask?.cancel()
+        focusGlowPhase = 0  // Reset to beginning
         
         focusRingAnimationTask = Task { @MainActor in
             while !Task.isCancelled {
-                // Calculate remaining distance and time from current position
-                let remainingDistance = (.pi * 2) - focusGlowPhase
-                let remainingTime = (remainingDistance / (.pi * 2)) * 2.0  // Proportional to distance
-                
-                if remainingDistance > 0.01 {
-                    // Continue animation to 2π
-                    withAnimation(.linear(duration: remainingTime)) {
-                        focusGlowPhase = .pi * 2
-                    }
-                    try? await Task.sleep(for: .seconds(remainingTime))
-                    if Task.isCancelled { break }
+                // Animate 0 → 2π (2 seconds)
+                withAnimation(.linear(duration: 2.0)) {
+                    focusGlowPhase = .pi * 2
                 }
+                try? await Task.sleep(for: .seconds(2.0))
+                if Task.isCancelled { break }
                 
-                // Pause at 2π (800ms)
+                // Pause (800ms)
                 try? await Task.sleep(for: .milliseconds(800))
                 if Task.isCancelled { break }
                 
@@ -901,11 +921,10 @@ private struct iOSAppIconView: View {
         }
     }
     
-    // Stop focus ring animation (keeps current position, doesn't rewind)
-    private func stopFocusRingAnimation() {
+    // Stop and reset focus ring animation to beginning
+    private func stopAndResetFocusRingAnimation() {
         focusRingAnimationTask?.cancel()
-        // Don't animate back to 0, just stop where it is
-        // This allows seamless continuation when re-focusing
+        focusGlowPhase = 0  // Reset to beginning
     }
     
     var body: some View {
@@ -996,8 +1015,8 @@ private struct iOSAppIconView: View {
                                         .cyan.opacity(isHovering ? 0.25 : 0.4),
                                         .accentColor.opacity(isHovering ? 0.3 : 0.5)
                                     ],
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: focusGlowPhase / (.pi * 2) + 0.5)
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 1.0 - focusGlowPhase / (.pi * 2)),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
                                 ),
                                 lineWidth: isHovering ? 2 : 4
                             )
@@ -1018,8 +1037,8 @@ private struct iOSAppIconView: View {
                                         .cyan,
                                         .accentColor
                                     ],
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: focusGlowPhase / (.pi * 2) + 0.5)
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 1.0 - focusGlowPhase / (.pi * 2)),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
                                 ),
                                 lineWidth: 3
                             )
@@ -1125,13 +1144,12 @@ private struct iOSAppIconView: View {
             .onHover { hovering in
                 isHovering = hovering
                 
-                // Start/stop gradient animation based on hover OR focus state
-                if showHoverEffect {
-                    // Start gradient animation with wait period (0→1→wait→repeat)
-                    startGradientAnimation()
+                if hovering {
+                    // Hover always starts gradient from beginning
+                    startGradientAnimationFromBeginning()
                 } else if !isFocused {
-                    // Stop gradient animation smoothly (only if not focused)
-                    stopGradientAnimation()
+                    // Stop and reset (only if not focused)
+                    stopAndResetGradientAnimation()
                 }
             }
             .gesture(
@@ -1206,8 +1224,8 @@ private struct iOSAppIconView: View {
                                 .cyan,
                                 .accentColor
                             ],
-                            startPoint: UnitPoint(x: gradientOffset, y: gradientOffset),
-                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: gradientOffset + 0.5)
+                            startPoint: UnitPoint(x: gradientOffset, y: 1.0 - gradientOffset),
+                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0.5 - gradientOffset)
                         )
                     )
                     .opacity(showHoverEffect ? 1 : 0)
@@ -1233,23 +1251,28 @@ private struct iOSAppIconView: View {
             
             // Start focus glow animation if focused
             if isFocused {
-                startFocusRingAnimation()
+                startFocusRingAnimationFromBeginning()
             }
         }
         .onChange(of: isFocused) { oldValue, newValue in
             if newValue {
-                // Start focus ring glow animation with wait period
-                startFocusRingAnimation()
-                // Also start app name gradient animation with wait period
+                // Focus gained - start from beginning
+                startFocusRingAnimationFromBeginning()
                 if !isHovering {
-                    startGradientAnimation()
+                    // If coming from another focused icon (keyboard navigation),
+                    // continue gradient. Otherwise start from beginning.
+                    // We'll use a simple heuristic: if gradient is > 0, continue
+                    if gradientOffset > 0.05 {
+                        continueGradientAnimation()
+                    } else {
+                        startGradientAnimationFromBeginning()
+                    }
                 }
             } else {
-                // Stop focus ring animation
-                stopFocusRingAnimation()
-                // Stop gradient animation only if not hovering
+                // Focus lost (ESC pressed) - reset everything
+                stopAndResetFocusRingAnimation()
                 if !isHovering {
-                    stopGradientAnimation()
+                    stopAndResetGradientAnimation()
                 }
             }
         }
