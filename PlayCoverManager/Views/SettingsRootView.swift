@@ -381,7 +381,7 @@ private struct DataSettingsView: View {
 
 // IPA Installer Sheet
 struct IPAInstallerSheet: View {
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isPresented: Bool
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(LauncherViewModel.self) private var launcherViewModel
     @State private var installerService: IPAInstallerService?
@@ -443,7 +443,7 @@ struct IPAInstallerSheet: View {
                     Spacer()
                     
                     Button {
-                        dismiss()
+                        isPresented = false
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24 * uiScale))
@@ -1292,7 +1292,7 @@ struct IPAInstallerSheet: View {
             // Hide cancel button during installation - too complex to safely cancel
             if currentPhase != .installing && currentPhase != .analyzing {
                 Button {
-                    dismiss()
+                    isPresented = false
                 } label: {
                     Text(currentPhase == .results ? "閉じる" : "キャンセル")
                         .font(.system(size: 14 * uiScale, weight: .medium))
@@ -1338,7 +1338,7 @@ struct IPAInstallerSheet: View {
                 
             case .results:
                 Button {
-                    dismiss()
+                    isPresented = false
                 } label: {
                     Text("完了")
                         .font(.system(size: 14 * uiScale, weight: .semibold))
@@ -1469,7 +1469,9 @@ struct IPAInstallerSheet: View {
 
 // App Uninstaller Sheet
 struct AppUninstallerSheet: View {
-    @Environment(\.dismiss) private var dismiss
+    @Binding var isPresented: Bool
+    let preSelectedBundleID: String?
+    
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(PerAppSettingsStore.self) private var perAppSettingsStore
     @Environment(AppViewModel.self) private var appViewModel
@@ -1480,8 +1482,6 @@ struct AppUninstallerSheet: View {
     @State private var totalSize: Int64 = 0
     @State private var statusUpdateTask: Task<Void, Never>?
     @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
-    
-    let preSelectedBundleID: String?
     
     enum UninstallPhase {
         case loading        // アプリ一覧読み込み中
@@ -1535,7 +1535,7 @@ struct AppUninstallerSheet: View {
                     Spacer()
                     
                     Button {
-                        dismiss()
+                        isPresented = false
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24 * uiScale))
@@ -2502,7 +2502,7 @@ struct AppUninstallerSheet: View {
             } else if currentPhase != .uninstalling {
                 // Hide cancel button during uninstallation
                 Button(currentPhase == .results ? "閉じる" : "キャンセル") {
-                    dismiss()
+                    isPresented = false
                 }
                 .keyboardShortcut(.cancelAction)
             }

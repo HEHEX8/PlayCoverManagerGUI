@@ -626,7 +626,7 @@ struct QuickLauncherView: View {
                         restoreWindowFocus()
                     }
                 
-                IPAInstallerSheet()
+                IPAInstallerSheet(isPresented: $showingInstaller)
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
             
@@ -638,7 +638,10 @@ struct QuickLauncherView: View {
                         restoreWindowFocus()
                     }
                 
-                AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
+                AppUninstallerSheet(isPresented: Binding(
+                    get: { selectedAppForUninstall != nil },
+                    set: { if !$0 { selectedAppForUninstall = nil; restoreWindowFocus() } }
+                ), preSelectedBundleID: identifiableString.id)
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
             
@@ -650,7 +653,7 @@ struct QuickLauncherView: View {
                         restoreWindowFocus()
                     }
                 
-                AppUninstallerSheet(preSelectedBundleID: nil)
+                AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
         }
