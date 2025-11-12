@@ -2227,6 +2227,7 @@ private struct AboutView: View {
 
 // Helper Views for About
 private struct RequirementRow: View {
+    @Environment(\.uiScale) var uiScale
     let icon: String
     let text: String
     
@@ -2243,6 +2244,7 @@ private struct RequirementRow: View {
 }
 
 private struct LinkButton: View {
+    @Environment(\.uiScale) var uiScale
     let icon: String
     let text: String
     let url: String

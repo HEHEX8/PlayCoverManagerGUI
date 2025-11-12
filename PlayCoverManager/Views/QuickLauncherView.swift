@@ -797,6 +797,7 @@ struct QuickLauncherView: View {
 
 // MARK: - Modern Toolbar Button with Hover Effect
 private struct ModernToolbarButton: View {
+    @Environment(\.uiScale) var uiScale
     let icon: String
     let color: Color
     let help: String
@@ -930,8 +931,8 @@ private struct iOSAppIconView: View {
                 .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: borderWidth)
                 .frame(width: circleSize, height: circleSize)
         }
-        .shadow(color: .black.opacity(0.2), radius: 3 * uiScale, x: 0, y: 1)
-        .offset(x: 6, y: -6)
+        .shadow(color: .black.opacity(0.2), radius: iconSize * 0.03, x: 0, y: iconSize * 0.01)
+        .offset(x: iconSize * 0.06, y: -iconSize * 0.06)
     }
     
     var body: some View {
@@ -1456,6 +1457,7 @@ private struct AppDetailSheet: View {
 private struct EmptyAppListView: View {
     let searchText: String
     @State private var showingInstaller = false
+    @Environment(\.uiScale) var uiScale
     
     // Check if this is a search result empty state or truly no apps
     private var isSearchEmpty: Bool {
@@ -1551,6 +1553,7 @@ private struct IPAInstallerSheetWrapper: View {
 
 // Recent app launch button with rich animations
 private struct RecentAppLaunchButton: View {
+    @Environment(\.uiScale) var uiScale
     let app: PlayCoverApp
     var iconSize: CGFloat = 56
     var titleFontSize: CGFloat = 17
@@ -1813,6 +1816,7 @@ private struct RecentAppLaunchButton: View {
 
 // 3D-style ripple effect animation
 private struct RippleEffect: View {
+    @Environment(\.uiScale) var uiScale
     let trigger: Int
     @State private var ripples: [Ripple] = []
     @Environment(\.colorScheme) private var colorScheme
@@ -1857,6 +1861,7 @@ private struct RippleEffect: View {
 
 // Individual ripple layer view
 private struct RippleLayer: View {
+    @Environment(\.uiScale) var uiScale
     let ripple: RippleEffect.Ripple
     let colorScheme: ColorScheme
     
@@ -1943,6 +1948,7 @@ private struct RippleLayer: View {
 // MARK: - Overview Tab
 
 private struct OverviewView: View {
+    @Environment(\.uiScale) var uiScale
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @State private var infoPlist: [String: Any]?
@@ -2275,6 +2281,7 @@ private struct OverviewView: View {
 // MARK: - Overview Supporting Views
 
 private struct StatCard: View {
+    @Environment(\.uiScale) var uiScale
     let icon: String
     let title: String
     let value: String
@@ -2305,6 +2312,7 @@ private struct StatCard: View {
 }
 
 private struct StorageRow: View {
+    @Environment(\.uiScale) var uiScale
     let label: String
     let size: String
     let color: Color
@@ -2329,6 +2337,7 @@ private struct StorageRow: View {
 }
 
 private struct QuickInfoRow: View {
+    @Environment(\.uiScale) var uiScale
     let icon: String
     let label: String
     let value: String
@@ -2358,6 +2367,7 @@ private struct QuickInfoRow: View {
 // MARK: - Basic Settings Tab
 
 private struct SettingsView: View {
+    @Environment(\.uiScale) var uiScale
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
@@ -2784,6 +2794,7 @@ private struct SettingsView: View {
 // MARK: - Info Tab
 
 private struct DetailsView: View {
+    @Environment(\.uiScale) var uiScale
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @State private var infoPlist: [String: Any]?
@@ -2853,6 +2864,7 @@ private struct DetailsView: View {
 
 // MARK: - Info Content View
 private struct InfoContentView: View {
+    @Environment(\.uiScale) var uiScale
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
     @Binding var infoPlist: [String: Any]?
@@ -3237,6 +3249,7 @@ struct StorageInfo {
 // MARK: - Analysis Content View
 
 private struct AnalysisContentView: View {
+    @Environment(\.uiScale) var uiScale
     let app: PlayCoverApp
     @State private var analyzing = false
     @State private var analysisResult: AppAnalysisResult?
@@ -3688,6 +3701,7 @@ actor AppAnalyzer {
 // MARK: - Drawer Panel
 
 private struct DrawerPanel: View {
+    @Environment(\.uiScale) var uiScale
     @Binding var showingSettings: Bool
     @Binding var showingInstaller: Bool
     @Binding var showingUninstaller: Bool
@@ -3854,6 +3868,7 @@ private struct DrawerPanel: View {
 
 // MARK: - Drawer Menu Item with Hover Effect
 private struct DrawerMenuItem: View {
+    @Environment(\.uiScale) var uiScale
     let icon: AnyView
     let title: String
     let help: String
@@ -3890,6 +3905,7 @@ private struct DrawerMenuItem: View {
 
 // MARK: - Keyboard Shortcut Guide
 private struct KeyboardShortcutGuide: View {
+    @Environment(\.uiScale) var uiScale
     @Binding var isShowing: Bool
     let uiScale: CGFloat
     
@@ -4041,6 +4057,7 @@ private struct KeyboardShortcutGuide: View {
 // MARK: - Data Handling Alert View
 
 private struct DataHandlingAlertView: View {
+    @Environment(\.uiScale) var uiScale
     let request: LauncherViewModel.DataHandlingRequest
     let defaultStrategy: SettingsStore.InternalDataStrategy
     let onSelect: (SettingsStore.InternalDataStrategy) -> Void
@@ -4191,6 +4208,7 @@ private struct DataHandlingAlertView: View {
 
 // MARK: - Responsive App Grid Helper View
 private struct ResponsiveAppGrid: View {
+    @Environment(\.uiScale) var uiScale
     @Bindable var viewModel: LauncherViewModel
     @Binding var hasPerformedInitialAnimation: Bool
     @Binding var focusedAppIndex: Int?
@@ -4251,6 +4269,7 @@ private struct ResponsiveAppGrid: View {
 
 // MARK: - App Grid Row Helper View
 private struct AppGridRow: View {
+    @Environment(\.uiScale) var uiScale
     let apps: [PlayCoverApp]
     let rowIndex: Int
     let focusedRow: Int
@@ -4301,6 +4320,7 @@ private struct AppGridRow: View {
 
 // MARK: - App Grid Cell Helper View
 private struct AppGridCell: View {
+    @Environment(\.uiScale) var uiScale
     let app: PlayCoverApp
     let index: Int
     let rowIndex: Int
