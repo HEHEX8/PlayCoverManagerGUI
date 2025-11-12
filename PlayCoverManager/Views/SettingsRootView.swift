@@ -4,10 +4,10 @@ import Observation
 import UniformTypeIdentifiers
 
 struct SettingsRootView: View {
+    @Binding var isPresented: Bool
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
-    @Environment(\.dismiss) private var dismiss
-    @State private var windowSize: CGSize = CGSize(width: 600, height: 500)
+    @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
     
     private func calculateUIScale(for size: CGSize) -> CGFloat {
         let baseWidth: CGFloat = 600.0
@@ -43,22 +43,25 @@ struct SettingsRootView: View {
                     Label("情報", systemImage: "info.circle")
                 }
         }
+        .tabViewStyle(.automatic)
         .uiScale(uiScale)  // Inject UI scale into environment for all tabs
-        .padding(24 * uiScale)
-        .frame(minWidth: 600, minHeight: 500)
+        .frame(minWidth: 700, minHeight: 550)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("閉じる") {
-                    dismiss()
+                    // Close settings window without terminating app
+                    if let window = NSApp.keyWindow {
+                        window.close()
+                    }
                 }
-                .help(String(localized: "設定を閉じる (Esc)"))
+                .help("設定を閉じる (Esc)")
             }
             
             ToolbarSpacer()
             
             ToolbarItem(placement: .automatic) {
                 Text("PlayCover Manager 設定")
-                    .font(.system(size: 17 * uiScale, weight: .semibold))
+                    .font(.system(size: 13 * uiScale, weight: .medium))
                     .foregroundStyle(.secondary)
             }
         }
@@ -68,7 +71,10 @@ struct SettingsRootView: View {
             windowSize = newSize
         }
         .onKeyPress(.escape) {
-            dismiss()
+            // Close the settings window instead of dismissing
+            if let window = NSApp.keyWindow {
+                window.close()
+            }
             return .handled
         }
     }
