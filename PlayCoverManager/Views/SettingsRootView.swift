@@ -2994,13 +2994,14 @@ private struct MaintenanceSettingsView: View {
                     VStack(alignment: .leading, spacing: 16 * uiScale) {
                         CustomLargeButton(
                             title: "設定をリセット",
-                            icon: "exclamationmark.triangle.fill",
+                            action: {
+                                showingResetConfirmation = true
+                            },
                             isPrimary: false,
                             isDestructive: true,
+                            icon: "exclamationmark.triangle.fill",
                             uiScale: uiScale
-                        ) {
-                            showingResetConfirmation = true
-                        }
+                        )
                         
                         HStack(spacing: 6 * uiScale) {
                             Image(systemName: "exclamationmark.triangle.fill")
