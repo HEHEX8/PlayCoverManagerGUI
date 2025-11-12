@@ -621,6 +621,8 @@ struct QuickLauncherView: View {
             proxy.size
         } action: { newSize in
             windowSize = newSize
+            let scale = calculateUIScale(for: newSize)
+            print("🔍 QuickLauncher window size: \(newSize.width)x\(newSize.height), uiScale: \(scale)")
         }
         .overlay(alignment: .center) {
             if viewModel.unmountFlowState != .idle {
