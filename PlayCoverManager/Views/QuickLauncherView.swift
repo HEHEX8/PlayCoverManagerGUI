@@ -288,15 +288,19 @@ struct QuickLauncherView: View {
                         if reduceTransparency {
                             // Fallback: solid background for performance
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.8))
+                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.9))
                         } else {
-                            // Ultra-rich glass search field
+                            // Ultra-rich glass search field with solid base
                             ZStack {
+                                // Solid base for visibility
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+                                
                                 // Animated glow when focused
                                 if isSearchFieldFocused {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(RadialGradient(
-                                            colors: [.accentColor.opacity(0.3), .purple.opacity(0.15), .clear],
+                                            colors: [.accentColor.opacity(0.4), .purple.opacity(0.2), .clear],
                                             center: .center,
                                             startRadius: 10,
                                             endRadius: 150
@@ -309,15 +313,15 @@ struct QuickLauncherView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .glassEffect(
                                         isSearchFieldFocused 
-                                        ? .regular.tint(.accentColor.opacity(0.5))
-                                        : .regular.tint(.accentColor.opacity(0.25)), 
+                                        ? .regular.tint(.accentColor.opacity(0.6))
+                                        : .regular.tint(.accentColor.opacity(0.35)), 
                                         in: RoundedRectangle(cornerRadius: 12)
                                     )
                                 
                                 // Shimmer overlay
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(LinearGradient(
-                                        colors: [.white.opacity(isSearchFieldFocused ? 0.2 : 0.1), .clear],
+                                        colors: [.white.opacity(isSearchFieldFocused ? 0.25 : 0.15), .clear],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ))
@@ -355,18 +359,22 @@ struct QuickLauncherView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
                 .background(
-                    // Ultra-rich glass toolbar (M4-optimized)
+                    // Ultra-rich glass toolbar (M4-optimized) with solid base
                     Group {
                         if reduceTransparency {
                             // Fallback: simple background
-                            Color(nsColor: .controlBackgroundColor).opacity(0.6)
+                            Color(nsColor: .controlBackgroundColor).opacity(0.85)
                         } else {
-                            // Rich multi-layer glass
+                            // Rich multi-layer glass with solid base
                             ZStack {
+                                // Solid base layer for visibility
+                                Rectangle()
+                                    .fill(Color(nsColor: .windowBackgroundColor).opacity(0.7))
+                                
                                 // Bottom glow layer
                                 Rectangle()
                                     .fill(LinearGradient(
-                                        colors: [.accentColor.opacity(0.06), .purple.opacity(0.04), .clear],
+                                        colors: [.accentColor.opacity(0.12), .purple.opacity(0.08), .clear],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     ))
@@ -375,7 +383,7 @@ struct QuickLauncherView: View {
                                 // Mid-layer shimmer
                                 Rectangle()
                                     .fill(LinearGradient(
-                                        colors: [.white.opacity(0.08), .clear, .accentColor.opacity(0.03)],
+                                        colors: [.white.opacity(0.15), .clear, .accentColor.opacity(0.06)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ))
@@ -383,7 +391,7 @@ struct QuickLauncherView: View {
                                 
                                 // Top glass layer
                                 Rectangle()
-                                    .glassEffect(.regular.tint(.primary.opacity(0.08)), in: .rect)
+                                    .glassEffect(.regular.tint(.primary.opacity(0.15)), in: .rect)
                             }
                         }
                     }
@@ -507,21 +515,25 @@ struct QuickLauncherView: View {
                             }
                         )
                         .background(
-                            // Ultra-rich glass for recent app button (M4-optimized)
+                            // Ultra-rich glass for recent app button (M4-optimized) with solid base
                             Group {
                                 if reduceTransparency {
                                     // Fallback: solid background
-                                    Color(nsColor: .controlBackgroundColor).opacity(0.7)
+                                    Color(nsColor: .controlBackgroundColor).opacity(0.85)
                                 } else {
-                                    // Epic multi-layer glass with animations
+                                    // Epic multi-layer glass with solid base
                                     ZStack {
+                                        // Solid base layer for visibility
+                                        Rectangle()
+                                            .fill(Color(nsColor: .windowBackgroundColor).opacity(0.75))
+                                        
                                         // Deep ambient glow
                                         LinearGradient(
                                             colors: [
-                                                .accentColor.opacity(0.15), 
-                                                .purple.opacity(0.1), 
-                                                .blue.opacity(0.08),
-                                                .pink.opacity(0.05)
+                                                .accentColor.opacity(0.2), 
+                                                .purple.opacity(0.15), 
+                                                .blue.opacity(0.12),
+                                                .pink.opacity(0.08)
                                             ],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
@@ -530,7 +542,7 @@ struct QuickLauncherView: View {
                                         
                                         // Animated shimmer layer
                                         LinearGradient(
-                                            colors: [.white.opacity(0.12), .clear, .accentColor.opacity(0.08), .clear],
+                                            colors: [.white.opacity(0.18), .clear, .accentColor.opacity(0.12), .clear],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
@@ -538,7 +550,7 @@ struct QuickLauncherView: View {
                                         
                                         // Main glass layer
                                         Rectangle()
-                                            .glassEffect(.regular.tint(.accentColor.opacity(0.2)), in: .rect)
+                                            .glassEffect(.regular.tint(.accentColor.opacity(0.25)), in: .rect)
                                     }
                                 }
                             }
@@ -901,12 +913,12 @@ private struct ModernToolbarButton: View {
                                 .scaleEffect(1.3)
                         }
                         
-                        // Glass button base
+                        // Glass button base with better visibility
                         RoundedRectangle(cornerRadius: 12)
                             .fill(
                                 isHovered 
-                                ? color.opacity(0.2)
-                                : Color(nsColor: .controlBackgroundColor).opacity(0.6)
+                                ? color.opacity(0.3)
+                                : Color(nsColor: .controlBackgroundColor).opacity(0.75)
                             )
                         
                         // Shimmer overlay
