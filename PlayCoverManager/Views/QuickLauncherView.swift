@@ -28,17 +28,30 @@ struct QuickLauncherView: View {
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     
-    // iOS-style grid with flexible columns (adaptive to window width)
-    // Minimum 70px allows more icons in narrow windows
-    // Maximum 110px prevents icons from becoming too large
-    private let gridColumns = [
-        GridItem(.adaptive(minimum: 70, maximum: 110), spacing: 12)
-    ]
+    // Dynamic grid calculation based on window width
+    @State private var windowWidth: CGFloat = 960
     
-    // Estimated columns per row (for keyboard navigation)
-    // This is approximate - actual count depends on window width
+    // Calculate optimal columns based on available width
     private var columnsPerRow: Int {
-        return 10  // Default estimate for keyboard navigation
+        let availableWidth = windowWidth - 32  // Subtract padding
+        let minIconWidth: CGFloat = 70
+        let maxIconWidth: CGFloat = 120
+        let spacing: CGFloat = 12
+        
+        // Calculate how many icons can fit at minimum size
+        let maxColumns = Int((availableWidth + spacing) / (minIconWidth + spacing))
+        
+        // Calculate how many icons to show for optimal size
+        let optimalColumns = Int((availableWidth + spacing) / (maxIconWidth + spacing))
+        
+        // Use at least the optimal number, but allow more if window is wide
+        return max(optimalColumns, min(maxColumns, 10))
+    }
+    
+    // Generate grid columns dynamically
+    private var gridColumns: [GridItem] {
+        let count = columnsPerRow
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
     }
     
     // Current focused row (for multi-row navigation)
@@ -358,8 +371,9 @@ struct QuickLauncherView: View {
                     if viewModel.filteredApps.isEmpty {
                         EmptyAppListView(searchText: viewModel.searchText)
                     } else {
-                        ScrollView {
-                            LazyVGrid(columns: gridColumns, spacing: 16) {
+                        GeometryReader { geometry in
+                            ScrollView {
+                                LazyVGrid(columns: gridColumns, spacing: 16) {
                                 ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                     iOSAppIconView(
                                         app: app, 
@@ -409,6 +423,13 @@ struct QuickLauncherView: View {
                                 }
                             }
                         }
+                        .onAppear {
+                            windowWidth = geometry.size.width
+                        }
+                        .onChange(of: geometry.size.width) { oldWidth, newWidth in
+                            windowWidth = newWidth
+                        }
+                    }
                     }
                     
                     // Modern recently launched app button with rich glass effect
@@ -477,8 +498,9 @@ struct QuickLauncherView: View {
                 if viewModel.filteredApps.isEmpty {
                     EmptyAppListView(searchText: viewModel.searchText)
                 } else {
-                    ScrollView {
-                        LazyVGrid(columns: gridColumns, spacing: 24) {
+                    GeometryReader { geometry in
+                        ScrollView {
+                            LazyVGrid(columns: gridColumns, spacing: 16) {
                             ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                 iOSAppIconView(
                                     app: app, 
@@ -527,6 +549,12 @@ struct QuickLauncherView: View {
                                 }
                             }
                         }
+                    }
+                    .onAppear {
+                        windowWidth = geometry.size.width
+                    }
+                    .onChange(of: geometry.size.width) { oldWidth, newWidth in
+                        windowWidth = newWidth
                     }
                 }
             }
