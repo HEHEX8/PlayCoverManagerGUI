@@ -1713,41 +1713,42 @@ private struct RecentAppLaunchButton: View {
                     if let oldIcon = oldIcon {
                         Image(nsImage: oldIcon)
                             .resizable()
-                            .frame(width: iconSize * 1.4, height: iconSize * 1.4)
-                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius * 1.4))
+                            .frame(width: iconSize, height: iconSize)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                             .shadow(color: .black.opacity(0.2), radius: iconSize * 0.11, x: 0, y: iconSize * 0.05)
                             .offset(x: oldIconOffsetX, y: oldIconOffsetY)
-                            .scaleEffect(oldIconScale)
+                            .scaleEffect(oldIconScale * 1.25)  // Scale up by 1.25x
                             .opacity(oldIconOpacity)
                     }
                     
                     // Ripple effect - middle layer, centered on icon
                     RippleEffect(trigger: rippleTrigger)
-                        .frame(width: iconSize * 1.4, height: iconSize * 1.4)
+                        .frame(width: iconSize, height: iconSize)
+                        .scaleEffect(1.25)  // Scale up ripple too
                     
                     // Current icon - top layer with modern shadow
                     if let icon = app.icon {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: iconSize * 1.4, height: iconSize * 1.4)
-                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius * 1.4))
+                            .frame(width: iconSize, height: iconSize)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                             .shadow(color: .black.opacity(0.2), radius: iconSize * 0.11, x: 0, y: iconSize * 0.05)
                             .offset(x: iconOffsetX, y: iconOffsetY)
-                            .scaleEffect(iconScale)
+                            .scaleEffect(iconScale * 1.25)  // Scale up by 1.25x
                     } else {
-                        RoundedRectangle(cornerRadius: cornerRadius * 1.4)
+                        RoundedRectangle(cornerRadius: cornerRadius)
                             .fill(Color.gray.opacity(0.3))
-                            .frame(width: iconSize * 1.4, height: iconSize * 1.4)
+                            .frame(width: iconSize, height: iconSize)
                             .overlay {
                                 Image(systemName: "app.fill")
-                                    .font(.system(size: iconSize * 0.7))
+                                    .font(.system(size: iconSize * 0.5))
                                     .foregroundStyle(.tertiary)
                             }
                             .offset(x: iconOffsetX, y: iconOffsetY)
-                            .scaleEffect(iconScale)
+                            .scaleEffect(iconScale * 1.25)  // Scale up by 1.25x
                     }
                 }
-                .frame(width: iconSize * 1.4, height: iconSize * 1.4)
+                .frame(width: iconSize, height: iconSize)
                 
                 // App info with modern styling
                 VStack(alignment: .leading, spacing: iconSize * 0.11) {
