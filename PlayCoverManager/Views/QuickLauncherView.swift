@@ -30,7 +30,7 @@ struct QuickLauncherView: View {
     
     // iOS-style grid with flexible columns (adaptive to window width)
     private let gridColumns = [
-        GridItem(.adaptive(minimum: 80, maximum: 120), spacing: 16)
+        GridItem(.adaptive(minimum: 80, maximum: 140), spacing: 16)
     ]
     
     // Estimated columns per row (for keyboard navigation)
@@ -905,7 +905,6 @@ private struct iOSAppIconView: View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
             iconContent
-                .frame(minWidth: 64, maxWidth: 96, minHeight: 64, maxHeight: 96)
                 .aspectRatio(1, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 18))
             .background {
@@ -925,8 +924,8 @@ private struct iOSAppIconView: View {
                                 endRadius: 60
                             )
                         )
-                        .frame(minWidth: 80, maxWidth: 120, minHeight: 80, maxHeight: 120)
                         .aspectRatio(1, contentMode: .fit)
+                        .scaleEffect(1.2)
                         .blur(radius: 8)
                 }
             }
@@ -1030,7 +1029,7 @@ private struct iOSAppIconView: View {
                 .font(.system(size: 11, weight: .regular))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 100)
+                .frame(maxWidth: .infinity)
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundStyle(.primary)
         }
