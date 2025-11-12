@@ -490,7 +490,7 @@ struct QuickLauncherView: View {
         } else {
             // No recent app - show full-height app grid
             if viewModel.filteredApps.isEmpty {
-                EmptyAppListView(searchText: viewModel.searchText)
+                EmptyAppListView(searchText: viewModel.searchText, showingInstaller: $showingInstaller)
             } else {
                 ResponsiveAppGrid(
                     viewModel: viewModel,
