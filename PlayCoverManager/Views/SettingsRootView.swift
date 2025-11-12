@@ -395,6 +395,7 @@ struct IPAInstallerSheet: View {
     @State private var showResults = false
     @State private var currentPhase: InstallPhase = .selection
     @State private var statusUpdateTask: Task<Void, Never>?
+    @State private var windowSize: CGSize = CGSize(width: 800, height: 600)
     
     enum InstallPhase {
         case selection      // IPA選択
@@ -404,8 +405,23 @@ struct IPAInstallerSheet: View {
         case results        // 結果表示
     }
     
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 800.0
+        let baseHeight: CGFloat = 600.0
+        
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        return max(1.0, min(2.0, scale))
+    }
+    
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
+    
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             Text("IPA インストーラー")
                 .font(.title3)
                 .fontWeight(.semibold)
@@ -427,8 +443,13 @@ struct IPAInstallerSheet: View {
             
             bottomButtons
         }
-        .padding(20)
-        .frame(width: 700, height: 600)
+        .padding(20 * uiScale)
+        .frame(width: 700 * uiScale, height: 600 * uiScale)
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            windowSize = newSize
+        }
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
@@ -1180,6 +1201,7 @@ struct AppUninstallerSheet: View {
     @State private var currentPhase: UninstallPhase = .loading
     @State private var totalSize: Int64 = 0
     @State private var statusUpdateTask: Task<Void, Never>?
+    @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
     
     let preSelectedBundleID: String?
     
@@ -1196,8 +1218,23 @@ struct AppUninstallerSheet: View {
         self.preSelectedBundleID = preSelectedBundleID
     }
     
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 700.0
+        let baseHeight: CGFloat = 600.0
+        
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        return max(1.0, min(2.0, scale))
+    }
+    
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
+    
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 16 * uiScale) {
             Text("アプリアンインストーラー")
                 .font(.title3)
                 .fontWeight(.semibold)
@@ -1219,8 +1256,13 @@ struct AppUninstallerSheet: View {
             
             bottomButtons
         }
-        .padding(20)
-        .frame(width: 700, height: 600)
+        .padding(20 * uiScale)
+        .frame(width: 700 * uiScale, height: 600 * uiScale)
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            windowSize = newSize
+        }
         .onAppear {
             Task {
                 await loadApps()

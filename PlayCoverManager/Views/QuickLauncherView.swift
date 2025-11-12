@@ -362,19 +362,19 @@ struct QuickLauncherView: View {
                     showingShortcutGuide.toggle()
                 }
             }
-            .keyboardShortcut("/", modifiers: [.command, .shift])
+            .keyboardShortcut("/", modifiers: [.command])
             
-            // Uninstall button with modern styling
+            // Unmount All & Quit button with modern styling
             ModernToolbarButton(
-                icon: "trash",
-                color: .red,
-                help: String(localized: "アンインストール (⌘⇧U)"),
+                icon: "eject.circle",
+                color: .orange,
+                help: String(localized: "全イジェクト (⌘⇧E)"),
                 size: toolbarButtonSize,
                 iconSize: toolbarButtonIconSize
             ) {
-                showingUninstaller = true
+                viewModel.requestUnmountAll()
             }
-            .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
+            .keyboardShortcut(KeyEquivalent("e"), modifiers: [.command, .shift])
         }
         .padding(.horizontal, toolbarHorizontalPadding)
         .padding(.vertical, toolbarHeight)
@@ -1255,6 +1255,22 @@ private struct AppDetailSheet: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab: SettingsTab = .overview
+    @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
+    
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 700.0
+        let baseHeight: CGFloat = 600.0
+        
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        return max(1.0, min(2.0, scale))
+    }
+    
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
     
     enum SettingsTab: String, CaseIterable, Identifiable {
         case overview
@@ -1296,19 +1312,19 @@ private struct AppDetailSheet: View {
             
             VStack(spacing: 0) {
                 // Modern header card
-                VStack(spacing: 16) {
-                    HStack(spacing: 16) {
+                VStack(spacing: 16 * uiScale) {
+                    HStack(spacing: 16 * uiScale) {
                         // App icon with shadow
                         if let icon = app.icon {
                             Image(nsImage: icon)
                                 .resizable()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 18))
-                                .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                .frame(width: 80 * uiScale, height: 80 * uiScale)
+                                .clipShape(RoundedRectangle(cornerRadius: 18 * uiScale))
+                                .shadow(color: .black.opacity(0.2), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
                         } else {
-                            RoundedRectangle(cornerRadius: 18)
+                            RoundedRectangle(cornerRadius: 18 * uiScale)
                                 .fill(Color.gray.opacity(0.3))
-                                .frame(width: 80, height: 80)
+                                .frame(width: 80 * uiScale, height: 80 * uiScale)
                                 .overlay {
                                     Image(systemName: "app.dashed")
                                         .font(.system(size: 32))
@@ -1421,11 +1437,16 @@ private struct AppDetailSheet: View {
                     .keyboardShortcut(.cancelAction)
                     .help(String(localized: "アプリ設定を閉じる (Esc)"))
                 }
-                .padding(16)
+                .padding(16 * uiScale)
                 .glassEffect(.regular, in: .rect)
             }
         }
-        .frame(width: 700, height: 600)
+        .frame(width: 700 * uiScale, height: 600 * uiScale)
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            windowSize = newSize
+        }
     }
 }
 
