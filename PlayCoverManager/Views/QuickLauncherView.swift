@@ -170,56 +170,79 @@ struct QuickLauncherView: View {
                 .focusEffectDisabled()  // Disable blue focus ring
                 .opacity(0.01)  // Nearly invisible but still present
             
-            // Rich multi-layer gradient background with depth
+            // Ultra-rich multi-layer ambient background (M4-optimized, UI-safe)
             ZStack {
-                // Base gradient
+                // Enhanced base gradient with depth
                 LinearGradient(
                     colors: [
                         Color(nsColor: .windowBackgroundColor),
-                        Color(nsColor: .controlBackgroundColor).opacity(0.3)
+                        Color(nsColor: .controlBackgroundColor).opacity(0.4),
+                        Color(nsColor: .windowBackgroundColor).opacity(0.8)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 
-                // Radial glow from center
+                // Enhanced radial glow from center (4-color)
                 RadialGradient(
                     colors: [
-                        .accentColor.opacity(0.03),
-                        .purple.opacity(0.02),
+                        .accentColor.opacity(0.08),
+                        .purple.opacity(0.06),
+                        .blue.opacity(0.04),
                         .clear
                     ],
                     center: .center,
-                    startRadius: 100,
-                    endRadius: 600
+                    startRadius: 80,
+                    endRadius: 700
                 )
                 
-                // Ambient corner glows
+                // Enhanced ambient corner glows
                 VStack {
                     HStack {
+                        // Top-left: blue/cyan glow
                         Circle()
                             .fill(RadialGradient(
-                                colors: [.blue.opacity(0.08), .clear],
+                                colors: [.blue.opacity(0.12), .cyan.opacity(0.06), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 250
+                            ))
+                            .frame(width: 500, height: 500)
+                            .blur(radius: 70)
+                            .offset(x: -100, y: -100)
+                        
+                        Spacer()
+                        
+                        // Top-right: purple/pink glow
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [.purple.opacity(0.10), .pink.opacity(0.05), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 220
+                            ))
+                            .frame(width: 450, height: 450)
+                            .blur(radius: 60)
+                            .offset(x: 100, y: -100)
+                    }
+                    
+                    Spacer()
+                    
+                    // Bottom center: accent/orange glow
+                    HStack {
+                        Spacer()
+                        Circle()
+                            .fill(RadialGradient(
+                                colors: [.accentColor.opacity(0.08), .orange.opacity(0.04), .clear],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 200
                             ))
                             .frame(width: 400, height: 400)
-                            .blur(radius: 60)
-                        
+                            .blur(radius: 55)
+                            .offset(y: 100)
                         Spacer()
-                        
-                        Circle()
-                            .fill(RadialGradient(
-                                colors: [.purple.opacity(0.06), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 180
-                            ))
-                            .frame(width: 350, height: 350)
-                            .blur(radius: 50)
                     }
-                    Spacer()
                 }
             }
             .allowsHitTesting(false)  // Allow clicks to pass through background
