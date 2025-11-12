@@ -3950,39 +3950,7 @@ private struct KeyboardShortcutGuide: View {
             ScrollView {
                 VStack(spacing: 0) {
                     ForEach([String(localized: "グローバル"), "ナビゲーション"], id: \.self) { category in
-                        VStack(alignment: .leading, spacing: 12 * uiScale) {
-                            Text(category)
-                                .font(.system(size: 17 * uiScale, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 24 * uiScale)
-                                .padding(.top, 16 * uiScale)
-                            
-                            VStack(spacing: 0) {
-                                ForEach(shortcuts.filter { $0.category == category }, id: \.keys) { shortcut in
-                                    HStack(spacing: 16 * uiScale) {
-                                        // Key combination
-                                        Text(shortcut.keys)
-                                            .font(.system(size: 15 * uiScale, design: .monospaced, weight: .semibold))
-                                            .foregroundStyle(.primary)
-                                            .padding(.horizontal, 12 * uiScale)
-                                            .padding(.vertical, 6 * uiScale)
-                                            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 6 * uiScale))
-                                            .frame(minWidth: 100 * uiScale, alignment: .leading)
-                                        
-                                        // Description
-                                        Text(shortcut.description)
-                                            .font(.system(size: 15 * uiScale))
-                                            .foregroundStyle(.primary)
-                                        
-                                        Spacer()
-                                    }
-                                    .padding(.horizontal, 24 * uiScale)
-                                    .padding(.vertical, 10 * uiScale)
-                                    .background(Color.clear)
-                                    .contentShape(Rectangle())
-                                }
-                            }
-                        }
+                        shortcutCategoryView(for: category)
                     }
                 }
                 .padding(.vertical, 12 * uiScale)
@@ -4016,6 +3984,57 @@ private struct KeyboardShortcutGuide: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 10 * uiScale)
+    }
+    
+    // Helper method to break up complex expression for type checker
+    @ViewBuilder
+    private func shortcutCategoryView(for category: String) -> some View {
+        let categorySpacing: CGFloat = 12 * uiScale
+        let horizontalPadding: CGFloat = 24 * uiScale
+        let topPadding: CGFloat = 16 * uiScale
+        let fontSize: CGFloat = 17 * uiScale
+        let itemFontSize: CGFloat = 15 * uiScale
+        let itemHorizontalPadding: CGFloat = 12 * uiScale
+        let itemVerticalPadding: CGFloat = 6 * uiScale
+        let cornerRadius: CGFloat = 6 * uiScale
+        let minWidth: CGFloat = 100 * uiScale
+        let rowHorizontalPadding: CGFloat = 24 * uiScale
+        let rowVerticalPadding: CGFloat = 10 * uiScale
+        let itemSpacing: CGFloat = 16 * uiScale
+        
+        VStack(alignment: .leading, spacing: categorySpacing) {
+            Text(category)
+                .font(.system(size: fontSize, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, topPadding)
+            
+            VStack(spacing: 0) {
+                ForEach(shortcuts.filter { $0.category == category }, id: \.keys) { shortcut in
+                    HStack(spacing: itemSpacing) {
+                        // Key combination
+                        Text(shortcut.keys)
+                            .font(.system(size: itemFontSize, design: .monospaced, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .padding(.horizontal, itemHorizontalPadding)
+                            .padding(.vertical, itemVerticalPadding)
+                            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: cornerRadius))
+                            .frame(minWidth: minWidth, alignment: .leading)
+                        
+                        // Description
+                        Text(shortcut.description)
+                            .font(.system(size: itemFontSize))
+                            .foregroundStyle(.primary)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, rowHorizontalPadding)
+                    .padding(.vertical, rowVerticalPadding)
+                    .background(Color.clear)
+                    .contentShape(Rectangle())
+                }
+            }
+        }
     }
 }
 
