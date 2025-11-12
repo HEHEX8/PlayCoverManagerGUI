@@ -29,8 +29,10 @@ struct QuickLauncherView: View {
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     
     // iOS-style grid with flexible columns (adaptive to window width)
+    // Minimum 70px allows more icons in narrow windows
+    // Maximum 110px prevents icons from becoming too large
     private let gridColumns = [
-        GridItem(.adaptive(minimum: 80, maximum: 140), spacing: 16)
+        GridItem(.adaptive(minimum: 70, maximum: 110), spacing: 12)
     ]
     
     // Estimated columns per row (for keyboard navigation)
@@ -357,7 +359,7 @@ struct QuickLauncherView: View {
                         EmptyAppListView(searchText: viewModel.searchText)
                     } else {
                         ScrollView {
-                            LazyVGrid(columns: gridColumns, spacing: 24) {
+                            LazyVGrid(columns: gridColumns, spacing: 16) {
                                 ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                     iOSAppIconView(
                                         app: app, 
@@ -394,8 +396,8 @@ struct QuickLauncherView: View {
                                     }
                                 }
                             }
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 32)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 24)
                             .onAppear {
                                 // Mark as performed after grid appears
                                 // Use delay to ensure animation starts before flag is set
@@ -513,8 +515,8 @@ struct QuickLauncherView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 32)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 24)
                         .onAppear {
                             // Mark as performed after grid appears
                             // Use delay to ensure animation starts before flag is set
