@@ -595,6 +595,7 @@ struct QuickLauncherView: View {
                     }
                 }
             }
+            }
         }
         .sheet(item: $selectedAppForDetail) { app in
         AppDetailSheet(app: app, viewModel: viewModel)
