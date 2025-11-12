@@ -34,18 +34,14 @@ struct QuickLauncherView: View {
     // Calculate optimal columns based on available width
     private var columnsPerRow: Int {
         let availableWidth = windowWidth - 32  // Subtract padding
-        let minIconWidth: CGFloat = 70
-        let maxIconWidth: CGFloat = 120
+        let idealIconWidth: CGFloat = 100  // Target icon size
         let spacing: CGFloat = 12
         
-        // Calculate how many icons can fit at minimum size
-        let maxColumns = Int((availableWidth + spacing) / (minIconWidth + spacing))
+        // Simple calculation: how many icons fit at ideal size?
+        let columns = Int((availableWidth + spacing) / (idealIconWidth + spacing))
         
-        // Calculate how many icons to show for optimal size
-        let optimalColumns = Int((availableWidth + spacing) / (maxIconWidth + spacing))
-        
-        // Use at least the optimal number, but allow more if window is wide
-        return max(optimalColumns, min(maxColumns, 10))
+        // Clamp between reasonable bounds
+        return max(4, min(columns, 15))  // Minimum 4, maximum 15 columns
     }
     
     // Generate grid columns dynamically
