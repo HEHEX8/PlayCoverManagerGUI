@@ -2031,7 +2031,9 @@ struct AppUninstallerSheet: View {
                                 .foregroundStyle(.tertiary)
                         }
                     }
+                    .padding(.vertical, 4 * uiScale)
                 }
+                .frame(minHeight: 200 * uiScale, maxHeight: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
