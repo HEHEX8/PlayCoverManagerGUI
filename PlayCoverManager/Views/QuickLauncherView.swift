@@ -397,7 +397,6 @@ struct QuickLauncherView: View {
                             viewModel: viewModel,
                             hasPerformedInitialAnimation: $hasPerformedInitialAnimation,
                             focusedAppIndex: $focusedAppIndex,
-                            isSearchFieldFocused: $isSearchFieldFocused,
                             focusedRow: focusedRow,
                             selectedAppForDetail: $selectedAppForDetail,
                             selectedAppForUninstall: $selectedAppForUninstall,
@@ -405,7 +404,8 @@ struct QuickLauncherView: View {
                             calculateSpacing: calculateSpacing,
                             calculateFontSize: calculateFontSize,
                             calculateBadgeFontSize: calculateBadgeFontSize,
-                            calculateBadgeSize: calculateBadgeSize
+                            calculateBadgeSize: calculateBadgeSize,
+                            clearSearchFocus: { isSearchFieldFocused = false }
                         )
                     }
                     
@@ -4141,7 +4141,6 @@ private struct ResponsiveAppGrid: View {
     @Bindable var viewModel: LauncherViewModel
     @Binding var hasPerformedInitialAnimation: Bool
     @Binding var focusedAppIndex: Int?
-    @Binding var isSearchFieldFocused: Bool
     let focusedRow: Int
     @Binding var selectedAppForDetail: PlayCoverApp?
     @Binding var selectedAppForUninstall: IdentifiableString?
@@ -4151,6 +4150,7 @@ private struct ResponsiveAppGrid: View {
     let calculateFontSize: (CGFloat) -> CGFloat
     let calculateBadgeFontSize: (CGFloat) -> CGFloat
     let calculateBadgeSize: (CGFloat) -> CGFloat
+    let clearSearchFocus: () -> Void
     
     var body: some View {
         GeometryReader { geometry in
@@ -4168,7 +4168,6 @@ private struct ResponsiveAppGrid: View {
                             rowIndex: rowIndex,
                             focusedRow: focusedRow,
                             focusedAppIndex: $focusedAppIndex,
-                            isSearchFieldFocused: $isSearchFieldFocused,
                             hasPerformedInitialAnimation: hasPerformedInitialAnimation,
                             selectedAppForDetail: $selectedAppForDetail,
                             selectedAppForUninstall: $selectedAppForUninstall,
@@ -4177,7 +4176,8 @@ private struct ResponsiveAppGrid: View {
                             fontSize: fontSize,
                             badgeFontSize: badgeFontSize,
                             badgeSize: badgeSize,
-                            launchApp: viewModel.launch
+                            launchApp: viewModel.launch,
+                            clearSearchFocus: clearSearchFocus
                         )
                     }
                 }
@@ -4202,7 +4202,6 @@ private struct AppGridRow: View {
     let rowIndex: Int
     let focusedRow: Int
     @Binding var focusedAppIndex: Int?
-    @Binding var isSearchFieldFocused: Bool
     let hasPerformedInitialAnimation: Bool
     @Binding var selectedAppForDetail: PlayCoverApp?
     @Binding var selectedAppForUninstall: IdentifiableString?
@@ -4213,6 +4212,7 @@ private struct AppGridRow: View {
     let badgeFontSize: CGFloat
     let badgeSize: CGFloat
     let launchApp: (PlayCoverApp) -> Void
+    let clearSearchFocus: () -> Void
     
     var body: some View {
         HStack(spacing: spacing) {
@@ -4228,7 +4228,6 @@ private struct AppGridRow: View {
                         columnIndex: columnIndex,
                         focusedRow: focusedRow,
                         focusedAppIndex: $focusedAppIndex,
-                        isSearchFieldFocused: $isSearchFieldFocused,
                         hasPerformedInitialAnimation: hasPerformedInitialAnimation,
                         selectedAppForDetail: $selectedAppForDetail,
                         selectedAppForUninstall: $selectedAppForUninstall,
@@ -4236,7 +4235,8 @@ private struct AppGridRow: View {
                         fontSize: fontSize,
                         badgeFontSize: badgeFontSize,
                         badgeSize: badgeSize,
-                        launchApp: launchApp
+                        launchApp: launchApp,
+                        clearSearchFocus: clearSearchFocus
                     )
                 }
             }
@@ -4254,7 +4254,6 @@ private struct AppGridCell: View {
     let columnIndex: Int
     let focusedRow: Int
     @Binding var focusedAppIndex: Int?
-    @Binding var isSearchFieldFocused: Bool
     let hasPerformedInitialAnimation: Bool
     @Binding var selectedAppForDetail: PlayCoverApp?
     @Binding var selectedAppForUninstall: IdentifiableString?
@@ -4264,6 +4263,7 @@ private struct AppGridCell: View {
     let badgeFontSize: CGFloat
     let badgeSize: CGFloat
     let launchApp: (PlayCoverApp) -> Void
+    let clearSearchFocus: () -> Void
     
     var body: some View {
         let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
@@ -4278,7 +4278,7 @@ private struct AppGridCell: View {
                 fontSize: fontSize
             ) {
                 // Tap action
-                isSearchFieldFocused = false
+                clearSearchFocus()
                 focusedAppIndex = index
                 launchApp(app)
                 
