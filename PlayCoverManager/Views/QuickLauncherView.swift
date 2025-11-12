@@ -28,15 +28,14 @@ struct QuickLauncherView: View {
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     
-    // Adaptive grid that automatically adjusts columns based on window width
-    private let gridColumns = [
-        GridItem(.adaptive(minimum: 80, maximum: 120), spacing: 12)
-    ]
-    
-    // Estimated columns per row (for keyboard navigation)
-    // This is approximate - actual count depends on window width
+    // Fixed 10 columns per row (iOS Dock style)
     private var columnsPerRow: Int {
-        return 10  // Default estimate for keyboard shortcuts
+        return 10
+    }
+    
+    // Create fixed 10-column grid
+    private var gridColumns: [GridItem] {
+        Array(repeating: GridItem(.fixed(100), spacing: 20), count: 10)
     }
     
     // Current focused row (for multi-row navigation)
@@ -357,14 +356,27 @@ struct QuickLauncherView: View {
                         EmptyAppListView(searchText: viewModel.searchText)
                     } else {
                         ScrollView {
-                            LazyVGrid(columns: gridColumns, spacing: 16) {
-                                ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                                    iOSAppIconView(
-                                        app: app, 
-                                        index: index,
-                                        shouldAnimate: !hasPerformedInitialAnimation,
-                                        isFocused: focusedAppIndex == index
-                                    ) {
+                            VStack(spacing: 32) {
+                                // Render apps in rows of 10
+                                ForEach(0..<((viewModel.filteredApps.count + 9) / 10), id: \.self) { rowIndex in
+                                    // iOS Dock style: center-aligned row
+                                    HStack(spacing: 20) {
+                                        Spacer(minLength: 0)
+                                        
+                                        ForEach(0..<10, id: \.self) { columnIndex in
+                                            let index = rowIndex * 10 + columnIndex
+                                            if index < viewModel.filteredApps.count {
+                                                let app = viewModel.filteredApps[index]
+                                                // Number key indicator (1-9, 0)
+                                                let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
+                                                
+                                                ZStack(alignment: .topLeading) {
+                                                    iOSAppIconView(
+                                                        app: app, 
+                                                        index: index,
+                                                        shouldAnimate: !hasPerformedInitialAnimation,
+                                                        isFocused: focusedAppIndex == index
+                                                    ) {
                                         // Tap action - called by DragGesture on valid release
                                         // Clear search focus and focus this app
                                         isSearchFieldFocused = false
@@ -385,16 +397,37 @@ struct QuickLauncherView: View {
                                                 object: nil
                                             )
                                         }
-                                    } rightClickAction: {
-                                        // Right click - show detail/settings
-                                        selectedAppForDetail = app
-                                    } uninstallAction: {
-                                        // Uninstall action - open uninstaller with pre-selected app
-                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                                    } rightClickAction: {
+                                                        // Right click - show detail/settings
+                                                        selectedAppForDetail = app
+                                                    } uninstallAction: {
+                                                        // Uninstall action - open uninstaller with pre-selected app
+                                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                                    }
+                                                    
+                                                    // Number key indicator badge
+                                                    if rowIndex == focusedRow {
+                                                        Text(keyNumber)
+                                                            .font(.system(size: 12, weight: .bold))
+                                                            .foregroundStyle(.white)
+                                                            .frame(width: 20, height: 20)
+                                                            .background(
+                                                                Circle()
+                                                                    .fill(Color.accentColor)
+                                                            )
+                                                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                                            .offset(x: -5, y: -5)
+                                                    }
+                                                }
+                                                .frame(width: 100)
+                                            }
+                                        }
+                                        
+                                        Spacer(minLength: 0)
                                     }
                                 }
                             }
-                            .padding(.horizontal, 16)
+                            .padding(.horizontal, 32)
                             .padding(.vertical, 24)
                             .onAppear {
                                 // Mark as performed after grid appears
@@ -407,6 +440,7 @@ struct QuickLauncherView: View {
                                 }
                             }
                         }
+                    }
                     }
                     
                     // Modern recently launched app button with rich glass effect
@@ -476,14 +510,27 @@ struct QuickLauncherView: View {
                     EmptyAppListView(searchText: viewModel.searchText)
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: gridColumns, spacing: 16) {
-                            ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
-                                iOSAppIconView(
-                                    app: app, 
-                                    index: index,
-                                    shouldAnimate: !hasPerformedInitialAnimation,
-                                    isFocused: focusedAppIndex == index
-                                ) {
+                        VStack(spacing: 32) {
+                            // Render apps in rows of 10
+                            ForEach(0..<((viewModel.filteredApps.count + 9) / 10), id: \.self) { rowIndex in
+                                // iOS Dock style: center-aligned row
+                                HStack(spacing: 20) {
+                                    Spacer(minLength: 0)
+                                    
+                                    ForEach(0..<10, id: \.self) { columnIndex in
+                                        let index = rowIndex * 10 + columnIndex
+                                        if index < viewModel.filteredApps.count {
+                                            let app = viewModel.filteredApps[index]
+                                            // Number key indicator (1-9, 0)
+                                            let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
+                                            
+                                            ZStack(alignment: .topLeading) {
+                                                iOSAppIconView(
+                                                    app: app, 
+                                                    index: index,
+                                                    shouldAnimate: !hasPerformedInitialAnimation,
+                                                    isFocused: focusedAppIndex == index
+                                                ) {
                                     // Tap action - called by DragGesture on valid release
                                     // Clear search focus and focus this app
                                     isSearchFieldFocused = false
@@ -504,16 +551,37 @@ struct QuickLauncherView: View {
                                             object: nil
                                         )
                                     }
-                                } rightClickAction: {
-                                    // Right click - show detail/settings
-                                    selectedAppForDetail = app
-                                } uninstallAction: {
-                                    // Uninstall action - open uninstaller with pre-selected app
-                                    selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                                } rightClickAction: {
+                                                    // Right click - show detail/settings
+                                                    selectedAppForDetail = app
+                                                } uninstallAction: {
+                                                    // Uninstall action - open uninstaller with pre-selected app
+                                                    selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                                }
+                                                
+                                                // Number key indicator badge
+                                                if rowIndex == focusedRow {
+                                                    Text(keyNumber)
+                                                        .font(.system(size: 12, weight: .bold))
+                                                        .foregroundStyle(.white)
+                                                        .frame(width: 20, height: 20)
+                                                        .background(
+                                                            Circle()
+                                                                .fill(Color.accentColor)
+                                                        )
+                                                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                                        .offset(x: -5, y: -5)
+                                                }
+                                            }
+                                            .frame(width: 100)
+                                        }
+                                    }
+                                    
+                                    Spacer(minLength: 0)
                                 }
                             }
                         }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 32)
                         .padding(.vertical, 24)
                         .onAppear {
                             // Mark as performed after grid appears
