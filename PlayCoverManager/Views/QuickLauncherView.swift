@@ -843,14 +843,14 @@ private struct iOSAppIconView: View {
         
         gradientAnimationTask = Task { @MainActor in
             while !Task.isCancelled {
-                // Animate 0 → 1 (3 seconds)
+                // Animate 0 → 0.5 (seamless loop point)
                 withAnimation(.linear(duration: 3.0)) {
-                    gradientOffset = 1.0
+                    gradientOffset = 0.5
                 }
                 try? await Task.sleep(for: .seconds(3.0))
                 if Task.isCancelled { break }
                 
-                // Reset to 0 instantly and loop immediately (no wait)
+                // Reset to 0 instantly (seamless because colors match)
                 gradientOffset = 0
             }
         }
@@ -863,20 +863,20 @@ private struct iOSAppIconView: View {
         
         gradientAnimationTask = Task { @MainActor in
             while !Task.isCancelled {
-                // Calculate remaining distance and time from current position
-                let remainingDistance = 1.0 - gradientOffset
-                let remainingTime = remainingDistance * 3.0
+                // Calculate remaining distance to 0.5 (loop point)
+                let remainingDistance = 0.5 - gradientOffset
+                let remainingTime = max(0, remainingDistance) * 6.0  // 0.5 range = 3 seconds total
                 
                 if remainingDistance > 0.01 {
-                    // Continue animation to 1.0
+                    // Continue animation to 0.5
                     withAnimation(.linear(duration: remainingTime)) {
-                        gradientOffset = 1.0
+                        gradientOffset = 0.5
                     }
                     try? await Task.sleep(for: .seconds(remainingTime))
                     if Task.isCancelled { break }
                 }
                 
-                // Reset to 0 instantly and loop immediately (no wait)
+                // Reset to 0 instantly (seamless because colors match)
                 gradientOffset = 0
             }
         }
@@ -896,14 +896,14 @@ private struct iOSAppIconView: View {
         
         focusRingAnimationTask = Task { @MainActor in
             while !Task.isCancelled {
-                // Animate 0 → 2π (2 seconds)
+                // Animate 0 → π (seamless loop point)
                 withAnimation(.linear(duration: 2.0)) {
-                    focusGlowPhase = .pi * 2
+                    focusGlowPhase = .pi
                 }
                 try? await Task.sleep(for: .seconds(2.0))
                 if Task.isCancelled { break }
                 
-                // Reset to 0 instantly and loop immediately (no wait)
+                // Reset to 0 instantly (seamless because colors match at 0 and π)
                 focusGlowPhase = 0
             }
         }
@@ -997,15 +997,16 @@ private struct iOSAppIconView: View {
                                         .purple.opacity(isHovering ? 0.25 : 0.4),
                                         .blue.opacity(isHovering ? 0.25 : 0.4),
                                         .cyan.opacity(isHovering ? 0.25 : 0.4),
-                                        .accentColor.opacity(isHovering ? 0.3 : 0.5),
+                                        .accentColor.opacity(isHovering ? 0.3 : 0.5),  // ← loop point (matches position 0)
                                         .purple.opacity(isHovering ? 0.25 : 0.4),
                                         .blue.opacity(isHovering ? 0.25 : 0.4),
                                         .cyan.opacity(isHovering ? 0.25 : 0.4),
                                         .accentColor.opacity(isHovering ? 0.3 : 0.5)
                                     ],
-                                    // Far off-screen bottom-left to far off-screen top-right
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) - 1.0, y: 2.0 - focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
+                                    // Seamless loop: 0→π, window shows 0.5 width of array
+                                    // At focusGlowPhase=0 and focusGlowPhase=π, same colors visible
+                                    startPoint: UnitPoint(x: focusGlowPhase / .pi - 0.5, y: 1.5 - focusGlowPhase / .pi),
+                                    endPoint: UnitPoint(x: focusGlowPhase / .pi, y: 1.0 - focusGlowPhase / .pi)
                                 ),
                                 lineWidth: isHovering ? 2 : 4
                             )
@@ -1020,15 +1021,15 @@ private struct iOSAppIconView: View {
                                         .purple,
                                         .blue,
                                         .cyan,
-                                        .accentColor,
+                                        .accentColor,  // ← loop point
                                         .purple,
                                         .blue,
                                         .cyan,
                                         .accentColor
                                     ],
-                                    // Far off-screen bottom-left to far off-screen top-right
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) - 1.0, y: 2.0 - focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
+                                    // Seamless loop: 0→π, window shows 0.5 width of array
+                                    startPoint: UnitPoint(x: focusGlowPhase / .pi - 0.5, y: 1.5 - focusGlowPhase / .pi),
+                                    endPoint: UnitPoint(x: focusGlowPhase / .pi, y: 1.0 - focusGlowPhase / .pi)
                                 ),
                                 lineWidth: 3
                             )
@@ -1204,19 +1205,22 @@ private struct iOSAppIconView: View {
                     .foregroundStyle(
                         LinearGradient(
                             colors: [
+                                // Double pattern for seamless loop: at offset=0 and offset=0.5, same pattern visible
                                 .accentColor,
                                 .purple,
                                 .blue,
                                 .cyan,
-                                .accentColor,
+                                .accentColor,  // ← repeat starts here (same as position 0)
                                 .purple,
                                 .blue,
                                 .cyan,
-                                .accentColor
+                                .accentColor   // ← end matches start
                             ],
-                            // Far off-screen bottom-left to far off-screen top-right
-                            startPoint: UnitPoint(x: gradientOffset - 1.0, y: 2.0 - gradientOffset),
-                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0.5 - gradientOffset)
+                            // Window shows 0.5 of the array (half)
+                            // Offset 0→0.5: gradient flows from bottom-left to top-right
+                            // At 0.5, jump to 0 (invisible because pattern matches)
+                            startPoint: UnitPoint(x: gradientOffset * 2 - 0.5, y: 1.5 - gradientOffset * 2),
+                            endPoint: UnitPoint(x: gradientOffset * 2, y: 1.0 - gradientOffset * 2)
                         )
                     )
                     .opacity(showHoverEffect ? 1 : 0)
