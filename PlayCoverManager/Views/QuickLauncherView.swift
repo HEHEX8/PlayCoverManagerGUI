@@ -828,6 +828,7 @@ private struct iOSAppIconView: View {
     @State private var gradientOffset: CGFloat = 0
     @State private var focusGlowPhase: CGFloat = 0
     @State private var gradientAnimationTask: Task<Void, Never>?
+    @State private var focusRingAnimationTask: Task<Void, Never>?
     @State private var gradientAnimationTask: Task<Void, Never>?
     
     // Show hover effect when hovering OR when focused (keyboard)
@@ -864,6 +865,39 @@ private struct iOSAppIconView: View {
         gradientAnimationTask?.cancel()
         withAnimation(.linear(duration: 0.5)) {
             gradientOffset = 0
+        }
+    }
+    
+    // Start focus ring animation with wait period: 0→2π→wait→repeat
+    private func startFocusRingAnimation() {
+        focusRingAnimationTask?.cancel()
+        
+        focusRingAnimationTask = Task { @MainActor in
+            while !Task.isCancelled {
+                // Animate from 0 to 2π
+                withAnimation(.linear(duration: 2.0)) {
+                    focusGlowPhase = .pi * 2
+                }
+                
+                // Wait for animation to complete + pause
+                try? await Task.sleep(for: .milliseconds(2000))
+                if Task.isCancelled { break }
+                
+                // Pause at 2π
+                try? await Task.sleep(for: .milliseconds(800))
+                if Task.isCancelled { break }
+                
+                // Reset to 0 instantly
+                focusGlowPhase = 0
+            }
+        }
+    }
+    
+    // Stop focus ring animation
+    private func stopFocusRingAnimation() {
+        focusRingAnimationTask?.cancel()
+        withAnimation(.linear(duration: 0.3)) {
+            focusGlowPhase = 0
         }
     }
     
@@ -1192,26 +1226,20 @@ private struct iOSAppIconView: View {
             
             // Start focus glow animation if focused
             if isFocused {
-                withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
-                    focusGlowPhase = .pi * 2
-                }
+                startFocusRingAnimation()
             }
         }
         .onChange(of: isFocused) { oldValue, newValue in
             if newValue {
-                // Start focus ring glow animation
-                withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
-                    focusGlowPhase = .pi * 2
-                }
+                // Start focus ring glow animation with wait period
+                startFocusRingAnimation()
                 // Also start app name gradient animation with wait period
                 if !isHovering {
                     startGradientAnimation()
                 }
             } else {
                 // Stop focus ring animation
-                withAnimation(.linear(duration: 0.3)) {
-                    focusGlowPhase = 0
-                }
+                stopFocusRingAnimation()
                 // Stop gradient animation only if not hovering
                 if !isHovering {
                     stopGradientAnimation()
