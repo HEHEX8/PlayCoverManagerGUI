@@ -826,6 +826,7 @@ private struct iOSAppIconView: View {
     // Hover effect state
     @State private var isHovering = false
     @State private var gradientOffset: CGFloat = 0
+    @State private var focusGlowPhase: CGFloat = 0
     
     var body: some View {
         VStack(spacing: 8) {
@@ -875,10 +876,62 @@ private struct iOSAppIconView: View {
                 y: isHovering ? 6 : 2
             )
             .overlay {
-                // Keyboard focus ring
+                // Rich keyboard focus ring with animated glow
                 if isFocused {
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(Color.accentColor, lineWidth: 3)
+                    ZStack {
+                        // Outer glow layer (pulsing)
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        .accentColor.opacity(0.3),
+                                        .purple.opacity(0.2),
+                                        .blue.opacity(0.2),
+                                        .accentColor.opacity(0.3)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 8
+                            )
+                            .blur(radius: 4)
+                            .opacity(0.6 + sin(focusGlowPhase) * 0.3)
+                        
+                        // Middle glow layer
+                        RoundedRectangle(cornerRadius: 19)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        .accentColor.opacity(0.5),
+                                        .purple.opacity(0.4),
+                                        .blue.opacity(0.4),
+                                        .cyan.opacity(0.4),
+                                        .accentColor.opacity(0.5)
+                                    ],
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 0),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 1, y: 1)
+                                ),
+                                lineWidth: 4
+                            )
+                            .blur(radius: 2)
+                        
+                        // Inner sharp border
+                        RoundedRectangle(cornerRadius: 18)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        .accentColor,
+                                        .purple,
+                                        .blue,
+                                        .cyan,
+                                        .accentColor
+                                    ],
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 4), y: 0),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 4) + 0.5, y: 0.5)
+                                ),
+                                lineWidth: 3
+                            )
+                    }
                 }
             }
             .overlay {
@@ -1083,6 +1136,26 @@ private struct iOSAppIconView: View {
             } else {
                 // No animation - just show immediately
                 hasAppeared = true
+            }
+            
+            // Start focus glow animation if focused
+            if isFocused {
+                withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
+                    focusGlowPhase = .pi * 2
+                }
+            }
+        }
+        .onChange(of: isFocused) { oldValue, newValue in
+            if newValue {
+                // Start focus ring glow animation
+                withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
+                    focusGlowPhase = .pi * 2
+                }
+            } else {
+                // Stop focus ring animation
+                withAnimation(.linear(duration: 0.3)) {
+                    focusGlowPhase = 0
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerAppIconAnimation"))) { notification in
