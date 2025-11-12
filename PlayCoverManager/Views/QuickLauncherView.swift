@@ -602,8 +602,15 @@ struct QuickLauncherView: View {
                         restoreWindowFocus()
                     }
                 
-                AppDetailSheet(app: app, viewModel: viewModel)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+                AppDetailSheet(
+                    isPresented: Binding(
+                        get: { selectedAppForDetail != nil },
+                        set: { if !$0 { selectedAppForDetail = nil; restoreWindowFocus() } }
+                    ),
+                    app: app,
+                    viewModel: viewModel
+                )
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
             
             if showingSettings {
@@ -1303,11 +1310,17 @@ private struct iOSAppIconView: View {
 
 // App detail and settings sheet with tabbed interface
 private struct AppDetailSheet: View {
+    @Binding var isPresented: Bool
     let app: PlayCoverApp
     @Bindable var viewModel: LauncherViewModel
-    @Environment(\.dismiss) private var dismiss
     @State private var selectedTab: SettingsTab = .overview
-    @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
+    @State private var windowSize: CGSize = CGSize(width: 800, height: 650)
+    
+    init(isPresented: Binding<Bool>, app: PlayCoverApp, viewModel: LauncherViewModel) {
+        self._isPresented = isPresented
+        self.app = app
+        self._viewModel = Bindable(wrappedValue: viewModel)
+    }
     
     private func calculateUIScale(for size: CGSize) -> CGFloat {
         let baseWidth: CGFloat = 700.0
@@ -1358,148 +1371,184 @@ private struct AppDetailSheet: View {
     
     var body: some View {
         ZStack {
-            // Background
-            Color(nsColor: .windowBackgroundColor)
-                .ignoresSafeArea()
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .controlBackgroundColor).opacity(0.95),
+                    Color(nsColor: .controlBackgroundColor).opacity(0.98)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            VStack(spacing: 0 * uiScale) {
-                // Modern header card
-                VStack(spacing: 16 * uiScale) {
-                    HStack(spacing: 16 * uiScale) {
-                        // App icon with shadow
-                        if let icon = app.icon {
-                            Image(nsImage: icon)
-                                .resizable()
-                                .frame(width: 80 * uiScale, height: 80 * uiScale)
-                                .clipShape(RoundedRectangle(cornerRadius: 18 * uiScale))
-                                .shadow(color: .black.opacity(0.2), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
-                        } else {
-                            RoundedRectangle(cornerRadius: 18 * uiScale)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 80 * uiScale, height: 80 * uiScale)
-                                .overlay {
-                                    Image(systemName: "app.dashed")
-                                        .font(.system(size: 32 * uiScale))
-                                        .foregroundStyle(.secondary)
-                                }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 6 * uiScale) {
-                            Text(app.displayName)
-                                .font(.system(size: 22 * uiScale, weight: .bold))
-                                .lineLimit(2)
-                            
-                            if let version = app.version {
-                                HStack(spacing: 4 * uiScale) {
-                                    Image(systemName: "tag.fill")
-                                        .font(.system(size: 10 * uiScale))
-                                    Text("バージョン \(version)")
-                                        .font(.system(size: 13 * uiScale))
-                                }
-                                .foregroundStyle(.secondary)
-                            }
-                            
-                            Text(app.bundleIdentifier)
-                                .font(.system(size: 11 * uiScale))
-                                .foregroundStyle(.tertiary)
-                                .lineLimit(1)
-                                .truncationMode(.middle)
-                        }
-                        
-                        Spacer()
-                        
-                        // Quick launch button
-                        Button {
-                            dismiss()
-                            viewModel.launch(app: app)
-                        } label: {
-                            Label("起動", systemImage: "play.circle.fill")
-                                .font(.system(size: 15 * uiScale, weight: .semibold))
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                    }
-                }
-                .padding(24 * uiScale)
-                .glassEffect(.regular, in: .rect)
-                
-                Divider()
-                
-                // Modern tab selector with icons
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8 * uiScale) {
-                        ForEach(SettingsTab.allCases) { tab in
-                            Button {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    selectedTab = tab
-                                }
-                            } label: {
-                                Label(tab.localizedTitle, systemImage: tab.icon)
-                                    .font(.system(size: 13 * uiScale, weight: selectedTab == tab ? .semibold : .regular))
-                                    .padding(.horizontal, 16 * uiScale)
-                                    .padding(.vertical, 8 * uiScale)
-                                    .background(
-                                        selectedTab == tab ?
-                                            AnyView(RoundedRectangle(cornerRadius: 8 * uiScale).fill(.blue)) :
-                                            AnyView(RoundedRectangle(cornerRadius: 8 * uiScale).fill(Color(nsColor: .controlBackgroundColor).opacity(0.5)))
-                                    )
-                                    .foregroundStyle(selectedTab == tab ? .white : .primary)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.horizontal, 24 * uiScale)
-                    .padding(.vertical, 12 * uiScale)
-                }
-                .background(Color(nsColor: .controlBackgroundColor).opacity(0.3))
-                
-                Divider()
-                
-                // Tab content with transition
-                ScrollView {
-                    VStack {
-                        switch selectedTab {
-                        case .overview:
-                            OverviewView(app: app, viewModel: viewModel)
-                        case .settings:
-                            SettingsView(app: app, viewModel: viewModel)
-                        case .details:
-                            DetailsView(app: app, viewModel: viewModel)
-                        }
-                    }
-                    .padding(24 * uiScale)
-                }
-                
-                Divider()
-                
-                // Footer
+            VStack(spacing: 0) {
+                // Header with close button
                 HStack {
-                    Button {
-                        NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                    } label: {
-                        Label("アプリ本体を表示", systemImage: "folder")
-                    }
-                    .buttonStyle(.bordered)
+                    Text(app.displayName)
+                        .font(.system(size: 24 * uiScale, weight: .bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
                     
                     Spacer()
                     
-                    Button("閉じる") {
-                        dismiss()
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24 * uiScale))
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
                     }
-                    .keyboardShortcut(.cancelAction)
-                    .help(String(localized: "アプリ設定を閉じる (Esc)"))
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.escape, modifiers: [])
+                    .help("閉じる (Esc)")
                 }
-                .padding(16 * uiScale)
-                .glassEffect(.regular, in: .rect)
+                .padding(.horizontal, 32 * uiScale)
+                .padding(.top, 24 * uiScale)
+                .padding(.bottom, 16 * uiScale)
+                
+                Divider()
+                    .padding(.horizontal, 32 * uiScale)
+                
+                // Content area
+                ScrollView {
+                    VStack(spacing: 24 * uiScale) {
+                        // App info card
+                        VStack(spacing: 16 * uiScale) {
+                            HStack(spacing: 16 * uiScale) {
+                                // App icon
+                                if let icon = app.icon {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 80 * uiScale, height: 80 * uiScale)
+                                        .clipShape(RoundedRectangle(cornerRadius: 18 * uiScale))
+                                        .shadow(color: .black.opacity(0.2), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 18 * uiScale)
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 80 * uiScale, height: 80 * uiScale)
+                                        .overlay {
+                                            Image(systemName: "app.dashed")
+                                                .font(.system(size: 32 * uiScale))
+                                                .foregroundStyle(.secondary)
+                                        }
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 6 * uiScale) {
+                                    if let version = app.version {
+                                        HStack(spacing: 4 * uiScale) {
+                                            Image(systemName: "tag.fill")
+                                                .font(.system(size: 10 * uiScale))
+                                            Text("バージョン \(version)")
+                                                .font(.system(size: 13 * uiScale))
+                                        }
+                                        .foregroundStyle(.secondary)
+                                    }
+                                    
+                                    Text(app.bundleIdentifier)
+                                        .font(.system(size: 11 * uiScale, design: .monospaced))
+                                        .foregroundStyle(.tertiary)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                }
+                                
+                                Spacer()
+                                
+                                // Quick launch button
+                                Button {
+                                    isPresented = false
+                                    viewModel.launch(app: app)
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "play.circle.fill")
+                                        Text("起動")
+                                    }
+                                    .font(.system(size: 15 * uiScale, weight: .semibold))
+                                    .frame(minWidth: 100 * uiScale)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.large)
+                            }
+                        }
+                        .padding(24 * uiScale)
+                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                        .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                        
+                        // Tab selector
+                        HStack(spacing: 12 * uiScale) {
+                            ForEach(SettingsTab.allCases) { tab in
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        selectedTab = tab
+                                    }
+                                } label: {
+                                    VStack(spacing: 8 * uiScale) {
+                                        Image(systemName: tab.icon)
+                                            .font(.system(size: 24 * uiScale, weight: .medium))
+                                        Text(tab.localizedTitle)
+                                            .font(.system(size: 12 * uiScale, weight: .medium))
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16 * uiScale)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                                            .fill(selectedTab == tab ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                                    )
+                                    .foregroundStyle(selectedTab == tab ? .white : .primary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        
+                        // Tab content
+                        VStack(spacing: 0) {
+                            switch selectedTab {
+                            case .overview:
+                                OverviewView(app: app, viewModel: viewModel)
+                            case .settings:
+                                SettingsView(app: app, viewModel: viewModel)
+                            case .details:
+                                DetailsView(app: app, viewModel: viewModel)
+                            }
+                        }
+                        .padding(24 * uiScale)
+                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                        .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                        
+                        // Bottom action buttons
+                        HStack(spacing: 12 * uiScale) {
+                            Button {
+                                NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                            } label: {
+                                HStack {
+                                    Image(systemName: "folder")
+                                    Text("アプリ本体を表示")
+                                }
+                                .font(.system(size: 14 * uiScale, weight: .medium))
+                                .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+                        }
+                        .padding(.bottom, 24 * uiScale)
+            }
+                    }
+                    .padding(.horizontal, 32 * uiScale)
+                    .padding(.vertical, 24 * uiScale)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .frame(width: 700 * uiScale, height: 600 * uiScale)
+        .uiScale(uiScale)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
             windowSize = newSize
         }
-        .uiScale(uiScale)  // Inject UI scale into environment for all child views
+        .frame(minWidth: 800, minHeight: 650)
+        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
     }
 }
 
