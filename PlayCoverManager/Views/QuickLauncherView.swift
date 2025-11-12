@@ -847,12 +847,58 @@ private struct iOSAppIconView: View {
             }
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .background {
+                // Hover glow effect behind the icon (doesn't cover image)
+                if isHovering {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    .accentColor.opacity(0.3),
+                                    .purple.opacity(0.2),
+                                    .blue.opacity(0.15),
+                                    .clear
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 60
+                            )
+                        )
+                        .frame(width: 96, height: 96)
+                        .blur(radius: 8)
+                }
+            }
+            .shadow(
+                color: isHovering ? .accentColor.opacity(0.5) : .black.opacity(0.2), 
+                radius: isHovering ? 16 : 3, 
+                x: 0, 
+                y: isHovering ? 6 : 2
+            )
             .overlay {
                 // Keyboard focus ring
                 if isFocused {
                     RoundedRectangle(cornerRadius: 18)
                         .strokeBorder(Color.accentColor, lineWidth: 3)
+                }
+            }
+            .overlay {
+                // Hover border glow outside the icon
+                if isHovering {
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    .accentColor.opacity(0.6),
+                                    .purple.opacity(0.5),
+                                    .blue.opacity(0.5),
+                                    .cyan.opacity(0.5),
+                                    .accentColor.opacity(0.6)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2
+                        )
                 }
             }
             .overlay(alignment: .topTrailing) {
@@ -900,11 +946,12 @@ private struct iOSAppIconView: View {
                     }
                 }
             }
-            // Press & bounce animation (no hover scale)
+            // Press & bounce & hover animation
             .scaleEffect(
                 isPressing ? 0.85 : 
                 isBouncing ? 1.15 : 
-                isAnimating ? 0.85 : 1.0
+                isAnimating ? 0.85 : 
+                isHovering ? 1.05 : 1.0
             )
             .animation(
                 isPressing ? .easeOut(duration: 0.15) :
@@ -933,13 +980,13 @@ private struct iOSAppIconView: View {
                 isHovering = hovering
                 
                 if hovering {
-                    // Start gradient animation when hovering
-                    withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
+                    // Start smooth gradient animation when hovering (-1 to 1 and back)
+                    withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: true)) {
                         gradientOffset = 1.0
                     }
                 } else {
-                    // Stop gradient animation
-                    withAnimation(.linear(duration: 0.3)) {
+                    // Stop gradient animation smoothly
+                    withAnimation(.linear(duration: 0.5)) {
                         gradientOffset = 0
                     }
                 }
@@ -1010,10 +1057,11 @@ private struct iOSAppIconView: View {
                                 .purple,
                                 .blue,
                                 .cyan,
+                                .purple,
                                 .accentColor
                             ],
-                            startPoint: UnitPoint(x: gradientOffset, y: 0),
-                            endPoint: UnitPoint(x: gradientOffset + 1.0, y: 0)
+                            startPoint: UnitPoint(x: gradientOffset - 0.5, y: 0),
+                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0)
                         )
                     )
                     .opacity(isHovering ? 1 : 0)
