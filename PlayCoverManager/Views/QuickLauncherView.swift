@@ -27,6 +27,7 @@ struct QuickLauncherView: View {
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
+    @State private var windowSize: CGSize = CGSize(width: 960, height: 640)  // Track window size for responsive UI
     
     // Fixed 10 columns per row (iOS Dock style)
     private var columnsPerRow: Int {
@@ -563,7 +564,7 @@ struct QuickLauncherView: View {
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
-            // Track window size for responsive grid layout
+            windowSize = newSize
         }
         .overlay(alignment: .center) {
             if viewModel.unmountFlowState != .idle {
