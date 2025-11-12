@@ -260,13 +260,14 @@ private struct GeneralSettingsView: View {
                         // Change storage button
                         CustomLargeButton(
                             title: "保存先を変更",
-                            icon: "folder.badge.gearshape",
+                            action: {
+                                dismiss()
+                                appViewModel.requestStorageLocationChange()
+                            },
                             isPrimary: true,
+                            icon: "folder.badge.gearshape",
                             uiScale: uiScale
-                        ) {
-                            dismiss()
-                            appViewModel.requestStorageLocationChange()
-                        }
+                        )
                         .help(String(localized: "すべてのコンテナをアンマウントしてから保存先を変更します"))
                         
                         // Info text
@@ -803,12 +804,12 @@ struct IPAInstallerSheet: View {
             
             CustomLargeButton(
                 title: "IPA を選択",
-                icon: "folder.badge.plus",
-                isPrimary: true,
-                uiScale: uiScale,
                 action: {
                     selectIPAFiles()
-                }
+                },
+                isPrimary: true,
+                icon: "folder.badge.plus",
+                uiScale: uiScale
             )
             .keyboardShortcut(.defaultAction)
             
@@ -2863,12 +2864,13 @@ private struct MaintenanceSettingsView: View {
                     VStack(alignment: .leading, spacing: 16 * uiScale) {
                         CustomLargeButton(
                             title: "アイコンキャッシュをクリア",
-                            icon: "trash",
+                            action: {
+                                showingClearCacheConfirmation = true
+                            },
                             isPrimary: false,
+                            icon: "trash",
                             uiScale: uiScale
-                        ) {
-                            showingClearCacheConfirmation = true
-                        }
+                        )
                         
                         HStack(spacing: 6 * uiScale) {
                             Image(systemName: "info.circle.fill")

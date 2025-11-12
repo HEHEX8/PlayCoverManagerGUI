@@ -1546,12 +1546,13 @@ private struct AppDetailSheet: View {
                         HStack(spacing: 12 * uiScale) {
                             CustomLargeButton(
                                 title: "アプリ本体を表示",
-                                icon: "folder",
+                                action: {
+                                    NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                                },
                                 isPrimary: false,
+                                icon: "folder",
                                 uiScale: uiScale
-                            ) {
-                                NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                            }
+                            )
                         }
                         .padding(.bottom, 24 * uiScale)
                     }
@@ -1639,12 +1640,13 @@ private struct EmptyAppListView: View {
                 if !isSearchEmpty {
                     CustomLargeButton(
                         title: "IPA をインストール",
-                        icon: "square.and.arrow.down",
+                        action: {
+                            showingInstaller = true
+                        },
                         isPrimary: true,
+                        icon: "square.and.arrow.down",
                         uiScale: uiScale
-                    ) {
-                        showingInstaller = true
-                    }
+                    )
                     .frame(minWidth: 200 * uiScale)
                     .keyboardShortcut(.defaultAction)
                 }

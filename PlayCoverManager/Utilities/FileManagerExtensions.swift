@@ -13,7 +13,8 @@ extension FileManager {
     
     /// Swift 6.2: Simplified directory creation with intermediate directories
     /// Eliminates need to specify withIntermediateDirectories every time
-    func createDirectoryIfNeeded(at url: URL, attributes: [FileAttributeKey: Any]? = nil) throws {
+    /// nonisolated to allow calling from any isolation context
+    nonisolated func createDirectoryIfNeeded(at url: URL, attributes: [FileAttributeKey: Any]? = nil) throws {
         guard !fileExists(atPath: url.path) else { return }
         try createDirectory(at: url, withIntermediateDirectories: true, attributes: attributes)
     }

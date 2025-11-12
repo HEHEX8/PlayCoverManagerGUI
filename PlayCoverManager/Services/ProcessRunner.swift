@@ -15,7 +15,8 @@ enum ProcessRunnerError: Error {
 final class ProcessRunner: Sendable {
     // Swift 6.2 optimization: Unified process execution logic
     // Extracts common logic to eliminate ~40 lines of duplication
-    private func executeProcess(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL?, environment: [String: String]?) throws -> String {
+    // nonisolated to allow calling from actor contexts
+    nonisolated private func executeProcess(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL?, environment: [String: String]?) throws -> String {
         let process = Process()
         process.launchPath = launchPath
         process.arguments = arguments
