@@ -222,584 +222,517 @@ struct QuickLauncherView: View {
         // Use NSWorkspace to get the app icon (works for macOS apps)
         return NSWorkspace.shared.icon(forFile: playCoverPath)
     }
-
-    var body: some View {
+    
+    // MARK: - View Components
+    
+    @ViewBuilder
+    private var backgroundLayer: some View {
+        // Rich multi-layer gradient background with depth
         ZStack {
-            // Hidden focusable view to capture keyboard events
-            // This ensures the view can receive keyboard input
-            Color.clear
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .focusable()
-                .focusEffectDisabled()  // Disable blue focus ring
-                .opacity(0.01)  // Nearly invisible but still present
+            // Base gradient
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .windowBackgroundColor),
+                    Color(nsColor: .controlBackgroundColor).opacity(0.3)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
             
-            // Rich multi-layer gradient background with depth
-            ZStack {
-                // Base gradient
-                LinearGradient(
-                    colors: [
-                        Color(nsColor: .windowBackgroundColor),
-                        Color(nsColor: .controlBackgroundColor).opacity(0.3)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                
-                // Radial glow from center
-                RadialGradient(
-                    colors: [
-                        .accentColor.opacity(0.03),
-                        .purple.opacity(0.02),
-                        .clear
-                    ],
-                    center: .center,
-                    startRadius: 100,
-                    endRadius: 600
-                )
-                
-                // Ambient corner glows
-                VStack {
-                    HStack {
-                        Circle()
-                            .fill(RadialGradient(
-                                colors: [.blue.opacity(0.08), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 200
-                            ))
-                            .frame(width: 400, height: 400)
-                            .blur(radius: 60)
-                        
-                        Spacer()
-                        
-                        Circle()
-                            .fill(RadialGradient(
-                                colors: [.purple.opacity(0.06), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 180
-                            ))
-                            .frame(width: 350, height: 350)
-                            .blur(radius: 50)
-                    }
+            // Radial glow from center
+            RadialGradient(
+                colors: [
+                    .accentColor.opacity(0.03),
+                    .purple.opacity(0.02),
+                    .clear
+                ],
+                center: .center,
+                startRadius: 100,
+                endRadius: 600
+            )
+            
+            // Ambient corner glows
+            VStack {
+                HStack {
+                    Circle()
+                        .fill(RadialGradient(
+                            colors: [.blue.opacity(0.08), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 200
+                        ))
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 60)
+                    
                     Spacer()
+                    
+                    Circle()
+                        .fill(RadialGradient(
+                            colors: [.purple.opacity(0.06), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 180
+                        ))
+                        .frame(width: 350, height: 350)
+                        .blur(radius: 50)
+                }
+                Spacer()
+            }
+        }
+        .allowsHitTesting(false)
+        .ignoresSafeArea()
+    }
+    
+    @ViewBuilder
+    private var toolbarView: some View {
+        HStack(spacing: 16) {
+            // Hamburger menu button
+            ModernToolbarButton(
+                icon: "line.3.horizontal",
+                color: .primary,
+                help: String(localized: "メニュー (⌘M)")
+            ) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    isDrawerOpen.toggle()
                 }
             }
-            .allowsHitTesting(false)  // Allow clicks to pass through background
-            .ignoresSafeArea()
+            .keyboardShortcut("m", modifiers: [.command])
             
-            VStack(spacing: 0) {
-                // Modern toolbar with glassmorphism
-                HStack(spacing: 16) {
-                    // Hamburger menu button
-                    ModernToolbarButton(
-                        icon: "line.3.horizontal",
-                        color: .primary,
-                        help: String(localized: "メニュー (⌘M)")
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            isDrawerOpen.toggle()
-                        }
-                    }
-                    .keyboardShortcut("m", modifiers: [.command])
-                    
-                    // Modern search field with icon
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.secondary)
-                        
-                        TextField(String(localized: "アプリを検索"), text: $viewModel.searchText)
-                            .textFieldStyle(.plain)
-                            .disabled(isDrawerOpen)
-                            .focused($isSearchFieldFocused)
-                            .onSubmit {
-                                // When Enter is pressed in search, focus first app
-                                isSearchFieldFocused = false
-                                if !viewModel.filteredApps.isEmpty {
-                                    focusedAppIndex = 0
-                                }
-                            }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .frame(maxWidth: 280)
-                    .glassEffect(
-                        isSearchFieldFocused 
-                        ? .regular.tint(.accentColor.opacity(0.4))
-                        : .regular.tint(.accentColor.opacity(0.2)), 
-                        in: RoundedRectangle(cornerRadius: 12)
-                    )
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
-                    .shadow(color: isSearchFieldFocused ? .accentColor.opacity(0.3) : .black.opacity(0.1), radius: isSearchFieldFocused ? 8 : 4, x: 0, y: 2)
-                    .scaleEffect(isSearchFieldFocused ? 1.02 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
-                    .onTapGesture {
-                        // Focus search field when clicked
-                        isSearchFieldFocused = true
-                        // Clear app focus
-                        focusedAppIndex = nil
-                    }
-                    
-                    Spacer()
-                    
-                    // Unmount button - modern style
-                    ModernToolbarButton(
-                        icon: "eject.fill",
-                        color: .red,
-                        help: String(localized: "すべてアンマウント (⌘⇧U)")
-                    ) {
-                        viewModel.unmountAll(applyToPlayCoverContainer: true)
-                    }
-                    .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
+            searchField
+            
+            Spacer()
+            
+            // Help button (shows keyboard shortcuts)
+            ModernToolbarButton(
+                icon: "questionmark.circle",
+                color: .secondary,
+                help: String(localized: "キーボードショートカット (⌘?)")
+            ) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    showingShortcutGuide.toggle()
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 16)
-                .background(
-                    // Multi-layer glass effect for depth
-                    ZStack {
-                        // Bottom layer - subtle glow
-                        Rectangle()
-                            .fill(LinearGradient(
-                                colors: [.accentColor.opacity(0.03), .clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ))
-                            .blur(radius: 20)
-                        
-                        // Top layer - main glass
-                        Rectangle()
-                            .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
+            }
+            .keyboardShortcut("/", modifiers: [.command, .shift])
+            
+            // Uninstall button with modern styling
+            ModernToolbarButton(
+                icon: "trash",
+                color: .red,
+                help: String(localized: "アンインストール (⌘⇧U)")
+            ) {
+                showingUninstaller = true
+            }
+            .keyboardShortcut(KeyEquivalent("u"), modifiers: [.command, .shift])
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+        .background(toolbarBackground)
+        .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+        .overlay(alignment: .bottom) {
+            toolbarSeparator
+        }
+    }
+    
+    @ViewBuilder
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.secondary)
+            
+            TextField(String(localized: "アプリを検索"), text: $viewModel.searchText)
+                .textFieldStyle(.plain)
+                .disabled(isDrawerOpen)
+                .focused($isSearchFieldFocused)
+                .onSubmit {
+                    // When Enter is pressed in search, focus first app
+                    isSearchFieldFocused = false
+                    if !viewModel.filteredApps.isEmpty {
+                        focusedAppIndex = 0
                     }
-                    .allowsHitTesting(false)  // Allow clicks to pass through to buttons
+                }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(
+                    isSearchFieldFocused ? Color.accentColor.opacity(0.5) : Color.primary.opacity(0.1),
+                    lineWidth: isSearchFieldFocused ? 2 : 1
                 )
-                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
-                .overlay(alignment: .bottom) {
-                    // Subtle separator line
-                    Rectangle()
-                        .fill(LinearGradient(
-                            colors: [.clear, .primary.opacity(0.1), .clear],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
-                        .frame(height: 0.5)
-                        .allowsHitTesting(false)  // Allow clicks through separator
-                }
+        }
+        .shadow(
+            color: isSearchFieldFocused ? .accentColor.opacity(0.2) : .clear,
+            radius: isSearchFieldFocused ? 8 : 0,
+            x: 0,
+            y: 2
+        )
+        .animation(.easeOut(duration: 0.2), value: isSearchFieldFocused)
+        .frame(maxWidth: 400)
+    }
+    
+    @ViewBuilder
+    private var toolbarBackground: some View {
+        ZStack {
+            // Bottom layer - subtle glow
+            Rectangle()
+                .fill(LinearGradient(
+                    colors: [.accentColor.opacity(0.03), .clear],
+                    startPoint: .top,
+                    endPoint: .bottom
+                ))
+                .blur(radius: 20)
             
-            // Recently launched app button (fixed at bottom)
-            if let recentApp = viewModel.filteredApps.first(where: { $0.lastLaunchedFlag }) {
-                VStack(spacing: 0) {
-                    // Main app grid
-                    if viewModel.filteredApps.isEmpty {
-                        EmptyAppListView(searchText: viewModel.searchText)
-                    } else {
-                        ResponsiveAppGrid(
-                            viewModel: viewModel,
-                            hasPerformedInitialAnimation: $hasPerformedInitialAnimation,
-                            focusedAppIndex: $focusedAppIndex,
-                            focusedRow: focusedRow,
-                            selectedAppForDetail: $selectedAppForDetail,
-                            selectedAppForUninstall: $selectedAppForUninstall,
-                            calculateIconSize: calculateIconSize,
-                            calculateSpacing: calculateSpacing,
-                            calculateFontSize: calculateFontSize,
-                            calculateBadgeFontSize: calculateBadgeFontSize,
-                            calculateBadgeSize: calculateBadgeSize,
-                            clearSearchFocus: { isSearchFieldFocused = false }
-                        )
-                    }
-                    
-                    // Modern recently launched app button with rich glass effect
-                    VStack(spacing: 0) {
-                        // Glowing separator
-                        Rectangle()
-                            .fill(LinearGradient(
-                                colors: [.clear, .accentColor.opacity(0.3), .purple.opacity(0.2), .accentColor.opacity(0.3), .clear],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ))
-                            .frame(height: 1)
-                            .blur(radius: 2)
-                        
-                        RecentAppLaunchButton(
-                            app: recentApp,
-                            onLaunch: {
-                                // Launch app first
-                                viewModel.launch(app: recentApp)
-                                
-                                // Trigger animation on the grid icon after a brief delay
-                                // to ensure the observer is set up
-                                Task { @MainActor in
-                                    try? await Task.sleep(for: .milliseconds(50))
-                                    NotificationCenter.default.post(
-                                        name: NSNotification.Name("TriggerAppIconAnimation"),
-                                        object: nil,
-                                        userInfo: ["bundleID": recentApp.bundleIdentifier]
-                                    )
-                                }
-                            }
-                        )
-                        .background(
-                            // Multi-layer glass for depth
-                            ZStack {
-                                // Animated gradient glow
-                                LinearGradient(
-                                    colors: [.accentColor.opacity(0.08), .purple.opacity(0.05), .blue.opacity(0.05)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                                .blur(radius: 20)
-                                
-                                // Main glass layer
-                                Rectangle()
-                                    .glassEffect(.regular.tint(.accentColor.opacity(0.12)), in: .rect)
-                            }
-                            .allowsHitTesting(false)  // Allow clicks through to button
-                        )
-                        .shadow(color: .accentColor.opacity(0.15), radius: 12, x: 0, y: -4)
-                        .overlay(alignment: .top) {
-                            // Shine effect
-                            LinearGradient(
-                                colors: [.white.opacity(0.15), .clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                            .frame(height: 60)
-                            .blur(radius: 10)
-                            .allowsHitTesting(false)  // Allow clicks through shine
-                        }
-                    }
-                }
-            } else {
-                // No recent app - show regular grid
+            // Top layer - main glass
+            Rectangle()
+                .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
+        }
+        .allowsHitTesting(false)
+    }
+    
+    @ViewBuilder
+    private var toolbarSeparator: some View {
+        Rectangle()
+            .fill(LinearGradient(
+                colors: [.clear, .primary.opacity(0.1), .clear],
+                startPoint: .leading,
+                endPoint: .trailing
+            ))
+            .frame(height: 0.5)
+            .allowsHitTesting(false)
+    }
+    
+    @ViewBuilder
+    private var mainContent: some View {
+        if let recentApp = viewModel.filteredApps.first(where: { $0.lastLaunchedFlag }) {
+            VStack(spacing: 0) {
+                // Main app grid
                 if viewModel.filteredApps.isEmpty {
                     EmptyAppListView(searchText: viewModel.searchText)
                 } else {
-                    ScrollView {
-                        VStack(spacing: 32) {
-                            // Render apps in rows of 10
-                            ForEach(0..<((viewModel.filteredApps.count + 9) / 10), id: \.self) { rowIndex in
-                                // iOS Dock style: center-aligned row
-                                HStack(spacing: 20) {
-                                    Spacer(minLength: 0)
-                                    
-                                    ForEach(0..<10, id: \.self) { columnIndex in
-                                        let index = rowIndex * 10 + columnIndex
-                                        if index < viewModel.filteredApps.count {
-                                            let app = viewModel.filteredApps[index]
-                                            // Number key indicator (1-9, 0)
-                                            let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
-                                            
-                                            ZStack(alignment: .topLeading) {
-                                                iOSAppIconView(
-                                                    app: app, 
-                                                    index: index,
-                                                    shouldAnimate: !hasPerformedInitialAnimation,
-                                                    isFocused: focusedAppIndex == index
-                                                ) {
-                                    // Tap action - called by DragGesture on valid release
-                                    // Clear search focus and focus this app
-                                    isSearchFieldFocused = false
-                                    focusedAppIndex = index
-                                    viewModel.launch(app: app)
-                                    
-                                    // Trigger icon animation
-                                    NotificationCenter.default.post(
-                                        name: NSNotification.Name("TriggerAppIconAnimation"),
-                                        object: nil,
-                                        userInfo: ["bundleID": app.bundleIdentifier]
-                                    )
-                                    
-                                    // If this is the recent app, trigger bounce animation on recent button
-                                    if app.lastLaunchedFlag {
-                                        NotificationCenter.default.post(
-                                            name: NSNotification.Name("TriggerRecentAppBounce"),
-                                            object: nil
-                                        )
-                                    }
-                                                } rightClickAction: {
-                                                    // Right click - show detail/settings
-                                                    selectedAppForDetail = app
-                                                } uninstallAction: {
-                                                    // Uninstall action - open uninstaller with pre-selected app
-                                                    selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
-                                                }
-                                                
-                                                // Number key indicator badge
-                                                if rowIndex == focusedRow {
-                                                    Text(keyNumber)
-                                                        .font(.system(size: 12, weight: .bold))
-                                                        .foregroundStyle(.white)
-                                                        .frame(width: 20, height: 20)
-                                                        .background(
-                                                            Circle()
-                                                                .fill(Color.accentColor)
-                                                        )
-                                                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                                        .offset(x: -5, y: -5)
-                                                }
-                                            }
-                                            .frame(width: 100)
-                                        }
-                                    }
-                                    
-                                    Spacer(minLength: 0)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 24)
-                        .onAppear {
-                            // Mark as performed after grid appears
-                            // Use delay to ensure animation starts before flag is set
-                            if !hasPerformedInitialAnimation {
-                                Task { @MainActor in
-                                    try? await Task.sleep(for: .milliseconds(50))
-                                    hasPerformedInitialAnimation = true
-                                }
-                            }
-                        }
+                    ResponsiveAppGrid(
+                        viewModel: viewModel,
+                        hasPerformedInitialAnimation: $hasPerformedInitialAnimation,
+                        focusedAppIndex: $focusedAppIndex,
+                        focusedRow: focusedRow,
+                        selectedAppForDetail: $selectedAppForDetail,
+                        selectedAppForUninstall: $selectedAppForUninstall,
+                        calculateIconSize: calculateIconSize,
+                        calculateSpacing: calculateSpacing,
+                        calculateFontSize: calculateFontSize,
+                        calculateBadgeFontSize: calculateBadgeFontSize,
+                        calculateBadgeSize: calculateBadgeSize,
+                        clearSearchFocus: { isSearchFieldFocused = false }
+                    )
+                }
+                
+                recentAppButton(recentApp)
+            }
+        } else {
+            // No recent app - show full-height app grid
+            if viewModel.filteredApps.isEmpty {
+                EmptyAppListView(searchText: viewModel.searchText)
+            } else {
+                ResponsiveAppGrid(
+                    viewModel: viewModel,
+                    hasPerformedInitialAnimation: $hasPerformedInitialAnimation,
+                    focusedAppIndex: $focusedAppIndex,
+                    focusedRow: focusedRow,
+                    selectedAppForDetail: $selectedAppForDetail,
+                    selectedAppForUninstall: $selectedAppForUninstall,
+                    calculateIconSize: calculateIconSize,
+                    calculateSpacing: calculateSpacing,
+                    calculateFontSize: calculateFontSize,
+                    calculateBadgeFontSize: calculateBadgeFontSize,
+                    calculateBadgeSize: calculateBadgeSize,
+                    clearSearchFocus: { isSearchFieldFocused = false }
+                )
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func recentAppButton(_ recentApp: PlayCoverApp) -> some View {
+        VStack(spacing: 0) {
+            // Glowing separator
+            Rectangle()
+                .fill(LinearGradient(
+                    colors: [.clear, .accentColor.opacity(0.3), .purple.opacity(0.2), .accentColor.opacity(0.3), .clear],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ))
+                .frame(height: 1)
+                .blur(radius: 2)
+            
+            RecentAppLaunchButton(
+                app: recentApp,
+                onLaunch: {
+                    viewModel.launch(app: recentApp)
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(50))
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("TriggerAppIconAnimation"),
+                            object: nil,
+                            userInfo: ["bundleID": recentApp.bundleIdentifier]
+                        )
                     }
                 }
+            )
+            .background(recentAppButtonBackground)
+            .shadow(color: .accentColor.opacity(0.15), radius: 12, x: 0, y: -4)
+            .overlay(alignment: .top) {
+                recentAppButtonShine
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var recentAppButtonBackground: some View {
+        ZStack {
+            // Animated gradient glow
+            LinearGradient(
+                colors: [.accentColor.opacity(0.08), .purple.opacity(0.05), .blue.opacity(0.05)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .blur(radius: 20)
+            
+            // Main glass layer
+            Rectangle()
+                .glassEffect(.regular.tint(.accentColor.opacity(0.12)), in: .rect)
+        }
+        .allowsHitTesting(false)
+    }
+    
+    @ViewBuilder
+    private var recentAppButtonShine: some View {
+        LinearGradient(
+            colors: [.white.opacity(0.15), .clear],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        .frame(height: 40)
+        .allowsHitTesting(false)
+    }
+
+    var body: some View {
+        ZStack {
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .focusable()
+                .focusEffectDisabled()
+                .opacity(0.01)
+            
+            backgroundLayer
+            
+            VStack(spacing: 0) {
+                toolbarView
+                mainContent
             }
         }
         .sheet(item: $selectedAppForDetail) { app in
-        AppDetailSheet(app: app, viewModel: viewModel)
-            .interactiveDismissDisabled(false)
-            .onDisappear {
-                restoreWindowFocus()
-            }
-    }
-    .sheet(isPresented: $showingSettings) {
-        SettingsRootView()
-            .interactiveDismissDisabled(false)
-            .onDisappear {
-                restoreWindowFocus()
-            }
-    }
-    .sheet(isPresented: $showingInstaller) {
-        IPAInstallerSheet()
-            .interactiveDismissDisabled(false)
-            .onDisappear {
-                restoreWindowFocus()
-            }
-    }
-    .sheet(item: $selectedAppForUninstall) { identifiableString in
-        AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
-            .interactiveDismissDisabled(false)
-            .onDisappear {
-                restoreWindowFocus()
-            }
-    }
-    .sheet(isPresented: $showingUninstaller) {
-        AppUninstallerSheet(preSelectedBundleID: nil)
-            .interactiveDismissDisabled(false)
-            .onDisappear {
-                restoreWindowFocus()
-            }
-    }
-    .frame(minWidth: 960, minHeight: 640)
-    .onGeometryChange(for: CGSize.self) { proxy in
-        proxy.size
-    } action: { newSize in
-        // Track window size for responsive grid layout
-        // Uses macOS 26 onGeometryChange API
-    }
-    .overlay(alignment: .center) {
-        // Unmount flow overlay (confirmation, progress, result, error)
-        if viewModel.unmountFlowState != .idle {
-            ZStack {
-                // Background overlay - blocks interaction but doesn't close on tap
-                // User must use buttons in the dialog
-                Color.black.opacity(0.3)
-                    .contentShape(Rectangle())  // Capture all tap events
-                    .ignoresSafeArea()
-                
-                UnmountOverlayView(viewModel: viewModel)
-                    .transition(.opacity.animation(.easeInOut(duration: 0.15)))
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .transition(.opacity)
-            .zIndex(998)  // Just below drawer (999), above regular content
+            AppDetailSheet(app: app, viewModel: viewModel)
+                .interactiveDismissDisabled(false)
+                .onDisappear { restoreWindowFocus() }
         }
-        // Regular status overlay for other time-consuming operations
-        else if viewModel.isBusy && viewModel.isShowingStatus {
-            VStack(spacing: 12) {
-                ProgressView()
-                if !viewModel.statusMessage.isEmpty {
-                    Text(viewModel.statusMessage)
+        .sheet(isPresented: $showingSettings) {
+            SettingsRootView()
+                .interactiveDismissDisabled(false)
+                .onDisappear { restoreWindowFocus() }
+        }
+        .sheet(isPresented: $showingInstaller) {
+            IPAInstallerSheet()
+                .interactiveDismissDisabled(false)
+                .onDisappear { restoreWindowFocus() }
+        }
+        .sheet(item: $selectedAppForUninstall) { identifiableString in
+            AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
+                .interactiveDismissDisabled(false)
+                .onDisappear { restoreWindowFocus() }
+        }
+        .sheet(isPresented: $showingUninstaller) {
+            AppUninstallerSheet(preSelectedBundleID: nil)
+                .interactiveDismissDisabled(false)
+                .onDisappear { restoreWindowFocus() }
+        }
+        .frame(minWidth: 960, minHeight: 640)
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            // Track window size for responsive grid layout
+        }
+        .overlay(alignment: .center) {
+            if viewModel.unmountFlowState != .idle {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .contentShape(Rectangle())
+                        .ignoresSafeArea()
+                    UnmountOverlayView(viewModel: viewModel)
+                        .transition(.opacity.animation(.easeInOut(duration: 0.15)))
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.opacity)
+                .zIndex(998)
+            } else if viewModel.isBusy && viewModel.isShowingStatus {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    if !viewModel.statusMessage.isEmpty {
+                        Text(viewModel.statusMessage)
+                    }
+                }
+                .padding()
+                .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle(cornerRadius: 12))
+                .shadow(radius: 12)
             }
-            .padding()
-            .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle(cornerRadius: 12))
-            .shadow(radius: 12)
         }
-    }
-    .keyboardNavigableAlert(
-        isPresented: Binding(
-            get: { viewModel.error != nil },
-            set: { if !$0 { viewModel.error = nil } }
-        ),
-        title: viewModel.error?.title ?? "",
-        message: viewModel.error?.message ?? "",
-        buttons: [
-            AlertButton("OK", role: .cancel, style: .borderedProminent, keyEquivalent: .default) {
-                viewModel.error = nil
-            }
-        ],
-        icon: .error
-    )
-    .keyboardNavigableAlert(
-        isPresented: Binding(
-            get: { viewModel.pendingImageCreation != nil },
-            set: { if !$0 { viewModel.cancelImageCreation() } }
-        ),
-        title: String(localized: "ディスクイメージが存在しません"),
-        message: String(localized: "\(viewModel.pendingImageCreation?.displayName ?? "") 用の ASIF ディスクイメージを作成しますか？"),
-        buttons: [
-            AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                viewModel.cancelImageCreation()
-            },
-            AlertButton("作成", style: .borderedProminent, keyEquivalent: .default) {
-                viewModel.confirmImageCreation()
-            }
-        ],
-        icon: .question
-    )
-    .overlay {
-        if viewModel.pendingDataHandling != nil {
-            DataHandlingAlertView(
-                request: viewModel.pendingDataHandling!,
-                defaultStrategy: settingsStore.defaultDataHandling,
-                onSelect: { strategy in
-                    viewModel.applyDataHandling(strategy: strategy)
+        .keyboardNavigableAlert(
+            isPresented: Binding(
+                get: { viewModel.error != nil },
+                set: { if !$0 { viewModel.error = nil } }
+            ),
+            title: viewModel.error?.title ?? "",
+            message: viewModel.error?.message ?? "",
+            buttons: [
+                AlertButton("OK", role: .cancel, style: .borderedProminent, keyEquivalent: .default) {
+                    viewModel.error = nil
+                }
+            ],
+            icon: .error
+        )
+        .keyboardNavigableAlert(
+            isPresented: Binding(
+                get: { viewModel.pendingImageCreation != nil },
+                set: { if !$0 { viewModel.cancelImageCreation() } }
+            ),
+            title: String(localized: "ディスクイメージが存在しません"),
+            message: String(localized: "\(viewModel.pendingImageCreation?.displayName ?? "") 用の ASIF ディスクイメージを作成しますか？"),
+            buttons: [
+                AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                    viewModel.cancelImageCreation()
                 },
-                onCancel: {
-                    viewModel.pendingDataHandling = nil
+                AlertButton("作成", style: .borderedProminent, keyEquivalent: .default) {
+                    viewModel.confirmImageCreation()
                 }
-            )
-        }
-    }
-    .task {
-        if viewModel.filteredApps.isEmpty {
-            await viewModel.refresh()
-        }
-        
-        // Set up storage change completion callback
-        viewModel.onStorageChangeCompleted = { [weak appViewModel] in
-            appViewModel?.completeStorageLocationChange()
-        }
-    }
-    .onAppear {
-        // Set up local keyboard event monitor for arrow keys
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            // Don't intercept keys if any modal/sheet is showing
-            if showingSettings || showingInstaller || showingUninstaller || 
-               selectedAppForDetail != nil || selectedAppForUninstall != nil ||
-               showingShortcutGuide || viewModel.unmountFlowState != .idle {
-                return event
-            }
-            
-            // Check if search field is focused
-            if isSearchFieldFocused {
-                return event
-            }
-            
-            // Handle arrow keys (keyCode: 123=left, 124=right, 125=down, 126=up)
-            // Handle space (49), return (36), and escape (53)
-            // Handle number keys (18=1, 19=2, 20=3, 21=4, 23=5, 22=6, 26=7, 28=8, 25=9, 29=0)
-            switch event.keyCode {
-            case 123, 124, 125, 126, 36, 49, 53,
-                 18, 19, 20, 21, 22, 23, 25, 26, 28, 29:  // Number keys 1-0
-                let handled = handleKeyCode(event.keyCode)
-                if handled {
-                    return nil  // Suppress the event (no beep)
-                }
-                return event
-            default:
-                return event
-            }
-        }
-    }
-    .onDisappear {
-        // Clean up event monitor
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSettings"))) { _ in
-        showingSettings = true
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowInstaller"))) { _ in
-        showingInstaller = true
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowUninstaller"))) { _ in
-        showingUninstaller = true
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleDrawer"))) { _ in
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            isDrawerOpen.toggle()
-        }
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UnmountAll"))) { _ in
-        viewModel.unmountAll(applyToPlayCoverContainer: true)
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowShortcutGuide"))) { _ in
-        showingShortcutGuide = true
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenPlayCover"))) { _ in
-        NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
-    }
-    .overlay {
-        // Left drawer overlay - full screen when open
-        if isDrawerOpen {
-            ZStack(alignment: .leading) {
-                // Background overlay - tap to close
-                // Use contentShape to ensure entire area is tappable
-                Color.black.opacity(0.3)
-                    .contentShape(Rectangle())
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            isDrawerOpen = false
-                        }
+            ],
+            icon: .question
+        )
+        .overlay {
+            if viewModel.pendingDataHandling != nil {
+                DataHandlingAlertView(
+                    request: viewModel.pendingDataHandling!,
+                    defaultStrategy: settingsStore.defaultDataHandling,
+                    onSelect: { strategy in
+                        viewModel.applyDataHandling(strategy: strategy)
+                    },
+                    onCancel: {
+                        viewModel.pendingDataHandling = nil
                     }
-                
-                // Drawer content
-                DrawerPanel(
-                    showingSettings: $showingSettings,
-                    showingInstaller: $showingInstaller,
-                    showingUninstaller: $showingUninstaller,
-                    getPlayCoverIcon: getPlayCoverIcon,
-                    isOpen: $isDrawerOpen
                 )
-                .transition(.move(edge: .leading))
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .zIndex(999)  // Ensure drawer overlay is above all other content
         }
-        
-        // Keyboard shortcut guide overlay
-        if showingShortcutGuide {
-            ZStack {
-                // Background overlay - tap to close
-                Color.black.opacity(0.5)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            showingShortcutGuide = false
-                        }
+        .task {
+            if viewModel.filteredApps.isEmpty {
+                await viewModel.refresh()
+            }
+            viewModel.onStorageChangeCompleted = { [weak appViewModel] in
+                appViewModel?.completeStorageLocationChange()
+            }
+        }
+        .onAppear {
+            eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                if showingSettings || showingInstaller || showingUninstaller || 
+                   selectedAppForDetail != nil || selectedAppForUninstall != nil ||
+                   showingShortcutGuide || viewModel.unmountFlowState != .idle {
+                    return event
+                }
+                if isSearchFieldFocused {
+                    return event
+                }
+                switch event.keyCode {
+                case 123, 124, 125, 126, 36, 49, 53,
+                     18, 19, 20, 21, 22, 23, 25, 26, 28, 29:
+                    let handled = handleKeyCode(event.keyCode)
+                    if handled {
+                        return nil
                     }
-                
-                KeyboardShortcutGuide(isShowing: $showingShortcutGuide)
-                    .transition(.scale.combined(with: .opacity))
+                    return event
+                default:
+                    return event
+                }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .zIndex(1000)  // Above drawer
         }
-    }
+        .onDisappear {
+            if let monitor = eventMonitor {
+                NSEvent.removeMonitor(monitor)
+                eventMonitor = nil
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSettings"))) { _ in
+            showingSettings = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowInstaller"))) { _ in
+            showingInstaller = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowUninstaller"))) { _ in
+            showingUninstaller = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleDrawer"))) { _ in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                isDrawerOpen.toggle()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UnmountAll"))) { _ in
+            viewModel.unmountAll(applyToPlayCoverContainer: true)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowShortcutGuide"))) { _ in
+            showingShortcutGuide = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("OpenPlayCover"))) { _ in
+            NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
+        }
+        .overlay {
+            if isDrawerOpen {
+                ZStack(alignment: .leading) {
+                    Color.black.opacity(0.3)
+                        .contentShape(Rectangle())
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                isDrawerOpen = false
+                            }
+                        }
+                    DrawerPanel(
+                        showingSettings: $showingSettings,
+                        showingInstaller: $showingInstaller,
+                        showingUninstaller: $showingUninstaller,
+                        getPlayCoverIcon: getPlayCoverIcon,
+                        isOpen: $isDrawerOpen
+                    )
+                    .transition(.move(edge: .leading))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .zIndex(999)
+            }
+            if showingShortcutGuide {
+                ZStack {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                showingShortcutGuide = false
+                            }
+                        }
+                    KeyboardShortcutGuide(isShowing: $showingShortcutGuide)
+                        .transition(.scale.combined(with: .opacity))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .zIndex(1000)
+            }
+        }
     }
 }
 
