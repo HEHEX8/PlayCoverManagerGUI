@@ -442,17 +442,20 @@ struct IPAInstallerSheet: View {
                     
                     Spacer()
                     
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24 * uiScale))
-                            .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
+                    // Hide close button during analyzing and installing phases
+                    if currentPhase != .analyzing && currentPhase != .installing {
+                        Button {
+                            isPresented = false
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.escape, modifiers: [])
+                        .help("閉じる (Esc)")
                     }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.escape, modifiers: [])
-                    .help("閉じる (Esc)")
                 }
                 .padding(.horizontal, 32 * uiScale)
                 .padding(.top, 24 * uiScale)
@@ -1535,17 +1538,20 @@ struct AppUninstallerSheet: View {
                     
                     Spacer()
                     
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24 * uiScale))
-                            .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
+                    // Hide close button during uninstalling phase
+                    if currentPhase != .uninstalling {
+                        Button {
+                            isPresented = false
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 24 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.escape, modifiers: [])
+                        .help("閉じる (Esc)")
                     }
-                    .buttonStyle(.plain)
-                    .keyboardShortcut(.escape, modifiers: [])
-                    .help("閉じる (Esc)")
                 }
                 .padding(.horizontal, 32 * uiScale)
                 .padding(.top, 24 * uiScale)
@@ -2033,7 +2039,7 @@ struct AppUninstallerSheet: View {
                     }
                     .padding(.vertical, 4 * uiScale)
                 }
-                .frame(minHeight: 200 * uiScale, maxHeight: .infinity)
+                .frame(minHeight: 350 * uiScale, maxHeight: .infinity)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
