@@ -393,101 +393,20 @@ struct QuickLauncherView: View {
                     if viewModel.filteredApps.isEmpty {
                         EmptyAppListView(searchText: viewModel.searchText)
                     } else {
-                        GeometryReader { geometry in
-                            let iconSize = calculateIconSize(for: geometry.size.width)
-                            let spacing = calculateSpacing(for: iconSize)
-                            let fontSize = calculateFontSize(for: iconSize)
-                            let badgeFontSize = calculateBadgeFontSize(for: iconSize)
-                            let badgeSize = calculateBadgeSize(for: iconSize)
-                            
-                            ScrollView {
-                                VStack(spacing: spacing * 1.6) {
-                                    // Render apps in rows of 10
-                                    ForEach(0..<((viewModel.filteredApps.count + 9) / 10), id: \.self) { rowIndex in
-                                        // iOS Dock style: center-aligned row
-                                        HStack(spacing: spacing) {
-                                            Spacer(minLength: 0)
-                                            
-                                            ForEach(0..<10, id: \.self) { columnIndex in
-                                                let index = rowIndex * 10 + columnIndex
-                                                if index < viewModel.filteredApps.count {
-                                                    let app = viewModel.filteredApps[index]
-                                                    // Number key indicator (1-9, 0)
-                                                    let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
-                                                    
-                                                    ZStack(alignment: .topLeading) {
-                                                        iOSAppIconView(
-                                                            app: app, 
-                                                            index: index,
-                                                            shouldAnimate: !hasPerformedInitialAnimation,
-                                                            isFocused: focusedAppIndex == index,
-                                                            iconSize: iconSize,
-                                                            fontSize: fontSize
-                                                        ) {
-                                            // Tap action - called by DragGesture on valid release
-                                            // Clear search focus and focus this app
-                                            isSearchFieldFocused = false
-                                            focusedAppIndex = index
-                                            viewModel.launch(app: app)
-                                            
-                                            // Trigger icon animation
-                                            NotificationCenter.default.post(
-                                                name: NSNotification.Name("TriggerAppIconAnimation"),
-                                                object: nil,
-                                                userInfo: ["bundleID": app.bundleIdentifier]
-                                            )
-                                            
-                                            // If this is the recent app, trigger bounce animation on recent button
-                                            if app.lastLaunchedFlag {
-                                                NotificationCenter.default.post(
-                                                    name: NSNotification.Name("TriggerRecentAppBounce"),
-                                                    object: nil
-                                                )
-                                            }
-                                                        } rightClickAction: {
-                                                            // Right click - show detail/settings
-                                                            selectedAppForDetail = app
-                                                        } uninstallAction: {
-                                                            // Uninstall action - open uninstaller with pre-selected app
-                                                            selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
-                                                        }
-                                                        
-                                                        // Number key indicator badge
-                                                        if rowIndex == focusedRow {
-                                                            Text(keyNumber)
-                                                                .font(.system(size: badgeFontSize, weight: .bold))
-                                                                .foregroundStyle(.white)
-                                                                .frame(width: badgeSize, height: badgeSize)
-                                                                .background(
-                                                                    Circle()
-                                                                        .fill(Color.accentColor)
-                                                                )
-                                                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                                                .offset(x: -5, y: -5)
-                                                        }
-                                                    }
-                                                    .frame(width: iconSize)
-                                                }
-                                            }
-                                            
-                                            Spacer(minLength: 0)
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal, 32)
-                                .padding(.vertical, 24)
-                                .onAppear {
-                                    // Mark as performed after grid appears
-                                    // Use delay to ensure animation starts before flag is set
-                                    if !hasPerformedInitialAnimation {
-                                        Task { @MainActor in
-                                            try? await Task.sleep(for: .milliseconds(50))
-                                            hasPerformedInitialAnimation = true
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        ResponsiveAppGrid(
+                            viewModel: viewModel,
+                            hasPerformedInitialAnimation: $hasPerformedInitialAnimation,
+                            focusedAppIndex: $focusedAppIndex,
+                            isSearchFieldFocused: $isSearchFieldFocused,
+                            focusedRow: focusedRow,
+                            selectedAppForDetail: $selectedAppForDetail,
+                            selectedAppForUninstall: $selectedAppForUninstall,
+                            calculateIconSize: calculateIconSize,
+                            calculateSpacing: calculateSpacing,
+                            calculateFontSize: calculateFontSize,
+                            calculateBadgeFontSize: calculateBadgeFontSize,
+                            calculateBadgeSize: calculateBadgeSize
+                        )
                     }
                     
                     // Modern recently launched app button with rich glass effect
@@ -4214,5 +4133,187 @@ private struct DataHandlingAlertView: View {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
         }
+    }
+}
+
+// MARK: - Responsive App Grid Helper View
+private struct ResponsiveAppGrid: View {
+    @Bindable var viewModel: LauncherViewModel
+    @Binding var hasPerformedInitialAnimation: Bool
+    @Binding var focusedAppIndex: Int?
+    @Binding var isSearchFieldFocused: Bool
+    let focusedRow: Int
+    @Binding var selectedAppForDetail: PlayCoverApp?
+    @Binding var selectedAppForUninstall: IdentifiableString?
+    
+    let calculateIconSize: (CGFloat) -> CGFloat
+    let calculateSpacing: (CGFloat) -> CGFloat
+    let calculateFontSize: (CGFloat) -> CGFloat
+    let calculateBadgeFontSize: (CGFloat) -> CGFloat
+    let calculateBadgeSize: (CGFloat) -> CGFloat
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let iconSize = calculateIconSize(geometry.size.width)
+            let spacing = calculateSpacing(iconSize)
+            let fontSize = calculateFontSize(iconSize)
+            let badgeFontSize = calculateBadgeFontSize(iconSize)
+            let badgeSize = calculateBadgeSize(iconSize)
+            
+            ScrollView {
+                VStack(spacing: spacing * 1.6) {
+                    ForEach(0..<((viewModel.filteredApps.count + 9) / 10), id: \.self) { rowIndex in
+                        AppGridRow(
+                            apps: viewModel.filteredApps,
+                            rowIndex: rowIndex,
+                            focusedRow: focusedRow,
+                            focusedAppIndex: $focusedAppIndex,
+                            isSearchFieldFocused: $isSearchFieldFocused,
+                            hasPerformedInitialAnimation: hasPerformedInitialAnimation,
+                            selectedAppForDetail: $selectedAppForDetail,
+                            selectedAppForUninstall: $selectedAppForUninstall,
+                            iconSize: iconSize,
+                            spacing: spacing,
+                            fontSize: fontSize,
+                            badgeFontSize: badgeFontSize,
+                            badgeSize: badgeSize,
+                            launchApp: viewModel.launch
+                        )
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.vertical, 24)
+                .onAppear {
+                    if !hasPerformedInitialAnimation {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(50))
+                            hasPerformedInitialAnimation = true
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - App Grid Row Helper View
+private struct AppGridRow: View {
+    let apps: [PlayCoverApp]
+    let rowIndex: Int
+    let focusedRow: Int
+    @Binding var focusedAppIndex: Int?
+    @Binding var isSearchFieldFocused: Bool
+    let hasPerformedInitialAnimation: Bool
+    @Binding var selectedAppForDetail: PlayCoverApp?
+    @Binding var selectedAppForUninstall: IdentifiableString?
+    
+    let iconSize: CGFloat
+    let spacing: CGFloat
+    let fontSize: CGFloat
+    let badgeFontSize: CGFloat
+    let badgeSize: CGFloat
+    let launchApp: (PlayCoverApp) -> Void
+    
+    var body: some View {
+        HStack(spacing: spacing) {
+            Spacer(minLength: 0)
+            
+            ForEach(0..<10, id: \.self) { columnIndex in
+                let index = rowIndex * 10 + columnIndex
+                if index < apps.count {
+                    AppGridCell(
+                        app: apps[index],
+                        index: index,
+                        rowIndex: rowIndex,
+                        columnIndex: columnIndex,
+                        focusedRow: focusedRow,
+                        focusedAppIndex: $focusedAppIndex,
+                        isSearchFieldFocused: $isSearchFieldFocused,
+                        hasPerformedInitialAnimation: hasPerformedInitialAnimation,
+                        selectedAppForDetail: $selectedAppForDetail,
+                        selectedAppForUninstall: $selectedAppForUninstall,
+                        iconSize: iconSize,
+                        fontSize: fontSize,
+                        badgeFontSize: badgeFontSize,
+                        badgeSize: badgeSize,
+                        launchApp: launchApp
+                    )
+                }
+            }
+            
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+// MARK: - App Grid Cell Helper View
+private struct AppGridCell: View {
+    let app: PlayCoverApp
+    let index: Int
+    let rowIndex: Int
+    let columnIndex: Int
+    let focusedRow: Int
+    @Binding var focusedAppIndex: Int?
+    @Binding var isSearchFieldFocused: Bool
+    let hasPerformedInitialAnimation: Bool
+    @Binding var selectedAppForDetail: PlayCoverApp?
+    @Binding var selectedAppForUninstall: IdentifiableString?
+    
+    let iconSize: CGFloat
+    let fontSize: CGFloat
+    let badgeFontSize: CGFloat
+    let badgeSize: CGFloat
+    let launchApp: (PlayCoverApp) -> Void
+    
+    var body: some View {
+        let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
+        
+        ZStack(alignment: .topLeading) {
+            iOSAppIconView(
+                app: app,
+                index: index,
+                shouldAnimate: !hasPerformedInitialAnimation,
+                isFocused: focusedAppIndex == index,
+                iconSize: iconSize,
+                fontSize: fontSize
+            ) {
+                // Tap action
+                isSearchFieldFocused = false
+                focusedAppIndex = index
+                launchApp(app)
+                
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TriggerAppIconAnimation"),
+                    object: nil,
+                    userInfo: ["bundleID": app.bundleIdentifier]
+                )
+                
+                if app.lastLaunchedFlag {
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("TriggerRecentAppBounce"),
+                        object: nil
+                    )
+                }
+            } rightClickAction: {
+                selectedAppForDetail = app
+            } uninstallAction: {
+                selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+            }
+            
+            // Number key indicator badge
+            if rowIndex == focusedRow {
+                Text(keyNumber)
+                    .font(.system(size: badgeFontSize, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: badgeSize, height: badgeSize)
+                    .background(
+                        Circle()
+                            .fill(Color.accentColor)
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                    .offset(x: -5, y: -5)
+            }
+        }
+        .frame(width: iconSize)
     }
 }
