@@ -825,41 +825,10 @@ private struct iOSAppIconView: View {
     @State private var pressLocation: CGPoint?
     // Hover effect state
     @State private var isHovering = false
-    @State private var focusGlowPhase: CGFloat = 0
-    @State private var focusRingAnimationTask: Task<Void, Never>?
     
     // Show hover effect when hovering OR when focused (keyboard)
     private var showHoverEffect: Bool {
         isHovering || isFocused
-    }
-    
-
-    
-    // Start focus ring animation from beginning
-    // Used when focus first appears or after ESC
-    private func startFocusRingAnimationFromBeginning() {
-        focusRingAnimationTask?.cancel()
-        focusGlowPhase = 0  // Reset to beginning
-        
-        focusRingAnimationTask = Task { @MainActor in
-            while !Task.isCancelled {
-                // Animate 0 → π (seamless loop point)
-                withAnimation(.linear(duration: 2.0)) {
-                    focusGlowPhase = .pi
-                }
-                try? await Task.sleep(for: .seconds(2.0))
-                if Task.isCancelled { break }
-                
-                // Reset to 0 instantly (seamless because colors match at 0 and π)
-                focusGlowPhase = 0
-            }
-        }
-    }
-    
-    // Stop and reset focus ring animation to beginning
-    private func stopAndResetFocusRingAnimation() {
-        focusRingAnimationTask?.cancel()
-        focusGlowPhase = 0  // Reset to beginning
     }
     
     var body: some View {
@@ -911,82 +880,8 @@ private struct iOSAppIconView: View {
                 y: showHoverEffect ? 6 : 2
             )
             .overlay {
-                // Rich keyboard focus ring with animated glow
-                // More subtle when also hovering to avoid visual overload
-                if isFocused {
-                    ZStack {
-                        // Outer glow layer (pulsing) - hidden when hovering to reduce clutter
-                        if !isHovering {
-                            RoundedRectangle(cornerRadius: 20)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [
-                                            .accentColor.opacity(0.3),
-                                            .purple.opacity(0.2),
-                                            .blue.opacity(0.2),
-                                            .accentColor.opacity(0.3)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 8
-                                )
-                                .blur(radius: 4)
-                                .opacity(0.6 + CGFloat(sin(Double(focusGlowPhase))) * 0.3)
-                        }
-                        
-                        // Middle glow layer (seamless rotation) - thinner when hovering
-                        RoundedRectangle(cornerRadius: 19)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        .accentColor.opacity(isHovering ? 0.3 : 0.5),
-                                        .purple.opacity(isHovering ? 0.25 : 0.4),
-                                        .blue.opacity(isHovering ? 0.25 : 0.4),
-                                        .cyan.opacity(isHovering ? 0.25 : 0.4),
-                                        .accentColor.opacity(isHovering ? 0.3 : 0.5),  // ← loop point (matches position 0)
-                                        .purple.opacity(isHovering ? 0.25 : 0.4),
-                                        .blue.opacity(isHovering ? 0.25 : 0.4),
-                                        .cyan.opacity(isHovering ? 0.25 : 0.4),
-                                        .accentColor.opacity(isHovering ? 0.3 : 0.5)
-                                    ],
-                                    // Seamless loop: 0→π, window shows 0.5 width of array
-                                    // At focusGlowPhase=0 and focusGlowPhase=π, same colors visible
-                                    startPoint: UnitPoint(x: focusGlowPhase / .pi - 0.5, y: 1.5 - focusGlowPhase / .pi),
-                                    endPoint: UnitPoint(x: focusGlowPhase / .pi, y: 1.0 - focusGlowPhase / .pi)
-                                ),
-                                lineWidth: isHovering ? 2 : 4
-                            )
-                            .blur(radius: isHovering ? 1 : 2)
-                        
-                        // Inner sharp border (seamless rotation)
-                        RoundedRectangle(cornerRadius: 18)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [
-                                        .accentColor,
-                                        .purple,
-                                        .blue,
-                                        .cyan,
-                                        .accentColor,  // ← loop point
-                                        .purple,
-                                        .blue,
-                                        .cyan,
-                                        .accentColor
-                                    ],
-                                    // Seamless loop: 0→π, window shows 0.5 width of array
-                                    startPoint: UnitPoint(x: focusGlowPhase / .pi - 0.5, y: 1.5 - focusGlowPhase / .pi),
-                                    endPoint: UnitPoint(x: focusGlowPhase / .pi, y: 1.0 - focusGlowPhase / .pi)
-                                ),
-                                lineWidth: 3
-                            )
-                    }
-                }
-            }
-            .overlay {
-                // Hover border glow outside the icon (only when not focused)
-                // When focused, the animated focus ring takes precedence
-                if isHovering && !isFocused {
+                // Border glow (hover or focus)
+                if showHoverEffect {
                     RoundedRectangle(cornerRadius: 18)
                         .strokeBorder(
                             LinearGradient(
