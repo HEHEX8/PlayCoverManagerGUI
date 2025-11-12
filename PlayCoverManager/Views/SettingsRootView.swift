@@ -1492,7 +1492,8 @@ struct AppUninstallerSheet: View {
         case results        // 結果表示
     }
     
-    init(preSelectedBundleID: String? = nil) {
+    init(isPresented: Binding<Bool>, preSelectedBundleID: String? = nil) {
+        self._isPresented = isPresented
         self.preSelectedBundleID = preSelectedBundleID
     }
     

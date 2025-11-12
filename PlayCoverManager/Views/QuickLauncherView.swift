@@ -467,7 +467,7 @@ struct QuickLauncherView: View {
             VStack(spacing: 0 * uiScale) {
                 // Main app grid
                 if viewModel.filteredApps.isEmpty {
-                    EmptyAppListView(searchText: viewModel.searchText)
+                    EmptyAppListView(searchText: viewModel.searchText, showingInstaller: $showingInstaller)
                 } else {
                     ResponsiveAppGrid(
                         viewModel: viewModel,
@@ -1505,7 +1505,7 @@ private struct AppDetailSheet: View {
 
 private struct EmptyAppListView: View {
     let searchText: String
-    @State private var showingInstaller = false
+    @Binding var showingInstaller: Bool
     @Environment(\.uiScale) var uiScale
     
     // Check if this is a search result empty state or truly no apps
@@ -1582,13 +1582,10 @@ private struct EmptyAppListView: View {
             .frame(maxWidth: 600 * uiScale)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .sheet(isPresented: $showingInstaller) {
-            IPAInstallerSheetWrapper()
-        }
     }
 }
 
-// Wrapper to access Environment in sheet
+// Wrapper to access Environment in sheet (removed - now using ZStack overlay)
 
 
 // Recent app launch button with rich animations
