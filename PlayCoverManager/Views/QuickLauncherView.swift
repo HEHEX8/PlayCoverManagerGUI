@@ -28,12 +28,15 @@ struct QuickLauncherView: View {
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     
-    // iOS-style grid with fixed 10 columns
-    private let gridColumns = Array(repeating: GridItem(.fixed(100), spacing: 24), count: 10)
+    // iOS-style grid with flexible columns (adaptive to window width)
+    private let gridColumns = [
+        GridItem(.adaptive(minimum: 80, maximum: 120), spacing: 16)
+    ]
     
-    // Fixed 10 columns per row
+    // Estimated columns per row (for keyboard navigation)
+    // This is approximate - actual count depends on window width
     private var columnsPerRow: Int {
-        return 10
+        return 10  // Default estimate for keyboard navigation
     }
     
     // Current focused row (for multi-row navigation)
@@ -354,7 +357,7 @@ struct QuickLauncherView: View {
                         EmptyAppListView(searchText: viewModel.searchText)
                     } else {
                         ScrollView {
-                            LazyVGrid(columns: gridColumns, spacing: 32) {
+                            LazyVGrid(columns: gridColumns, spacing: 24) {
                                 ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                     iOSAppIconView(
                                         app: app, 
@@ -391,7 +394,8 @@ struct QuickLauncherView: View {
                                     }
                                 }
                             }
-                            .padding(32)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 32)
                             .onAppear {
                                 // Mark as performed after grid appears
                                 // Use delay to ensure animation starts before flag is set
@@ -472,7 +476,7 @@ struct QuickLauncherView: View {
                     EmptyAppListView(searchText: viewModel.searchText)
                 } else {
                     ScrollView {
-                        LazyVGrid(columns: gridColumns, spacing: 32) {
+                        LazyVGrid(columns: gridColumns, spacing: 24) {
                             ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                 iOSAppIconView(
                                     app: app, 
@@ -509,7 +513,8 @@ struct QuickLauncherView: View {
                                 }
                             }
                         }
-                        .padding(32)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 32)
                         .onAppear {
                             // Mark as performed after grid appears
                             // Use delay to ensure animation starts before flag is set
@@ -900,7 +905,8 @@ private struct iOSAppIconView: View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
             iconContent
-                .frame(width: 80, height: 80)
+                .frame(minWidth: 64, maxWidth: 96, minHeight: 64, maxHeight: 96)
+                .aspectRatio(1, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 18))
             .background {
                 // Hover glow effect behind the icon (doesn't cover image)
@@ -919,7 +925,8 @@ private struct iOSAppIconView: View {
                                 endRadius: 60
                             )
                         )
-                        .frame(width: 96, height: 96)
+                        .frame(minWidth: 80, maxWidth: 120, minHeight: 80, maxHeight: 120)
+                        .aspectRatio(1, contentMode: .fit)
                         .blur(radius: 8)
                 }
             }
@@ -998,29 +1005,20 @@ private struct iOSAppIconView: View {
                     .onEnded { value in
                         isPressing = false
                         
-                        // Check if release location is within icon bounds (100x100 frame)
-                        let isWithinBounds = value.location.x >= 0 && value.location.x <= 100 &&
-                                           value.location.y >= 0 && value.location.y <= 120
+                        // Valid release - trigger bounce and launch
+                        withAnimation(.interpolatingSpring(stiffness: 400, damping: 8)) {
+                            isBouncing = true
+                        }
                         
-                        if isWithinBounds {
-                            // Valid release - trigger bounce and launch
-                            withAnimation(.interpolatingSpring(stiffness: 400, damping: 8)) {
-                                isBouncing = true
+                        // Trigger launch action
+                        tapAction()
+                        
+                        // Reset bounce after animation
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(400))
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                isBouncing = false
                             }
-                            
-                            // Trigger launch action
-                            tapAction()
-                            
-                            // Reset bounce after animation
-                            Task { @MainActor in
-                                try? await Task.sleep(for: .milliseconds(400))
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    isBouncing = false
-                                }
-                            }
-                        } else {
-                            // Invalid release - just return to normal without bounce
-                            // No action triggered
                         }
                         
                         pressLocation = nil
@@ -1032,11 +1030,10 @@ private struct iOSAppIconView: View {
                 .font(.system(size: 11, weight: .regular))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-                .frame(width: 90, height: 28)
+                .frame(maxWidth: 100)
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundStyle(.primary)
         }
-        .frame(width: 100, height: 120)
         .contentShape(Rectangle())
         .opacity(shouldAnimate ? (hasAppeared ? 1 : 0) : 1)
         .scaleEffect(max(0.3, shouldAnimate ? (hasAppeared ? 1 : 0.3) : 1))
