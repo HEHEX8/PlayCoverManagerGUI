@@ -825,6 +825,7 @@ private struct iOSAppIconView: View {
     @State private var pressLocation: CGPoint?
     // Hover effect state
     @State private var isHovering = false
+    @State private var gradientOffset: CGFloat = 0
     
     var body: some View {
         VStack(spacing: 8) {
@@ -846,55 +847,12 @@ private struct iOSAppIconView: View {
             }
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(
-                color: isHovering ? .accentColor.opacity(0.4) : .black.opacity(0.2), 
-                radius: isHovering ? 12 : 3, 
-                x: 0, 
-                y: isHovering ? 4 : 2
-            )
-            .overlay {
-                // Hover glow effect
-                if isHovering {
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [
-                                    .accentColor.opacity(0.6),
-                                    .purple.opacity(0.4),
-                                    .blue.opacity(0.4),
-                                    .accentColor.opacity(0.6)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 2
-                        )
-                        .blur(radius: 1)
-                }
-            }
+            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
             .overlay {
                 // Keyboard focus ring
                 if isFocused {
                     RoundedRectangle(cornerRadius: 18)
                         .strokeBorder(Color.accentColor, lineWidth: 3)
-                }
-            }
-            .overlay {
-                // Shimmer effect on hover
-                if isHovering {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    .clear,
-                                    .white.opacity(0.15),
-                                    .clear
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .allowsHitTesting(false)
                 }
             }
             .overlay(alignment: .topTrailing) {
@@ -942,12 +900,11 @@ private struct iOSAppIconView: View {
                     }
                 }
             }
-            // Press & bounce & hover animation
+            // Press & bounce animation (no hover scale)
             .scaleEffect(
                 isPressing ? 0.85 : 
                 isBouncing ? 1.15 : 
-                isAnimating ? 0.85 : 
-                isHovering ? 1.08 : 1.0
+                isAnimating ? 0.85 : 1.0
             )
             .animation(
                 isPressing ? .easeOut(duration: 0.15) :
@@ -974,6 +931,18 @@ private struct iOSAppIconView: View {
             )
             .onHover { hovering in
                 isHovering = hovering
+                
+                if hovering {
+                    // Start gradient animation when hovering
+                    withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
+                        gradientOffset = 1.0
+                    }
+                } else {
+                    // Stop gradient animation
+                    withAnimation(.linear(duration: 0.3)) {
+                        gradientOffset = 0
+                    }
+                }
             }
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -1015,26 +984,41 @@ private struct iOSAppIconView: View {
                     }
             )
             
-            // App name below icon
-            Text(app.displayName)
-                .font(.system(size: 11, weight: isHovering ? .medium : .regular))
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .frame(width: 90, height: 28)
-                .fixedSize(horizontal: false, vertical: true)
-                .foregroundStyle(
-                    isHovering ? 
+            // App name below icon with animated gradient on hover
+            ZStack {
+                // Base text (always visible)
+                Text(app.displayName)
+                    .font(.system(size: 11, weight: .regular))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 90, height: 28)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(.primary)
+                    .opacity(isHovering ? 0 : 1)
+                
+                // Gradient text (fades in on hover with animated gradient)
+                Text(app.displayName)
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 90, height: 28)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .foregroundStyle(
                         LinearGradient(
-                            colors: [.accentColor, .purple, .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ) :
-                        LinearGradient(
-                            colors: [.primary],
-                            startPoint: .leading,
-                            endPoint: .trailing
+                            colors: [
+                                .accentColor,
+                                .purple,
+                                .blue,
+                                .cyan,
+                                .accentColor
+                            ],
+                            startPoint: UnitPoint(x: gradientOffset, y: 0),
+                            endPoint: UnitPoint(x: gradientOffset + 1.0, y: 0)
                         )
-                )
+                    )
+                    .opacity(isHovering ? 1 : 0)
+            }
+            .animation(.easeInOut(duration: 0.4), value: isHovering)
         }
         .frame(width: 100, height: 120)
         .contentShape(Rectangle())
