@@ -8,6 +8,34 @@ struct SettingsRootView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
     @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
+    @State private var selectedTab: SettingsTab = .general
+    
+    enum SettingsTab: String, CaseIterable, Identifiable {
+        case general
+        case data
+        case maintenance
+        case about
+        
+        var id: String { rawValue }
+        
+        var localizedTitle: String {
+            switch self {
+            case .general: return String(localized: "一般")
+            case .data: return String(localized: "データ")
+            case .maintenance: return String(localized: "メンテナンス")
+            case .about: return String(localized: "情報")
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .general: return "gear"
+            case .data: return "internaldrive"
+            case .maintenance: return "wrench.and.screwdriver"
+            case .about: return "info.circle"
+            }
+        }
+    }
     
     init(isPresented: Binding<Bool>) {
         self._isPresented = isPresented
@@ -70,26 +98,53 @@ struct SettingsRootView: View {
                 Divider()
                     .padding(.horizontal, 32 * uiScale)
                 
-                // TabView content
-                TabView {
-                    GeneralSettingsView()
-                        .tabItem {
-                            Label("一般", systemImage: "gear")
+                // Custom Tab Content
+                ScrollView {
+                    VStack(spacing: 24 * uiScale) {
+                        // Tab selector
+                        HStack(spacing: 12 * uiScale) {
+                            ForEach(SettingsTab.allCases) { tab in
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        selectedTab = tab
+                                    }
+                                } label: {
+                                    VStack(spacing: 8 * uiScale) {
+                                        Image(systemName: tab.icon)
+                                            .font(.system(size: 24 * uiScale, weight: .medium))
+                                        Text(tab.localizedTitle)
+                                            .font(.system(size: 12 * uiScale, weight: .medium))
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16 * uiScale)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                                            .fill(selectedTab == tab ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                                    )
+                                    .foregroundStyle(selectedTab == tab ? .white : .primary)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
-                    DataSettingsView()
-                        .tabItem {
-                            Label("データ", systemImage: "internaldrive")
+                        .padding(.horizontal, 32 * uiScale)
+                        
+                        // Tab content
+                        VStack(spacing: 0) {
+                            switch selectedTab {
+                            case .general:
+                                GeneralSettingsView()
+                            case .data:
+                                DataSettingsView()
+                            case .maintenance:
+                                MaintenanceSettingsView()
+                            case .about:
+                                AboutView()
+                            }
                         }
-                    MaintenanceSettingsView()
-                        .tabItem {
-                            Label("メンテナンス", systemImage: "wrench.and.screwdriver")
-                        }
-                    AboutView()
-                        .tabItem {
-                            Label("情報", systemImage: "info.circle")
-                        }
+                    }
+                    .padding(.vertical, 24 * uiScale)
                 }
-                .tabViewStyle(.automatic)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .uiScale(uiScale)  // Inject UI scale into environment for all tabs
