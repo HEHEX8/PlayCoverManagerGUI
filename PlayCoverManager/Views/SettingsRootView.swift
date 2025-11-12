@@ -420,30 +420,89 @@ struct IPAInstallerSheet: View {
     }
     
     var body: some View {
-        VStack(spacing: 16 * uiScale) {
-            Text("IPA インストーラー")
-                .font(.system(size: 20 * uiScale, weight: .semibold))
-                .fontWeight(.semibold)
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .controlBackgroundColor).opacity(0.95),
+                    Color(nsColor: .controlBackgroundColor).opacity(0.98)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            switch currentPhase {
-            case .selection:
-                selectionView
-            case .analyzing:
-                analyzingView
-            case .confirmation:
-                confirmationView
-            case .installing:
-                installingView
-            case .results:
-                resultsView
+            // Main content
+            VStack(spacing: 0) {
+                // Header with close button
+                HStack {
+                    Text("IPA インストーラー")
+                        .font(.system(size: 24 * uiScale, weight: .bold))
+                        .foregroundStyle(.primary)
+                    
+                    Spacer()
+                    
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24 * uiScale))
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.escape, modifiers: [])
+                    .help("閉じる (Esc)")
+                }
+                .padding(.horizontal, 32 * uiScale)
+                .padding(.top, 24 * uiScale)
+                .padding(.bottom, 16 * uiScale)
+                
+                Divider()
+                    .padding(.horizontal, 32 * uiScale)
+                
+                // Content area with phase views
+                ScrollView {
+                    VStack(spacing: 24 * uiScale) {
+                        switch currentPhase {
+                        case .selection:
+                            selectionView
+                        case .analyzing:
+                            analyzingView
+                        case .confirmation:
+                            confirmationView
+                        case .installing:
+                            installingView
+                        case .results:
+                            resultsView
+                        }
+                    }
+                    .padding(.horizontal, 32 * uiScale)
+                    .padding(.vertical, 24 * uiScale)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
+                // Bottom buttons bar
+                if currentPhase != .analyzing {
+                    VStack(spacing: 0) {
+                        Divider()
+                            .padding(.horizontal, 32 * uiScale)
+                        
+                        bottomButtons
+                            .padding(.horizontal, 32 * uiScale)
+                            .padding(.vertical, 20 * uiScale)
+                    }
+                    .background(
+                        Color(nsColor: .controlBackgroundColor)
+                            .opacity(0.8)
+                            .blur(radius: 20)
+                    )
+                }
             }
-            
-            Spacer()
-            
-            bottomButtons
         }
-        .padding(20 * uiScale)
-        .frame(minWidth: 700, minHeight: 600)
+        .frame(minWidth: 800, minHeight: 600)
+        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
@@ -459,263 +518,373 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Selection View
     private var selectionView: some View {
-        VStack(spacing: 16 * uiScale) {
-            Image(systemName: "doc.badge.arrow.up")
-                .font(.system(size: 48 * uiScale))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 32 * uiScale) {
+            Spacer()
             
-            Text("IPA ファイルを選択してください")
-                .font(.system(size: 17 * uiScale, weight: .semibold))
+            // Icon with gradient background
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120 * uiScale, height: 120 * uiScale)
+                
+                Image(systemName: "doc.badge.arrow.up.fill")
+                    .font(.system(size: 56 * uiScale, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .symbolRenderingMode(.hierarchical)
+            }
             
-            Button("IPA を選択") {
+            VStack(spacing: 12 * uiScale) {
+                Text("IPA ファイルを選択")
+                    .font(.system(size: 28 * uiScale, weight: .bold))
+                    .foregroundStyle(.primary)
+                
+                Text("インストールする IPA ファイルを選択してください")
+                    .font(.system(size: 15 * uiScale))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Button {
                 selectIPAFiles()
+            } label: {
+                HStack(spacing: 8 * uiScale) {
+                    Image(systemName: "folder.badge.plus")
+                        .font(.system(size: 16 * uiScale, weight: .semibold))
+                    Text("IPA を選択")
+                        .font(.system(size: 16 * uiScale, weight: .semibold))
+                }
+                .padding(.horizontal, 24 * uiScale)
+                .padding(.vertical, 12 * uiScale)
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
             .keyboardShortcut(.defaultAction)
+            
+            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 48 * uiScale)
     }
     
     // MARK: - Analyzing View
     private var analyzingView: some View {
-        VStack(spacing: 16 * uiScale) {
-            ProgressView()
-            Text("IPA ファイルを解析中...")
-                .font(.system(size: 17 * uiScale, weight: .semibold))
-            Text(statusMessage)
-                .font(.system(size: 11 * uiScale))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 32 * uiScale) {
+            Spacer()
+            
+            // Animated icon
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.2), Color.cyan.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120 * uiScale, height: 120 * uiScale)
+                
+                ProgressView()
+                    .scaleEffect(1.5 * uiScale)
+                    .controlSize(.large)
+            }
+            
+            VStack(spacing: 12 * uiScale) {
+                Text("解析中")
+                    .font(.system(size: 28 * uiScale, weight: .bold))
+                    .foregroundStyle(.primary)
+                
+                Text("IPA ファイルを解析しています...")
+                    .font(.system(size: 16 * uiScale))
+                    .foregroundStyle(.secondary)
+                
+                if !statusMessage.isEmpty {
+                    Text(statusMessage)
+                        .font(.system(size: 13 * uiScale))
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, 8 * uiScale)
+                }
+            }
+            
+            Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 48 * uiScale)
     }
     
     // MARK: - Confirmation View
     private var confirmationView: some View {
-        VStack(spacing: 24 * uiScale) {
-            // Single or multiple app confirmation
-            if analyzedIPAs.count == 1, let info = analyzedIPAs.first {
-                // Single app confirmation
-                VStack(spacing: 16 * uiScale) {
-                    // App icon
-                    if let icon = info.icon {
-                        Image(nsImage: icon)
-                            .resizable()
-                            .frame(width: 80 * uiScale, height: 80 * uiScale)
-                            .clipShape(RoundedRectangle(cornerRadius: 18 * uiScale))
-                            .shadow(color: .black.opacity(0.2), radius: 8 * uiScale, x: 0, y: 4)
-                    }
-                    
-                    VStack(spacing: 8 * uiScale) {
-                        Text(info.appName)
-                            .font(.system(size: 22 * uiScale, weight: .bold))
-                            .fontWeight(.semibold)
-                            .lineLimit(2)
+        ScrollView {
+            VStack(spacing: 20 * uiScale) {
+                // Single or multiple app confirmation
+                if analyzedIPAs.count == 1, let info = analyzedIPAs.first {
+                    // Single app confirmation with modern card
+                    VStack(spacing: 20 * uiScale) {
+                        // App icon with shadow
+                        if let icon = info.icon {
+                            Image(nsImage: icon)
+                                .resizable()
+                                .frame(width: 100 * uiScale, height: 100 * uiScale)
+                                .clipShape(RoundedRectangle(cornerRadius: 22 * uiScale))
+                                .shadow(color: .black.opacity(0.25), radius: 12 * uiScale, x: 0, y: 6 * uiScale)
+                        }
                         
-                        Text(info.bundleID)
-                            .font(.system(size: 11 * uiScale))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
+                        VStack(spacing: 8 * uiScale) {
+                            Text(info.appName)
+                                .font(.system(size: 26 * uiScale, weight: .bold))
+                                .lineLimit(2)
+                                .multilineTextAlignment(.center)
+                            
+                            Text(info.bundleID)
+                                .font(.system(size: 13 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .padding(.horizontal, 20 * uiScale)
                     }
-                }
-                
-                Divider()
-                
-                // Install type indicator
-                VStack(spacing: 12 * uiScale) {
-                    installTypeIndicator(for: info)
+                    .padding(.vertical, 24 * uiScale)
                     
-                    Text(installTypeMessage(for: info))
-                        .font(.system(size: 13 * uiScale))
-                        .foregroundStyle(.secondary)
-                }
-                
-                Divider()
-                
-                // Details
-                VStack(spacing: 8 * uiScale) {
-                    HStack {
-                        Text("バージョン(ラベル)")
+                    // Install type card
+                    VStack(spacing: 16 * uiScale) {
+                        installTypeIndicator(for: info)
+                        
+                        Text(installTypeMessage(for: info))
+                            .font(.system(size: 14 * uiScale))
                             .foregroundStyle(.secondary)
-                        Spacer()
-                        if let existing = info.existingVersion {
-                            Text("\(existing) → \(info.version)")
-                                .fontWeight(.medium)
-                        } else {
-                            Text(info.version)
-                                .fontWeight(.medium)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(20 * uiScale)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                            .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                    )
+                    
+                    // Details card
+                    VStack(spacing: 12 * uiScale) {
+                        HStack {
+                            Text("バージョン")
+                                .font(.system(size: 14 * uiScale))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            if let existing = info.existingVersion {
+                                Text("\(existing) → \(info.version)")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                                    .foregroundStyle(.primary)
+                            } else {
+                                Text(info.version)
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                                    .foregroundStyle(.primary)
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        HStack {
+                            Text("ファイルサイズ")
+                                .font(.system(size: 14 * uiScale))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
+                                .font(.system(size: 14 * uiScale, weight: .medium))
+                                .foregroundStyle(.primary)
                         }
                     }
-                    HStack {
-                        Text("ファイルサイズ(ラベル)")
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
-                    }
-                }
-                .font(.system(size: 15 * uiScale))
-                .padding()
-                .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
+                    .padding(20 * uiScale)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                            .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                    )
                 
             } else if analyzedIPAs.count > 1 {
-                // Multiple apps confirmation with expanded list view
-                VStack(spacing: 0 * uiScale) {
-                    // Compact header with summary
-                    VStack(spacing: 8 * uiScale) {
-                        HStack(spacing: 10 * uiScale) {
-                            Image(systemName: "square.and.arrow.down.fill")
-                                .font(.system(size: 24 * uiScale))
-                                .foregroundStyle(.blue)
+                // Multiple apps confirmation with modern card layout
+                VStack(spacing: 20 * uiScale) {
+                    // Header card with summary
+                    VStack(spacing: 16 * uiScale) {
+                        HStack(spacing: 12 * uiScale) {
+                            Image(systemName: "square.stack.3d.down.forward.fill")
+                                .font(.system(size: 32 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.blue, .cyan],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
                             
-                            Text("\(analyzedIPAs.count) 個のアプリをインストールしますか？")
-                                .font(.system(size: 17 * uiScale, weight: .semibold))
+                            VStack(alignment: .leading, spacing: 4 * uiScale) {
+                                Text("\(analyzedIPAs.count) 個のアプリ")
+                                    .font(.system(size: 24 * uiScale, weight: .bold))
+                                
+                                Text("インストール準備完了")
+                                    .font(.system(size: 14 * uiScale))
+                                    .foregroundStyle(.secondary)
+                            }
                             
                             Spacer()
                         }
                         
-                        // Summary badges in compact layout
+                        // Summary badges
                         let newInstalls = analyzedIPAs.filter { $0.installType == .newInstall }.count
                         let upgrades = analyzedIPAs.filter { $0.installType == .upgrade }.count
                         let others = analyzedIPAs.count - newInstalls - upgrades
                         let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
                         
-                        HStack(spacing: 10 * uiScale) {
+                        HStack(spacing: 12 * uiScale) {
                             if newInstalls > 0 {
-                                HStack(spacing: 3 * uiScale) {
+                                HStack(spacing: 4 * uiScale) {
                                     Image(systemName: "sparkles")
-                                        .font(.caption2)
+                                        .font(.system(size: 12 * uiScale))
                                     Text("\(newInstalls)")
+                                        .font(.system(size: 14 * uiScale, weight: .semibold))
                                 }
-                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.blue)
+                                .padding(.horizontal, 12 * uiScale)
+                                .padding(.vertical, 6 * uiScale)
+                                .background(Color.blue.opacity(0.15), in: Capsule())
                             }
                             if upgrades > 0 {
-                                HStack(spacing: 3 * uiScale) {
+                                HStack(spacing: 4 * uiScale) {
                                     Image(systemName: "arrow.up.circle.fill")
-                                        .font(.caption2)
+                                        .font(.system(size: 12 * uiScale))
                                     Text("\(upgrades)")
+                                        .font(.system(size: 14 * uiScale, weight: .semibold))
                                 }
-                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.green)
+                                .padding(.horizontal, 12 * uiScale)
+                                .padding(.vertical, 6 * uiScale)
+                                .background(Color.green.opacity(0.15), in: Capsule())
                             }
                             if others > 0 {
-                                HStack(spacing: 3 * uiScale) {
+                                HStack(spacing: 4 * uiScale) {
                                     Image(systemName: "arrow.clockwise.circle.fill")
-                                        .font(.caption2)
+                                        .font(.system(size: 12 * uiScale))
                                     Text("\(others)")
+                                        .font(.system(size: 14 * uiScale, weight: .semibold))
                                 }
-                                .font(.system(size: 11 * uiScale))
                                 .foregroundStyle(.secondary)
+                                .padding(.horizontal, 12 * uiScale)
+                                .padding(.vertical, 6 * uiScale)
+                                .background(Color.secondary.opacity(0.15), in: Capsule())
                             }
-                            
-                            Text("・")
-                                .foregroundStyle(.tertiary)
-                                .font(.system(size: 11 * uiScale))
-                            
-                            Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
-                                .font(.system(size: 11 * uiScale))
-                                .fontWeight(.medium)
-                                .foregroundStyle(.secondary)
                             
                             Spacer()
+                            
+                            Text(ByteCountFormatter.string(fromByteCount: totalSize, countStyle: .file))
+                                .font(.system(size: 14 * uiScale, weight: .medium))
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .padding(12 * uiScale)
-                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
+                    .padding(20 * uiScale)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12 * uiScale)
+                            .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                    )
                     
-                    // Expanded scrollable list of apps with optimized spacing
-                    ScrollView {
-                        VStack(spacing: 6 * uiScale) {
-                            ForEach(analyzedIPAs) { info in
-                                HStack(spacing: 10 * uiScale) {
-                                    // App icon (slightly smaller)
-                                    if let icon = info.icon {
-                                        Image(nsImage: icon)
-                                            .resizable()
-                                            .frame(width: 42 * uiScale, height: 42 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 9 * uiScale))
-                                            .shadow(color: .black.opacity(0.2), radius: 3 * uiScale, x: 0, y: 1)
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 9 * uiScale)
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 42 * uiScale, height: 42 * uiScale)
-                                            .overlay {
-                                                Image(systemName: "app.dashed")
-                                                    .font(.system(size: 11 * uiScale))
-                                                    .foregroundStyle(.secondary)
-                                            }
-                                    }
-                                    
-                                    // App info (compact layout)
-                                    VStack(alignment: .leading, spacing: 2 * uiScale) {
-                                        Text(info.appName)
-                                            .font(.system(size: 15 * uiScale))
-                                            .fontWeight(.medium)
-                                            .lineLimit(1)
-                                        
-                                        HStack(spacing: 6 * uiScale) {
-                                            // Install type badge
-                                            Group {
-                                                switch info.installType {
-                                                case .newInstall:
-                                                    HStack(spacing: 2 * uiScale) {
-                                                        Image(systemName: "sparkles")
-                                                        Text("新規")
-                                                    }
-                                                    .foregroundStyle(.blue)
-                                                case .upgrade:
-                                                    HStack(spacing: 2 * uiScale) {
-                                                        Image(systemName: "arrow.up.circle.fill")
-                                                        Text("更新")
-                                                    }
-                                                    .foregroundStyle(.green)
-                                                case .downgrade:
-                                                    HStack(spacing: 2 * uiScale) {
-                                                        Image(systemName: "arrow.down.circle.fill")
-                                                        Text("ダウン")
-                                                    }
-                                                    .foregroundStyle(.orange)
-                                                case .reinstall:
-                                                    HStack(spacing: 2 * uiScale) {
-                                                        Image(systemName: "arrow.clockwise.circle.fill")
-                                                        Text("上書き")
-                                                    }
-                                                    .foregroundStyle(.secondary)
-                                                }
-                                            }
-                                            .font(.caption2)
-                                            
-                                            Text("・")
-                                                .foregroundStyle(.tertiary)
-                                                .font(.caption2)
-                                            
-                                            Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
-                                                .font(.caption2)
+                    // App list with modern card design
+                    VStack(spacing: 8 * uiScale) {
+                        ForEach(analyzedIPAs) { info in
+                            HStack(spacing: 12 * uiScale) {
+                                // App icon with shadow
+                                if let icon = info.icon {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12 * uiScale))
+                                        .shadow(color: .black.opacity(0.2), radius: 4 * uiScale, x: 0, y: 2)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 12 * uiScale)
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: 52 * uiScale, height: 52 * uiScale)
+                                        .overlay {
+                                            Image(systemName: "app.dashed")
+                                                .font(.system(size: 20 * uiScale))
                                                 .foregroundStyle(.secondary)
                                         }
-                                    }
+                                }
+                                
+                                // App info
+                                VStack(alignment: .leading, spacing: 4 * uiScale) {
+                                    Text(info.appName)
+                                        .font(.system(size: 15 * uiScale, weight: .medium))
+                                        .lineLimit(1)
                                     
-                                    Spacer()
-                                    
-                                    // Remove from list button (compact)
-                                    Button {
-                                        removeIPAFromList(info)
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .font(.system(size: 15 * uiScale))
+                                    HStack(spacing: 8 * uiScale) {
+                                        // Install type badge
+                                        Group {
+                                            switch info.installType {
+                                            case .newInstall:
+                                                HStack(spacing: 3 * uiScale) {
+                                                    Image(systemName: "sparkles")
+                                                    Text("新規")
+                                                }
+                                                .foregroundStyle(.blue)
+                                            case .upgrade:
+                                                HStack(spacing: 3 * uiScale) {
+                                                    Image(systemName: "arrow.up.circle.fill")
+                                                    Text("更新")
+                                                }
+                                                .foregroundStyle(.green)
+                                            case .downgrade:
+                                                HStack(spacing: 3 * uiScale) {
+                                                    Image(systemName: "arrow.down.circle.fill")
+                                                    Text("ダウン")
+                                                }
+                                                .foregroundStyle(.orange)
+                                            case .reinstall:
+                                                HStack(spacing: 3 * uiScale) {
+                                                    Image(systemName: "arrow.clockwise.circle.fill")
+                                                    Text("上書き")
+                                                }
+                                                .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                        .font(.system(size: 12 * uiScale))
+                                        
+                                        Text("・")
+                                            .foregroundStyle(.tertiary)
+                                            .font(.system(size: 12 * uiScale))
+                                        
+                                        Text(ByteCountFormatter.string(fromByteCount: info.fileSize, countStyle: .file))
+                                            .font(.system(size: 12 * uiScale))
                                             .foregroundStyle(.secondary)
                                     }
-                                    .buttonStyle(.plain)
-                                    .help("リストから外す")
                                 }
-                                .padding(10 * uiScale)
-                                .background(Color(nsColor: .controlBackgroundColor))
-                                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
+                                
+                                Spacer()
+                                
+                                // Remove from list button
+                                Button {
+                                    removeIPAFromList(info)
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 20 * uiScale))
+                                        .foregroundStyle(.secondary)
+                                        .symbolRenderingMode(.hierarchical)
+                                }
+                                .buttonStyle(.plain)
+                                .help("リストから外す")
                             }
+                            .padding(16 * uiScale)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12 * uiScale)
+                                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                            )
                         }
-                        .padding(.top, 8 * uiScale)
                     }
                 }
             }
@@ -1043,12 +1212,17 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Bottom Buttons
     private var bottomButtons: some View {
-        HStack {
+        HStack(spacing: 12 * uiScale) {
             // Hide cancel button during installation - too complex to safely cancel
             if currentPhase != .installing && currentPhase != .analyzing {
-                Button(currentPhase == .results ? "閉じる" : "キャンセル") {
+                Button {
                     dismiss()
+                } label: {
+                    Text(currentPhase == .results ? "閉じる" : "キャンセル")
+                        .font(.system(size: 14 * uiScale, weight: .medium))
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
                 .keyboardShortcut(.cancelAction)
             }
             
@@ -1056,17 +1230,45 @@ struct IPAInstallerSheet: View {
             
             switch currentPhase {
             case .confirmation:
-                Button("別の IPA を追加") {
+                Button {
                     selectIPAFiles()
+                } label: {
+                    HStack(spacing: 6 * uiScale) {
+                        Image(systemName: "plus.circle")
+                            .font(.system(size: 14 * uiScale))
+                        Text("別の IPA を追加")
+                            .font(.system(size: 14 * uiScale, weight: .medium))
+                    }
                 }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
                 
-                Button("インストール開始") {
+                Button {
                     Task {
                         await startInstallation()
                     }
+                } label: {
+                    HStack(spacing: 6 * uiScale) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 14 * uiScale))
+                        Text("インストール開始")
+                            .font(.system(size: 14 * uiScale, weight: .semibold))
+                    }
                 }
                 .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .disabled(analyzedIPAs.isEmpty)
+                .keyboardShortcut(.defaultAction)
+                
+            case .results:
+                Button {
+                    dismiss()
+                } label: {
+                    Text("完了")
+                        .font(.system(size: 14 * uiScale, weight: .semibold))
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
                 
             default:
