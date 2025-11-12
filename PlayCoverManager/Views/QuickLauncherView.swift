@@ -592,32 +592,73 @@ struct QuickLauncherView: View {
                 toolbarView
                 mainContent
             }
+            
+            // Overlay modals (instead of sheets) for dynamic scaling support
+            if let app = selectedAppForDetail {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        selectedAppForDetail = nil
+                        restoreWindowFocus()
+                    }
+                
+                AppDetailSheet(app: app, viewModel: viewModel)
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
+            
+            if showingSettings {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showingSettings = false
+                        restoreWindowFocus()
+                    }
+                
+                SettingsRootView()
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
+            
+            if showingInstaller {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showingInstaller = false
+                        restoreWindowFocus()
+                    }
+                
+                IPAInstallerSheet()
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
+            
+            if let identifiableString = selectedAppForUninstall {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        selectedAppForUninstall = nil
+                        restoreWindowFocus()
+                    }
+                
+                AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
+            
+            if showingUninstaller {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        showingUninstaller = false
+                        restoreWindowFocus()
+                    }
+                
+                AppUninstallerSheet(preSelectedBundleID: nil)
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
         }
-        .sheet(item: $selectedAppForDetail) { app in
-            AppDetailSheet(app: app, viewModel: viewModel)
-                .interactiveDismissDisabled(false)
-                .onDisappear { restoreWindowFocus() }
-        }
-        .sheet(isPresented: $showingSettings) {
-            SettingsRootView()
-                .interactiveDismissDisabled(false)
-                .onDisappear { restoreWindowFocus() }
-        }
-        .sheet(isPresented: $showingInstaller) {
-            IPAInstallerSheet()
-                .interactiveDismissDisabled(false)
-                .onDisappear { restoreWindowFocus() }
-        }
-        .sheet(item: $selectedAppForUninstall) { identifiableString in
-            AppUninstallerSheet(preSelectedBundleID: identifiableString.id)
-                .interactiveDismissDisabled(false)
-                .onDisappear { restoreWindowFocus() }
-        }
-        .sheet(isPresented: $showingUninstaller) {
-            AppUninstallerSheet(preSelectedBundleID: nil)
-                .interactiveDismissDisabled(false)
-                .onDisappear { restoreWindowFocus() }
-        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: selectedAppForDetail != nil)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showingSettings)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showingInstaller)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: selectedAppForUninstall != nil)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showingUninstaller)
         .frame(minWidth: 960, minHeight: 640)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
