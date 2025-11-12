@@ -441,7 +441,6 @@ struct QuickLauncherView: View {
                             }
                         }
                     }
-                    }
                     
                     // Modern recently launched app button with rich glass effect
                     VStack(spacing: 0) {
