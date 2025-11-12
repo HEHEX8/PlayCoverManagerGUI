@@ -827,10 +827,44 @@ private struct iOSAppIconView: View {
     @State private var isHovering = false
     @State private var gradientOffset: CGFloat = 0
     @State private var focusGlowPhase: CGFloat = 0
+    @State private var gradientAnimationTask: Task<Void, Never>?
+    @State private var gradientAnimationTask: Task<Void, Never>?
     
     // Show hover effect when hovering OR when focused (keyboard)
     private var showHoverEffect: Bool {
         isHovering || isFocused
+    }
+    
+    // Start gradient animation loop with wait period
+    private func startGradientAnimation() {
+        gradientAnimationTask?.cancel()
+        gradientAnimationTask = Task { @MainActor in
+            while !Task.isCancelled {
+                // Animate 0 → 1 (3 seconds)
+                withAnimation(.linear(duration: 3.0)) {
+                    gradientOffset = 1.0
+                }
+                try? await Task.sleep(for: .seconds(3.0))
+                
+                if Task.isCancelled { break }
+                
+                // Wait (1 second)
+                try? await Task.sleep(for: .seconds(1.0))
+                
+                if Task.isCancelled { break }
+                
+                // Reset to 0 instantly (no animation)
+                gradientOffset = 0
+            }
+        }
+    }
+    
+    // Stop gradient animation
+    private func stopGradientAnimation() {
+        gradientAnimationTask?.cancel()
+        withAnimation(.linear(duration: 0.5)) {
+            gradientOffset = 0
+        }
     }
     
     var body: some View {
@@ -1052,15 +1086,11 @@ private struct iOSAppIconView: View {
                 
                 // Start/stop gradient animation based on hover OR focus state
                 if showHoverEffect {
-                    // Start seamless gradient animation (0 to 1 loop with duplicated colors)
-                    withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
-                        gradientOffset = 1.0
-                    }
+                    // Start gradient animation with wait period (0→1→wait→repeat)
+                    startGradientAnimation()
                 } else if !isFocused {
                     // Stop gradient animation smoothly (only if not focused)
-                    withAnimation(.linear(duration: 0.5)) {
-                        gradientOffset = 0
-                    }
+                    stopGradientAnimation()
                 }
             }
             .gesture(
@@ -1173,11 +1203,9 @@ private struct iOSAppIconView: View {
                 withAnimation(.linear(duration: 2.0).repeatForever(autoreverses: false)) {
                     focusGlowPhase = .pi * 2
                 }
-                // Also start app name gradient animation
+                // Also start app name gradient animation with wait period
                 if !isHovering {
-                    withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
-                        gradientOffset = 1.0
-                    }
+                    startGradientAnimation()
                 }
             } else {
                 // Stop focus ring animation
@@ -1186,9 +1214,7 @@ private struct iOSAppIconView: View {
                 }
                 // Stop gradient animation only if not hovering
                 if !isHovering {
-                    withAnimation(.linear(duration: 0.5)) {
-                        gradientOffset = 0
-                    }
+                    stopGradientAnimation()
                 }
             }
         }
