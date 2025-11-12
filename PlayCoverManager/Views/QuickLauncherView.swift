@@ -33,9 +33,47 @@ struct QuickLauncherView: View {
         return 10
     }
     
-    // Create fixed 10-column grid
-    private var gridColumns: [GridItem] {
-        Array(repeating: GridItem(.fixed(100), spacing: 20), count: 10)
+    // Calculate dynamic icon size based on available width
+    // Formula: (availableWidth - totalSpacing - sidePadding) / columnCount
+    private func calculateIconSize(for availableWidth: CGFloat) -> CGFloat {
+        let sidePadding: CGFloat = 64.0  // 32 padding on each side
+        let minimumSpacing: CGFloat = 12.0
+        let spacingMultiplier = CGFloat(columnsPerRow - 1)
+        let totalSpacing = minimumSpacing * spacingMultiplier
+        
+        let availableForIcons = availableWidth - sidePadding - totalSpacing
+        let calculatedSize = availableForIcons / CGFloat(columnsPerRow)
+        
+        // Clamp between reasonable bounds (60pt - 150pt)
+        return max(60, min(150, calculatedSize))
+    }
+    
+    // Calculate dynamic spacing based on icon size
+    private func calculateSpacing(for iconSize: CGFloat) -> CGFloat {
+        // Spacing scales proportionally with icon size
+        // Base: 20pt spacing at 100pt icon = 0.2 ratio
+        return iconSize * 0.2
+    }
+    
+    // Calculate dynamic font size based on icon size
+    private func calculateFontSize(for iconSize: CGFloat) -> CGFloat {
+        // Font scales proportionally with icon size
+        // Base: 11pt font at 100pt icon = 0.11 ratio
+        return iconSize * 0.11
+    }
+    
+    // Calculate badge font size based on icon size
+    private func calculateBadgeFontSize(for iconSize: CGFloat) -> CGFloat {
+        // Badge font scales proportionally with icon size
+        // Base: 12pt font at 100pt icon = 0.12 ratio
+        return iconSize * 0.12
+    }
+    
+    // Calculate badge size based on icon size
+    private func calculateBadgeSize(for iconSize: CGFloat) -> CGFloat {
+        // Badge size scales proportionally with icon size
+        // Base: 20pt badge at 100pt icon = 0.2 ratio
+        return iconSize * 0.2
     }
     
     // Current focused row (for multi-row navigation)
@@ -355,87 +393,97 @@ struct QuickLauncherView: View {
                     if viewModel.filteredApps.isEmpty {
                         EmptyAppListView(searchText: viewModel.searchText)
                     } else {
-                        ScrollView {
-                            VStack(spacing: 32) {
-                                // Render apps in rows of 10
-                                ForEach(0..<((viewModel.filteredApps.count + 9) / 10), id: \.self) { rowIndex in
-                                    // iOS Dock style: center-aligned row
-                                    HStack(spacing: 20) {
-                                        Spacer(minLength: 0)
-                                        
-                                        ForEach(0..<10, id: \.self) { columnIndex in
-                                            let index = rowIndex * 10 + columnIndex
-                                            if index < viewModel.filteredApps.count {
-                                                let app = viewModel.filteredApps[index]
-                                                // Number key indicator (1-9, 0)
-                                                let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
-                                                
-                                                ZStack(alignment: .topLeading) {
-                                                    iOSAppIconView(
-                                                        app: app, 
-                                                        index: index,
-                                                        shouldAnimate: !hasPerformedInitialAnimation,
-                                                        isFocused: focusedAppIndex == index
-                                                    ) {
-                                        // Tap action - called by DragGesture on valid release
-                                        // Clear search focus and focus this app
-                                        isSearchFieldFocused = false
-                                        focusedAppIndex = index
-                                        viewModel.launch(app: app)
-                                        
-                                        // Trigger icon animation
-                                        NotificationCenter.default.post(
-                                            name: NSNotification.Name("TriggerAppIconAnimation"),
-                                            object: nil,
-                                            userInfo: ["bundleID": app.bundleIdentifier]
-                                        )
-                                        
-                                        // If this is the recent app, trigger bounce animation on recent button
-                                        if app.lastLaunchedFlag {
-                                            NotificationCenter.default.post(
-                                                name: NSNotification.Name("TriggerRecentAppBounce"),
-                                                object: nil
-                                            )
-                                        }
-                                                    } rightClickAction: {
-                                                        // Right click - show detail/settings
-                                                        selectedAppForDetail = app
-                                                    } uninstallAction: {
-                                                        // Uninstall action - open uninstaller with pre-selected app
-                                                        selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
-                                                    }
+                        GeometryReader { geometry in
+                            let iconSize = calculateIconSize(for: geometry.size.width)
+                            let spacing = calculateSpacing(for: iconSize)
+                            let fontSize = calculateFontSize(for: iconSize)
+                            let badgeFontSize = calculateBadgeFontSize(for: iconSize)
+                            let badgeSize = calculateBadgeSize(for: iconSize)
+                            
+                            ScrollView {
+                                VStack(spacing: spacing * 1.6) {
+                                    // Render apps in rows of 10
+                                    ForEach(0..<((viewModel.filteredApps.count + 9) / 10), id: \.self) { rowIndex in
+                                        // iOS Dock style: center-aligned row
+                                        HStack(spacing: spacing) {
+                                            Spacer(minLength: 0)
+                                            
+                                            ForEach(0..<10, id: \.self) { columnIndex in
+                                                let index = rowIndex * 10 + columnIndex
+                                                if index < viewModel.filteredApps.count {
+                                                    let app = viewModel.filteredApps[index]
+                                                    // Number key indicator (1-9, 0)
+                                                    let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
                                                     
-                                                    // Number key indicator badge
-                                                    if rowIndex == focusedRow {
-                                                        Text(keyNumber)
-                                                            .font(.system(size: 12, weight: .bold))
-                                                            .foregroundStyle(.white)
-                                                            .frame(width: 20, height: 20)
-                                                            .background(
-                                                                Circle()
-                                                                    .fill(Color.accentColor)
-                                                            )
-                                                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                                                            .offset(x: -5, y: -5)
-                                                    }
-                                                }
-                                                .frame(width: 100)
+                                                    ZStack(alignment: .topLeading) {
+                                                        iOSAppIconView(
+                                                            app: app, 
+                                                            index: index,
+                                                            shouldAnimate: !hasPerformedInitialAnimation,
+                                                            isFocused: focusedAppIndex == index,
+                                                            iconSize: iconSize,
+                                                            fontSize: fontSize
+                                                        ) {
+                                            // Tap action - called by DragGesture on valid release
+                                            // Clear search focus and focus this app
+                                            isSearchFieldFocused = false
+                                            focusedAppIndex = index
+                                            viewModel.launch(app: app)
+                                            
+                                            // Trigger icon animation
+                                            NotificationCenter.default.post(
+                                                name: NSNotification.Name("TriggerAppIconAnimation"),
+                                                object: nil,
+                                                userInfo: ["bundleID": app.bundleIdentifier]
+                                            )
+                                            
+                                            // If this is the recent app, trigger bounce animation on recent button
+                                            if app.lastLaunchedFlag {
+                                                NotificationCenter.default.post(
+                                                    name: NSNotification.Name("TriggerRecentAppBounce"),
+                                                    object: nil
+                                                )
                                             }
+                                                        } rightClickAction: {
+                                                            // Right click - show detail/settings
+                                                            selectedAppForDetail = app
+                                                        } uninstallAction: {
+                                                            // Uninstall action - open uninstaller with pre-selected app
+                                                            selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+                                                        }
+                                                        
+                                                        // Number key indicator badge
+                                                        if rowIndex == focusedRow {
+                                                            Text(keyNumber)
+                                                                .font(.system(size: badgeFontSize, weight: .bold))
+                                                                .foregroundStyle(.white)
+                                                                .frame(width: badgeSize, height: badgeSize)
+                                                                .background(
+                                                                    Circle()
+                                                                        .fill(Color.accentColor)
+                                                                )
+                                                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                                                .offset(x: -5, y: -5)
+                                                        }
+                                                    }
+                                                    .frame(width: iconSize)
+                                                }
+                                            }
+                                            
+                                            Spacer(minLength: 0)
                                         }
-                                        
-                                        Spacer(minLength: 0)
                                     }
                                 }
-                            }
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 24)
-                            .onAppear {
-                                // Mark as performed after grid appears
-                                // Use delay to ensure animation starts before flag is set
-                                if !hasPerformedInitialAnimation {
-                                    Task { @MainActor in
-                                        try? await Task.sleep(for: .milliseconds(50))
-                                        hasPerformedInitialAnimation = true
+                                .padding(.horizontal, 32)
+                                .padding(.vertical, 24)
+                                .onAppear {
+                                    // Mark as performed after grid appears
+                                    // Use delay to ensure animation starts before flag is set
+                                    if !hasPerformedInitialAnimation {
+                                        Task { @MainActor in
+                                            try? await Task.sleep(for: .milliseconds(50))
+                                            hasPerformedInitialAnimation = true
+                                        }
                                     }
                                 }
                             }
@@ -910,6 +958,8 @@ private struct iOSAppIconView: View {
     let index: Int
     let shouldAnimate: Bool
     let isFocused: Bool  // Keyboard focus state
+    let iconSize: CGFloat  // Dynamic icon size
+    let fontSize: CGFloat  // Dynamic font size
     let tapAction: () -> Void
     let rightClickAction: () -> Void
     let uninstallAction: () -> Void
@@ -940,11 +990,11 @@ private struct iOSAppIconView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
         } else {
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: iconSize * 0.18)
                 .fill(Color.gray.opacity(0.3))
                 .overlay {
                     Image(systemName: "app.dashed")
-                        .font(.system(size: 32))
+                        .font(.system(size: iconSize * 0.32))
                         .foregroundStyle(.secondary)
                 }
         }
@@ -953,8 +1003,9 @@ private struct iOSAppIconView: View {
     // Status indicator view
     @ViewBuilder
     private var statusIndicator: some View {
-        let circleSize: CGFloat = 14
-        let borderWidth: CGFloat = 2.5
+        // Scale status indicator with icon size (base: 14pt at 100pt icon = 0.14 ratio)
+        let circleSize: CGFloat = iconSize * 0.14
+        let borderWidth: CGFloat = iconSize * 0.025
         
         ZStack {
             Circle()
@@ -969,15 +1020,19 @@ private struct iOSAppIconView: View {
     }
     
     var body: some View {
-        VStack(spacing: 8) {
+        // Calculate corner radius dynamically (base: 18pt at 100pt icon = 0.18 ratio)
+        let cornerRadius = iconSize * 0.18
+        let spacingBetweenIconAndText = iconSize * 0.08
+        
+        VStack(spacing: spacingBetweenIconAndText) {
             // iOS-style app icon (rounded square)
             iconContent
                 .aspectRatio(1, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             .background {
                 // Hover glow effect behind the icon (doesn't cover image)
                 if isHovering {
-                    RoundedRectangle(cornerRadius: 18)
+                    RoundedRectangle(cornerRadius: cornerRadius)
                         .fill(
                             RadialGradient(
                                 colors: [
@@ -988,31 +1043,31 @@ private struct iOSAppIconView: View {
                                 ],
                                 center: .center,
                                 startRadius: 0,
-                                endRadius: 60
+                                endRadius: iconSize * 0.6
                             )
                         )
                         .aspectRatio(1, contentMode: .fit)
                         .scaleEffect(1.2)
-                        .blur(radius: 8)
+                        .blur(radius: iconSize * 0.08)
                 }
             }
             .shadow(
                 color: isHovering ? .accentColor.opacity(0.5) : .black.opacity(0.2), 
-                radius: isHovering ? 16 : 3, 
+                radius: isHovering ? iconSize * 0.16 : iconSize * 0.03, 
                 x: 0, 
-                y: isHovering ? 6 : 2
+                y: isHovering ? iconSize * 0.06 : iconSize * 0.02
             )
             .overlay {
                 // Simple focus border (keyboard focus only)
                 if isFocused {
-                    RoundedRectangle(cornerRadius: 18)
-                        .strokeBorder(Color.accentColor, lineWidth: 3)
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .strokeBorder(Color.accentColor, lineWidth: iconSize * 0.03)
                 }
             }
             .overlay {
                 // Hover border glow
                 if isHovering {
-                    RoundedRectangle(cornerRadius: 18)
+                    RoundedRectangle(cornerRadius: cornerRadius)
                         .strokeBorder(
                             LinearGradient(
                                 colors: [
@@ -1025,7 +1080,7 @@ private struct iOSAppIconView: View {
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
-                            lineWidth: 2
+                            lineWidth: iconSize * 0.02
                         )
                 }
             }
@@ -1093,7 +1148,7 @@ private struct iOSAppIconView: View {
             
             // App name below icon
             Text(app.displayName)
-                .font(.system(size: 11, weight: .regular))
+                .font(.system(size: fontSize, weight: .regular))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
