@@ -837,21 +837,26 @@ private struct iOSAppIconView: View {
     }
     
     // Start gradient animation loop with wait period
+    // Continues from current position if interrupted
     private func startGradientAnimation() {
         gradientAnimationTask?.cancel()
         gradientAnimationTask = Task { @MainActor in
             while !Task.isCancelled {
-                // Animate 0 → 1 (3 seconds)
-                withAnimation(.linear(duration: 3.0)) {
-                    gradientOffset = 1.0
+                // Calculate remaining distance and time from current position
+                let remainingDistance = 1.0 - gradientOffset
+                let remainingTime = remainingDistance * 3.0  // Proportional to distance
+                
+                if remainingDistance > 0.01 {
+                    // Continue animation to 1.0
+                    withAnimation(.linear(duration: remainingTime)) {
+                        gradientOffset = 1.0
+                    }
+                    try? await Task.sleep(for: .seconds(remainingTime))
+                    if Task.isCancelled { break }
                 }
-                try? await Task.sleep(for: .seconds(3.0))
                 
-                if Task.isCancelled { break }
-                
-                // Wait (1 second)
-                try? await Task.sleep(for: .seconds(1.0))
-                
+                // Wait (800ms)
+                try? await Task.sleep(for: .milliseconds(800))
                 if Task.isCancelled { break }
                 
                 // Reset to 0 instantly (no animation)
@@ -860,30 +865,34 @@ private struct iOSAppIconView: View {
         }
     }
     
-    // Stop gradient animation
+    // Stop gradient animation (keeps current position, doesn't rewind)
     private func stopGradientAnimation() {
         gradientAnimationTask?.cancel()
-        withAnimation(.linear(duration: 0.5)) {
-            gradientOffset = 0
-        }
+        // Don't animate back to 0, just stop where it is
+        // This allows seamless continuation when re-entering
     }
     
     // Start focus ring animation with wait period: 0→2π→wait→repeat
+    // Continues from current position if interrupted
     private func startFocusRingAnimation() {
         focusRingAnimationTask?.cancel()
         
         focusRingAnimationTask = Task { @MainActor in
             while !Task.isCancelled {
-                // Animate from 0 to 2π
-                withAnimation(.linear(duration: 2.0)) {
-                    focusGlowPhase = .pi * 2
+                // Calculate remaining distance and time from current position
+                let remainingDistance = (.pi * 2) - focusGlowPhase
+                let remainingTime = (remainingDistance / (.pi * 2)) * 2.0  // Proportional to distance
+                
+                if remainingDistance > 0.01 {
+                    // Continue animation to 2π
+                    withAnimation(.linear(duration: remainingTime)) {
+                        focusGlowPhase = .pi * 2
+                    }
+                    try? await Task.sleep(for: .seconds(remainingTime))
+                    if Task.isCancelled { break }
                 }
                 
-                // Wait for animation to complete + pause
-                try? await Task.sleep(for: .milliseconds(2000))
-                if Task.isCancelled { break }
-                
-                // Pause at 2π
+                // Pause at 2π (800ms)
                 try? await Task.sleep(for: .milliseconds(800))
                 if Task.isCancelled { break }
                 
@@ -893,12 +902,11 @@ private struct iOSAppIconView: View {
         }
     }
     
-    // Stop focus ring animation
+    // Stop focus ring animation (keeps current position, doesn't rewind)
     private func stopFocusRingAnimation() {
         focusRingAnimationTask?.cancel()
-        withAnimation(.linear(duration: 0.3)) {
-            focusGlowPhase = 0
-        }
+        // Don't animate back to 0, just stop where it is
+        // This allows seamless continuation when re-focusing
     }
     
     var body: some View {
@@ -989,8 +997,8 @@ private struct iOSAppIconView: View {
                                         .cyan.opacity(isHovering ? 0.25 : 0.4),
                                         .accentColor.opacity(isHovering ? 0.3 : 0.5)
                                     ],
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 0),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0)
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: focusGlowPhase / (.pi * 2)),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: focusGlowPhase / (.pi * 2) + 0.5)
                                 ),
                                 lineWidth: isHovering ? 2 : 4
                             )
@@ -1011,8 +1019,8 @@ private struct iOSAppIconView: View {
                                         .cyan,
                                         .accentColor
                                     ],
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 0),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0)
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: focusGlowPhase / (.pi * 2)),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: focusGlowPhase / (.pi * 2) + 0.5)
                                 ),
                                 lineWidth: 3
                             )
@@ -1199,8 +1207,8 @@ private struct iOSAppIconView: View {
                                 .cyan,
                                 .accentColor
                             ],
-                            startPoint: UnitPoint(x: gradientOffset, y: 0),
-                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0)
+                            startPoint: UnitPoint(x: gradientOffset, y: gradientOffset),
+                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: gradientOffset + 0.5)
                         )
                     )
                     .opacity(showHoverEffect ? 1 : 0)
