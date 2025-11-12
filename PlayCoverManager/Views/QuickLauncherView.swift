@@ -823,6 +823,8 @@ private struct iOSAppIconView: View {
     @State private var isPressing = false
     @State private var isBouncing = false
     @State private var pressLocation: CGPoint?
+    // Hover effect state
+    @State private var isHovering = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -844,12 +846,55 @@ private struct iOSAppIconView: View {
             }
             .frame(width: 80, height: 80)
             .clipShape(RoundedRectangle(cornerRadius: 18))
-            .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 2)
+            .shadow(
+                color: isHovering ? .accentColor.opacity(0.4) : .black.opacity(0.2), 
+                radius: isHovering ? 12 : 3, 
+                x: 0, 
+                y: isHovering ? 4 : 2
+            )
             .overlay {
-                // Keyboard focus ring only
+                // Hover glow effect
+                if isHovering {
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    .accentColor.opacity(0.6),
+                                    .purple.opacity(0.4),
+                                    .blue.opacity(0.4),
+                                    .accentColor.opacity(0.6)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2
+                        )
+                        .blur(radius: 1)
+                }
+            }
+            .overlay {
+                // Keyboard focus ring
                 if isFocused {
                     RoundedRectangle(cornerRadius: 18)
                         .strokeBorder(Color.accentColor, lineWidth: 3)
+                }
+            }
+            .overlay {
+                // Shimmer effect on hover
+                if isHovering {
+                    RoundedRectangle(cornerRadius: 18)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    .clear,
+                                    .white.opacity(0.15),
+                                    .clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .allowsHitTesting(false)
                 }
             }
             .overlay(alignment: .topTrailing) {
@@ -897,9 +942,12 @@ private struct iOSAppIconView: View {
                     }
                 }
             }
-            // Press & bounce animation
+            // Press & bounce & hover animation
             .scaleEffect(
-                isPressing ? 0.85 : (isBouncing ? 1.15 : (isAnimating ? 0.85 : 1.0))
+                isPressing ? 0.85 : 
+                isBouncing ? 1.15 : 
+                isAnimating ? 0.85 : 
+                isHovering ? 1.08 : 1.0
             )
             .animation(
                 isPressing ? .easeOut(duration: 0.15) :
@@ -920,6 +968,13 @@ private struct iOSAppIconView: View {
                     .easeOut(duration: 0.2),
                 value: isAnimating
             )
+            .animation(
+                .interpolatingSpring(stiffness: 350, damping: 12),
+                value: isHovering
+            )
+            .onHover { hovering in
+                isHovering = hovering
+            }
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
@@ -962,11 +1017,24 @@ private struct iOSAppIconView: View {
             
             // App name below icon
             Text(app.displayName)
-                .font(.system(size: 11))
+                .font(.system(size: 11, weight: isHovering ? .medium : .regular))
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .frame(width: 90, height: 28)
                 .fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(
+                    isHovering ? 
+                        LinearGradient(
+                            colors: [.accentColor, .purple, .blue],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ) :
+                        LinearGradient(
+                            colors: [.primary],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                )
         }
         .frame(width: 100, height: 120)
         .contentShape(Rectangle())
