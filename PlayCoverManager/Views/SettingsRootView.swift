@@ -135,9 +135,9 @@ private struct GeneralSettingsView: View {
                         )
                         .blur(radius: 20)
                         
-                        // Main glass
+                        // Simple background
                         RoundedRectangle(cornerRadius: 12)
-                            .glassEffect(.regular.tint(.blue.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
+                            .fill(Color(nsColor: .controlBackgroundColor))
                     }
                 )
                 .overlay {
@@ -175,14 +175,10 @@ private struct GeneralSettingsView: View {
                 }
                 .padding(20)
                 .background(
-                    ZStack {
-                        LinearGradient(colors: [.purple.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.purple.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    .allowsHitTesting(false)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .purple.opacity(0.15), radius: 12, x: 0, y: 4)
                 
 
                 // Language Card
@@ -223,14 +219,10 @@ private struct GeneralSettingsView: View {
                 }
                 .padding(20)
                 .background(
-                    ZStack {
-                        LinearGradient(colors: [.green.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.green.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    .allowsHitTesting(false)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .green.opacity(0.15), radius: 12, x: 0, y: 4)
             }
             .padding(20)
         }
@@ -371,14 +363,10 @@ private struct DataSettingsView: View {
                 }
                 .padding(20)
                 .background(
-                    ZStack {
-                        LinearGradient(colors: [.orange.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.orange.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    .allowsHitTesting(false)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .orange.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 Spacer()
             }
@@ -1905,14 +1893,10 @@ private struct MaintenanceSettingsView: View {
                 }
                 .padding(20)
                 .background(
-                    ZStack {
-                        LinearGradient(colors: [.cyan.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.cyan.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    .allowsHitTesting(false)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .cyan.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 // PlayCover Shortcuts Card
                 VStack(alignment: .leading, spacing: 16) {
@@ -1939,14 +1923,10 @@ private struct MaintenanceSettingsView: View {
                 }
                 .padding(20)
                 .background(
-                    ZStack {
-                        LinearGradient(colors: [.yellow.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.yellow.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    .allowsHitTesting(false)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .yellow.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 // Reset Card
                 VStack(alignment: .leading, spacing: 16) {
@@ -1973,14 +1953,10 @@ private struct MaintenanceSettingsView: View {
                 }
                 .padding(20)
                 .background(
-                    ZStack {
-                        LinearGradient(colors: [.red.opacity(0.06), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 20)
-                        RoundedRectangle(cornerRadius: 12).glassEffect(.regular.tint(.red.opacity(0.12)), in: RoundedRectangle(cornerRadius: 12))
-                    }
-                    .allowsHitTesting(false)
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 )
-                .overlay { LinearGradient(colors: [.white.opacity(0.1), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 12)).allowsHitTesting(false) }
-                .shadow(color: .red.opacity(0.15), radius: 12, x: 0, y: 4)
                 
                 Spacer()
             }
@@ -2104,8 +2080,11 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(24)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                )
                 
                 // Description Card
                 VStack(alignment: .leading, spacing: 12) {
@@ -2127,8 +2106,11 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                )
                 
                 // System Requirements Card
                 VStack(alignment: .leading, spacing: 12) {
@@ -2146,8 +2128,11 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                )
                 
                 // Links Card
                 VStack(alignment: .leading, spacing: 12) {
@@ -2165,8 +2150,11 @@ private struct AboutView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(20)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                )
                 
                 // Copyright
                 VStack(spacing: 4) {
