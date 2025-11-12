@@ -95,107 +95,224 @@ private struct GeneralSettingsView: View {
             VStack(spacing: 20 * uiScale) {
                 // Storage Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
-                    Label("ストレージ", systemImage: "externaldrive.fill")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.blue)
-                    
-                    Divider()
-                    
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
-                        // Storage path display
-                        VStack(alignment: .leading, spacing: 8 * uiScale) {
-                            Text("保存先")
-                                .font(.system(size: 13 * uiScale, weight: .medium))
-                                .foregroundStyle(.secondary)
+                    // Header with icon gradient
+                    HStack(spacing: 12 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.blue.opacity(0.2), Color.cyan.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
                             
-                            HStack {
-                                Text(settingsStore.diskImageDirectory?.path ?? "未設定")
-                                    .font(.system(.callout, design: .monospaced))
-                                    .foregroundStyle(.primary)
-                                    .lineLimit(2)
-                                    .truncationMode(.middle)
-                                Spacer()
-                                if calculatingSize {
-                                    ProgressView()
-                                        .controlSize(.small)
-                                } else if totalDiskUsage > 0 {
-                                    Text(ByteCountFormatter.string(fromByteCount: totalDiskUsage, countStyle: .file))
-                                        .font(.system(size: 11 * uiScale))
-                                        .foregroundStyle(.secondary)
-                                        .padding(.horizontal, 8 * uiScale)
-                                        .padding(.vertical, 4 * uiScale)
-                                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6 * uiScale))
-                                }
-                            }
-                            .padding(12 * uiScale)
-                            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5), in: RoundedRectangle(cornerRadius: 8 * uiScale))
+                            Image(systemName: "externaldrive.fill")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.blue, .cyan],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
                         }
                         
+                        Text("ストレージ")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
+                    
+                    Divider()
+                        .padding(.vertical, 4 * uiScale)
+                    
+                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                        // Storage path section
+                        VStack(alignment: .leading, spacing: 8 * uiScale) {
+                            Text("保存先")
+                                .font(.system(size: 13 * uiScale, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            
+                            VStack(spacing: 8 * uiScale) {
+                                HStack {
+                                    Text(settingsStore.diskImageDirectory?.path ?? "未設定")
+                                        .font(.system(size: 12 * uiScale, design: .monospaced))
+                                        .foregroundStyle(.primary)
+                                        .lineLimit(2)
+                                        .truncationMode(.middle)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .padding(12 * uiScale)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8 * uiScale)
+                                        .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                                )
+                                
+                                // Storage usage display
+                                if calculatingSize || totalDiskUsage > 0 {
+                                    HStack {
+                                        if calculatingSize {
+                                            ProgressView()
+                                                .controlSize(.small)
+                                            Text("容量を計算中...")
+                                                .font(.system(size: 12 * uiScale))
+                                                .foregroundStyle(.secondary)
+                                        } else {
+                                            Text(ByteCountFormatter.string(fromByteCount: totalDiskUsage, countStyle: .file))
+                                                .font(.system(size: 15 * uiScale, weight: .bold))
+                                                .foregroundStyle(.blue)
+                                        }
+                                        Spacer()
+                                    }
+                                    .padding(.horizontal, 4 * uiScale)
+                                }
+                            }
+                        }
+                        
+                        // Change storage button
                         Button {
                             dismiss()
                             appViewModel.requestStorageLocationChange()
                         } label: {
-                            Label("保存先を変更", systemImage: "folder.badge.gearshape")
-                                .font(.system(size: 14 * uiScale, weight: .medium))
+                            HStack {
+                                Image(systemName: "folder.badge.gearshape")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                                Text("保存先を変更")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                         .help(String(localized: "すべてのコンテナをアンマウントしてから保存先を変更します"))
                         
-                        Text("保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。")
-                            .font(.system(size: 11 * uiScale))
-                            .foregroundStyle(.secondary)
+                        // Info text
+                        HStack(spacing: 6 * uiScale) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 12 * uiScale))
+                                .foregroundStyle(.blue)
+                            Text("保存先を変更すると、マウント中のコンテナをすべてアンマウントしてから新しい保存先に環境を構築します。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                                .fill(Color.blue.opacity(0.05))
+                        )
                     }
                 }
-                .padding(20 * uiScale)
-                .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
-                )
+                .padding(24 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
                 
                 // Mount Settings Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
-                    Label("マウント設定", systemImage: "internaldrive")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.purple)
+                    // Header with icon gradient
+                    HStack(spacing: 12 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.purple.opacity(0.2), Color.pink.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
+                            
+                            Image(systemName: "internaldrive")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.purple, .pink],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        
+                        Text("マウント設定")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
                     
                     Divider()
+                        .padding(.vertical, 4 * uiScale)
                     
                     VStack(alignment: .leading, spacing: 12 * uiScale) {
-                        Toggle(isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 })) {
-                            VStack(alignment: .leading, spacing: 4 * uiScale) {
+                        HStack(spacing: 12 * uiScale) {
+                            VStack(alignment: .leading, spacing: 6 * uiScale) {
                                 Text("Finder に表示しない (-nobrowse)")
-                                    .font(.system(size: 13 * uiScale))
-                                    .fontWeight(.medium)
+                                    .font(.system(size: 14 * uiScale, weight: .semibold))
+                                    .foregroundStyle(.primary)
                                 Text("有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。")
                                     .font(.system(size: 11 * uiScale))
                                     .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
+                            Spacer()
+                            Toggle("", isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }))
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                                .controlSize(.large)
                         }
-                        .toggleStyle(.switch)
+                        .padding(16 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                        )
                     }
                 }
-                .padding(20 * uiScale)
-                .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
-                )
+                .padding(24 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
                 
 
                 // Language Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
-                    Label("言語", systemImage: "globe")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.green)
+                    // Header with icon gradient
+                    HStack(spacing: 12 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.green.opacity(0.2), Color.mint.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
+                            
+                            Image(systemName: "globe")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.green, .mint],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        
+                        Text("言語")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
                     
                     Divider()
+                        .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
-                        VStack(alignment: .leading, spacing: 8 * uiScale) {
+                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                        VStack(alignment: .leading, spacing: 10 * uiScale) {
                             Text("アプリの言語")
-                                .font(.system(size: 13 * uiScale))
-                                .fontWeight(.medium)
+                                .font(.system(size: 13 * uiScale, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             
                             Picker("", selection: Binding(
@@ -212,22 +329,39 @@ private struct GeneralSettingsView: View {
                                 }
                             }
                             .pickerStyle(.menu)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .padding(16 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                        )
                         
-                        Text("言語を変更すると、アプリを再起動する必要があります。")
-                            .font(.system(size: 11 * uiScale))
-                            .foregroundStyle(.secondary)
+                        // Info text
+                        HStack(spacing: 6 * uiScale) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 12 * uiScale))
+                                .foregroundStyle(.green)
+                            Text("言語を変更すると、アプリを再起動する必要があります。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                                .fill(Color.green.opacity(0.05))
+                        )
                     }
                 }
-                .padding(20 * uiScale)
-                .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
-                )
+                .padding(24 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
             }
-            .padding(20 * uiScale)
+            .padding(.horizontal, 24 * uiScale)
+            .padding(.vertical, 20 * uiScale)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             previousLanguage = settingsStore.appLanguage
             Task {
