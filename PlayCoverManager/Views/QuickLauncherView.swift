@@ -3903,7 +3903,6 @@ private struct DrawerMenuItem: View {
 
 // MARK: - Keyboard Shortcut Guide
 private struct KeyboardShortcutGuide: View {
-    @Environment(\.uiScale) var uiScale
     @Binding var isShowing: Bool
     let uiScale: CGFloat
     
