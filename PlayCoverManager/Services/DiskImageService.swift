@@ -187,13 +187,21 @@ final class DiskImageService {
         _ = try await processRunner.run("/usr/sbin/diskutil", ["unmount", "force", volumeURL.path])
     }
 
+    // Swift 6.2: Parallel detach with TaskGroup for performance
     func detachAll(volumeURLs: [URL]) async throws {
-        for url in volumeURLs {
-            do {
-                try await detach(volumeURL: url)
-            } catch {
-                throw AppError.diskImage(String(localized: "ディスクイメージのアンマウントに失敗"), message: url.path, underlying: error)
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            for url in volumeURLs {
+                group.addTask { [self] in
+                    do {
+                        try await self.detach(volumeURL: url)
+                    } catch {
+                        throw AppError.diskImage(String(localized: "ディスクイメージのアンマウントに失敗"), message: url.path, underlying: error)
+                    }
+                }
             }
+            
+            // Wait for all detach operations to complete
+            try await group.waitForAll()
         }
     }
     
