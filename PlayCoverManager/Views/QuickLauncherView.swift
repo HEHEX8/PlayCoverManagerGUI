@@ -829,7 +829,6 @@ private struct iOSAppIconView: View {
     @State private var focusGlowPhase: CGFloat = 0
     @State private var gradientAnimationTask: Task<Void, Never>?
     @State private var focusRingAnimationTask: Task<Void, Never>?
-    @State private var gradientAnimationTask: Task<Void, Never>?
     
     // Show hover effect when hovering OR when focused (keyboard)
     private var showHoverEffect: Bool {
