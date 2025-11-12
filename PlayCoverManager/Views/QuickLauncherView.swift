@@ -16,6 +16,7 @@ struct QuickLauncherView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedAppForDetail: PlayCoverApp?
     @State private var hasPerformedInitialAnimation = false
     @State private var showingSettings = false
@@ -171,7 +172,7 @@ struct QuickLauncherView: View {
                 .focusEffectDisabled()  // Disable blue focus ring
                 .opacity(0.01)  // Nearly invisible but still present
             
-            // Ultra-rich multi-layer animated background (M4-optimized)
+            // Ultra-rich multi-layer ambient background (M4-optimized, visibility-safe)
             ZStack {
                 // Base gradient with depth
                 LinearGradient(
@@ -184,7 +185,7 @@ struct QuickLauncherView: View {
                     endPoint: .bottom
                 )
                 
-                // Multi-color radial glow from center (enhanced)
+                // Enhanced radial glow from center
                 RadialGradient(
                     colors: [
                         .accentColor.opacity(0.08),
@@ -197,55 +198,56 @@ struct QuickLauncherView: View {
                     endRadius: 700
                 )
                 
-                // Ambient corner glows (top-left: blue)
+                // Ambient corner glows (enhanced but controlled)
                 VStack {
                     HStack {
+                        // Top-left: blue/cyan glow
                         Circle()
                             .fill(RadialGradient(
-                                colors: [.blue.opacity(0.15), .cyan.opacity(0.08), .clear],
+                                colors: [.blue.opacity(0.12), .cyan.opacity(0.06), .clear],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 250
                             ))
                             .frame(width: 500, height: 500)
-                            .blur(radius: 80)
+                            .blur(radius: 70)
                             .offset(x: -100, y: -100)
                         
                         Spacer()
                         
-                        // Top-right: purple
+                        // Top-right: purple/pink glow
                         Circle()
                             .fill(RadialGradient(
-                                colors: [.purple.opacity(0.12), .pink.opacity(0.06), .clear],
+                                colors: [.purple.opacity(0.10), .pink.opacity(0.05), .clear],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 220
                             ))
                             .frame(width: 450, height: 450)
-                            .blur(radius: 70)
+                            .blur(radius: 60)
                             .offset(x: 100, y: -100)
                     }
                     
                     Spacer()
                     
-                    // Bottom center: accent glow
+                    // Bottom center: accent/orange glow
                     HStack {
                         Spacer()
                         Circle()
                             .fill(RadialGradient(
-                                colors: [.accentColor.opacity(0.1), .orange.opacity(0.05), .clear],
+                                colors: [.accentColor.opacity(0.08), .orange.opacity(0.04), .clear],
                                 center: .center,
                                 startRadius: 0,
                                 endRadius: 200
                             ))
                             .frame(width: 400, height: 400)
-                            .blur(radius: 60)
+                            .blur(radius: 55)
                             .offset(y: 100)
                         Spacer()
                     }
                 }
             }
-            .allowsHitTesting(false)  // Allow clicks to pass through background
+            .allowsHitTesting(false)
             .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -285,57 +287,51 @@ struct QuickLauncherView: View {
                     .padding(.vertical, 10)
                     .frame(maxWidth: 280)
                     .background {
-                        if reduceTransparency {
-                            // Fallback: solid background for performance
+                        // Visibility-safe rich search field
+                        ZStack {
+                            // Solid base for readability
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.9))
-                        } else {
-                            // Ultra-rich glass search field with solid base
-                            ZStack {
-                                // Solid base for visibility
+                                .fill(Color(nsColor: .controlBackgroundColor).opacity(colorScheme == .dark ? 0.75 : 0.65))
+                            
+                            // Animated glow on focus
+                            if isSearchFieldFocused {
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.6))
-                                
-                                // Animated glow when focused
-                                if isSearchFieldFocused {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(RadialGradient(
-                                            colors: [.accentColor.opacity(0.4), .purple.opacity(0.2), .clear],
-                                            center: .center,
-                                            startRadius: 10,
-                                            endRadius: 150
-                                        ))
-                                        .blur(radius: 20)
-                                        .scaleEffect(1.2)
-                                }
-                                
-                                // Glass layer
-                                RoundedRectangle(cornerRadius: 12)
-                                    .glassEffect(
-                                        isSearchFieldFocused 
-                                        ? .regular.tint(.accentColor.opacity(0.6))
-                                        : .regular.tint(.accentColor.opacity(0.35)), 
-                                        in: RoundedRectangle(cornerRadius: 12)
-                                    )
-                                
-                                // Shimmer overlay
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(LinearGradient(
-                                        colors: [.white.opacity(isSearchFieldFocused ? 0.25 : 0.15), .clear],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
+                                    .fill(RadialGradient(
+                                        colors: [.accentColor.opacity(0.35), .purple.opacity(0.18), .clear],
+                                        center: .center,
+                                        startRadius: 10,
+                                        endRadius: 140
                                     ))
+                                    .blur(radius: 18)
+                                    .scaleEffect(1.15)
                             }
+                            
+                            // Glass layer
+                            RoundedRectangle(cornerRadius: 12)
+                                .glassEffect(
+                                    isSearchFieldFocused 
+                                    ? .regular.tint(.accentColor.opacity(0.5))
+                                    : .regular.tint(.accentColor.opacity(0.3)), 
+                                    in: RoundedRectangle(cornerRadius: 12)
+                                )
+                            
+                            // Shimmer overlay
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(LinearGradient(
+                                    colors: [.white.opacity(isSearchFieldFocused ? 0.20 : 0.12), .clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ))
                         }
                     }
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: isSearchFieldFocused)
+                    .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSearchFieldFocused)
                     .shadow(
-                        color: isSearchFieldFocused ? .accentColor.opacity(0.5) : .black.opacity(0.15), 
-                        radius: isSearchFieldFocused ? 20 : 8, 
+                        color: isSearchFieldFocused ? .accentColor.opacity(0.4) : .black.opacity(0.12), 
+                        radius: isSearchFieldFocused ? 16 : 6, 
                         x: 0, 
-                        y: isSearchFieldFocused ? 8 : 4
+                        y: isSearchFieldFocused ? 6 : 3
                     )
-                    .scaleEffect(isSearchFieldFocused ? 1.05 : 1.0)
+                    .scaleEffect(isSearchFieldFocused ? 1.04 : 1.0)
                     .animation(.spring(response: 0.35, dampingFraction: 0.68), value: isSearchFieldFocused)
                     .onTapGesture {
                         // Focus search field when clicked
@@ -359,43 +355,35 @@ struct QuickLauncherView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
                 .background(
-                    // Ultra-rich glass toolbar (M4-optimized) with solid base
-                    Group {
-                        if reduceTransparency {
-                            // Fallback: simple background
-                            Color(nsColor: .controlBackgroundColor).opacity(0.85)
-                        } else {
-                            // Rich multi-layer glass with solid base
-                            ZStack {
-                                // Solid base layer for visibility
-                                Rectangle()
-                                    .fill(Color(nsColor: .windowBackgroundColor).opacity(0.7))
-                                
-                                // Bottom glow layer
-                                Rectangle()
-                                    .fill(LinearGradient(
-                                        colors: [.accentColor.opacity(0.12), .purple.opacity(0.08), .clear],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ))
-                                    .blur(radius: 25)
-                                
-                                // Mid-layer shimmer
-                                Rectangle()
-                                    .fill(LinearGradient(
-                                        colors: [.white.opacity(0.15), .clear, .accentColor.opacity(0.06)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ))
-                                    .blur(radius: 15)
-                                
-                                // Top glass layer
-                                Rectangle()
-                                    .glassEffect(.regular.tint(.primary.opacity(0.15)), in: .rect)
-                            }
-                        }
+                    // Visibility-safe rich glass toolbar (best practices compliant)
+                    ZStack {
+                        // Solid base for visibility (critical for dark mode)
+                        Rectangle()
+                            .fill(Color(nsColor: .windowBackgroundColor).opacity(colorScheme == .dark ? 0.85 : 0.75))
+                        
+                        // Controlled glow layer
+                        Rectangle()
+                            .fill(LinearGradient(
+                                colors: [.accentColor.opacity(0.10), .purple.opacity(0.06), .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
+                            .blur(radius: 22)
+                        
+                        // Shimmer layer for richness
+                        Rectangle()
+                            .fill(LinearGradient(
+                                colors: [.white.opacity(0.12), .clear, .accentColor.opacity(0.05)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                            .blur(radius: 12)
+                        
+                        // System material on top
+                        Rectangle()
+                            .glassEffect(.regular.tint(.primary.opacity(0.12)), in: .rect)
                     }
-                    .allowsHitTesting(false)  // Allow clicks to pass through to buttons
+                    .allowsHitTesting(false)
                 )
                 .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
                 .overlay(alignment: .bottom) {
@@ -419,8 +407,7 @@ struct QuickLauncherView: View {
                     } else {
                         ScrollView {
                             LazyVGrid(columns: gridColumns, spacing: 32) {
-                                ForEach(viewModel.filteredApps.indices, id: \.self) { index in
-                                    let app = viewModel.filteredApps[index]
+                                ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                     Button {
                                         // Single tap - launch
                                         // Clear search focus and focus this app
@@ -515,58 +502,50 @@ struct QuickLauncherView: View {
                             }
                         )
                         .background(
-                            // Ultra-rich glass for recent app button (M4-optimized) with solid base
-                            Group {
-                                if reduceTransparency {
-                                    // Fallback: solid background
-                                    Color(nsColor: .controlBackgroundColor).opacity(0.85)
-                                } else {
-                                    // Epic multi-layer glass with solid base
-                                    ZStack {
-                                        // Solid base layer for visibility
-                                        Rectangle()
-                                            .fill(Color(nsColor: .windowBackgroundColor).opacity(0.75))
-                                        
-                                        // Deep ambient glow
-                                        LinearGradient(
-                                            colors: [
-                                                .accentColor.opacity(0.2), 
-                                                .purple.opacity(0.15), 
-                                                .blue.opacity(0.12),
-                                                .pink.opacity(0.08)
-                                            ],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                        .blur(radius: 30)
-                                        
-                                        // Animated shimmer layer
-                                        LinearGradient(
-                                            colors: [.white.opacity(0.18), .clear, .accentColor.opacity(0.12), .clear],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                        .blur(radius: 15)
-                                        
-                                        // Main glass layer
-                                        Rectangle()
-                                            .glassEffect(.regular.tint(.accentColor.opacity(0.25)), in: .rect)
-                                    }
-                                }
+                            // Visibility-safe rich glass for recent app button
+                            ZStack {
+                                // Solid base for visibility
+                                Rectangle()
+                                    .fill(Color(nsColor: .windowBackgroundColor).opacity(colorScheme == .dark ? 0.80 : 0.70))
+                                
+                                // Enhanced gradient glow (4-color)
+                                LinearGradient(
+                                    colors: [
+                                        .accentColor.opacity(0.16), 
+                                        .purple.opacity(0.12), 
+                                        .blue.opacity(0.10),
+                                        .pink.opacity(0.06)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                                .blur(radius: 25)
+                                
+                                // Shimmer layer
+                                LinearGradient(
+                                    colors: [.white.opacity(0.15), .clear, .accentColor.opacity(0.10), .clear],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .blur(radius: 12)
+                                
+                                // Glass layer on top
+                                Rectangle()
+                                    .glassEffect(.regular.tint(.accentColor.opacity(0.20)), in: .rect)
                             }
-                            .allowsHitTesting(false)  // Allow clicks through to button
+                            .allowsHitTesting(false)
                         )
-                        .shadow(color: .accentColor.opacity(0.15), radius: 12, x: 0, y: -4)
+                        .shadow(color: .accentColor.opacity(0.18), radius: 14, x: 0, y: -4)
                         .overlay(alignment: .top) {
-                            // Shine effect
+                            // Enhanced shine
                             LinearGradient(
-                                colors: [.white.opacity(0.15), .clear],
+                                colors: [.white.opacity(0.18), .clear],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                             .frame(height: 60)
                             .blur(radius: 10)
-                            .allowsHitTesting(false)  // Allow clicks through shine
+                            .allowsHitTesting(false)
                         }
                     }
                 }
@@ -577,8 +556,7 @@ struct QuickLauncherView: View {
                 } else {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 32) {
-                            ForEach(viewModel.filteredApps.indices, id: \.self) { index in
-                                let app = viewModel.filteredApps[index]
+                            ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                 Button {
                                     // Single tap - launch
                                     // Clear search focus and focus this app
@@ -900,65 +878,57 @@ private struct ModernToolbarButton: View {
                 .frame(width: 44, height: 44)
                 .background(
                     ZStack {
-                        // Epic glow when hovered
+                        // Enhanced glow on hover
                         if isHovered {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(RadialGradient(
-                                    colors: [color.opacity(0.4), color.opacity(0.2), .clear],
+                                    colors: [color.opacity(0.35), color.opacity(0.18), .clear],
                                     center: .center,
                                     startRadius: 0,
-                                    endRadius: 50
+                                    endRadius: 45
                                 ))
-                                .blur(radius: 15)
-                                .scaleEffect(1.3)
+                                .blur(radius: 12)
+                                .scaleEffect(1.2)
                         }
                         
-                        // Glass button base with better visibility
+                        // Solid base for visibility
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(
+                            .fill(Color(nsColor: .controlBackgroundColor).opacity(isHovered ? 0.80 : 0.70))
+                        
+                        // Glass button on top
+                        RoundedRectangle(cornerRadius: 12)
+                            .glassEffect(
                                 isHovered 
-                                ? color.opacity(0.3)
-                                : Color(nsColor: .controlBackgroundColor).opacity(0.75)
+                                ? .regular.tint(color.opacity(0.25))
+                                : .regular.tint(.primary.opacity(0.08)), 
+                                in: RoundedRectangle(cornerRadius: 12)
                             )
                         
-                        // Shimmer overlay
+                        // Shimmer overlay on hover
                         if isHovered {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(LinearGradient(
-                                    colors: [.white.opacity(0.3), .clear, color.opacity(0.1)],
+                                    colors: [.white.opacity(0.25), .clear, color.opacity(0.08)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ))
                         }
                     }
-                    .shadow(color: isHovered ? color.opacity(0.5) : .black.opacity(0.1), radius: isHovered ? 12 : 4)
-                    .allowsHitTesting(false)  // Allow clicks through to button
+                    .allowsHitTesting(false)
                 )
                 .shadow(
-                    color: isHovered ? color.opacity(0.3) : .black.opacity(0.1), 
-                    radius: isHovered ? 8 : 4, 
+                    color: isHovered ? color.opacity(0.4) : .black.opacity(0.12), 
+                    radius: isHovered ? 10 : 5, 
                     x: 0, 
-                    y: 2
+                    y: isHovered ? 4 : 2
                 )
-                .overlay {
-                    // Shine effect on hover
-                    if isHovered {
-                        LinearGradient(
-                            colors: [.white.opacity(0.2), .clear],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .allowsHitTesting(false)  // Allow clicks through shine
-                    }
-                }
-                .contentShape(Rectangle())  // Ensure entire area is tappable
-                .scaleEffect(isHovered ? 1.08 : 1.0)
+                .contentShape(Rectangle())
+                .scaleEffect(isHovered ? 1.10 : 1.0)
         }
         .buttonStyle(.plain)
         .help(help)
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 isHovered = hovering
             }
         }
@@ -981,25 +951,25 @@ private struct iOSAppIconView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            // iOS-style app icon (rounded square) with rich effects
+            // iOS-style app icon with rich hover/focus effects
             ZStack {
-                // Epic glow when hovered or focused
+                // Epic glow on hover or focus
                 if isHovered || isFocused {
                     RoundedRectangle(cornerRadius: 18)
                         .fill(RadialGradient(
                             colors: [
-                                .accentColor.opacity(isFocused ? 0.5 : 0.3), 
-                                .purple.opacity(isFocused ? 0.3 : 0.15), 
+                                .accentColor.opacity(isFocused ? 0.45 : 0.30), 
+                                .purple.opacity(isFocused ? 0.28 : 0.15), 
                                 .clear
                             ],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 80
+                            endRadius: 75
                         ))
-                        .blur(radius: isFocused ? 25 : 20)
-                        .scaleEffect(isFocused ? 1.4 : 1.3)
-                        .opacity(isFocused ? 0.8 : 1.0)
-                        .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: isFocused)
+                        .blur(radius: isFocused ? 22 : 18)
+                        .scaleEffect(isFocused ? 1.35 : 1.25)
+                        .opacity(isFocused ? 0.85 : 1.0)
+                        .animation(isFocused ? .easeInOut(duration: 1.4).repeatForever(autoreverses: true) : .default, value: isFocused)
                 }
                 
                 // Icon
@@ -1021,17 +991,17 @@ private struct iOSAppIconView: View {
                 .frame(width: 80, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 18))
                 .shadow(
-                    color: isHovered ? .accentColor.opacity(0.4) : .black.opacity(0.2), 
-                    radius: isHovered ? 12 : 3, 
+                    color: isHovered ? .accentColor.opacity(0.35) : .black.opacity(0.2), 
+                    radius: isHovered ? 10 : 3, 
                     x: 0, 
-                    y: isHovered ? 6 : 2
+                    y: isHovered ? 5 : 2
                 )
                 
-                // Shimmer overlay on hover
+                // Shimmer on hover
                 if isHovered {
                     RoundedRectangle(cornerRadius: 18)
                         .fill(LinearGradient(
-                            colors: [.white.opacity(0.4), .clear, .accentColor.opacity(0.2)],
+                            colors: [.white.opacity(0.35), .clear, .accentColor.opacity(0.15)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ))
@@ -1053,9 +1023,9 @@ private struct iOSAppIconView: View {
                         .frame(width: 80, height: 80)
                 }
             }
-            .scaleEffect(isHovered ? 1.08 : 1.0)
+            .scaleEffect(isHovered ? 1.06 : 1.0)
             .onHover { hovering in
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.65)) {
                     isHovered = hovering
                 }
             }
@@ -1705,7 +1675,7 @@ private struct RecentAppLaunchButton: View {
         .buttonStyle(.plain)
         .clipped()
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
+            withAnimation(.easeInOut(duration: 0.2)) {
                 isHovered = hovering
             }
         }
