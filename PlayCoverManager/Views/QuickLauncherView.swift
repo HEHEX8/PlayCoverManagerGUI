@@ -23,23 +23,21 @@ struct QuickLauncherView: View {
     @State private var selectedAppForUninstall: IdentifiableString? = nil  // For pre-selected uninstall (from context menu)
     @State private var isDrawerOpen = false
     @State private var focusedAppIndex: Int?  // For keyboard navigation
+    @State private var focusedColumn: Int = 0  // Column within the row (0-9)
     @FocusState private var isSearchFieldFocused: Bool  // Track if search field has focus
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     
-    // iOS-style grid with fixed size icons
-    private let gridColumns = [
-        GridItem(.adaptive(minimum: 100, maximum: 100), spacing: 24)
-    ]
+    // iOS-style grid with fixed 10 columns
+    private let gridColumns = Array(repeating: GridItem(.fixed(100), spacing: 24), count: 10)
     
-    // Calculate columns per row based on window width
+    // Fixed 10 columns per row
     private var columnsPerRow: Int {
-        // Assuming minimum window width of 960, icon width of 100, spacing of 24, padding of 32 each side
-        // Available width: 960 - 64 (padding) = 896
-        // Per item: 100 (icon) + 24 (spacing) = 124
-        // Columns: 896 / 124 ≈ 7
-        return 7
+        return 10
     }
+    
+    // Current focused row (for multi-row navigation)
+    @State private var focusedRow: Int = 0
     
     // Workaround for macOS focus loss bug after dismissing sheets/overlays
     // Forces the window to regain focus and become key window
@@ -50,6 +48,32 @@ struct QuickLauncherView: View {
                 window.makeKey()
                 window.makeFirstResponder(window.contentView)
             }
+        }
+    }
+    
+    // Launch app at specific index with animation
+    private func launchAppAtIndex(_ index: Int) {
+        let apps = viewModel.filteredApps
+        guard index < apps.count else { return }
+        
+        let app = apps[index]
+        
+        // Trigger icon animation
+        NotificationCenter.default.post(
+            name: NSNotification.Name("TriggerAppIconAnimation"),
+            object: nil,
+            userInfo: ["bundleID": app.bundleIdentifier]
+        )
+        
+        // Launch app
+        viewModel.launch(app: app)
+        
+        // If this is the recent app, trigger bounce animation on recent button
+        if app.lastLaunchedFlag {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("TriggerRecentAppBounce"),
+                object: nil
+            )
         }
     }
     
@@ -65,6 +89,9 @@ struct QuickLauncherView: View {
             return false
         }
         
+        // Calculate total rows
+        let totalRows = (apps.count + columnsPerRow - 1) / columnsPerRow
+        
         // Handle Escape key (53)
         if keyCode == 53 {
             if isDrawerOpen {
@@ -75,73 +102,69 @@ struct QuickLauncherView: View {
             }
             // Clear focus
             focusedAppIndex = nil
+            focusedRow = 0
+            focusedColumn = 0
             return true
         }
         
-        // If no app is focused, focus the first one on any arrow key
-        if focusedAppIndex == nil {
-            if keyCode == 123 || keyCode == 124 || keyCode == 125 || keyCode == 126 {
-                focusedAppIndex = 0
+        // Handle number keys 1-9, 0 (key codes: 18-26 for 1-9, 29 for 0)
+        // Map: 1=18, 2=19, 3=20, 4=21, 5=23, 6=22, 7=26, 8=28, 9=25, 0=29
+        let numberKeyMap: [UInt16: Int] = [
+            18: 0,  // 1 -> column 0
+            19: 1,  // 2 -> column 1
+            20: 2,  // 3 -> column 2
+            21: 3,  // 4 -> column 3
+            23: 4,  // 5 -> column 4
+            22: 5,  // 6 -> column 5
+            26: 6,  // 7 -> column 6
+            28: 7,  // 8 -> column 7
+            25: 8,  // 9 -> column 8
+            29: 9   // 0 -> column 9
+        ]
+        
+        if let column = numberKeyMap[keyCode] {
+            // Calculate app index: row * 10 + column
+            let targetIndex = focusedRow * columnsPerRow + column
+            
+            if targetIndex < apps.count {
+                // Valid app at this position - launch it immediately
+                focusedColumn = column
+                focusedAppIndex = targetIndex
+                launchAppAtIndex(targetIndex)
                 return true
             }
             return false
         }
         
-        guard let currentIndex = focusedAppIndex else { return false }
-        
+        // Handle up/down arrows - switch rows
         switch keyCode {
-        case 36, 49:  // Return (36) or Space (49)
-            // Launch focused app with animation
-            if currentIndex < apps.count {
-                let app = apps[currentIndex]
-                
-                // Trigger icon animation
-                NotificationCenter.default.post(
-                    name: NSNotification.Name("TriggerAppIconAnimation"),
-                    object: nil,
-                    userInfo: ["bundleID": app.bundleIdentifier]
-                )
-                
-                // Launch app
-                viewModel.launch(app: app)
-                
-                // If this is the recent app, trigger bounce animation on recent button
-                if app.lastLaunchedFlag {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("TriggerRecentAppBounce"),
-                        object: nil
-                    )
+        case 125:  // Down arrow - next row
+            if focusedRow < totalRows - 1 {
+                focusedRow += 1
+                // Update focused index to same column in new row
+                let newIndex = focusedRow * columnsPerRow + focusedColumn
+                // Clamp to valid range
+                focusedAppIndex = min(newIndex, apps.count - 1)
+                // Adjust column if we're at the last row and it's not full
+                if focusedAppIndex! < apps.count {
+                    focusedColumn = focusedAppIndex! % columnsPerRow
                 }
             }
             return true
             
-        case 124:  // Right arrow
-            // Move focus right
-            if currentIndex < apps.count - 1 {
-                focusedAppIndex = currentIndex + 1
+        case 126:  // Up arrow - previous row
+            if focusedRow > 0 {
+                focusedRow -= 1
+                // Update focused index to same column in new row
+                let newIndex = focusedRow * columnsPerRow + focusedColumn
+                focusedAppIndex = newIndex
             }
             return true
             
-        case 123:  // Left arrow
-            // Move focus left
-            if currentIndex > 0 {
-                focusedAppIndex = currentIndex - 1
-            }
-            return true
-            
-        case 125:  // Down arrow
-            // Move focus down (next row)
-            let nextIndex = currentIndex + columnsPerRow
-            if nextIndex < apps.count {
-                focusedAppIndex = nextIndex
-            }
-            return true
-            
-        case 126:  // Up arrow
-            // Move focus up (previous row)
-            let prevIndex = currentIndex - columnsPerRow
-            if prevIndex >= 0 {
-                focusedAppIndex = prevIndex
+        case 36, 49:  // Return (36) or Space (49)
+            // Launch focused app with animation
+            if let currentIndex = focusedAppIndex, currentIndex < apps.count {
+                launchAppAtIndex(currentIndex)
             }
             return true
             
@@ -826,10 +849,7 @@ private struct iOSAppIconView: View {
     // Hover effect state
     @State private var isHovering = false
     
-    // Show hover effect when hovering OR when focused (keyboard)
-    private var showHoverEffect: Bool {
-        isHovering || isFocused
-    }
+
     
     var body: some View {
         VStack(spacing: 8) {
@@ -874,14 +894,21 @@ private struct iOSAppIconView: View {
                 }
             }
             .shadow(
-                color: showHoverEffect ? .accentColor.opacity(0.5) : .black.opacity(0.2), 
-                radius: showHoverEffect ? 16 : 3, 
+                color: isHovering ? .accentColor.opacity(0.5) : .black.opacity(0.2), 
+                radius: isHovering ? 16 : 3, 
                 x: 0, 
-                y: showHoverEffect ? 6 : 2
+                y: isHovering ? 6 : 2
             )
             .overlay {
-                // Border glow (hover or focus)
-                if showHoverEffect {
+                // Simple focus border (keyboard focus only)
+                if isFocused {
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(.accentColor, lineWidth: 3)
+                }
+            }
+            .overlay {
+                // Hover border glow
+                if isHovering {
                     RoundedRectangle(cornerRadius: 18)
                         .strokeBorder(
                             LinearGradient(
@@ -944,12 +971,12 @@ private struct iOSAppIconView: View {
                     }
                 }
             }
-            // Press & bounce & hover/focus animation
+            // Press & bounce & hover animation
             .scaleEffect(
                 isPressing ? 0.85 : 
                 isBouncing ? 1.15 : 
                 isAnimating ? 0.85 : 
-                showHoverEffect ? 1.05 : 1.0
+                isHovering ? 1.05 : 1.0
             )
             .animation(
                 isPressing ? .easeOut(duration: 0.15) :
@@ -972,7 +999,7 @@ private struct iOSAppIconView: View {
             )
             .animation(
                 .interpolatingSpring(stiffness: 350, damping: 12),
-                value: showHoverEffect
+                value: isHovering
             )
             .onHover { hovering in
                 isHovering = hovering
@@ -1041,20 +1068,6 @@ private struct iOSAppIconView: View {
             } else {
                 // No animation - just show immediately
                 hasAppeared = true
-            }
-            
-            // Start focus glow animation if focused
-            if isFocused {
-                startFocusRingAnimationFromBeginning()
-            }
-        }
-        .onChange(of: isFocused) { oldValue, newValue in
-            if newValue {
-                // Focus gained - start from beginning
-                startFocusRingAnimationFromBeginning()
-            } else {
-                // Focus lost (ESC pressed) - reset everything
-                stopAndResetFocusRingAnimation()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerAppIconAnimation"))) { notification in
