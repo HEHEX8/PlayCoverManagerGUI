@@ -1015,8 +1015,9 @@ private struct iOSAppIconView: View {
                                         .cyan.opacity(isHovering ? 0.25 : 0.4),
                                         .accentColor.opacity(isHovering ? 0.3 : 0.5)
                                     ],
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 1.0 - focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
+                                    // Gradient flows from off-screen (bottom-left) to off-screen (top-right)
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) - 0.5, y: 1.5 - focusGlowPhase / (.pi * 2)),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 1.0, y: -focusGlowPhase / (.pi * 2))
                                 ),
                                 lineWidth: isHovering ? 2 : 4
                             )
@@ -1037,8 +1038,9 @@ private struct iOSAppIconView: View {
                                         .cyan,
                                         .accentColor
                                     ],
-                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2), y: 1.0 - focusGlowPhase / (.pi * 2)),
-                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 0.5, y: 0.5 - focusGlowPhase / (.pi * 2))
+                                    // Gradient flows from off-screen (bottom-left) to off-screen (top-right)
+                                    startPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) - 0.5, y: 1.5 - focusGlowPhase / (.pi * 2)),
+                                    endPoint: UnitPoint(x: focusGlowPhase / (.pi * 2) + 1.0, y: -focusGlowPhase / (.pi * 2))
                                 ),
                                 lineWidth: 3
                             )
@@ -1224,8 +1226,12 @@ private struct iOSAppIconView: View {
                                 .cyan,
                                 .accentColor
                             ],
-                            startPoint: UnitPoint(x: gradientOffset, y: 1.0 - gradientOffset),
-                            endPoint: UnitPoint(x: gradientOffset + 0.5, y: 0.5 - gradientOffset)
+                            // Offset -0.5 to 1.5: gradient flows from off-screen (bottom-left) to off-screen (top-right)
+                            // At 0: gradient starts off-screen bottom-left
+                            // At 0.5: gradient passes through center
+                            // At 1: gradient exits off-screen top-right
+                            startPoint: UnitPoint(x: gradientOffset - 0.5, y: 1.5 - gradientOffset),
+                            endPoint: UnitPoint(x: gradientOffset + 1.0, y: -gradientOffset)
                         )
                     )
                     .opacity(showHoverEffect ? 1 : 0)
