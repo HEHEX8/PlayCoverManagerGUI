@@ -784,7 +784,7 @@ struct QuickLauncherView: View {
                                 showingShortcutGuide = false
                             }
                         }
-                    KeyboardShortcutGuide(isShowing: $showingShortcutGuide)
+                    KeyboardShortcutGuide(isShowing: $showingShortcutGuide, uiScale: uiScale)
                         .transition(.scale.combined(with: .opacity))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -3889,6 +3889,7 @@ private struct DrawerMenuItem: View {
 // MARK: - Keyboard Shortcut Guide
 private struct KeyboardShortcutGuide: View {
     @Binding var isShowing: Bool
+    let uiScale: CGFloat
     
     struct ShortcutItem {
         let keys: String
@@ -3918,11 +3919,11 @@ private struct KeyboardShortcutGuide: View {
             // Header
             HStack {
                 Image(systemName: "keyboard")
-                    .font(.system(size: 24))
+                    .font(.system(size: 24 * uiScale))
                     .foregroundStyle(.blue)
                 
                 Text("キーボードショートカット")
-                    .font(.title2.bold())
+                    .font(.system(size: 20 * uiScale, weight: .bold))
                 
                 Spacer()
                 
@@ -3932,13 +3933,13 @@ private struct KeyboardShortcutGuide: View {
                     }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24))
+                        .font(.system(size: 24 * uiScale))
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
                 .help(String(localized: "閉じる (Esc)"))
             }
-            .padding(24)
+            .padding(24 * uiScale)
             .glassEffect(.regular, in: .rect)
             
             Divider()
@@ -3947,34 +3948,34 @@ private struct KeyboardShortcutGuide: View {
             ScrollView {
                 VStack(spacing: 0) {
                     ForEach([String(localized: "グローバル"), "ナビゲーション"], id: \.self) { category in
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 12 * uiScale) {
                             Text(category)
-                                .font(.headline)
+                                .font(.system(size: 17 * uiScale, weight: .semibold))
                                 .foregroundStyle(.secondary)
-                                .padding(.horizontal, 24)
-                                .padding(.top, 16)
+                                .padding(.horizontal, 24 * uiScale)
+                                .padding(.top, 16 * uiScale)
                             
                             VStack(spacing: 0) {
                                 ForEach(shortcuts.filter { $0.category == category }, id: \.keys) { shortcut in
-                                    HStack(spacing: 16) {
+                                    HStack(spacing: 16 * uiScale) {
                                         // Key combination
                                         Text(shortcut.keys)
-                                            .font(.system(.body, design: .monospaced).weight(.semibold))
+                                            .font(.system(size: 15 * uiScale, design: .monospaced, weight: .semibold))
                                             .foregroundStyle(.primary)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
-                                            .frame(minWidth: 100, alignment: .leading)
+                                            .padding(.horizontal, 12 * uiScale)
+                                            .padding(.vertical, 6 * uiScale)
+                                            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 6 * uiScale))
+                                            .frame(minWidth: 100 * uiScale, alignment: .leading)
                                         
                                         // Description
                                         Text(shortcut.description)
-                                            .font(.body)
+                                            .font(.system(size: 15 * uiScale))
                                             .foregroundStyle(.primary)
                                         
                                         Spacer()
                                     }
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 10)
+                                    .padding(.horizontal, 24 * uiScale)
+                                    .padding(.vertical, 10 * uiScale)
                                     .background(Color.clear)
                                     .contentShape(Rectangle())
                                 }
@@ -3982,7 +3983,7 @@ private struct KeyboardShortcutGuide: View {
                         }
                     }
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, 12 * uiScale)
             }
             
             Divider()
@@ -3990,9 +3991,10 @@ private struct KeyboardShortcutGuide: View {
             // Footer
             HStack {
                 Image(systemName: "info.circle")
+                    .font(.system(size: 13 * uiScale))
                     .foregroundStyle(.secondary)
                 Text("Escキーまたは背景をクリックして閉じる")
-                    .font(.caption)
+                    .font(.system(size: 12 * uiScale))
                     .foregroundStyle(.secondary)
                 
                 Spacer()
@@ -4002,15 +4004,16 @@ private struct KeyboardShortcutGuide: View {
                         isShowing = false
                     }
                 }
+                .font(.system(size: 14 * uiScale))
                 .keyboardShortcut(.cancelAction)
             }
-            .padding(16)
+            .padding(16 * uiScale)
             .glassEffect(.regular, in: .rect)
         }
-        .frame(width: 600, height: 500)
+        .frame(width: 600 * uiScale, height: 500 * uiScale)
         .background(Color(nsColor: .windowBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
+        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 10 * uiScale)
     }
 }
 
