@@ -64,41 +64,62 @@ struct AppRootView: View {
 struct CheckingView: View {
     let status: String
     let retry: () -> Void
+    @State private var windowSize: CGSize = .zero
+    
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 960.0
+        let baseHeight: CGFloat = 640.0
+        
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        return max(1.0, min(2.0, scale))
+    }
+    
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
 
     var body: some View {
         ZStack {
             Color(nsColor: .windowBackgroundColor)
                 .ignoresSafeArea()
             
-            VStack(spacing: 32) {
+            VStack(spacing: 32 * uiScale) {
                 ProgressView()
-                    .scaleEffect(1.5)
+                    .scaleEffect(1.5 * uiScale)
                 
                 Text(status)
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.secondary)
                 
                 Button {
                     retry()
                 } label: {
                     Label("再試行", systemImage: "arrow.clockwise")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 14 * uiScale, weight: .medium))
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
                 .keyboardShortcut(.defaultAction)
             }
-            .padding(40)
-            .frame(maxWidth: 500)
+            .padding(40 * uiScale)
+            .frame(maxWidth: 500 * uiScale)
             .background(
                 ZStack {
-                    LinearGradient(colors: [.blue.opacity(0.08), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25)
-                    RoundedRectangle(cornerRadius: 20).glassEffect(.regular.tint(.blue.opacity(0.18)), in: RoundedRectangle(cornerRadius: 20))
+                    LinearGradient(colors: [.blue.opacity(0.08), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25 * uiScale)
+                    RoundedRectangle(cornerRadius: 20 * uiScale).glassEffect(.regular.tint(.blue.opacity(0.18)), in: RoundedRectangle(cornerRadius: 20 * uiScale))
                 }
                 .allowsHitTesting(false)
             )
-            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20)).allowsHitTesting(false) }
-            .shadow(color: .blue.opacity(0.2), radius: 35, x: 0, y: 12)
+            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20 * uiScale)).allowsHitTesting(false) }
+            .shadow(color: .blue.opacity(0.2), radius: 35 * uiScale, x: 0, y: 12 * uiScale)
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            windowSize = newSize
         }
     }
 }
@@ -107,36 +128,52 @@ struct ErrorView: View {
     let error: AppError
     let onRetry: () -> Void
     let onChangeSettings: () -> Void
+    @State private var windowSize: CGSize = .zero
+    
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 960.0
+        let baseHeight: CGFloat = 640.0
+        
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        return max(1.0, min(2.0, scale))
+    }
+    
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
 
     var body: some View {
         ZStack {
             Color(nsColor: .windowBackgroundColor)
                 .ignoresSafeArea()
             
-            VStack(spacing: 32) {
+            VStack(spacing: 32 * uiScale) {
                 // Icon
                 Image(systemName: iconName)
-                    .font(.system(size: 80))
+                    .font(.system(size: 80 * uiScale))
                     .foregroundStyle(iconColor)
                 
                 // Title and message
-                VStack(spacing: 16) {
+                VStack(spacing: 16 * uiScale) {
                     Text(error.title)
-                        .font(.title.bold())
+                        .font(.system(size: 28 * uiScale, weight: .bold))
                         .multilineTextAlignment(.center)
                     
                     Text(error.message)
-                        .font(.callout)
+                        .font(.system(size: 15 * uiScale))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
-                        .frame(maxWidth: 450)
+                        .frame(maxWidth: 450 * uiScale)
                 }
                 
                 Divider()
-                    .frame(maxWidth: 400)
+                    .frame(maxWidth: 400 * uiScale)
                 
                 // Action buttons
-                VStack(spacing: 12) {
+                VStack(spacing: 12 * uiScale) {
                     if error.category == .permissionDenied {
                         Button {
                             if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
@@ -144,8 +181,8 @@ struct ErrorView: View {
                             }
                         } label: {
                             Label("システム設定を開く", systemImage: "gear")
-                                .font(.system(size: 15, weight: .medium))
-                                .frame(minWidth: 200)
+                                .font(.system(size: 15 * uiScale, weight: .medium))
+                                .frame(minWidth: 200 * uiScale)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
@@ -156,8 +193,8 @@ struct ErrorView: View {
                             onChangeSettings()
                         } label: {
                             Label("保存先を変更", systemImage: "folder.badge.gearshape")
-                                .font(.system(size: 15, weight: .medium))
-                                .frame(minWidth: 200)
+                                .font(.system(size: 15 * uiScale, weight: .medium))
+                                .frame(minWidth: 200 * uiScale)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
@@ -166,20 +203,20 @@ struct ErrorView: View {
                     } else if error.requiresAction {
                         SettingsLink {
                             Label("設定を開く", systemImage: "gear")
-                                .font(.system(size: 15, weight: .medium))
-                                .frame(minWidth: 200)
+                                .font(.system(size: 15 * uiScale, weight: .medium))
+                                .frame(minWidth: 200 * uiScale)
                         }
                         .buttonStyle(.borderedProminent)
                         .controlSize(.large)
                     }
                     
-                    HStack(spacing: 12) {
+                    HStack(spacing: 12 * uiScale) {
                         Button {
                             NSApplication.shared.terminate(nil)
                         } label: {
                             Text("終了")
-                                .font(.system(size: 14, weight: .medium))
-                                .frame(minWidth: 80)
+                                .font(.system(size: 14 * uiScale, weight: .medium))
+                                .frame(minWidth: 80 * uiScale)
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.large)
@@ -188,8 +225,8 @@ struct ErrorView: View {
                             onRetry()
                         } label: {
                             Label("再試行", systemImage: "arrow.clockwise")
-                                .font(.system(size: 14, weight: .medium))
-                                .frame(minWidth: 100)
+                                .font(.system(size: 14 * uiScale, weight: .medium))
+                                .frame(minWidth: 100 * uiScale)
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.large)
@@ -197,17 +234,22 @@ struct ErrorView: View {
                     }
                 }
             }
-            .padding(48)
-            .frame(maxWidth: 600)
+            .padding(48 * uiScale)
+            .frame(maxWidth: 600 * uiScale)
             .background(
                 ZStack {
-                    LinearGradient(colors: [.orange.opacity(0.07), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25)
-                    RoundedRectangle(cornerRadius: 20).glassEffect(.regular.tint(.orange.opacity(0.14)), in: RoundedRectangle(cornerRadius: 20))
+                    LinearGradient(colors: [.orange.opacity(0.07), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25 * uiScale)
+                    RoundedRectangle(cornerRadius: 20 * uiScale).glassEffect(.regular.tint(.orange.opacity(0.14)), in: RoundedRectangle(cornerRadius: 20 * uiScale))
                 }
                 .allowsHitTesting(false)
             )
-            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20)).allowsHitTesting(false) }
-            .shadow(color: .orange.opacity(0.2), radius: 35, x: 0, y: 12)
+            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20 * uiScale)).allowsHitTesting(false) }
+            .shadow(color: .orange.opacity(0.2), radius: 35 * uiScale, x: 0, y: 12 * uiScale)
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            windowSize = newSize
         }
     }
     
@@ -240,13 +282,29 @@ struct TerminationFlowView: View {
     let onContinueWaiting: () -> Void
     let onForceTerminate: () -> Void
     let onCancel: () -> Void
+    @State private var windowSize: CGSize = .zero
+    
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 960.0
+        let baseHeight: CGFloat = 640.0
+        
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        return max(1.0, min(2.0, scale))
+    }
+    
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
     
     var body: some View {
         ZStack {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
             
-            VStack(spacing: 32) {
+            VStack(spacing: 32 * uiScale) {
                 switch state {
                 case .unmounting(let status):
                     unmountingView(status: status)
@@ -258,54 +316,59 @@ struct TerminationFlowView: View {
                     EmptyView()
                 }
             }
-            .padding(48)
-            .frame(maxWidth: 600)
+            .padding(48 * uiScale)
+            .frame(maxWidth: 600 * uiScale)
             .background(
                 ZStack {
-                    LinearGradient(colors: [.blue.opacity(0.07), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25)
-                    RoundedRectangle(cornerRadius: 20).glassEffect(.regular.tint(.blue.opacity(0.14)), in: RoundedRectangle(cornerRadius: 20))
+                    LinearGradient(colors: [.blue.opacity(0.07), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).blur(radius: 25 * uiScale)
+                    RoundedRectangle(cornerRadius: 20 * uiScale).glassEffect(.regular.tint(.blue.opacity(0.14)), in: RoundedRectangle(cornerRadius: 20 * uiScale))
                 }
                 .allowsHitTesting(false)
             )
-            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20)).allowsHitTesting(false) }
-            .shadow(color: .blue.opacity(0.25), radius: 35, x: 0, y: 12)
+            .overlay { LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .topLeading, endPoint: .center).clipShape(RoundedRectangle(cornerRadius: 20 * uiScale)).allowsHitTesting(false) }
+            .shadow(color: .blue.opacity(0.25), radius: 35 * uiScale, x: 0, y: 12 * uiScale)
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            windowSize = newSize
         }
     }
     
     private func unmountingView(status: String) -> some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 24 * uiScale) {
             ProgressView()
-                .scaleEffect(1.5)
+                .scaleEffect(1.5 * uiScale)
             
             Text(status)
-                .font(.headline)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
                 .foregroundStyle(.secondary)
         }
     }
     
     private func timeoutView() -> some View {
-        VStack(spacing: 32) {
+        VStack(spacing: 32 * uiScale) {
             Image(systemName: "clock.badge.exclamationmark")
-                .font(.system(size: 64))
+                .font(.system(size: 64 * uiScale))
                 .foregroundStyle(.orange)
             
-            VStack(spacing: 16) {
+            VStack(spacing: 16 * uiScale) {
                 Text("アンマウント処理がタイムアウトしました")
-                    .font(.title2.bold())
+                    .font(.system(size: 22 * uiScale, weight: .bold))
                 
                 Text("ディスクイメージのアンマウントに時間がかかっています。\n\n強制終了しますか？（データが失われる可能性があります）")
-                    .font(.callout)
+                    .font(.system(size: 15 * uiScale))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             
-            HStack(spacing: 12) {
+            HStack(spacing: 12 * uiScale) {
                 Button {
                     onContinueWaiting()
                 } label: {
                     Text("待機")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(minWidth: 100)
+                        .font(.system(size: 14 * uiScale, weight: .medium))
+                        .frame(minWidth: 100 * uiScale)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
@@ -314,8 +377,8 @@ struct TerminationFlowView: View {
                     onForceTerminate()
                 } label: {
                     Text("強制終了")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(minWidth: 100)
+                        .font(.system(size: 14 * uiScale, weight: .medium))
+                        .frame(minWidth: 100 * uiScale)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -332,7 +395,8 @@ struct TerminationFlowView: View {
             onQuitAllAndRetry: { [self] in
                 // Retry unmount after quitting all apps
                 self.retryUnmount()
-            }
+            },
+            uiScale: uiScale
         )
     }
     
@@ -381,6 +445,7 @@ struct RunningAppsBlockingView: View {
     let runningAppBundleIDs: [String]
     let onCancel: () -> Void
     let onQuitAllAndRetry: (() -> Void)?  // Optional: retry unmount after quitting all apps
+    var uiScale: CGFloat = 1.0
     
     @State private var appInfoList: [RunningAppInfo] = []
     @State private var isProcessing: Bool = false  // Processing state for "すべて終了"
@@ -393,51 +458,50 @@ struct RunningAppsBlockingView: View {
     }
     
     var body: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: 32 * uiScale) {
             if isProcessing {
                 // Processing state: show progress indicator
                 ProgressView()
-                    .scaleEffect(1.5)
-                    .padding(.bottom, 16)
+                    .scaleEffect(1.5 * uiScale)
+                    .padding(.bottom, 16 * uiScale)
                 
                 Text("アプリを終了しています...")
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.secondary)
             } else {
                 // Normal state: show running apps
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 64))
+                    .font(.system(size: 64 * uiScale))
                     .foregroundStyle(.orange)
                 
-                VStack(spacing: 16) {
+                VStack(spacing: 16 * uiScale) {
                     Text("一部のディスクイメージをアンマウントできません")
-                        .font(.title2.bold())
+                        .font(.system(size: 22 * uiScale, weight: .bold))
                     
                     Text("以下のアプリが実行中です。")
-                        .font(.callout)
+                        .font(.system(size: 15 * uiScale))
                         .foregroundStyle(.secondary)
                     
                     // Running apps list with icons and quit buttons
                     ScrollView {
-                        VStack(spacing: 12) {
+                        VStack(spacing: 12 * uiScale) {
                             ForEach(appInfoList) { appInfo in
-                            HStack(spacing: 12) {
+                            HStack(spacing: 12 * uiScale) {
                                 // App icon
                                 if let icon = appInfo.icon {
                                     Image(nsImage: icon)
                                         .resizable()
-                                        .frame(width: 48, height: 48)
-                                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                                        .frame(width: 48 * uiScale, height: 48 * uiScale)
+                                        .clipShape(RoundedRectangle(cornerRadius: 10 * uiScale))
                                 } else {
-                                    RoundedRectangle(cornerRadius: 10)
+                                    RoundedRectangle(cornerRadius: 10 * uiScale)
                                         .fill(Color.gray.opacity(0.3))
-                                        .frame(width: 48, height: 48)
+                                        .frame(width: 48 * uiScale, height: 48 * uiScale)
                                 }
                                 
                                 // App name
                                 Text(appInfo.name)
-                                    .font(.body)
-                                    .fontWeight(.medium)
+                                    .font(.system(size: 15 * uiScale, weight: .medium))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 
                                 // Quit button
@@ -445,27 +509,27 @@ struct RunningAppsBlockingView: View {
                                     quitApp(appInfo.app)
                                 } label: {
                                     Text("終了")
-                                        .font(.system(size: 13, weight: .medium))
+                                        .font(.system(size: 13 * uiScale, weight: .medium))
                                 }
                                 .buttonStyle(.bordered)
                                 .controlSize(.small)
                             }
-                            .padding(12)
+                            .padding(12 * uiScale)
                             .background(Color(nsColor: .controlBackgroundColor))
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
                         }
                     }
                     }
-                    .frame(maxHeight: 300)
+                    .frame(maxHeight: 300 * uiScale)
                 }
                 
-                HStack(spacing: 12) {
+                HStack(spacing: 12 * uiScale) {
                     Button {
                         onCancel()
                     } label: {
                         Text("キャンセル")
-                            .font(.system(size: 14, weight: .medium))
-                            .frame(minWidth: 100)
+                            .font(.system(size: 14 * uiScale, weight: .medium))
+                            .frame(minWidth: 100 * uiScale)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.large)
@@ -479,8 +543,8 @@ struct RunningAppsBlockingView: View {
                         }
                     } label: {
                         Text("すべて終了")
-                            .font(.system(size: 14, weight: .medium))
-                            .frame(minWidth: 100)
+                            .font(.system(size: 14 * uiScale, weight: .medium))
+                            .frame(minWidth: 100 * uiScale)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
@@ -489,8 +553,8 @@ struct RunningAppsBlockingView: View {
                 }
             }
         }
-        .padding(48)
-        .frame(maxWidth: 600)
+        .padding(48 * uiScale)
+        .frame(maxWidth: 600 * uiScale)
         .onAppear {
             loadRunningApps()
         }
