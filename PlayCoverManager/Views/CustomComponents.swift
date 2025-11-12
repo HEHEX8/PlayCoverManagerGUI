@@ -297,6 +297,37 @@ struct CustomToggle: View {
     }
 }
 
+// MARK: - Liquid Glass Card Modifier
+// Swift 6.2: ViewModifier for consistent glass effect + shadow combination
+struct LiquidGlassCardModifier: ViewModifier {
+    let cornerRadius: CGFloat
+    let shadowRadius: CGFloat
+    let shadowOffset: CGSize
+    let shadowOpacity: Double
+    let uiScale: CGFloat
+    
+    init(cornerRadius: CGFloat = 16, shadowRadius: CGFloat = 8, shadowOffset: CGSize = CGSize(width: 0, height: 4), shadowOpacity: Double = 0.1, uiScale: CGFloat = 1.0) {
+        self.cornerRadius = cornerRadius
+        self.shadowRadius = shadowRadius
+        self.shadowOffset = shadowOffset
+        self.shadowOpacity = shadowOpacity
+        self.uiScale = uiScale
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius * uiScale))
+            .shadow(color: .black.opacity(shadowOpacity), radius: shadowRadius * uiScale, x: shadowOffset.width * uiScale, y: shadowOffset.height * uiScale)
+    }
+}
+
+extension View {
+    // Apply Liquid Glass card styling with optional customization
+    func liquidGlassCard(cornerRadius: CGFloat = 16, shadowRadius: CGFloat = 8, shadowOffset: CGSize = CGSize(width: 0, height: 4), shadowOpacity: Double = 0.1, uiScale: CGFloat = 1.0) -> some View {
+        modifier(LiquidGlassCardModifier(cornerRadius: cornerRadius, shadowRadius: shadowRadius, shadowOffset: shadowOffset, shadowOpacity: shadowOpacity, uiScale: uiScale))
+    }
+}
+
 // MARK: - Custom Section Card
 
 /// Modern section card container - Swift 6.2 optimized

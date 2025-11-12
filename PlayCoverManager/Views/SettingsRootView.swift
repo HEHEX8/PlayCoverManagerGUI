@@ -287,8 +287,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(24 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
                 
                 // Mount Settings Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
@@ -352,8 +351,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(24 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
                 
 
                 // Language Card
@@ -439,8 +437,7 @@ private struct GeneralSettingsView: View {
                     }
                 }
                 .padding(24 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
             }
             .padding(.horizontal, 24 * uiScale)
             .padding(.vertical, 20 * uiScale)
@@ -613,8 +610,7 @@ private struct DataSettingsView: View {
                     }
                 }
                 .padding(24 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
                 
                 Spacer()
             }
@@ -2891,8 +2887,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(24 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
                 
                 // PlayCover Shortcuts Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
@@ -2956,8 +2951,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(24 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
                 
                 // Reset Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
@@ -3022,8 +3016,7 @@ private struct MaintenanceSettingsView: View {
                     }
                 }
                 .padding(24 * uiScale)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
                 
                 Spacer()
             }

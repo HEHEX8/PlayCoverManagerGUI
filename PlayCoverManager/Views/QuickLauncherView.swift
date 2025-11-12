@@ -1500,8 +1500,7 @@ private struct AppDetailSheet: View {
                             }
                         }
                         .padding(24 * uiScale)
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                        .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                        .liquidGlassCard(uiScale: uiScale)
                         
                         // Tab selector
                         HStack(spacing: 12 * uiScale) {
@@ -1541,8 +1540,7 @@ private struct AppDetailSheet: View {
                             }
                         }
                         .padding(24 * uiScale)
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                        .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+                        .liquidGlassCard(uiScale: uiScale)
                         
                         // Bottom action buttons
                         HStack(spacing: 12 * uiScale) {
