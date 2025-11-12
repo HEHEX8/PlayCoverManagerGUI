@@ -1018,7 +1018,6 @@ private struct iOSAppIconView: View {
                 .frame(width: circleSize, height: circleSize)
         }
         .shadow(color: .black.opacity(0.2), radius: iconSize * 0.03, x: 0, y: iconSize * 0.01)
-        .offset(x: iconSize * 0.06, y: -iconSize * 0.06)
     }
     
     var body: some View {
@@ -1086,8 +1085,9 @@ private struct iOSAppIconView: View {
                         )
                 }
             }
-            .overlay(alignment: .topTrailing) {
+            .overlay(alignment: .bottom) {
                 statusIndicator
+                    .offset(x: 0, y: iconSize * 0.06)  // Shift down slightly from bottom edge
             }
             // Press & bounce & hover animation
             .scaleEffect(currentScale)
@@ -1713,8 +1713,8 @@ private struct RecentAppLaunchButton: View {
                     if let oldIcon = oldIcon {
                         Image(nsImage: oldIcon)
                             .resizable()
-                            .frame(width: iconSize, height: iconSize)
-                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                            .frame(width: iconSize * 1.4, height: iconSize * 1.4)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius * 1.4))
                             .shadow(color: .black.opacity(0.2), radius: iconSize * 0.11, x: 0, y: iconSize * 0.05)
                             .offset(x: oldIconOffsetX, y: oldIconOffsetY)
                             .scaleEffect(oldIconScale)
@@ -1723,31 +1723,31 @@ private struct RecentAppLaunchButton: View {
                     
                     // Ripple effect - middle layer, centered on icon
                     RippleEffect(trigger: rippleTrigger)
-                        .frame(width: iconSize, height: iconSize)
+                        .frame(width: iconSize * 1.4, height: iconSize * 1.4)
                     
                     // Current icon - top layer with modern shadow
                     if let icon = app.icon {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: iconSize, height: iconSize)
-                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                            .frame(width: iconSize * 1.4, height: iconSize * 1.4)
+                            .clipShape(RoundedRectangle(cornerRadius: cornerRadius * 1.4))
                             .shadow(color: .black.opacity(0.2), radius: iconSize * 0.11, x: 0, y: iconSize * 0.05)
                             .offset(x: iconOffsetX, y: iconOffsetY)
                             .scaleEffect(iconScale)
                     } else {
-                        RoundedRectangle(cornerRadius: cornerRadius)
+                        RoundedRectangle(cornerRadius: cornerRadius * 1.4)
                             .fill(Color.gray.opacity(0.3))
-                            .frame(width: iconSize, height: iconSize)
+                            .frame(width: iconSize * 1.4, height: iconSize * 1.4)
                             .overlay {
                                 Image(systemName: "app.fill")
-                                    .font(.system(size: iconSize * 0.5))
+                                    .font(.system(size: iconSize * 0.7))
                                     .foregroundStyle(.tertiary)
                             }
                             .offset(x: iconOffsetX, y: iconOffsetY)
                             .scaleEffect(iconScale)
                     }
                 }
-                .frame(width: iconSize, height: iconSize)
+                .frame(width: iconSize * 1.4, height: iconSize * 1.4)
                 
                 // App info with modern styling
                 VStack(alignment: .leading, spacing: iconSize * 0.11) {
@@ -4457,7 +4457,7 @@ private struct AppGridCell: View {
     var body: some View {
         let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
         
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .top) {
             iOSAppIconView(
                 app: app,
                 index: index,
@@ -4500,7 +4500,7 @@ private struct AppGridCell: View {
                             .fill(Color.accentColor)
                     )
                     .shadow(color: .black.opacity(0.3), radius: 2 * uiScale, x: 0, y: 1)
-                    .offset(x: -5, y: -5)
+                    .offset(x: 0, y: -badgeSize * 0.3)
             }
         }
         .frame(width: iconSize)
