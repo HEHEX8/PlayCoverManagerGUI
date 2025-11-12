@@ -849,7 +849,14 @@ private struct iOSAppIconView: View {
     // Hover effect state
     @State private var isHovering = false
     
-
+    // Computed scale for cleaner code
+    private var currentScale: CGFloat {
+        if isPressing { return 0.85 }
+        if isBouncing { return 1.15 }
+        if isAnimating { return 0.85 }
+        if isHovering { return 1.05 }
+        return 1.0
+    }
     
     var body: some View {
         VStack(spacing: 8) {
@@ -873,8 +880,7 @@ private struct iOSAppIconView: View {
             .clipShape(RoundedRectangle(cornerRadius: 18))
             .background {
                 // Hover glow effect behind the icon (doesn't cover image)
-                // Shows when hovering OR keyboard focused
-                if showHoverEffect {
+                if isHovering {
                     RoundedRectangle(cornerRadius: 18)
                         .fill(
                             RadialGradient(
@@ -972,12 +978,7 @@ private struct iOSAppIconView: View {
                 }
             }
             // Press & bounce & hover animation
-            .scaleEffect(
-                isPressing ? 0.85 : 
-                isBouncing ? 1.15 : 
-                isAnimating ? 0.85 : 
-                isHovering ? 1.05 : 1.0
-            )
+            .scaleEffect(currentScale)
             .animation(
                 isPressing ? .easeOut(duration: 0.15) :
                 isBouncing ? .interpolatingSpring(stiffness: 400, damping: 8) :
