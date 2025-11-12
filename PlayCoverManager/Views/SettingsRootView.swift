@@ -500,14 +500,14 @@ struct IPAInstallerSheet: View {
                 }
             }
         }
-        .frame(minWidth: 800, minHeight: 600)
-        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
             windowSize = newSize
         }
+        .frame(minWidth: 800, minHeight: 600)
+        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         .onAppear {
             let diskImageService = DiskImageService(processRunner: ProcessRunner(), settings: settingsStore)
             let launcherService = LauncherService()
@@ -1592,14 +1592,14 @@ struct AppUninstallerSheet: View {
                 }
             }
         }
-        .frame(minWidth: 800, minHeight: 600)
-        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
             windowSize = newSize
         }
+        .frame(minWidth: 800, minHeight: 600)
+        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         .onAppear {
             Task {
                 await loadApps()
