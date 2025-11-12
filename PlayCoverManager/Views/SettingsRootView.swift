@@ -25,58 +25,78 @@ struct SettingsRootView: View {
     }
 
     var body: some View {
-        TabView {
-            GeneralSettingsView()
-                .tabItem {
-                    Label("一般", systemImage: "gear")
-                }
-            DataSettingsView()
-                .tabItem {
-                    Label("データ", systemImage: "internaldrive")
-                }
-            MaintenanceSettingsView()
-                .tabItem {
-                    Label("メンテナンス", systemImage: "wrench.and.screwdriver")
-                }
-            AboutView()
-                .tabItem {
-                    Label("情報", systemImage: "info.circle")
-                }
-        }
-        .tabViewStyle(.automatic)
-        .uiScale(uiScale)  // Inject UI scale into environment for all tabs
-        .frame(minWidth: 700, minHeight: 550)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("閉じる") {
-                    // Close settings window without terminating app
-                    if let window = NSApp.keyWindow {
-                        window.close()
+        ZStack {
+            // Background gradient
+            LinearGradient(
+                colors: [
+                    Color(nsColor: .controlBackgroundColor).opacity(0.95),
+                    Color(nsColor: .controlBackgroundColor).opacity(0.98)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Main content
+            VStack(spacing: 0) {
+                // Header with close button
+                HStack {
+                    Text("PlayCover Manager 設定")
+                        .font(.system(size: 24 * uiScale, weight: .bold))
+                        .foregroundStyle(.primary)
+                    
+                    Spacer()
+                    
+                    Button {
+                        isPresented = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24 * uiScale))
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
                     }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.escape, modifiers: [])
+                    .help("閉じる (Esc)")
                 }
-                .help("設定を閉じる (Esc)")
-            }
-            
-            ToolbarSpacer()
-            
-            ToolbarItem(placement: .automatic) {
-                Text("PlayCover Manager 設定")
-                    .font(.system(size: 13 * uiScale, weight: .medium))
-                    .foregroundStyle(.secondary)
+                .padding(.horizontal, 32 * uiScale)
+                .padding(.top, 24 * uiScale)
+                .padding(.bottom, 16 * uiScale)
+                
+                Divider()
+                    .padding(.horizontal, 32 * uiScale)
+                
+                // TabView content
+                TabView {
+                    GeneralSettingsView()
+                        .tabItem {
+                            Label("一般", systemImage: "gear")
+                        }
+                    DataSettingsView()
+                        .tabItem {
+                            Label("データ", systemImage: "internaldrive")
+                        }
+                    MaintenanceSettingsView()
+                        .tabItem {
+                            Label("メンテナンス", systemImage: "wrench.and.screwdriver")
+                        }
+                    AboutView()
+                        .tabItem {
+                            Label("情報", systemImage: "info.circle")
+                        }
+                }
+                .tabViewStyle(.automatic)
             }
         }
+        .uiScale(uiScale)  // Inject UI scale into environment for all tabs
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
             windowSize = newSize
         }
-        .onKeyPress(.escape) {
-            // Close the settings window instead of dismissing
-            if let window = NSApp.keyWindow {
-                window.close()
-            }
-            return .handled
-        }
+        .frame(minWidth: 800, minHeight: 600)
+        .clipShape(RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
     }
 }
 

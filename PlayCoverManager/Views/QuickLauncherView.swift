@@ -614,7 +614,7 @@ struct QuickLauncherView: View {
                         restoreWindowFocus()
                     }
                 
-                SettingsRootView()
+                SettingsRootView(isPresented: $showingSettings)
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
             
