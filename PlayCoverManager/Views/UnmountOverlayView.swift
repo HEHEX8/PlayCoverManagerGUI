@@ -79,22 +79,15 @@ struct UnmountOverlayView: View {
                 .id("error")
                 
             case .runningAppsBlocking(let runningAppBundleIDs):
-                ZStack {
-                    Color.black.opacity(0.5)
-                        .ignoresSafeArea()
-                    
-                    RunningAppsBlockingView(
-                        runningAppBundleIDs: runningAppBundleIDs,
-                        onCancel: { viewModel.dismissUnmountError() },
-                        onQuitAllAndRetry: {
-                            // Retry ALL unmount flow after quitting all apps
-                            viewModel.retryUnmountAll()
-                        },
-                        uiScale: uiScale
-                    )
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20 * uiScale))
-                    .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 10 * uiScale)
-                }
+                RunningAppsBlockingView(
+                    runningAppBundleIDs: runningAppBundleIDs,
+                    onCancel: { viewModel.dismissUnmountError() },
+                    onQuitAllAndRetry: {
+                        // Retry ALL unmount flow after quitting all apps
+                        viewModel.retryUnmountAll()
+                    },
+                    uiScale: uiScale
+                )
                 .id("runningAppsBlocking")
                 
             case .forceUnmountOffering(let failedCount, let applyToPlayCoverContainer):
@@ -137,60 +130,70 @@ private struct StorageChangeConfirmationView: View {
     @State private var selectedButton: Int = 1  // 0=cancel, 1=confirm (default)
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            Image(systemName: "externaldrive.badge.questionmark")
-                .font(.system(size: 64 * uiScale))
-                .foregroundStyle(.orange)
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onCancel()
+                }
             
-            Text("保存先を変更")
-                .font(.system(size: 22 * uiScale, weight: .semibold))
-            
-            VStack(spacing: 12 * uiScale) {
-                Text("保存先を変更するには、現在マウント中のすべてのディスクイメージをアンマウントする必要があります。")
-                    .font(.system(size: 15 * uiScale))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 400 * uiScale)
+            VStack(spacing: 20 * uiScale) {
+                Image(systemName: "externaldrive.badge.questionmark")
+                    .font(.system(size: 64 * uiScale))
+                    .foregroundStyle(.orange)
                 
-                if mountedCount > 0 {
-                    HStack {
-                        Image(systemName: "info.circle.fill")
-                            .foregroundStyle(.blue)
-                        Text(LocalizedStringKey("マウント中: \(mountedCount) 個のコンテナ"))
-                            .font(.system(size: 15 * uiScale))
+                Text("保存先を変更")
+                    .font(.system(size: 22 * uiScale, weight: .semibold))
+                
+                VStack(spacing: 12 * uiScale) {
+                    Text("保存先を変更するには、現在マウント中のすべてのディスクイメージをアンマウントする必要があります。")
+                        .font(.system(size: 15 * uiScale))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 400 * uiScale)
+                    
+                    if mountedCount > 0 {
+                        HStack {
+                            Image(systemName: "info.circle.fill")
+                                .foregroundStyle(.blue)
+                            Text(LocalizedStringKey("マウント中: \(mountedCount) 個のコンテナ"))
+                                .font(.system(size: 15 * uiScale))
+                        }
+                        .padding(8 * uiScale)
+                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6 * uiScale))
                     }
-                    .padding(8 * uiScale)
-                    .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 6 * uiScale))
+                    
+                    Text("すべてのアプリを終了してからアンマウントを実行してください。")
+                        .font(.system(size: 12 * uiScale))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 400 * uiScale)
                 }
                 
-                Text("すべてのアプリを終了してからアンマウントを実行してください。")
-                    .font(.system(size: 12 * uiScale))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 400 * uiScale)
-            }
-            
-            HStack(spacing: 12 * uiScale) {
-                Button("キャンセル", action: onCancel)
-                    .buttonStyle(.bordered)
-                    .tint(selectedButton == 0 ? .blue : .gray)
-                    .overlay {
-                        if selectedButton == 0 {
-                            RoundedRectangle(cornerRadius: 6 * uiScale)
-                                .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
+                HStack(spacing: 12 * uiScale) {
+                    Button("キャンセル", action: onCancel)
+                        .buttonStyle(.bordered)
+                        .tint(selectedButton == 0 ? .blue : .gray)
+                        .overlay {
+                            if selectedButton == 0 {
+                                RoundedRectangle(cornerRadius: 6 * uiScale)
+                                    .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
+                            }
                         }
-                    }
-                    .keyboardShortcut(.cancelAction)
-                
-                Button("アンマウントして続行", action: onConfirm)
-                    .buttonStyle(.borderedProminent)
-                    .tint(selectedButton == 1 ? .blue : .gray)
-                    .keyboardShortcut(.defaultAction)
+                        .keyboardShortcut(.cancelAction)
+                    
+                    Button("アンマウントして続行", action: onConfirm)
+                        .buttonStyle(.borderedProminent)
+                        .tint(selectedButton == 1 ? .blue : .gray)
+                        .keyboardShortcut(.defaultAction)
+                }
             }
+            .padding(32 * uiScale)
+            .frame(minWidth: 500 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 500 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
@@ -232,42 +235,52 @@ private struct UnmountConfirmationView: View {
     @State private var selectedButton: Int = 1  // 0=cancel, 1=confirm (default)
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            Image(systemName: "eject.circle.fill")
-                .font(.system(size: 64 * uiScale))
-                .foregroundStyle(.orange)
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onCancel()
+                }
             
-            Text("すべてアンマウントして終了")
-                .font(.system(size: 22 * uiScale, weight: .semibold))
-            
-            Text("すべてのディスクイメージをアンマウントし、アプリを終了します。\n\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。")
-                .font(.system(size: 15 * uiScale))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 400 * uiScale)
-                .foregroundStyle(.secondary)
-            
-            HStack(spacing: 12 * uiScale) {
-                Button("キャンセル", action: onCancel)
-                    .buttonStyle(.bordered)
-                    .tint(selectedButton == 0 ? .blue : .gray)
-                    .overlay {
-                        if selectedButton == 0 {
-                            RoundedRectangle(cornerRadius: 6 * uiScale)
-                                .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
-                        }
-                    }
-                    .keyboardShortcut(.cancelAction)
+            VStack(spacing: 20 * uiScale) {
+                Image(systemName: "eject.circle.fill")
+                    .font(.system(size: 64 * uiScale))
+                    .foregroundStyle(.orange)
                 
-                Button("アンマウントして終了", action: onConfirm)
-                    .buttonStyle(.borderedProminent)
-                    .tint(selectedButton == 1 ? .blue : .gray)
-                    .keyboardShortcut(.defaultAction)
+                Text("すべてアンマウントして終了")
+                    .font(.system(size: 22 * uiScale, weight: .semibold))
+                
+                Text("すべてのディスクイメージをアンマウントし、アプリを終了します。\n\n外部ドライブの場合、ドライブごと安全に取り外せる状態にします。")
+                    .font(.system(size: 15 * uiScale))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400 * uiScale)
+                    .foregroundStyle(.secondary)
+                
+                HStack(spacing: 12 * uiScale) {
+                    Button("キャンセル", action: onCancel)
+                        .buttonStyle(.bordered)
+                        .tint(selectedButton == 0 ? .blue : .gray)
+                        .overlay {
+                            if selectedButton == 0 {
+                                RoundedRectangle(cornerRadius: 6 * uiScale)
+                                    .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
+                            }
+                        }
+                        .keyboardShortcut(.cancelAction)
+                    
+                    Button("アンマウントして終了", action: onConfirm)
+                        .buttonStyle(.borderedProminent)
+                        .tint(selectedButton == 1 ? .blue : .gray)
+                        .keyboardShortcut(.defaultAction)
+                }
             }
+            .padding(32 * uiScale)
+            .frame(minWidth: 500 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 500 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
@@ -305,18 +318,25 @@ private struct UnmountProcessingView: View {
     var uiScale: CGFloat = 1.0
     
     var body: some View {
-        VStack(spacing: 16 * uiScale) {
-            ProgressView()
-                .scaleEffect(1.2 * uiScale)
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
             
-            Text(status)
-                .font(.system(size: 17 * uiScale, weight: .semibold))
-                .multilineTextAlignment(.center)
+            VStack(spacing: 16 * uiScale) {
+                ProgressView()
+                    .scaleEffect(1.2 * uiScale)
+                
+                Text(status)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(32 * uiScale)
+            .frame(minWidth: 400 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 400 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -331,50 +351,60 @@ private struct UnmountEjectConfirmationView: View {
     @State private var selectedButton: Int = 1  // 0=cancel, 1=eject (default)
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            Image(systemName: "externaldrive.fill")
-                .font(.system(size: 64 * uiScale))
-                .foregroundStyle(.blue)
-            
-            Text("外部ドライブをイジェクトしますか？")
-                .font(.system(size: 22 * uiScale, weight: .semibold))
-            
-            Text("データの保存先が外部ドライブまたはネットワークドライブ（\(volumeName)）にあります。\n\nドライブをイジェクトしますか？")
-                .font(.system(size: 15 * uiScale))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 400 * uiScale)
-                .foregroundStyle(.secondary)
-            
-            HStack(spacing: 12 * uiScale) {
-                Button("イジェクトしない") {
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
                     onCancel()
                 }
-                .buttonStyle(.bordered)
-                .tint(selectedButton == 0 ? .blue : .gray)
-                .overlay {
-                    if selectedButton == 0 {
-                        RoundedRectangle(cornerRadius: 6 * uiScale)
-                            .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
-                    }
-                }
-                .keyboardShortcut(.cancelAction)
-                
-                Button("イジェクト") {
-                    onConfirm()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(selectedButton == 1 ? .blue : .gray)
-                .keyboardShortcut(.defaultAction)
-            }
             
-            Text("「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します")
-                .font(.system(size: 12 * uiScale))
-                .foregroundStyle(.tertiary)
+            VStack(spacing: 20 * uiScale) {
+                Image(systemName: "externaldrive.fill")
+                    .font(.system(size: 64 * uiScale))
+                    .foregroundStyle(.blue)
+                
+                Text("外部ドライブをイジェクトしますか？")
+                    .font(.system(size: 22 * uiScale, weight: .semibold))
+                
+                Text("データの保存先が外部ドライブまたはネットワークドライブ（\(volumeName)）にあります。\n\nドライブをイジェクトしますか？")
+                    .font(.system(size: 15 * uiScale))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400 * uiScale)
+                    .foregroundStyle(.secondary)
+                
+                HStack(spacing: 12 * uiScale) {
+                    Button("イジェクトしない") {
+                        onCancel()
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(selectedButton == 0 ? .blue : .gray)
+                    .overlay {
+                        if selectedButton == 0 {
+                            RoundedRectangle(cornerRadius: 6 * uiScale)
+                                .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
+                        }
+                    }
+                    .keyboardShortcut(.cancelAction)
+                    
+                    Button("イジェクト") {
+                        onConfirm()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(selectedButton == 1 ? .blue : .gray)
+                    .keyboardShortcut(.defaultAction)
+                }
+                
+                Text("「イジェクトしない」を選択すると、イジェクトせずにアプリを終了します")
+                    .font(.system(size: 12 * uiScale))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(32 * uiScale)
+            .frame(minWidth: 500 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 500 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
@@ -414,45 +444,52 @@ private struct UnmountSuccessView: View {
     var uiScale: CGFloat = 1.0
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            Image(systemName: ejectedDrive != nil ? "checkmark.circle.fill" : "checkmark.circle.fill")
-                .font(.system(size: 64 * uiScale))
-                .foregroundStyle(.green)
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
             
-            Text(ejectedDrive != nil ? "ドライブの取り外し完了" : "アンマウント完了")
-                .font(.system(size: 22 * uiScale, weight: .semibold))
-            
-            VStack(spacing: 8 * uiScale) {
-                if let driveName = ejectedDrive {
-                    Text("外部ドライブ「\(driveName)」を安全に取り外せる状態にしました。")
-                        .font(.system(size: 15 * uiScale))
-                        .multilineTextAlignment(.center)
-                } else {
-                    Text("ディスクイメージをアンマウントしました。")
-                        .font(.system(size: 15 * uiScale))
-                        .multilineTextAlignment(.center)
-                }
+            VStack(spacing: 20 * uiScale) {
+                Image(systemName: ejectedDrive != nil ? "checkmark.circle.fill" : "checkmark.circle.fill")
+                    .font(.system(size: 64 * uiScale))
+                    .foregroundStyle(.green)
                 
-                Text("アンマウントされたボリューム: \(unmountedCount) 個")
-                    .font(.system(size: 17 * uiScale, weight: .semibold))
-                    .padding(.top, 4 * uiScale)
+                Text(ejectedDrive != nil ? "ドライブの取り外し完了" : "アンマウント完了")
+                    .font(.system(size: 22 * uiScale, weight: .semibold))
                 
-                if unmountedCount > 1 {
-                    Text("（PlayCoverコンテナと関連するアプリコンテナが含まれます）")
-                        .font(.system(size: 12 * uiScale))
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 8 * uiScale) {
+                    if let driveName = ejectedDrive {
+                        Text("外部ドライブ「\(driveName)」を安全に取り外せる状態にしました。")
+                            .font(.system(size: 15 * uiScale))
+                            .multilineTextAlignment(.center)
+                    } else {
+                        Text("ディスクイメージをアンマウントしました。")
+                            .font(.system(size: 15 * uiScale))
+                            .multilineTextAlignment(.center)
+                    }
+                    
+                    Text("アンマウントされたボリューム: \(unmountedCount) 個")
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
+                        .padding(.top, 4 * uiScale)
+                    
+                    if unmountedCount > 1 {
+                        Text("（PlayCoverコンテナと関連するアプリコンテナが含まれます）")
+                            .font(.system(size: 12 * uiScale))
+                            .foregroundStyle(.secondary)
+                    }
                 }
+                .frame(maxWidth: 400 * uiScale)
+                
+                Button("終了", action: onDismiss)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
             }
-            .frame(maxWidth: 400 * uiScale)
-            
-            Button("終了", action: onDismiss)
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
+            .padding(32 * uiScale)
+            .frame(minWidth: 500 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 500 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -465,51 +502,61 @@ private struct ForceUnmountOfferingView: View {
     var uiScale: CGFloat = 1.0
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 64 * uiScale))
-                .foregroundStyle(.orange)
-            
-            Text("アンマウントに失敗しました")
-                .font(.system(size: 22 * uiScale, weight: .semibold))
-            
-            VStack(spacing: 12 * uiScale) {
-                Text("\(failedCount) 個のコンテナをアンマウントできませんでした。")
-                    .font(.system(size: 15 * uiScale))
-                    .multilineTextAlignment(.center)
-                
-                Text("システムプロセス（cfprefsdなど）がファイルを使用している可能性があります。")
-                    .font(.system(size: 15 * uiScale))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Text("強制的にアンマウントを試行しますか？")
-                    .font(.system(size: 15 * uiScale, weight: .semibold))
-                    .foregroundStyle(.orange)
-                    .padding(.top, 8 * uiScale)
-                
-                Text("⚠️ 強制アンマウントはデータ損失のリスクがあります")
-                    .font(.system(size: 12 * uiScale))
-                    .foregroundStyle(.red)
-            }
-            .frame(maxWidth: 450 * uiScale)
-            
-            HStack(spacing: 12 * uiScale) {
-                Button("キャンセル", action: onCancel)
-                    .keyboardShortcut(.cancelAction)
-                
-                Button("強制アンマウント") {
-                    onForce()
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onCancel()
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.orange)
-                .keyboardShortcut(.defaultAction)
+            
+            VStack(spacing: 20 * uiScale) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 64 * uiScale))
+                    .foregroundStyle(.orange)
+                
+                Text("アンマウントに失敗しました")
+                    .font(.system(size: 22 * uiScale, weight: .semibold))
+                
+                VStack(spacing: 12 * uiScale) {
+                    Text("\(failedCount) 個のコンテナをアンマウントできませんでした。")
+                        .font(.system(size: 15 * uiScale))
+                        .multilineTextAlignment(.center)
+                    
+                    Text("システムプロセス（cfprefsdなど）がファイルを使用している可能性があります。")
+                        .font(.system(size: 15 * uiScale))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("強制的にアンマウントを試行しますか？")
+                        .font(.system(size: 15 * uiScale, weight: .semibold))
+                        .foregroundStyle(.orange)
+                        .padding(.top, 8 * uiScale)
+                    
+                    Text("⚠️ 強制アンマウントはデータ損失のリスクがあります")
+                        .font(.system(size: 12 * uiScale))
+                        .foregroundStyle(.red)
+                }
+                .frame(maxWidth: 450 * uiScale)
+                
+                HStack(spacing: 12 * uiScale) {
+                    Button("キャンセル", action: onCancel)
+                        .keyboardShortcut(.cancelAction)
+                    
+                    Button("強制アンマウント") {
+                        onForce()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                    .keyboardShortcut(.defaultAction)
+                }
             }
+            .padding(32 * uiScale)
+            .frame(minWidth: 500 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 500 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -522,51 +569,61 @@ private struct ForceEjectOfferingView: View {
     var uiScale: CGFloat = 1.0
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 64 * uiScale))
-                .foregroundStyle(.orange)
-            
-            Text("ドライブのイジェクトに失敗")
-                .font(.system(size: 22 * uiScale, weight: .semibold))
-            
-            VStack(spacing: 12 * uiScale) {
-                Text("「\(volumeName)」をイジェクトできませんでした。")
-                    .font(.system(size: 15 * uiScale))
-                    .multilineTextAlignment(.center)
-                
-                Text("ドライブ上のボリュームが使用中の可能性があります。")
-                    .font(.system(size: 15 * uiScale))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Text("強制的にイジェクトを試行しますか？")
-                    .font(.system(size: 15 * uiScale, weight: .semibold))
-                    .foregroundStyle(.orange)
-                    .padding(.top, 8 * uiScale)
-                
-                Text("⚠️ 強制イジェクトはデータ損失のリスクがあります")
-                    .font(.system(size: 12 * uiScale))
-                    .foregroundStyle(.red)
-            }
-            .frame(maxWidth: 450 * uiScale)
-            
-            HStack(spacing: 12 * uiScale) {
-                Button("キャンセル", action: onCancel)
-                    .keyboardShortcut(.cancelAction)
-                
-                Button("強制イジェクト") {
-                    onForce()
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onCancel()
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.orange)
-                .keyboardShortcut(.defaultAction)
+            
+            VStack(spacing: 20 * uiScale) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 64 * uiScale))
+                    .foregroundStyle(.orange)
+                
+                Text("ドライブのイジェクトに失敗")
+                    .font(.system(size: 22 * uiScale, weight: .semibold))
+                
+                VStack(spacing: 12 * uiScale) {
+                    Text("「\(volumeName)」をイジェクトできませんでした。")
+                        .font(.system(size: 15 * uiScale))
+                        .multilineTextAlignment(.center)
+                    
+                    Text("ドライブ上のボリュームが使用中の可能性があります。")
+                        .font(.system(size: 15 * uiScale))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("強制的にイジェクトを試行しますか？")
+                        .font(.system(size: 15 * uiScale, weight: .semibold))
+                        .foregroundStyle(.orange)
+                        .padding(.top, 8 * uiScale)
+                    
+                    Text("⚠️ 強制イジェクトはデータ損失のリスクがあります")
+                        .font(.system(size: 12 * uiScale))
+                        .foregroundStyle(.red)
+                }
+                .frame(maxWidth: 450 * uiScale)
+                
+                HStack(spacing: 12 * uiScale) {
+                    Button("キャンセル", action: onCancel)
+                        .keyboardShortcut(.cancelAction)
+                    
+                    Button("強制イジェクト") {
+                        onForce()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                    .keyboardShortcut(.defaultAction)
+                }
             }
+            .padding(32 * uiScale)
+            .frame(minWidth: 500 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 500 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -579,27 +636,37 @@ private struct UnmountErrorView: View {
     var uiScale: CGFloat = 1.0
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 64 * uiScale))
-                .foregroundStyle(.orange)
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onDismiss()
+                }
             
-            Text(title)
-                .font(.system(size: 22 * uiScale, weight: .semibold))
-            
-            Text(message)
-                .font(.system(size: 15 * uiScale))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 450 * uiScale)
-                .foregroundStyle(.secondary)
-            
-            Button("OK", action: onDismiss)
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.defaultAction)
+            VStack(spacing: 20 * uiScale) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 64 * uiScale))
+                    .foregroundStyle(.orange)
+                
+                Text(title)
+                    .font(.system(size: 22 * uiScale, weight: .semibold))
+                
+                Text(message)
+                    .font(.system(size: 15 * uiScale))
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 450 * uiScale)
+                    .foregroundStyle(.secondary)
+                
+                Button("OK", action: onDismiss)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+            }
+            .padding(32 * uiScale)
+            .frame(minWidth: 500 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 500 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
