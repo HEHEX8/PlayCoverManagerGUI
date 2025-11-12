@@ -37,26 +37,53 @@ struct QuickLauncherView: View {
         return 10
     }
     
-    // Calculate dynamic icon size based on available width
-    // Formula: (availableWidth - totalSpacing - sidePadding) / columnCount
-    private func calculateIconSize(for availableWidth: CGFloat) -> CGFloat {
+    // Calculate dynamic icon size based on available width and app count
+    // Formula: (availableWidth - totalSpacing - sidePadding) / effectiveColumnCount
+    private func calculateIconSize(for availableWidth: CGFloat, appCount: Int) -> CGFloat {
         let sidePadding: CGFloat = 64.0  // 32 padding on each side
         let minimumSpacing: CGFloat = 12.0
-        let spacingMultiplier = CGFloat(columnsPerRow - 1)
+        
+        // Determine effective column count based on app count
+        let effectiveColumns: Int
+        if appCount == 0 {
+            effectiveColumns = 10  // Default
+        } else if appCount <= 5 {
+            // Very few apps: use actual count for larger icons
+            effectiveColumns = min(appCount, 5)
+        } else if appCount < 10 {
+            // Less than 10 apps: use actual count for optimal spacing
+            effectiveColumns = appCount
+        } else {
+            // 10 or more apps: use standard 10 columns
+            effectiveColumns = 10
+        }
+        
+        let spacingMultiplier = CGFloat(effectiveColumns - 1)
         let totalSpacing = minimumSpacing * spacingMultiplier
         
         let availableForIcons = availableWidth - sidePadding - totalSpacing
-        let calculatedSize = availableForIcons / CGFloat(columnsPerRow)
+        let calculatedSize = availableForIcons / CGFloat(effectiveColumns)
         
-        // Clamp between reasonable bounds (60pt - 150pt)
-        return max(60, min(150, calculatedSize))
+        // Dynamic bounds based on app count
+        let minSize: CGFloat = appCount <= 5 ? 80 : 60
+        let maxSize: CGFloat = appCount <= 5 ? 200 : 150
+        
+        return max(minSize, min(maxSize, calculatedSize))
     }
     
-    // Calculate dynamic spacing based on icon size
-    private func calculateSpacing(for iconSize: CGFloat) -> CGFloat {
+    // Calculate dynamic spacing based on icon size and app count
+    private func calculateSpacing(for iconSize: CGFloat, appCount: Int) -> CGFloat {
         // Spacing scales proportionally with icon size
         // Base: 20pt spacing at 100pt icon = 0.2 ratio
-        return iconSize * 0.2
+        // Increase spacing when fewer apps for more spacious layout
+        let baseSpacing = iconSize * 0.2
+        
+        if appCount < 10 && appCount > 0 {
+            // Add extra spacing when fewer than 10 apps
+            return baseSpacing * 1.5
+        }
+        
+        return baseSpacing
     }
     
     // Calculate dynamic font size based on icon size
@@ -4301,8 +4328,8 @@ private struct ResponsiveAppGrid: View {
     @Binding var selectedAppForDetail: PlayCoverApp?
     @Binding var selectedAppForUninstall: IdentifiableString?
     
-    let calculateIconSize: (CGFloat) -> CGFloat
-    let calculateSpacing: (CGFloat) -> CGFloat
+    let calculateIconSize: (CGFloat, Int) -> CGFloat
+    let calculateSpacing: (CGFloat, Int) -> CGFloat
     let calculateFontSize: (CGFloat) -> CGFloat
     let calculateBadgeFontSize: (CGFloat) -> CGFloat
     let calculateBadgeSize: (CGFloat) -> CGFloat
@@ -4310,8 +4337,9 @@ private struct ResponsiveAppGrid: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let iconSize = calculateIconSize(geometry.size.width)
-            let spacing = calculateSpacing(iconSize)
+            let appCount = viewModel.filteredApps.count
+            let iconSize = calculateIconSize(geometry.size.width, appCount)
+            let spacing = calculateSpacing(iconSize, appCount)
             let fontSize = calculateFontSize(iconSize)
             let badgeFontSize = calculateBadgeFontSize(iconSize)
             let badgeSize = calculateBadgeSize(iconSize)
@@ -4372,10 +4400,13 @@ private struct AppGridRow: View {
     let clearSearchFocus: () -> Void
     
     var body: some View {
+        let appsInRow = min(10, apps.count - (rowIndex * 10))
+        let maxColumns = max(1, appsInRow)
+        
         HStack(spacing: spacing) {
             Spacer(minLength: 0)
             
-            ForEach(0..<10, id: \.self) { columnIndex in
+            ForEach(0..<maxColumns, id: \.self) { columnIndex in
                 let index = rowIndex * 10 + columnIndex
                 if index < apps.count {
                     AppGridCell(
