@@ -7,28 +7,44 @@ struct SettingsRootView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var windowSize: CGSize = CGSize(width: 600, height: 500)
+    
+    private func calculateUIScale(for size: CGSize) -> CGFloat {
+        let baseWidth: CGFloat = 600.0
+        let baseHeight: CGFloat = 500.0
+        
+        let widthScale = size.width / baseWidth
+        let heightScale = size.height / baseHeight
+        let scale = min(widthScale, heightScale)
+        
+        return max(1.0, min(2.0, scale))
+    }
+    
+    private var uiScale: CGFloat {
+        calculateUIScale(for: windowSize)
+    }
 
     var body: some View {
         TabView {
-            GeneralSettingsView()
+            GeneralSettingsView(uiScale: uiScale)
                 .tabItem {
                     Label("一般", systemImage: "gear")
                 }
-            DataSettingsView()
+            DataSettingsView(uiScale: uiScale)
                 .tabItem {
                     Label("データ", systemImage: "internaldrive")
                 }
-            MaintenanceSettingsView()
+            MaintenanceSettingsView(uiScale: uiScale)
                 .tabItem {
                     Label("メンテナンス", systemImage: "wrench.and.screwdriver")
                 }
-            AboutView()
+            AboutView(uiScale: uiScale)
                 .tabItem {
                     Label("情報", systemImage: "info.circle")
                 }
         }
-        .padding(24)
-        .frame(width: 600, height: 500)
+        .padding(24 * uiScale)
+        .frame(width: 600 * uiScale, height: 500 * uiScale)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("閉じる") {
@@ -41,9 +57,14 @@ struct SettingsRootView: View {
             
             ToolbarItem(placement: .automatic) {
                 Text("PlayCover Manager 設定")
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.secondary)
             }
+        }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { newSize in
+            windowSize = newSize
         }
         .onKeyPress(.escape) {
             dismiss()
@@ -53,6 +74,7 @@ struct SettingsRootView: View {
 }
 
 private struct GeneralSettingsView: View {
+    var uiScale: CGFloat = 1.0
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
     @Environment(\.dismiss) private var dismiss
@@ -61,7 +83,8 @@ private struct GeneralSettingsView: View {
     @State private var showLanguageChangeAlert = false
     @State private var previousLanguage: SettingsStore.AppLanguage
 
-    init() {
+    init(uiScale: CGFloat = 1.0) {
+        self.uiScale = uiScale
         // Initialize with current language
         let store = SettingsStore()
         _previousLanguage = State(initialValue: store.appLanguage)
@@ -69,18 +92,18 @@ private struct GeneralSettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 20 * uiScale) {
                 // Storage Card
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     Label("ストレージ", systemImage: "externaldrive.fill")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.blue)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12 * uiScale) {
                         // Storage path display
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 8 * uiScale) {
                             Text("保存先")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
@@ -288,23 +311,25 @@ private struct GeneralSettingsView: View {
 }
 
 private struct DataSettingsView: View {
+    var uiScale: CGFloat = 1.0
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 20 * uiScale) {
                 // Internal Data Handling Card
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     Label("内部データ処理の既定値", systemImage: "doc.on.doc")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.orange)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 12 * uiScale) {
+                        VStack(alignment: .leading, spacing: 8 * uiScale) {
                             Text("既定の処理")
+                                .font(.system(size: 15 * uiScale))
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
@@ -1842,22 +1867,23 @@ struct AppUninstallerSheet: View {
 
 // Appearance Settings View
 private struct MaintenanceSettingsView: View {
+    var uiScale: CGFloat = 1.0
     @Environment(SettingsStore.self) private var settingsStore
     @State private var showingResetConfirmation = false
     @State private var showingClearCacheConfirmation = false
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 20 * uiScale) {
                 // Cache Card
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 16 * uiScale) {
                     Label("キャッシュ", systemImage: "folder.badge.minus")
-                        .font(.headline)
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.cyan)
                     
                     Divider()
                     
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 12 * uiScale) {
                         Button {
                             showingClearCacheConfirmation = true
                         } label: {
@@ -2028,6 +2054,8 @@ private struct MaintenanceSettingsView: View {
 
 // MARK: - About View
 private struct AboutView: View {
+    var uiScale: CGFloat = 1.0
+    
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
     }
@@ -2038,23 +2066,23 @@ private struct AboutView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 20 * uiScale) {
                 // App Icon and Name Card
-                VStack(spacing: 16) {
+                VStack(spacing: 16 * uiScale) {
                     if let icon = NSImage(named: "AppIcon") {
                         Image(nsImage: icon)
                             .resizable()
-                            .frame(width: 100, height: 100)
-                            .clipShape(RoundedRectangle(cornerRadius: 22))
-                            .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+                            .frame(width: 100 * uiScale, height: 100 * uiScale)
+                            .clipShape(RoundedRectangle(cornerRadius: 22 * uiScale))
+                            .shadow(color: .black.opacity(0.2), radius: 10 * uiScale, x: 0, y: 5 * uiScale)
                     }
                     
-                    VStack(spacing: 6) {
+                    VStack(spacing: 6 * uiScale) {
                         Text("PlayCover Manager")
-                            .font(.title.bold())
+                            .font(.system(size: 28 * uiScale, weight: .bold))
                         
                         Text("Version \(appVersion) (Build \(buildNumber))")
-                            .font(.subheadline)
+                            .font(.system(size: 14 * uiScale))
                             .foregroundStyle(.secondary)
                     }
                 }
