@@ -825,9 +825,7 @@ private struct iOSAppIconView: View {
     @State private var pressLocation: CGPoint?
     // Hover effect state
     @State private var isHovering = false
-    @State private var gradientOffset: CGFloat = 0
     @State private var focusGlowPhase: CGFloat = 0
-    @State private var gradientAnimationTask: Task<Void, Never>?
     @State private var focusRingAnimationTask: Task<Void, Never>?
     
     // Show hover effect when hovering OR when focused (keyboard)
@@ -1183,49 +1181,14 @@ private struct iOSAppIconView: View {
                     }
             )
             
-            // App name below icon with animated gradient on hover/focus
-            ZStack {
-                // Base text (always visible)
-                Text(app.displayName)
-                    .font(.system(size: 11, weight: .regular))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .frame(width: 90, height: 28)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .foregroundStyle(.primary)
-                    .opacity(showHoverEffect ? 0 : 1)
-                
-                // Gradient text (fades in on hover/focus with animated gradient)
-                Text(app.displayName)
-                    .font(.system(size: 11, weight: .medium))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .frame(width: 90, height: 28)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                // Double pattern for seamless loop: at offset=0 and offset=0.5, same pattern visible
-                                .accentColor,
-                                .purple,
-                                .blue,
-                                .cyan,
-                                .accentColor,  // ← repeat starts here (same as position 0)
-                                .purple,
-                                .blue,
-                                .cyan,
-                                .accentColor   // ← end matches start
-                            ],
-                            // Window shows 0.5 of the array (half)
-                            // Offset 0→0.5: gradient flows from bottom-left to top-right
-                            // At 0.5, jump to 0 (invisible because pattern matches)
-                            startPoint: UnitPoint(x: gradientOffset * 2 - 0.5, y: 1.5 - gradientOffset * 2),
-                            endPoint: UnitPoint(x: gradientOffset * 2, y: 1.0 - gradientOffset * 2)
-                        )
-                    )
-                    .opacity(showHoverEffect ? 1 : 0)
-            }
-            .animation(.easeInOut(duration: 0.4), value: showHoverEffect)
+            // App name below icon
+            Text(app.displayName)
+                .font(.system(size: 11, weight: .regular))
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(width: 90, height: 28)
+                .fixedSize(horizontal: false, vertical: true)
+                .foregroundStyle(.primary)
         }
         .frame(width: 100, height: 120)
         .contentShape(Rectangle())
