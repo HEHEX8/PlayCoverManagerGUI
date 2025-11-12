@@ -833,58 +833,7 @@ private struct iOSAppIconView: View {
         isHovering || isFocused
     }
     
-    // Start gradient animation from beginning (always resets to 0)
-    // Used for hover - always starts fresh
-    private func startGradientAnimationFromBeginning() {
-        gradientAnimationTask?.cancel()
-        gradientOffset = 0  // Reset to beginning
-        
-        gradientAnimationTask = Task { @MainActor in
-            while !Task.isCancelled {
-                // Animate 0 → 0.5 (seamless loop point)
-                withAnimation(.linear(duration: 3.0)) {
-                    gradientOffset = 0.5
-                }
-                try? await Task.sleep(for: .seconds(3.0))
-                if Task.isCancelled { break }
-                
-                // Reset to 0 instantly (seamless because colors match)
-                gradientOffset = 0
-            }
-        }
-    }
-    
-    // Continue gradient animation from current position
-    // Used for keyboard navigation - seamless continuation
-    private func continueGradientAnimation() {
-        gradientAnimationTask?.cancel()
-        
-        gradientAnimationTask = Task { @MainActor in
-            while !Task.isCancelled {
-                // Calculate remaining distance to 0.5 (loop point)
-                let remainingDistance = 0.5 - gradientOffset
-                let remainingTime = max(0, remainingDistance) * 6.0  // 0.5 range = 3 seconds total
-                
-                if remainingDistance > 0.01 {
-                    // Continue animation to 0.5
-                    withAnimation(.linear(duration: remainingTime)) {
-                        gradientOffset = 0.5
-                    }
-                    try? await Task.sleep(for: .seconds(remainingTime))
-                    if Task.isCancelled { break }
-                }
-                
-                // Reset to 0 instantly (seamless because colors match)
-                gradientOffset = 0
-            }
-        }
-    }
-    
-    // Stop and reset gradient animation to beginning
-    private func stopAndResetGradientAnimation() {
-        gradientAnimationTask?.cancel()
-        gradientOffset = 0  // Reset to beginning
-    }
+
     
     // Start focus ring animation from beginning
     // Used when focus first appears or after ESC
@@ -1132,14 +1081,6 @@ private struct iOSAppIconView: View {
             )
             .onHover { hovering in
                 isHovering = hovering
-                
-                if hovering {
-                    // Hover always starts gradient from beginning
-                    startGradientAnimationFromBeginning()
-                } else if !isFocused {
-                    // Stop and reset (only if not focused)
-                    stopAndResetGradientAnimation()
-                }
             }
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -1216,22 +1157,9 @@ private struct iOSAppIconView: View {
             if newValue {
                 // Focus gained - start from beginning
                 startFocusRingAnimationFromBeginning()
-                if !isHovering {
-                    // If coming from another focused icon (keyboard navigation),
-                    // continue gradient. Otherwise start from beginning.
-                    // We'll use a simple heuristic: if gradient is > 0, continue
-                    if gradientOffset > 0.05 {
-                        continueGradientAnimation()
-                    } else {
-                        startGradientAnimationFromBeginning()
-                    }
-                }
             } else {
                 // Focus lost (ESC pressed) - reset everything
                 stopAndResetFocusRingAnimation()
-                if !isHovering {
-                    stopAndResetGradientAnimation()
-                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerAppIconAnimation"))) { notification in
