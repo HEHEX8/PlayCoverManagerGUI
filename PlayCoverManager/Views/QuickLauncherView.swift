@@ -372,7 +372,7 @@ struct QuickLauncherView: View {
                 size: toolbarButtonSize,
                 iconSize: toolbarButtonIconSize
             ) {
-                viewModel.requestUnmountAll()
+                viewModel.unmountAll()
             }
             .keyboardShortcut(KeyEquivalent("e"), modifiers: [.command, .shift])
         }
@@ -767,7 +767,8 @@ struct QuickLauncherView: View {
                         showingInstaller: $showingInstaller,
                         showingUninstaller: $showingUninstaller,
                         getPlayCoverIcon: getPlayCoverIcon,
-                        isOpen: $isDrawerOpen
+                        isOpen: $isDrawerOpen,
+                        uiScale: uiScale
                     )
                     .transition(.move(edge: .leading))
                 }
@@ -3690,13 +3691,14 @@ private struct DrawerPanel: View {
     @Binding var showingUninstaller: Bool
     let getPlayCoverIcon: () -> NSImage?
     @Binding var isOpen: Bool
+    let uiScale: CGFloat
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             HStack {
                 Text("メニュー")
-                    .font(.headline)
+                    .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.primary)
                 
                 Spacer()
@@ -3707,17 +3709,17 @@ private struct DrawerPanel: View {
                     }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14))
+                        .font(.system(size: 14 * uiScale))
                 }
                 .buttonStyle(.plain)
             }
-            .padding()
+            .padding(16 * uiScale)
             
             Divider()
             
             VStack(spacing: 0) {
                 Spacer()
-                    .frame(height: 20)
+                    .frame(height: 20 * uiScale)
             
                 // PlayCover.app button
                 DrawerMenuItem(
@@ -3726,18 +3728,19 @@ private struct DrawerPanel: View {
                             if let playCoverIcon = getPlayCoverIcon() {
                                 Image(nsImage: playCoverIcon)
                                     .resizable()
-                                    .frame(width: 32, height: 32)
-                                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                                    .frame(width: 32 * uiScale, height: 32 * uiScale)
+                                    .clipShape(RoundedRectangle(cornerRadius: 7 * uiScale))
                             } else {
                                 Image(systemName: "app.badge.checkmark")
-                                    .font(.system(size: 20))
+                                    .font(.system(size: 20 * uiScale))
                                     .foregroundStyle(.secondary)
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 32 * uiScale, height: 32 * uiScale)
                             }
                         }
                     ),
                     title: String(localized: "PlayCover アプリを開く"),
-                    help: String(localized: "PlayCover アプリを開く (⌘⇧P)")
+                    help: String(localized: "PlayCover アプリを開く (⌘⇧P)"),
+                    uiScale: uiScale
                 ) {
                     NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/PlayCover.app"))
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3747,18 +3750,19 @@ private struct DrawerPanel: View {
                 .keyboardShortcut("p", modifiers: [.command, .shift])
                 
                 Divider()
-                    .padding(.leading, 16)
+                    .padding(.leading, 16 * uiScale)
                 
                 // Install button
                 DrawerMenuItem(
                     icon: AnyView(
                         Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 20))
+                            .font(.system(size: 20 * uiScale))
                             .foregroundStyle(.blue)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 32 * uiScale, height: 32 * uiScale)
                     ),
                     title: String(localized: "IPA をインストール"),
-                    help: String(localized: "IPA をインストール (⌘I)")
+                    help: String(localized: "IPA をインストール (⌘I)"),
+                    uiScale: uiScale
                 ) {
                     showingInstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3771,12 +3775,13 @@ private struct DrawerPanel: View {
                 DrawerMenuItem(
                     icon: AnyView(
                         Image(systemName: "trash")
-                            .font(.system(size: 20))
+                            .font(.system(size: 20 * uiScale))
                             .foregroundStyle(.red)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 32 * uiScale, height: 32 * uiScale)
                     ),
                     title: String(localized: "アプリをアンインストール"),
-                    help: String(localized: "アプリをアンインストール (⌘D)")
+                    help: String(localized: "アプリをアンインストール (⌘D)"),
+                    uiScale: uiScale
                 ) {
                     showingUninstaller = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3786,18 +3791,19 @@ private struct DrawerPanel: View {
                 .keyboardShortcut("d", modifiers: [.command])
                 
                 Divider()
-                    .padding(.leading, 16)
+                    .padding(.leading, 16 * uiScale)
                 
                 // Settings button
                 DrawerMenuItem(
                     icon: AnyView(
                         Image(systemName: "gear")
-                            .font(.system(size: 20))
+                            .font(.system(size: 20 * uiScale))
                             .foregroundStyle(.secondary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 32 * uiScale, height: 32 * uiScale)
                     ),
                     title: String(localized: "設定"),
-                    help: String(localized: "設定 (ショートカット)")
+                    help: String(localized: "設定 (ショートカット)"),
+                    uiScale: uiScale
                 ) {
                     showingSettings = true
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -3809,7 +3815,7 @@ private struct DrawerPanel: View {
                 Spacer()
             }
         }
-        .frame(width: 260)
+        .frame(width: 260 * uiScale)
         .frame(maxHeight: .infinity)
         .background(
             // Enhanced drawer with gradient glass
@@ -3820,7 +3826,7 @@ private struct DrawerPanel: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                .blur(radius: 30)
+                .blur(radius: 30 * uiScale)
                 
                 // Main glass layer
                 Rectangle()
@@ -3839,8 +3845,8 @@ private struct DrawerPanel: View {
                 .frame(width: 1)
                 .allowsHitTesting(false)  // Allow clicks through separator
         }
-        .shadow(color: .black.opacity(0.2), radius: 20, x: 4, y: 0)
-        .shadow(color: .black.opacity(0.3), radius: 10, x: 2, y: 0)
+        .shadow(color: .black.opacity(0.2), radius: 20 * uiScale, x: 4 * uiScale, y: 0)
+        .shadow(color: .black.opacity(0.3), radius: 10 * uiScale, x: 2 * uiScale, y: 0)
     }
 }
 
@@ -3849,20 +3855,21 @@ private struct DrawerMenuItem: View {
     let icon: AnyView
     let title: String
     let help: String
+    let uiScale: CGFloat
     let action: () -> Void
     
     @State private var isHovered = false
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: 12 * uiScale) {
                 icon
                 Text(title)
-                    .font(.body)
+                    .font(.system(size: 15 * uiScale))
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 16 * uiScale)
+            .padding(.vertical, 12 * uiScale)
             .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 0)
