@@ -1589,16 +1589,7 @@ private struct EmptyAppListView: View {
 }
 
 // Wrapper to access Environment in sheet
-private struct IPAInstallerSheetWrapper: View {
-    @Environment(SettingsStore.self) private var settingsStore
-    @Environment(LauncherViewModel.self) private var launcherViewModel
-    
-    var body: some View {
-        IPAInstallerSheet()
-            .environment(settingsStore)
-            .environment(launcherViewModel)
-    }
-}
+
 
 // Recent app launch button with rich animations
 private struct RecentAppLaunchButton: View {
