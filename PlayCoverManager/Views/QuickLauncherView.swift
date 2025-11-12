@@ -858,26 +858,48 @@ private struct iOSAppIconView: View {
         return 1.0
     }
     
+    // Icon content view
+    @ViewBuilder
+    private var iconContent: some View {
+        if let icon = app.icon {
+            Image(nsImage: icon)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+        } else {
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color.gray.opacity(0.3))
+                .overlay {
+                    Image(systemName: "app.dashed")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+                }
+        }
+    }
+    
+    // Status indicator view
+    @ViewBuilder
+    private var statusIndicator: some View {
+        let circleSize: CGFloat = 14
+        let borderWidth: CGFloat = 2.5
+        
+        ZStack {
+            Circle()
+                .fill(app.isRunning ? Color.green : app.isMounted ? Color.orange : Color.red)
+                .frame(width: circleSize, height: circleSize)
+            Circle()
+                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: borderWidth)
+                .frame(width: circleSize, height: circleSize)
+        }
+        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
+        .offset(x: 6, y: -6)
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             // iOS-style app icon (rounded square)
-            Group {
-                if let icon = app.icon {
-                    Image(nsImage: icon)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay {
-                            Image(systemName: "app.dashed")
-                                .font(.system(size: 32))
-                                .foregroundStyle(.secondary)
-                        }
-                }
-            }
-            .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            iconContent
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
             .background {
                 // Hover glow effect behind the icon (doesn't cover image)
                 if isHovering {
@@ -933,49 +955,7 @@ private struct iOSAppIconView: View {
                 }
             }
             .overlay(alignment: .topTrailing) {
-                // Status indicator:
-                // 🟢 Green: App is running
-                // 🟠 Orange: App not running but container mounted (needs unmount)
-                // 🔴 Red: App stopped and container unmounted
-                Group {
-                    if app.isRunning {
-                        // Green: Running
-                        ZStack {
-                            Circle()
-                                .fill(Color.green)
-                                .frame(width: 14, height: 14)
-                            Circle()
-                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
-                                .frame(width: 14, height: 14)
-                        }
-                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                        .offset(x: 6, y: -6)
-                    } else if app.isMounted {
-                        // Orange: Not running but mounted
-                        ZStack {
-                            Circle()
-                                .fill(Color.orange)
-                                .frame(width: 14, height: 14)
-                            Circle()
-                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
-                                .frame(width: 14, height: 14)
-                        }
-                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                        .offset(x: 6, y: -6)
-                    } else {
-                        // Red: Stopped and unmounted
-                        ZStack {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 14, height: 14)
-                            Circle()
-                                .strokeBorder(Color(nsColor: .windowBackgroundColor), lineWidth: 2.5)
-                                .frame(width: 14, height: 14)
-                        }
-                        .shadow(color: .black.opacity(0.2), radius: 3, x: 0, y: 1)
-                        .offset(x: 6, y: -6)
-                    }
-                }
+                statusIndicator
             }
             // Press & bounce & hover animation
             .scaleEffect(currentScale)
