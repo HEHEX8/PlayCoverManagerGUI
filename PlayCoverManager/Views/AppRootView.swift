@@ -459,142 +459,178 @@ struct RunningAppsBlockingView: View {
     
     var body: some View {
         ZStack {
-            // Background overlay - same as QuickLauncherView
-            Color.black.opacity(0.4)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    if !isProcessing {
-                        onCancel()
-                    }
-                }
-            
-            VStack(spacing: 32 * uiScale) {
-                if isProcessing {
-                    // Processing state: show progress indicator
-                    ProgressView()
-                        .scaleEffect(1.5 * uiScale)
-                        .padding(.bottom, 16 * uiScale)
-                    
-                    Text("アプリを終了しています...")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                } else {
-                    // Header with icon and title
-                    VStack(spacing: 16 * uiScale) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 72 * uiScale))
-                            .foregroundStyle(.orange)
-                            .shadow(color: .orange.opacity(0.3), radius: 12 * uiScale, x: 0, y: 4 * uiScale)
-                        
-                        VStack(spacing: 8 * uiScale) {
-                            Text("一部のディスクイメージをアンマウントできません")
-                                .font(.system(size: 24 * uiScale, weight: .bold))
-                                .multilineTextAlignment(.center)
-                            
-                            Text("以下のアプリが実行中です。")
-                                .font(.system(size: 15 * uiScale))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    // Running apps list with beautiful cards
-                    ScrollView {
-                        VStack(spacing: 16 * uiScale) {
-                            ForEach(appInfoList) { appInfo in
-                                HStack(spacing: 16 * uiScale) {
-                                    // App icon - larger and more prominent
-                                    if let icon = appInfo.icon {
-                                        Image(nsImage: icon)
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: 64 * uiScale, height: 64 * uiScale)
-                                            .clipShape(RoundedRectangle(cornerRadius: 14 * uiScale))
-                                            .shadow(color: .black.opacity(0.15), radius: 4 * uiScale, x: 0, y: 2 * uiScale)
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 14 * uiScale)
-                                            .fill(Color.gray.opacity(0.2))
-                                            .frame(width: 64 * uiScale, height: 64 * uiScale)
-                                            .overlay {
-                                                Image(systemName: "app.dashed")
-                                                    .font(.system(size: 28 * uiScale))
-                                                    .foregroundStyle(.tertiary)
-                                            }
-                                    }
-                                    
-                                    // App name - larger text
-                                    Text(appInfo.name)
-                                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .foregroundStyle(.primary)
-                                    
-                                    // Quit button - modern style
-                                    Button {
-                                        quitApp(appInfo.app)
-                                    } label: {
-                                        HStack(spacing: 6 * uiScale) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.system(size: 14 * uiScale))
-                                            Text("終了")
-                                                .font(.system(size: 14 * uiScale, weight: .semibold))
-                                        }
-                                        .padding(.horizontal, 16 * uiScale)
-                                        .padding(.vertical, 10 * uiScale)
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .tint(.red)
-                                }
-                                .padding(20 * uiScale)
-                                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-                                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
-                            }
-                        }
-                        .padding(.horizontal, 4 * uiScale)
-                    }
-                    .frame(maxHeight: 350 * uiScale)
-                    
-                    // Bottom action buttons
-                    HStack(spacing: 16 * uiScale) {
-                        Button {
-                            onCancel()
-                        } label: {
-                            Text("キャンセル")
-                                .font(.system(size: 16 * uiScale, weight: .semibold))
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 44 * uiScale)
-                        }
-                        .buttonStyle(.bordered)
-                        .keyboardShortcut(.cancelAction)
-                        
-                        Button {
-                            if let onQuitAllAndRetry = onQuitAllAndRetry {
-                                quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
-                            } else {
-                                quitAllApps()
-                            }
-                        } label: {
-                            HStack(spacing: 8 * uiScale) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 16 * uiScale))
-                                Text("すべて終了")
-                                    .font(.system(size: 16 * uiScale, weight: .semibold))
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44 * uiScale)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.orange)
-                        .keyboardShortcut(.defaultAction)
-                    }
-                }
-            }
-            .padding(40 * uiScale)
-            .frame(maxWidth: 700 * uiScale)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20 * uiScale))
-            .shadow(color: .black.opacity(0.3), radius: 40 * uiScale, x: 0, y: 20 * uiScale)
+            backgroundOverlay
+            dialogContent
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             loadRunningApps()
+        }
+    }
+    
+    // MARK: - View Components
+    
+    @ViewBuilder
+    private var backgroundOverlay: some View {
+        Color.black.opacity(0.4)
+            .ignoresSafeArea()
+            .onTapGesture {
+                if !isProcessing {
+                    onCancel()
+                }
+            }
+    }
+    
+    @ViewBuilder
+    private var dialogContent: some View {
+        VStack(spacing: 32 * uiScale) {
+            if isProcessing {
+                processingView
+            } else {
+                headerView
+                appListView
+                actionButtons
+            }
+        }
+        .padding(40 * uiScale)
+        .frame(maxWidth: 700 * uiScale)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20 * uiScale))
+        .shadow(color: .black.opacity(0.3), radius: 40 * uiScale, x: 0, y: 20 * uiScale)
+    }
+    
+    @ViewBuilder
+    private var processingView: some View {
+        ProgressView()
+            .scaleEffect(1.5 * uiScale)
+            .padding(.bottom, 16 * uiScale)
+        
+        Text("アプリを終了しています...")
+            .font(.system(size: 17 * uiScale, weight: .semibold))
+            .foregroundStyle(.secondary)
+    }
+    
+    @ViewBuilder
+    private var headerView: some View {
+        VStack(spacing: 16 * uiScale) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 72 * uiScale))
+                .foregroundStyle(.orange)
+                .shadow(color: .orange.opacity(0.3), radius: 12 * uiScale, x: 0, y: 4 * uiScale)
+            
+            VStack(spacing: 8 * uiScale) {
+                Text("一部のディスクイメージをアンマウントできません")
+                    .font(.system(size: 24 * uiScale, weight: .bold))
+                    .multilineTextAlignment(.center)
+                
+                Text("以下のアプリが実行中です。")
+                    .font(.system(size: 15 * uiScale))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var appListView: some View {
+        ScrollView {
+            VStack(spacing: 16 * uiScale) {
+                ForEach(appInfoList) { appInfo in
+                    appCard(for: appInfo)
+                }
+            }
+            .padding(.horizontal, 4 * uiScale)
+        }
+        .frame(maxHeight: 350 * uiScale)
+    }
+    
+    @ViewBuilder
+    private func appCard(for appInfo: RunningAppInfo) -> some View {
+        HStack(spacing: 16 * uiScale) {
+            appIcon(for: appInfo)
+            
+            Text(appInfo.name)
+                .font(.system(size: 17 * uiScale, weight: .semibold))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .foregroundStyle(.primary)
+            
+            quitButton(for: appInfo)
+        }
+        .padding(20 * uiScale)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+        .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
+    }
+    
+    @ViewBuilder
+    private func appIcon(for appInfo: RunningAppInfo) -> some View {
+        if let icon = appInfo.icon {
+            Image(nsImage: icon)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 64 * uiScale, height: 64 * uiScale)
+                .clipShape(RoundedRectangle(cornerRadius: 14 * uiScale))
+                .shadow(color: .black.opacity(0.15), radius: 4 * uiScale, x: 0, y: 2 * uiScale)
+        } else {
+            RoundedRectangle(cornerRadius: 14 * uiScale)
+                .fill(Color.gray.opacity(0.2))
+                .frame(width: 64 * uiScale, height: 64 * uiScale)
+                .overlay {
+                    Image(systemName: "app.dashed")
+                        .font(.system(size: 28 * uiScale))
+                        .foregroundStyle(.tertiary)
+                }
+        }
+    }
+    
+    @ViewBuilder
+    private func quitButton(for appInfo: RunningAppInfo) -> some View {
+        Button {
+            quitApp(appInfo.app)
+        } label: {
+            HStack(spacing: 6 * uiScale) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 14 * uiScale))
+                Text("終了")
+                    .font(.system(size: 14 * uiScale, weight: .semibold))
+            }
+            .padding(.horizontal, 16 * uiScale)
+            .padding(.vertical, 10 * uiScale)
+        }
+        .buttonStyle(.bordered)
+        .tint(.red)
+    }
+    
+    @ViewBuilder
+    private var actionButtons: some View {
+        HStack(spacing: 16 * uiScale) {
+            Button {
+                onCancel()
+            } label: {
+                Text("キャンセル")
+                    .font(.system(size: 16 * uiScale, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44 * uiScale)
+            }
+            .buttonStyle(.bordered)
+            .keyboardShortcut(.cancelAction)
+            
+            Button {
+                if let onQuitAllAndRetry = onQuitAllAndRetry {
+                    quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
+                } else {
+                    quitAllApps()
+                }
+            } label: {
+                HStack(spacing: 8 * uiScale) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16 * uiScale))
+                    Text("すべて終了")
+                        .font(.system(size: 16 * uiScale, weight: .semibold))
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 44 * uiScale)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.orange)
+            .keyboardShortcut(.defaultAction)
         }
     }
     
