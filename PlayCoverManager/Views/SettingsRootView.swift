@@ -9,6 +9,10 @@ struct SettingsRootView: View {
     @Environment(AppViewModel.self) private var appViewModel
     @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
     
+    init(isPresented: Binding<Bool>) {
+        self._isPresented = isPresented
+    }
+    
     private func calculateUIScale(for size: CGSize) -> CGFloat {
         let baseWidth: CGFloat = 600.0
         let baseHeight: CGFloat = 500.0
