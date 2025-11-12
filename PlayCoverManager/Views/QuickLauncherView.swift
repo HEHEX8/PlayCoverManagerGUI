@@ -15,6 +15,7 @@ struct QuickLauncherView: View {
     @Bindable var viewModel: LauncherViewModel
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var selectedAppForDetail: PlayCoverApp?
     @State private var hasPerformedInitialAnimation = false
     @State private var showingSettings = false
@@ -170,7 +171,7 @@ struct QuickLauncherView: View {
                 .focusEffectDisabled()  // Disable blue focus ring
                 .opacity(0.01)  // Nearly invisible but still present
             
-            // Rich multi-layer gradient background with depth
+            // Optimized gradient background (reduced layer count for performance)
             ZStack {
                 // Base gradient
                 LinearGradient(
@@ -182,45 +183,17 @@ struct QuickLauncherView: View {
                     endPoint: .bottom
                 )
                 
-                // Radial glow from center
+                // Simplified radial glow from center (reduced opacity for subtlety)
                 RadialGradient(
                     colors: [
-                        .accentColor.opacity(0.03),
-                        .purple.opacity(0.02),
+                        .accentColor.opacity(0.02),
+                        .purple.opacity(0.015),
                         .clear
                     ],
                     center: .center,
                     startRadius: 100,
                     endRadius: 600
                 )
-                
-                // Ambient corner glows
-                VStack {
-                    HStack {
-                        Circle()
-                            .fill(RadialGradient(
-                                colors: [.blue.opacity(0.08), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 200
-                            ))
-                            .frame(width: 400, height: 400)
-                            .blur(radius: 60)
-                        
-                        Spacer()
-                        
-                        Circle()
-                            .fill(RadialGradient(
-                                colors: [.purple.opacity(0.06), .clear],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 180
-                            ))
-                            .frame(width: 350, height: 350)
-                            .blur(radius: 50)
-                    }
-                    Spacer()
-                }
             }
             .allowsHitTesting(false)  // Allow clicks to pass through background
             .ignoresSafeArea()
@@ -261,16 +234,26 @@ struct QuickLauncherView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .frame(maxWidth: 280)
-                    .glassEffect(
-                        isSearchFieldFocused 
-                        ? .regular.tint(.accentColor.opacity(0.4))
-                        : .regular.tint(.accentColor.opacity(0.2)), 
-                        in: RoundedRectangle(cornerRadius: 12)
-                    )
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
+                    .background {
+                        if reduceTransparency {
+                            // Fallback: solid background for performance
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.8))
+                        } else {
+                            // Normal: glass effect
+                            RoundedRectangle(cornerRadius: 12)
+                                .glassEffect(
+                                    isSearchFieldFocused 
+                                    ? .regular.tint(.accentColor.opacity(0.4))
+                                    : .regular.tint(.accentColor.opacity(0.2)), 
+                                    in: RoundedRectangle(cornerRadius: 12)
+                                )
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.2), value: isSearchFieldFocused)
                     .shadow(color: isSearchFieldFocused ? .accentColor.opacity(0.3) : .black.opacity(0.1), radius: isSearchFieldFocused ? 8 : 4, x: 0, y: 2)
                     .scaleEffect(isSearchFieldFocused ? 1.02 : 1.0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSearchFieldFocused)
+                    .animation(.easeInOut(duration: 0.2), value: isSearchFieldFocused)
                     .onTapGesture {
                         // Focus search field when clicked
                         isSearchFieldFocused = true
@@ -293,20 +276,28 @@ struct QuickLauncherView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 16)
                 .background(
-                    // Multi-layer glass effect for depth
-                    ZStack {
-                        // Bottom layer - subtle glow
-                        Rectangle()
-                            .fill(LinearGradient(
-                                colors: [.accentColor.opacity(0.03), .clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            ))
-                            .blur(radius: 20)
-                        
-                        // Top layer - main glass
-                        Rectangle()
-                            .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
+                    // Optimized glass effect (conditional for performance)
+                    Group {
+                        if reduceTransparency {
+                            // Fallback: simple background
+                            Color(nsColor: .controlBackgroundColor).opacity(0.6)
+                        } else {
+                            // Normal: glass with subtle glow
+                            ZStack {
+                                // Subtle glow (reduced blur radius)
+                                Rectangle()
+                                    .fill(LinearGradient(
+                                        colors: [.accentColor.opacity(0.02), .clear],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    ))
+                                    .blur(radius: 10)
+                                
+                                // Main glass
+                                Rectangle()
+                                    .glassEffect(.regular.tint(.primary.opacity(0.05)), in: .rect)
+                            }
+                        }
                     }
                     .allowsHitTesting(false)  // Allow clicks to pass through to buttons
                 )
@@ -332,7 +323,8 @@ struct QuickLauncherView: View {
                     } else {
                         ScrollView {
                             LazyVGrid(columns: gridColumns, spacing: 32) {
-                                ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
+                                ForEach(viewModel.filteredApps.indices, id: \.self) { index in
+                                    let app = viewModel.filteredApps[index]
                                     Button {
                                         // Single tap - launch
                                         // Clear search focus and focus this app
@@ -427,19 +419,27 @@ struct QuickLauncherView: View {
                             }
                         )
                         .background(
-                            // Multi-layer glass for depth
-                            ZStack {
-                                // Animated gradient glow
-                                LinearGradient(
-                                    colors: [.accentColor.opacity(0.08), .purple.opacity(0.05), .blue.opacity(0.05)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                                .blur(radius: 20)
-                                
-                                // Main glass layer
-                                Rectangle()
-                                    .glassEffect(.regular.tint(.accentColor.opacity(0.12)), in: .rect)
+                            // Optimized glass for recent app button
+                            Group {
+                                if reduceTransparency {
+                                    // Fallback: solid background
+                                    Color(nsColor: .controlBackgroundColor).opacity(0.7)
+                                } else {
+                                    // Normal: glass with glow
+                                    ZStack {
+                                        // Gradient glow (reduced blur)
+                                        LinearGradient(
+                                            colors: [.accentColor.opacity(0.06), .purple.opacity(0.04), .blue.opacity(0.03)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                        .blur(radius: 12)
+                                        
+                                        // Main glass layer
+                                        Rectangle()
+                                            .glassEffect(.regular.tint(.accentColor.opacity(0.12)), in: .rect)
+                                    }
+                                }
                             }
                             .allowsHitTesting(false)  // Allow clicks through to button
                         )
@@ -464,7 +464,8 @@ struct QuickLauncherView: View {
                 } else {
                     ScrollView {
                         LazyVGrid(columns: gridColumns, spacing: 32) {
-                            ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
+                            ForEach(viewModel.filteredApps.indices, id: \.self) { index in
+                                let app = viewModel.filteredApps[index]
                                 Button {
                                     // Single tap - launch
                                     // Clear search focus and focus this app
@@ -785,24 +786,14 @@ private struct ModernToolbarButton: View {
                 .rotationEffect(.degrees(rotation))
                 .frame(width: 44, height: 44)
                 .background(
-                    ZStack {
-                        // Glow effect when hovered
-                        if isHovered {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(color.opacity(0.15))
-                                .blur(radius: 8)
-                        }
-                        
-                        // Main glass button
-                        RoundedRectangle(cornerRadius: 12)
-                            .glassEffect(
-                                isHovered 
-                                ? .regular.tint(color.opacity(0.15))
-                                : .regular, 
-                                in: RoundedRectangle(cornerRadius: 12)
-                            )
-                    }
-                    .allowsHitTesting(false)  // Allow clicks through to button
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            isHovered 
+                            ? color.opacity(0.12)
+                            : Color(nsColor: .controlBackgroundColor).opacity(0.6)
+                        )
+                        .shadow(color: isHovered ? color.opacity(0.2) : .clear, radius: 4)
+                        .allowsHitTesting(false)  // Allow clicks through to button
                 )
                 .shadow(
                     color: isHovered ? color.opacity(0.3) : .black.opacity(0.1), 
@@ -828,7 +819,7 @@ private struct ModernToolbarButton: View {
         .buttonStyle(.plain)
         .help(help)
         .onHover { hovering in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
             }
         }
@@ -1522,7 +1513,7 @@ private struct RecentAppLaunchButton: View {
         .buttonStyle(.plain)
         .clipped()
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.easeInOut(duration: 0.15)) {
                 isHovered = hovering
             }
         }
