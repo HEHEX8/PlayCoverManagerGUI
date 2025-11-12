@@ -26,23 +26,24 @@ struct SettingsRootView: View {
 
     var body: some View {
         TabView {
-            GeneralSettingsView(uiScale: uiScale)
+            GeneralSettingsView()
                 .tabItem {
                     Label("一般", systemImage: "gear")
                 }
-            DataSettingsView(uiScale: uiScale)
+            DataSettingsView()
                 .tabItem {
                     Label("データ", systemImage: "internaldrive")
                 }
-            MaintenanceSettingsView(uiScale: uiScale)
+            MaintenanceSettingsView()
                 .tabItem {
                     Label("メンテナンス", systemImage: "wrench.and.screwdriver")
                 }
-            AboutView(uiScale: uiScale)
+            AboutView()
                 .tabItem {
                     Label("情報", systemImage: "info.circle")
                 }
         }
+        .uiScale(uiScale)  // Inject UI scale into environment for all tabs
         .padding(24 * uiScale)
         .frame(width: 600 * uiScale, height: 500 * uiScale)
         .toolbar {
@@ -74,7 +75,7 @@ struct SettingsRootView: View {
 }
 
 private struct GeneralSettingsView: View {
-    var uiScale: CGFloat = 1.0
+    @Environment(\.uiScale) var uiScale
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
     @Environment(\.dismiss) private var dismiss
@@ -83,8 +84,7 @@ private struct GeneralSettingsView: View {
     @State private var showLanguageChangeAlert = false
     @State private var previousLanguage: SettingsStore.AppLanguage
 
-    init(uiScale: CGFloat = 1.0) {
-        self.uiScale = uiScale
+    init() {
         // Initialize with current language
         let store = SettingsStore()
         _previousLanguage = State(initialValue: store.appLanguage)
@@ -105,8 +105,7 @@ private struct GeneralSettingsView: View {
                         // Storage path display
                         VStack(alignment: .leading, spacing: 8 * uiScale) {
                             Text("保存先")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
+                                .font(.system(size: 13 * uiScale, weight: .medium))
                                 .foregroundStyle(.secondary)
                             
                             HStack {
@@ -311,7 +310,7 @@ private struct GeneralSettingsView: View {
 }
 
 private struct DataSettingsView: View {
-    var uiScale: CGFloat = 1.0
+    @Environment(\.uiScale) var uiScale
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
 
@@ -455,6 +454,7 @@ struct IPAInstallerSheet: View {
             let launcherService = LauncherService()
             installerService = IPAInstallerService(diskImageService: diskImageService, settingsStore: settingsStore, launcherService: launcherService)
         }
+        .uiScale(uiScale)  // Inject UI scale into environment for all child views
     }
     
     // MARK: - Selection View
@@ -1268,6 +1268,7 @@ struct AppUninstallerSheet: View {
                 await loadApps()
             }
         }
+        .uiScale(uiScale)  // Inject UI scale into environment for all child views
     }
     
     // MARK: - Loading View
@@ -1909,7 +1910,7 @@ struct AppUninstallerSheet: View {
 
 // Appearance Settings View
 private struct MaintenanceSettingsView: View {
-    var uiScale: CGFloat = 1.0
+    @Environment(\.uiScale) var uiScale
     @Environment(SettingsStore.self) private var settingsStore
     @State private var showingResetConfirmation = false
     @State private var showingClearCacheConfirmation = false
@@ -2096,7 +2097,7 @@ private struct MaintenanceSettingsView: View {
 
 // MARK: - About View
 private struct AboutView: View {
-    var uiScale: CGFloat = 1.0
+    @Environment(\.uiScale) var uiScale
     
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"

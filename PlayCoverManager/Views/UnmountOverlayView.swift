@@ -122,6 +122,7 @@ struct UnmountOverlayView: View {
             windowSize = newSize
         }
         .animation(.none, value: viewModel.unmountFlowState)  // Disable implicit animations
+        .uiScale(uiScale)  // Inject UI scale into environment for all overlay child views
     }
 }
 

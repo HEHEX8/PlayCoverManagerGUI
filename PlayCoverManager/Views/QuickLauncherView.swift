@@ -791,6 +791,7 @@ struct QuickLauncherView: View {
                 .zIndex(1000)
             }
         }
+        .uiScale(uiScale)  // Inject UI scale into environment for all child views
     }
 }
 
@@ -1448,6 +1449,7 @@ private struct AppDetailSheet: View {
         } action: { newSize in
             windowSize = newSize
         }
+        .uiScale(uiScale)  // Inject UI scale into environment for all child views
     }
 }
 

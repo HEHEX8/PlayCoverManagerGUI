@@ -148,6 +148,7 @@ struct SetupWizardView: View {
                 }
             }
         }
+        .uiScale(uiScale)  // Inject UI scale into environment for all child views
     }
     
     @ViewBuilder
