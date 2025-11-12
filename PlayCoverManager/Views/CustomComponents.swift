@@ -215,22 +215,46 @@ struct CustomLargeButton: View {
 // MARK: - Custom Picker
 
 /// Modern picker with dynamic scaling - Swift 6.2 optimized
+/// Supports both menu and segmented styles with proper scaling
 struct CustomPicker<SelectionValue: Hashable, Content: View>: View {
+    enum PickerStyle {
+        case menu
+        case segmented
+    }
+    
     @Binding var selection: SelectionValue
+    let label: String
     let content: Content
+    let style: PickerStyle
     var uiScale: CGFloat = 1.0
     
     init(
+        _ label: String = "",
         selection: Binding<SelectionValue>,
+        style: PickerStyle = .menu,
         uiScale: CGFloat = 1.0,
         @ViewBuilder content: () -> Content
     ) {
+        self.label = label
         self._selection = selection
+        self.style = style
         self.uiScale = uiScale
         self.content = content()
     }
     
     var body: some View {
+        Group {
+            switch style {
+            case .menu:
+                menuPicker
+            case .segmented:
+                segmentedPicker
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var menuPicker: some View {
         Menu {
             content
         } label: {
@@ -240,8 +264,23 @@ struct CustomPicker<SelectionValue: Hashable, Content: View>: View {
     }
     
     @ViewBuilder
+    private var segmentedPicker: some View {
+        // Use native Picker with segmented style but with scaled frame
+        Picker(label, selection: $selection) {
+            content
+        }
+        .pickerStyle(.segmented)
+        .scaleEffect(uiScale)
+        .frame(height: 32 * uiScale)
+    }
+    
+    @ViewBuilder
     private var pickerLabel: some View {
-        HStack {
+        HStack(spacing: 8 * uiScale) {
+            if !label.isEmpty {
+                Text(label)
+                    .font(.system(size: 14 * uiScale))
+            }
             Image(systemName: "chevron.up.chevron.down")
                 .font(.system(size: 12 * uiScale))
                 .foregroundStyle(.secondary)

@@ -2544,12 +2544,11 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                Picker("", selection: $nobrowseOverride) {
+                CustomPicker("", selection: $nobrowseOverride, style: .segmented, uiScale: uiScale) {
                     ForEach(NobrowseOverride.allCases) { option in
                         Text(option.localizedTitle).tag(option)
                     }
                 }
-                .pickerStyle(.segmented)
                 .onChange(of: nobrowseOverride) { _, newValue in
                     saveNobrowseSetting(newValue)
                 }
@@ -2573,12 +2572,11 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                Picker("", selection: $dataHandlingOverride) {
+                CustomPicker("", selection: $dataHandlingOverride, style: .menu, uiScale: uiScale) {
                     ForEach(DataHandlingOverride.allCases) { option in
                         Text(option.localizedTitle).tag(option)
                     }
                 }
-                .pickerStyle(.menu)
                 .onChange(of: dataHandlingOverride) { _, newValue in
                     saveDataHandlingSetting(newValue)
                 }
@@ -2603,13 +2601,12 @@ private struct SettingsView: View {
                         .font(.system(size: 13 * uiScale))
                         .fontWeight(.medium)
                     
-                    Picker("", selection: $languageOverride) {
+                    CustomPicker("", selection: $languageOverride, style: .menu, uiScale: uiScale) {
                         Text("システムデフォルト").tag(nil as String?)
                         ForEach(supportedLanguages, id: \.self) { lang in
                             Text(getLanguageDisplayName(lang)).tag(lang as String?)
                         }
                     }
-                    .pickerStyle(.menu)
                     .onChange(of: languageOverride) { _, newValue in
                         saveLanguageSetting(newValue)
                     }
@@ -2936,12 +2933,11 @@ private struct DetailsView: View {
                 .font(.system(size: 17 * uiScale, weight: .semibold))
             
             // Sub-section selector
-            Picker("", selection: $selectedSection) {
+            CustomPicker("", selection: $selectedSection, style: .segmented, uiScale: uiScale) {
                 ForEach(DetailSection.allCases) { section in
                     Label(section.localizedTitle, systemImage: section.icon).tag(section)
                 }
             }
-            .pickerStyle(.segmented)
             .labelsHidden()
             
             ScrollView {
