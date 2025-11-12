@@ -28,26 +28,15 @@ struct QuickLauncherView: View {
     @State private var eventMonitor: Any?  // For monitoring keyboard events
     @State private var showingShortcutGuide = false  // For keyboard shortcut cheat sheet
     
-    // Dynamic grid calculation based on window width
-    @State private var windowWidth: CGFloat = 960
+    // Adaptive grid that automatically adjusts columns based on window width
+    private let gridColumns = [
+        GridItem(.adaptive(minimum: 80, maximum: 120), spacing: 12)
+    ]
     
-    // Calculate optimal columns based on available width
+    // Estimated columns per row (for keyboard navigation)
+    // This is approximate - actual count depends on window width
     private var columnsPerRow: Int {
-        let availableWidth = windowWidth - 32  // Subtract padding
-        let idealIconWidth: CGFloat = 100  // Target icon size
-        let spacing: CGFloat = 12
-        
-        // Simple calculation: how many icons fit at ideal size?
-        let columns = Int((availableWidth + spacing) / (idealIconWidth + spacing))
-        
-        // Clamp between reasonable bounds
-        return max(4, min(columns, 15))  // Minimum 4, maximum 15 columns
-    }
-    
-    // Generate grid columns dynamically
-    private var gridColumns: [GridItem] {
-        let count = columnsPerRow
-        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
+        return 10  // Default estimate for keyboard shortcuts
     }
     
     // Current focused row (for multi-row navigation)
@@ -367,9 +356,8 @@ struct QuickLauncherView: View {
                     if viewModel.filteredApps.isEmpty {
                         EmptyAppListView(searchText: viewModel.searchText)
                     } else {
-                        GeometryReader { geometry in
-                            ScrollView {
-                                LazyVGrid(columns: gridColumns, spacing: 16) {
+                        ScrollView {
+                            LazyVGrid(columns: gridColumns, spacing: 16) {
                                 ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                     iOSAppIconView(
                                         app: app, 
@@ -419,13 +407,6 @@ struct QuickLauncherView: View {
                                 }
                             }
                         }
-                        .onAppear {
-                            windowWidth = geometry.size.width
-                        }
-                        .onChange(of: geometry.size.width) { oldWidth, newWidth in
-                            windowWidth = newWidth
-                        }
-                    }
                     }
                     
                     // Modern recently launched app button with rich glass effect
@@ -494,9 +475,8 @@ struct QuickLauncherView: View {
                 if viewModel.filteredApps.isEmpty {
                     EmptyAppListView(searchText: viewModel.searchText)
                 } else {
-                    GeometryReader { geometry in
-                        ScrollView {
-                            LazyVGrid(columns: gridColumns, spacing: 16) {
+                    ScrollView {
+                        LazyVGrid(columns: gridColumns, spacing: 16) {
                             ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.id) { index, app in
                                 iOSAppIconView(
                                     app: app, 
@@ -546,14 +526,7 @@ struct QuickLauncherView: View {
                             }
                         }
                     }
-                    .onAppear {
-                        windowWidth = geometry.size.width
-                    }
-                    .onChange(of: geometry.size.width) { oldWidth, newWidth in
-                        windowWidth = newWidth
-                    }
                 }
-            }
             }
         }
         .sheet(item: $selectedAppForDetail) { app in
