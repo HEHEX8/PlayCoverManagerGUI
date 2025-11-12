@@ -36,7 +36,8 @@ actor ContainerLockService {
             do {
                 // Ensure container directory exists
                 if !fileManager.fileExists(atPath: containerURL.path) {
-                    try fileManager.createDirectory(at: containerURL, withIntermediateDirectories: true)
+                    // Swift 6.2: Use FileManager extension
+                    try fileManager.createDirectoryIfNeeded(at: containerURL)
                 }
                 
                 // Create lock file if it doesn't exist

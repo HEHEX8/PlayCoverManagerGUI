@@ -203,7 +203,8 @@ class PlayCoverAppSettingsStore {
         let settingsFolder = playCoverContainer.appendingPathComponent("App Settings")
         
         if !FileManager.default.fileExists(atPath: settingsFolder.path) {
-            try? FileManager.default.createDirectory(at: settingsFolder, withIntermediateDirectories: true, attributes: [:])
+            // Swift 6.2: Use FileManager extension
+            try? FileManager.default.createDirectoryIfNeeded(at: settingsFolder)
         }
         
         return settingsFolder

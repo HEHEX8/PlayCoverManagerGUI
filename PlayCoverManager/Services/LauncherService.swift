@@ -398,7 +398,8 @@ final class LauncherService {
         }
         
         let content = lines.joined(separator: "\n")
-        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        // Swift 6.2: Use FileManager extension
+        try? FileManager.default.createDirectoryIfNeeded(at: url.deletingLastPathComponent())
         try? content.data(using: .utf8)?.write(to: url)
     }
 }

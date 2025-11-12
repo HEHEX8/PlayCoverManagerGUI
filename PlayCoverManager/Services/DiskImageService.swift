@@ -85,7 +85,8 @@ final class DiskImageService {
         
         // Try to create directory - this will fail if we don't have access
         do {
-            try fileManager.createDirectory(at: parentDir, withIntermediateDirectories: true)
+            // Swift 6.2: Use FileManager extension
+            try fileManager.createDirectoryIfNeeded(at: parentDir)
         } catch let error as NSError {
             Logger.error("Failed to create parent directory: \(error)")
             if error.domain == NSCocoaErrorDomain && (error.code == NSFileWriteNoPermissionError || error.code == NSFileNoSuchFileError) {
@@ -146,7 +147,8 @@ final class DiskImageService {
             Logger.error("Disk image not found: \(imageURL.path)")
             throw AppError.diskImage(String(localized: "ディスクイメージが見つかりません"), message: imageURL.path)
         }
-        try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
+        // Swift 6.2: Use FileManager extension
+        try fileManager.createDirectoryIfNeeded(at: mountPoint)
         
         // Mount ASIF disk image using diskutil (mounts read-write by default)
         var args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path]
@@ -174,7 +176,8 @@ final class DiskImageService {
     func mountTemporarily(for bundleIdentifier: String, temporaryMountBase: URL) async throws -> URL {
         let imageURL = try diskImageURL(for: bundleIdentifier)
         let tempMountPoint = temporaryMountBase.appendingPathComponent(bundleIdentifier, isDirectory: true)
-        try fileManager.createDirectory(at: tempMountPoint, withIntermediateDirectories: true)
+        // Swift 6.2: Use FileManager extension
+        try fileManager.createDirectoryIfNeeded(at: tempMountPoint)
         
         // Mount ASIF image using diskutil
         let args = ["image", "attach", imageURL.path, "--mountPoint", tempMountPoint.path, "--nobrowse"]
@@ -235,7 +238,8 @@ final class DiskImageService {
         guard fileManager.fileExists(atPath: imageURL.path) else {
             throw AppError.diskImage(String(localized: "ディスクイメージが見つかりません"), message: imageURL.path)
         }
-        try fileManager.createDirectory(at: mountPoint, withIntermediateDirectories: true)
+        // Swift 6.2: Use FileManager extension
+        try fileManager.createDirectoryIfNeeded(at: mountPoint)
         
         // Mount ASIF disk image using diskutil (mounts read-write by default)
         var args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path]

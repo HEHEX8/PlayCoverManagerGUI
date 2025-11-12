@@ -102,7 +102,8 @@ class IPAInstallerService {
             try? FileManager.default.removeItem(at: tempDir)
         }
         
-        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        // Swift 6.2: Use FileManager extension for cleaner directory creation
+        try FileManager.default.createDirectoryIfNeeded(at: tempDir)
         
         // Get app's configured language (respects user's language setting in app)
         let appLanguages = UserDefaults.standard.stringArray(forKey: "AppleLanguages") ?? []

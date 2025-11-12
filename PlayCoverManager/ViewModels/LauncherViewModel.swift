@@ -299,7 +299,8 @@ final class LauncherViewModel {
             applySearch()
             
             // Update running apps set for consistency
-            previouslyRunningApps = Set(apps.filter { $0.isRunning }.map { $0.bundleIdentifier })
+            // Swift 6.2: Use compactMap for better performance than filter+map
+            previouslyRunningApps = Set(apps.compactMap { $0.isRunning ? $0.bundleIdentifier : nil })
         } catch {
             self.error = AppError.environment(String(localized: "アプリ一覧の更新に失敗"), message: error.localizedDescription, underlying: error)
         }
