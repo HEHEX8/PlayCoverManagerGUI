@@ -171,21 +171,23 @@ private struct StorageChangeConfirmationView: View {
                 }
                 
                 HStack(spacing: 12 * uiScale) {
-                    Button("キャンセル", action: onCancel)
-                        .buttonStyle(.bordered)
-                        .tint(selectedButton == 0 ? .blue : .gray)
-                        .overlay {
-                            if selectedButton == 0 {
-                                RoundedRectangle(cornerRadius: 6 * uiScale)
-                                    .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
-                            }
-                        }
-                        .keyboardShortcut(.cancelAction)
+                    DialogButton(
+                        title: "キャンセル",
+                        action: onCancel,
+                        isPrimary: false,
+                        isSelected: selectedButton == 0,
+                        uiScale: uiScale
+                    )
+                    .keyboardShortcut(.cancelAction)
                     
-                    Button("アンマウントして続行", action: onConfirm)
-                        .buttonStyle(.borderedProminent)
-                        .tint(selectedButton == 1 ? .blue : .gray)
-                        .keyboardShortcut(.defaultAction)
+                    DialogButton(
+                        title: "アンマウントして続行",
+                        action: onConfirm,
+                        isPrimary: true,
+                        isSelected: selectedButton == 1,
+                        uiScale: uiScale
+                    )
+                    .keyboardShortcut(.defaultAction)
                 }
             }
             .padding(32 * uiScale)
@@ -224,6 +226,121 @@ private struct StorageChangeConfirmationView: View {
     }
 }
 
+// MARK: - Custom Button Styles for Unmount Dialogs
+
+/// Modern button style for unmount dialogs with dynamic scaling
+private struct DialogButton: View {
+    let title: String
+    let action: () -> Void
+    var isPrimary: Bool = false
+    var isSelected: Bool = false
+    var uiScale: CGFloat = 1.0
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15 * uiScale, weight: .semibold))
+                .foregroundStyle(isPrimary ? .white : .primary)
+                .frame(minWidth: 120 * uiScale, minHeight: 36 * uiScale)
+                .padding(.horizontal, 20 * uiScale)
+                .padding(.vertical, 8 * uiScale)
+                .background(buttonBackground)
+                .overlay {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 8 * uiScale)
+                            .strokeBorder(isPrimary ? Color.white.opacity(0.5) : Color.accentColor, lineWidth: 2 * uiScale)
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
+                .shadow(
+                    color: isPrimary ? Color.accentColor.opacity(0.3) : .black.opacity(0.1),
+                    radius: isHovered ? 8 * uiScale : 4 * uiScale,
+                    x: 0,
+                    y: isHovered ? 4 * uiScale : 2 * uiScale
+                )
+                .scaleEffect(isHovered ? 1.02 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var buttonBackground: some View {
+        if isPrimary {
+            LinearGradient(
+                colors: [
+                    Color.accentColor,
+                    Color.accentColor.opacity(0.9)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        } else {
+            RoundedRectangle(cornerRadius: 8 * uiScale)
+                .fill(Color(nsColor: .controlBackgroundColor))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8 * uiScale)
+                        .strokeBorder(Color.primary.opacity(0.2), lineWidth: 1 * uiScale)
+                }
+        }
+    }
+}
+
+/// Warning/destructive button style for force actions
+private struct DialogWarningButton: View {
+    let title: String
+    let action: () -> Void
+    var isSelected: Bool = false
+    var uiScale: CGFloat = 1.0
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15 * uiScale, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(minWidth: 120 * uiScale, minHeight: 36 * uiScale)
+                .padding(.horizontal, 20 * uiScale)
+                .padding(.vertical, 8 * uiScale)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color.orange,
+                            Color.orange.opacity(0.9)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .overlay {
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 8 * uiScale)
+                            .strokeBorder(Color.white.opacity(0.5), lineWidth: 2 * uiScale)
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
+                .shadow(
+                    color: Color.orange.opacity(0.4),
+                    radius: isHovered ? 12 * uiScale : 6 * uiScale,
+                    x: 0,
+                    y: isHovered ? 4 * uiScale : 2 * uiScale
+                )
+                .scaleEffect(isHovered ? 1.02 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
 // MARK: - Confirmation View
 
 private struct UnmountConfirmationView: View {
@@ -258,21 +375,23 @@ private struct UnmountConfirmationView: View {
                     .foregroundStyle(.secondary)
                 
                 HStack(spacing: 12 * uiScale) {
-                    Button("キャンセル", action: onCancel)
-                        .buttonStyle(.bordered)
-                        .tint(selectedButton == 0 ? .blue : .gray)
-                        .overlay {
-                            if selectedButton == 0 {
-                                RoundedRectangle(cornerRadius: 6 * uiScale)
-                                    .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
-                            }
-                        }
-                        .keyboardShortcut(.cancelAction)
+                    DialogButton(
+                        title: "キャンセル",
+                        action: onCancel,
+                        isPrimary: false,
+                        isSelected: selectedButton == 0,
+                        uiScale: uiScale
+                    )
+                    .keyboardShortcut(.cancelAction)
                     
-                    Button("アンマウントして終了", action: onConfirm)
-                        .buttonStyle(.borderedProminent)
-                        .tint(selectedButton == 1 ? .blue : .gray)
-                        .keyboardShortcut(.defaultAction)
+                    DialogButton(
+                        title: "アンマウントして終了",
+                        action: onConfirm,
+                        isPrimary: true,
+                        isSelected: selectedButton == 1,
+                        uiScale: uiScale
+                    )
+                    .keyboardShortcut(.defaultAction)
                 }
             }
             .padding(32 * uiScale)
@@ -374,24 +493,22 @@ private struct UnmountEjectConfirmationView: View {
                     .foregroundStyle(.secondary)
                 
                 HStack(spacing: 12 * uiScale) {
-                    Button("イジェクトしない") {
-                        onCancel()
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(selectedButton == 0 ? .blue : .gray)
-                    .overlay {
-                        if selectedButton == 0 {
-                            RoundedRectangle(cornerRadius: 6 * uiScale)
-                                .strokeBorder(Color.blue, lineWidth: 2 * uiScale)
-                        }
-                    }
+                    DialogButton(
+                        title: "イジェクトしない",
+                        action: onCancel,
+                        isPrimary: false,
+                        isSelected: selectedButton == 0,
+                        uiScale: uiScale
+                    )
                     .keyboardShortcut(.cancelAction)
                     
-                    Button("イジェクト") {
-                        onConfirm()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(selectedButton == 1 ? .blue : .gray)
+                    DialogButton(
+                        title: "イジェクト",
+                        action: onConfirm,
+                        isPrimary: true,
+                        isSelected: selectedButton == 1,
+                        uiScale: uiScale
+                    )
                     .keyboardShortcut(.defaultAction)
                 }
                 
@@ -480,9 +597,14 @@ private struct UnmountSuccessView: View {
                 }
                 .frame(maxWidth: 400 * uiScale)
                 
-                Button("終了", action: onDismiss)
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
+                DialogButton(
+                    title: "終了",
+                    action: onDismiss,
+                    isPrimary: true,
+                    isSelected: true,
+                    uiScale: uiScale
+                )
+                .keyboardShortcut(.defaultAction)
             }
             .padding(32 * uiScale)
             .frame(minWidth: 500 * uiScale)
@@ -540,14 +662,21 @@ private struct ForceUnmountOfferingView: View {
                 .frame(maxWidth: 450 * uiScale)
                 
                 HStack(spacing: 12 * uiScale) {
-                    Button("キャンセル", action: onCancel)
-                        .keyboardShortcut(.cancelAction)
+                    DialogButton(
+                        title: "キャンセル",
+                        action: onCancel,
+                        isPrimary: false,
+                        isSelected: false,
+                        uiScale: uiScale
+                    )
+                    .keyboardShortcut(.cancelAction)
                     
-                    Button("強制アンマウント") {
-                        onForce()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
+                    DialogWarningButton(
+                        title: "強制アンマウント",
+                        action: onForce,
+                        isSelected: true,
+                        uiScale: uiScale
+                    )
                     .keyboardShortcut(.defaultAction)
                 }
             }
@@ -607,14 +736,21 @@ private struct ForceEjectOfferingView: View {
                 .frame(maxWidth: 450 * uiScale)
                 
                 HStack(spacing: 12 * uiScale) {
-                    Button("キャンセル", action: onCancel)
-                        .keyboardShortcut(.cancelAction)
+                    DialogButton(
+                        title: "キャンセル",
+                        action: onCancel,
+                        isPrimary: false,
+                        isSelected: false,
+                        uiScale: uiScale
+                    )
+                    .keyboardShortcut(.cancelAction)
                     
-                    Button("強制イジェクト") {
-                        onForce()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
+                    DialogWarningButton(
+                        title: "強制イジェクト",
+                        action: onForce,
+                        isSelected: true,
+                        uiScale: uiScale
+                    )
                     .keyboardShortcut(.defaultAction)
                 }
             }
@@ -658,9 +794,14 @@ private struct UnmountErrorView: View {
                     .frame(maxWidth: 450 * uiScale)
                     .foregroundStyle(.secondary)
                 
-                Button("OK", action: onDismiss)
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
+                DialogButton(
+                    title: "OK",
+                    action: onDismiss,
+                    isPrimary: true,
+                    isSelected: true,
+                    uiScale: uiScale
+                )
+                .keyboardShortcut(.defaultAction)
             }
             .padding(32 * uiScale)
             .frame(minWidth: 500 * uiScale)
