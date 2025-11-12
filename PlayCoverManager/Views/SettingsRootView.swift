@@ -453,18 +453,43 @@ private struct DataSettingsView: View {
             VStack(spacing: 20 * uiScale) {
                 // Internal Data Handling Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
-                    Label("内部データ処理の既定値", systemImage: "doc.on.doc")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.orange)
+                    // Header with icon gradient
+                    HStack(spacing: 12 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.orange.opacity(0.2), Color.yellow.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
+                            
+                            Image(systemName: "doc.on.doc")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.orange, .yellow],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        
+                        Text("内部データ処理の既定値")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
                     
                     Divider()
+                        .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
-                        VStack(alignment: .leading, spacing: 8 * uiScale) {
+                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                        VStack(alignment: .leading, spacing: 10 * uiScale) {
                             Text("既定の処理")
-                                .font(.system(size: 15 * uiScale))
-                                .font(.system(size: 13 * uiScale))
-                                .fontWeight(.medium)
+                                .font(.system(size: 13 * uiScale, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             
                             Picker("", selection: Binding<SettingsStore.InternalDataStrategy>(
@@ -476,40 +501,41 @@ private struct DataSettingsView: View {
                                 }
                             }
                             .pickerStyle(.menu)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .padding(16 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12 * uiScale)
+                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                        )
                         
-                        // Description with info icon
-                        HStack(alignment: .top, spacing: 12 * uiScale) {
+                        // Info text
+                        HStack(spacing: 6 * uiScale) {
                             Image(systemName: "info.circle.fill")
-                                .font(.system(size: 20 * uiScale, weight: .semibold))
-                                .foregroundStyle(.blue)
-                            
-                            VStack(alignment: .leading, spacing: 4 * uiScale) {
-                                Text("説明")
-                                    .font(.system(size: 13 * uiScale))
-                                    .fontWeight(.semibold)
-                                
-                                Text("アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。")
-                                    .font(.system(size: 15 * uiScale))
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
+                                .font(.system(size: 12 * uiScale))
+                                .foregroundStyle(.orange)
+                            Text("アプリのコンテナに内部データが残っていた場合のデフォルト処理です。ランチャーから起動する際に変更できます。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(12 * uiScale)
-                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 8 * uiScale))
+                        .background(
+                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                                .fill(Color.orange.opacity(0.05))
+                        )
                     }
                 }
-                .padding(20 * uiScale)
-                .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
-                )
+                .padding(24 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
                 
                 Spacer()
             }
-            .padding(20 * uiScale)
+            .padding(.horizontal, 24 * uiScale)
+            .padding(.vertical, 20 * uiScale)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -2719,97 +2745,222 @@ private struct MaintenanceSettingsView: View {
             VStack(spacing: 20 * uiScale) {
                 // Cache Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
-                    Label("キャッシュ", systemImage: "folder.badge.minus")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.cyan)
+                    // Header with icon gradient
+                    HStack(spacing: 12 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.cyan.opacity(0.2), Color.blue.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
+                            
+                            Image(systemName: "folder.badge.minus")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.cyan, .blue],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        
+                        Text("キャッシュ")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
                     
                     Divider()
+                        .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
+                    VStack(alignment: .leading, spacing: 16 * uiScale) {
                         Button {
                             showingClearCacheConfirmation = true
                         } label: {
-                            Label("アイコンキャッシュをクリア", systemImage: "trash")
-                                .font(.system(size: 14 * uiScale, weight: .medium))
+                            HStack {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                                Text("アイコンキャッシュをクリア")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
+                        .controlSize(.large)
                         
-                        Text("アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。")
-                            .font(.system(size: 11 * uiScale))
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 6 * uiScale) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 12 * uiScale))
+                                .foregroundStyle(.cyan)
+                            Text("アプリアイコンのキャッシュをクリアします。次回起動時に再読み込みされます。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                                .fill(Color.cyan.opacity(0.05))
+                        )
                     }
                 }
-                .padding(20 * uiScale)
-                .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
-                )
+                .padding(24 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
                 
                 // PlayCover Shortcuts Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
-                    Label("PlayCover ショートカット", systemImage: "folder.badge.questionmark")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.yellow)
+                    // Header with icon gradient
+                    HStack(spacing: 12 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.yellow.opacity(0.2), Color.orange.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
+                            
+                            Image(systemName: "folder.badge.questionmark")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.yellow, .orange],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        
+                        Text("PlayCover ショートカット")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
                     
                     Divider()
+                        .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
+                    VStack(alignment: .leading, spacing: 16 * uiScale) {
                         Button {
                             removePlayCoverShortcuts()
                         } label: {
-                            Label("~/Applications/PlayCover を削除", systemImage: "trash")
-                                .font(.system(size: 14 * uiScale, weight: .medium))
+                            HStack {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                                Text("~/Applications/PlayCover を削除")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
                         .tint(.yellow)
+                        .controlSize(.large)
                         
-                        Text("PlayCover が作成する不要なショートカットを削除します。PlayCover.app 起動時に再作成されます。")
-                            .font(.system(size: 11 * uiScale))
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 6 * uiScale) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 12 * uiScale))
+                                .foregroundStyle(.yellow)
+                            Text("PlayCover が作成する不要なショートカットを削除します。PlayCover.app 起動時に再作成されます。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                                .fill(Color.yellow.opacity(0.05))
+                        )
                     }
                 }
-                .padding(20 * uiScale)
-                .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
-                )
+                .padding(24 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
                 
                 // Reset Card
                 VStack(alignment: .leading, spacing: 16 * uiScale) {
-                    Label("リセット", systemImage: "arrow.counterclockwise.circle.fill")
-                        .font(.system(size: 17 * uiScale, weight: .semibold))
-                        .foregroundStyle(.red)
+                    // Header with icon gradient
+                    HStack(spacing: 12 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.red.opacity(0.2), Color.orange.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
+                            
+                            Image(systemName: "arrow.counterclockwise.circle.fill")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.red, .orange],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        
+                        Text("リセット")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
                     
                     Divider()
+                        .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
+                    VStack(alignment: .leading, spacing: 16 * uiScale) {
                         Button {
                             showingResetConfirmation = true
                         } label: {
-                            Label("設定をリセット", systemImage: "exclamationmark.triangle.fill")
-                                .font(.system(size: 14 * uiScale, weight: .medium))
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                                Text("設定をリセット")
+                                    .font(.system(size: 14 * uiScale, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
                         .tint(.red)
+                        .controlSize(.large)
                         
-                        Text("すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。")
-                            .font(.system(size: 11 * uiScale))
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 6 * uiScale) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 12 * uiScale))
+                                .foregroundStyle(.red)
+                            Text("すべての設定を初期値に戻します（ディスクイメージとアプリは削除されません）。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12 * uiScale)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8 * uiScale)
+                                .fill(Color.red.opacity(0.05))
+                        )
                     }
                 }
-                .padding(20 * uiScale)
-                .background(
-                    RoundedRectangle(cornerRadius: 12 * uiScale)
-                        .fill(Color(nsColor: .controlBackgroundColor))
-                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
-                )
+                .padding(24 * uiScale)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+                .shadow(color: .black.opacity(0.1), radius: 8 * uiScale, x: 0, y: 4 * uiScale)
                 
                 Spacer()
             }
-            .padding(20 * uiScale)
+            .padding(.horizontal, 24 * uiScale)
+            .padding(.vertical, 20 * uiScale)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .keyboardNavigableAlert(
             isPresented: $showingResetConfirmation,
             title: String(localized: "設定をリセットしますか？"),
