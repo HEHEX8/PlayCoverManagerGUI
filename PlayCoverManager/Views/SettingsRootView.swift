@@ -2049,7 +2049,7 @@ struct AppUninstallerSheet: View {
                 )
                 .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
                 
-                // Apps list with modern card design
+                // Apps list - allow flexible height
                 List(apps, id: \.bundleID, selection: $selectedApps) { app in
                     HStack(spacing: 12 * uiScale) {
                         if let icon = app.icon {
@@ -2093,10 +2093,8 @@ struct AppUninstallerSheet: View {
                     }
                     .padding(.vertical, 4 * uiScale)
                 }
-                .scrollContentBackground(.hidden)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Uninstalling View
