@@ -258,20 +258,15 @@ private struct GeneralSettingsView: View {
                         }
                         
                         // Change storage button
-                        Button {
+                        CustomLargeButton(
+                            title: "保存先を変更",
+                            icon: "folder.badge.gearshape",
+                            isPrimary: true,
+                            uiScale: uiScale
+                        ) {
                             dismiss()
                             appViewModel.requestStorageLocationChange()
-                        } label: {
-                            HStack {
-                                Image(systemName: "folder.badge.gearshape")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                                Text("保存先を変更")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                            }
-                            .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
                         .help(String(localized: "すべてのコンテナをアンマウントしてから保存先を変更します"))
                         
                         // Info text
@@ -342,10 +337,12 @@ private struct GeneralSettingsView: View {
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer()
-                            Toggle("", isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }))
-                                .labelsHidden()
-                                .toggleStyle(.switch)
-                                .controlSize(.large)
+                            CustomToggle(
+                                title: "",
+                                subtitle: nil,
+                                isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }),
+                                uiScale: uiScale
+                            )
                         }
                         .padding(16 * uiScale)
                         .background(
@@ -400,20 +397,22 @@ private struct GeneralSettingsView: View {
                                 .font(.system(size: 13 * uiScale, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             
-                            Picker("", selection: Binding(
-                                get: { settingsStore.appLanguage },
-                                set: { newValue in
-                                    if newValue != previousLanguage {
-                                        settingsStore.appLanguage = newValue
-                                        showLanguageChangeAlert = true
+                            CustomPicker(
+                                selection: Binding(
+                                    get: { settingsStore.appLanguage },
+                                    set: { newValue in
+                                        if newValue != previousLanguage {
+                                            settingsStore.appLanguage = newValue
+                                            showLanguageChangeAlert = true
+                                        }
                                     }
-                                }
-                            )) {
+                                ),
+                                uiScale: uiScale
+                            ) {
                                 ForEach(SettingsStore.AppLanguage.allCases) { language in
                                     Text(language.localizedDescription).tag(language)
                                 }
                             }
-                            .pickerStyle(.menu)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(16 * uiScale)
@@ -577,15 +576,17 @@ private struct DataSettingsView: View {
                                 .font(.system(size: 13 * uiScale, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             
-                            Picker("", selection: Binding<SettingsStore.InternalDataStrategy>(
-                                get: { settingsStore.defaultDataHandling },
-                                set: { settingsStore.defaultDataHandling = $0 }
-                            )) {
+                            CustomPicker(
+                                selection: Binding<SettingsStore.InternalDataStrategy>(
+                                    get: { settingsStore.defaultDataHandling },
+                                    set: { settingsStore.defaultDataHandling = $0 }
+                                ),
+                                uiScale: uiScale
+                            ) {
                                 ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
                                     Text(strategy.localizedDescription).tag(strategy)
                                 }
                             }
-                            .pickerStyle(.menu)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(16 * uiScale)
@@ -804,20 +805,15 @@ struct IPAInstallerSheet: View {
                     .multilineTextAlignment(.center)
             }
             
-            Button {
-                selectIPAFiles()
-            } label: {
-                HStack(spacing: 8 * uiScale) {
-                    Image(systemName: "folder.badge.plus")
-                        .font(.system(size: 16 * uiScale, weight: .semibold))
-                    Text("IPA を選択")
-                        .font(.system(size: 16 * uiScale, weight: .semibold))
+            CustomLargeButton(
+                title: "IPA を選択",
+                icon: "folder.badge.plus",
+                isPrimary: true,
+                uiScale: uiScale,
+                action: {
+                    selectIPAFiles()
                 }
-                .padding(.horizontal, 24 * uiScale)
-                .padding(.vertical, 12 * uiScale)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            )
             .keyboardShortcut(.defaultAction)
             
             Spacer()
@@ -1539,14 +1535,13 @@ struct IPAInstallerSheet: View {
         HStack(spacing: 12 * uiScale) {
             // Hide cancel button during installation - too complex to safely cancel
             if currentPhase != .installing && currentPhase != .analyzing {
-                Button {
-                    isPresented = false
-                } label: {
-                    Text(currentPhase == .results ? "閉じる" : "キャンセル")
-                        .font(.system(size: 14 * uiScale, weight: .medium))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                CustomButton(
+                    title: currentPhase == .results ? "閉じる" : "キャンセル",
+                    action: { isPresented = false },
+                    isPrimary: false,
+                    isDestructive: false,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.cancelAction)
             }
             
@@ -1554,45 +1549,35 @@ struct IPAInstallerSheet: View {
             
             switch currentPhase {
             case .confirmation:
-                Button {
-                    selectIPAFiles()
-                } label: {
-                    HStack(spacing: 6 * uiScale) {
-                        Image(systemName: "plus.circle")
-                            .font(.system(size: 14 * uiScale))
-                        Text("別の IPA を追加")
-                            .font(.system(size: 14 * uiScale, weight: .medium))
-                    }
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                CustomButton(
+                    title: "別の IPA を追加",
+                    action: { selectIPAFiles() },
+                    isPrimary: false,
+                    icon: "plus.circle",
+                    uiScale: uiScale
+                )
                 
-                Button {
-                    Task {
-                        await startInstallation()
-                    }
-                } label: {
-                    HStack(spacing: 6 * uiScale) {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.system(size: 14 * uiScale))
-                        Text("インストール開始")
-                            .font(.system(size: 14 * uiScale, weight: .semibold))
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(analyzedIPAs.isEmpty)
+                CustomButton(
+                    title: "インストール開始",
+                    action: {
+                        Task {
+                            await startInstallation()
+                        }
+                    },
+                    isPrimary: true,
+                    icon: "arrow.down.circle.fill",
+                    uiScale: uiScale,
+                    isEnabled: !analyzedIPAs.isEmpty
+                )
                 .keyboardShortcut(.defaultAction)
                 
             case .results:
-                Button {
-                    isPresented = false
-                } label: {
-                    Text("完了")
-                        .font(.system(size: 14 * uiScale, weight: .semibold))
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                CustomButton(
+                    title: "完了",
+                    action: { isPresented = false },
+                    isPrimary: true,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.defaultAction)
                 
             default:
@@ -2687,43 +2672,59 @@ struct AppUninstallerSheet: View {
     private var bottomButtons: some View {
         HStack {
             if currentPhase == .confirmingMultiple {
-                Button("戻る") {
-                    currentPhase = .selection
-                }
+                CustomButton(
+                    title: "戻る",
+                    action: { currentPhase = .selection },
+                    isPrimary: false,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.cancelAction)
             } else if currentPhase != .uninstalling {
                 // Hide cancel button during uninstallation
-                Button(currentPhase == .results ? "閉じる" : "キャンセル") {
-                    isPresented = false
-                }
+                CustomButton(
+                    title: currentPhase == .results ? "閉じる" : "キャンセル",
+                    action: { isPresented = false },
+                    isPrimary: false,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.cancelAction)
             }
             
             Spacer()
             
             if currentPhase == .confirmingSingle && !selectedApps.isEmpty {
-                Button("アンインストール") {
-                    Task {
-                        await startUninstallation()
-                    }
-                }
-                .tint(.red)
-                .buttonStyle(.borderedProminent)
+                CustomButton(
+                    title: "アンインストール",
+                    action: {
+                        Task {
+                            await startUninstallation()
+                        }
+                    },
+                    isPrimary: true,
+                    isDestructive: true,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.defaultAction)
             } else if currentPhase == .confirmingMultiple && !selectedApps.isEmpty {
-                Button("アンインストール (\(selectedApps.count) 個)") {
-                    Task {
-                        await startUninstallation()
-                    }
-                }
-                .tint(.red)
-                .buttonStyle(.borderedProminent)
+                CustomButton(
+                    title: "アンインストール (\(selectedApps.count) 個)",
+                    action: {
+                        Task {
+                            await startUninstallation()
+                        }
+                    },
+                    isPrimary: true,
+                    isDestructive: true,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.defaultAction)
             } else if currentPhase == .selection && !selectedApps.isEmpty {
-                Button("次へ") {
-                    currentPhase = .confirmingMultiple
-                }
-                .buttonStyle(.borderedProminent)
+                CustomButton(
+                    title: "次へ",
+                    action: { currentPhase = .confirmingMultiple },
+                    isPrimary: true,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.defaultAction)
             }
         }
@@ -2864,19 +2865,14 @@ private struct MaintenanceSettingsView: View {
                         .padding(.vertical, 4 * uiScale)
                     
                     VStack(alignment: .leading, spacing: 16 * uiScale) {
-                        Button {
+                        CustomLargeButton(
+                            title: "アイコンキャッシュをクリア",
+                            icon: "trash",
+                            isPrimary: false,
+                            uiScale: uiScale
+                        ) {
                             showingClearCacheConfirmation = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                                Text("アイコンキャッシュをクリア")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                            }
-                            .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
                         
                         HStack(spacing: 6 * uiScale) {
                             Image(systemName: "info.circle.fill")
@@ -2934,20 +2930,14 @@ private struct MaintenanceSettingsView: View {
                         .padding(.vertical, 4 * uiScale)
                     
                     VStack(alignment: .leading, spacing: 16 * uiScale) {
-                        Button {
+                        CustomLargeButton(
+                            title: "~/Applications/PlayCover を削除",
+                            icon: "trash",
+                            isPrimary: false,
+                            uiScale: uiScale
+                        ) {
                             removePlayCoverShortcuts()
-                        } label: {
-                            HStack {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                                Text("~/Applications/PlayCover を削除")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                            }
-                            .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(.yellow)
-                        .controlSize(.large)
                         
                         HStack(spacing: 6 * uiScale) {
                             Image(systemName: "info.circle.fill")
@@ -3005,20 +2995,15 @@ private struct MaintenanceSettingsView: View {
                         .padding(.vertical, 4 * uiScale)
                     
                     VStack(alignment: .leading, spacing: 16 * uiScale) {
-                        Button {
+                        CustomLargeButton(
+                            title: "設定をリセット",
+                            icon: "exclamationmark.triangle.fill",
+                            isPrimary: false,
+                            isDestructive: true,
+                            uiScale: uiScale
+                        ) {
                             showingResetConfirmation = true
-                        } label: {
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                                Text("設定をリセット")
-                                    .font(.system(size: 14 * uiScale, weight: .medium))
-                            }
-                            .frame(maxWidth: .infinity)
                         }
-                        .buttonStyle(.bordered)
-                        .tint(.red)
-                        .controlSize(.large)
                         
                         HStack(spacing: 6 * uiScale) {
                             Image(systemName: "exclamationmark.triangle.fill")

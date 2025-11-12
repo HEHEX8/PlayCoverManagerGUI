@@ -1486,19 +1486,17 @@ private struct AppDetailSheet: View {
                                 Spacer()
                                 
                                 // Quick launch button
-                                Button {
-                                    isPresented = false
-                                    viewModel.launch(app: app)
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "play.circle.fill")
-                                        Text("起動")
-                                    }
-                                    .font(.system(size: 15 * uiScale, weight: .semibold))
-                                    .frame(minWidth: 100 * uiScale)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .controlSize(.large)
+                                CustomButton(
+                                    title: "起動",
+                                    action: {
+                                        isPresented = false
+                                        viewModel.launch(app: app)
+                                    },
+                                    isPrimary: true,
+                                    icon: "play.circle.fill",
+                                    uiScale: uiScale
+                                )
+                                .frame(minWidth: 100 * uiScale)
                             }
                         }
                         .padding(24 * uiScale)
@@ -1548,18 +1546,14 @@ private struct AppDetailSheet: View {
                         
                         // Bottom action buttons
                         HStack(spacing: 12 * uiScale) {
-                            Button {
+                            CustomLargeButton(
+                                title: "アプリ本体を表示",
+                                icon: "folder",
+                                isPrimary: false,
+                                uiScale: uiScale
+                            ) {
                                 NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                            } label: {
-                                HStack {
-                                    Image(systemName: "folder")
-                                    Text("アプリ本体を表示")
-                                }
-                                .font(.system(size: 14 * uiScale, weight: .medium))
-                                .frame(maxWidth: .infinity)
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.large)
                         }
                         .padding(.bottom, 24 * uiScale)
                     }
@@ -1645,15 +1639,15 @@ private struct EmptyAppListView: View {
                 
                 // Action buttons (only for non-search empty state)
                 if !isSearchEmpty {
-                    Button {
+                    CustomLargeButton(
+                        title: "IPA をインストール",
+                        icon: "square.and.arrow.down",
+                        isPrimary: true,
+                        uiScale: uiScale
+                    ) {
                         showingInstaller = true
-                    } label: {
-                        Label("IPA をインストール", systemImage: "square.and.arrow.down")
-                            .font(.system(size: 16 * uiScale, weight: .semibold))
-                            .frame(minWidth: 200 * uiScale)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
+                    .frame(minWidth: 200 * uiScale)
                     .keyboardShortcut(.defaultAction)
                 }
             }
@@ -2204,36 +2198,28 @@ private struct OverviewView: View {
                     
                     // Quick Actions
                     VStack(spacing: 8 * uiScale) {
-                        Button {
-                            NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-                        } label: {
-                            HStack {
-                                Image(systemName: "folder")
-                                Text("アプリ本体を Finder で表示")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 11 * uiScale))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .buttonStyle(.bordered)
+                        CustomButton(
+                            title: "アプリ本体を Finder で表示",
+                            action: {
+                                NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
+                            },
+                            isPrimary: false,
+                            icon: "folder",
+                            uiScale: uiScale
+                        )
                         
-                        Button {
-                            let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-                            if FileManager.default.fileExists(atPath: containerURL.path) {
-                                NSWorkspace.shared.activateFileViewerSelecting([containerURL])
-                            }
-                        } label: {
-                            HStack {
-                                Image(systemName: "externaldrive")
-                                Text("コンテナを Finder で表示")
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 11 * uiScale))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .buttonStyle(.bordered)
+                        CustomButton(
+                            title: "コンテナを Finder で表示",
+                            action: {
+                                let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                                if FileManager.default.fileExists(atPath: containerURL.path) {
+                                    NSWorkspace.shared.activateFileViewerSelecting([containerURL])
+                                }
+                            },
+                            isPrimary: false,
+                            icon: "externaldrive",
+                            uiScale: uiScale
+                        )
                     }
                 }
                 .padding()
@@ -3386,12 +3372,15 @@ private struct AnalysisContentView: View {
                         .scaleEffect(0.7)
                 }
                 
-                Button(analyzing ? "解析中..." : "再解析") {
-                    Task { await performAnalysis() }
-                }
-                .disabled(analyzing)
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                CustomButton(
+                    title: analyzing ? "解析中..." : "再解析",
+                    action: {
+                        Task { await performAnalysis() }
+                    },
+                    isPrimary: true,
+                    uiScale: uiScale,
+                    isEnabled: !analyzing
+                )
             }
             
             if let result = analysisResult {
@@ -3492,10 +3481,14 @@ private struct AnalysisContentView: View {
                         .font(.system(size: 13 * uiScale))
                         .foregroundStyle(.secondary)
                     
-                    Button("解析開始") {
-                        Task { await performAnalysis() }
-                    }
-                    .buttonStyle(.borderedProminent)
+                    CustomButton(
+                        title: "解析開始",
+                        action: {
+                            Task { await performAnalysis() }
+                        },
+                        isPrimary: true,
+                        uiScale: uiScale
+                    )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -4259,10 +4252,12 @@ private struct DataHandlingAlertView: View {
                 .frame(maxWidth: 500 * uiScale)
                 
                 // Cancel button
-                Button("キャンセル") {
-                    onCancel()
-                }
-                .buttonStyle(.bordered)
+                CustomButton(
+                    title: "キャンセル",
+                    action: onCancel,
+                    isPrimary: false,
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.cancelAction)
             }
             .padding(32 * uiScale)

@@ -94,14 +94,13 @@ struct CheckingView: View {
                     .font(.system(size: 17 * uiScale, weight: .semibold))
                     .foregroundStyle(.secondary)
                 
-                Button {
-                    retry()
-                } label: {
-                    Label("再試行", systemImage: "arrow.clockwise")
-                        .font(.system(size: 14 * uiScale, weight: .medium))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                CustomButton(
+                    title: "再試行",
+                    action: retry,
+                    isPrimary: false,
+                    icon: "arrow.clockwise",
+                    uiScale: uiScale
+                )
                 .keyboardShortcut(.defaultAction)
             }
             .padding(40 * uiScale)
@@ -175,61 +174,62 @@ struct ErrorView: View {
                 // Action buttons
                 VStack(spacing: 12 * uiScale) {
                     if error.category == .permissionDenied {
-                        Button {
-                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
-                                NSWorkspace.shared.open(url)
-                            }
-                        } label: {
-                            Label("システム設定を開く", systemImage: "gear")
-                                .font(.system(size: 15 * uiScale, weight: .medium))
-                                .frame(minWidth: 200 * uiScale)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        CustomButton(
+                            title: "システム設定を開く",
+                            action: {
+                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            },
+                            isPrimary: true,
+                            icon: "gear",
+                            uiScale: uiScale
+                        )
+                        .frame(minWidth: 200 * uiScale)
                         .keyboardShortcut("s", modifiers: [.command])
                         
                     } else if error.category == .diskImage {
-                        Button {
-                            onChangeSettings()
-                        } label: {
-                            Label("保存先を変更", systemImage: "folder.badge.gearshape")
-                                .font(.system(size: 15 * uiScale, weight: .medium))
-                                .frame(minWidth: 200 * uiScale)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        CustomButton(
+                            title: "保存先を変更",
+                            action: onChangeSettings,
+                            isPrimary: true,
+                            icon: "folder.badge.gearshape",
+                            uiScale: uiScale
+                        )
+                        .frame(minWidth: 200 * uiScale)
                         .keyboardShortcut("s", modifiers: [.command])
                         
                     } else if error.requiresAction {
-                        SettingsLink {
-                            Label("設定を開く", systemImage: "gear")
-                                .font(.system(size: 15 * uiScale, weight: .medium))
-                                .frame(minWidth: 200 * uiScale)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
+                        CustomButton(
+                            title: "設定を開く",
+                            action: {
+                                // Open settings (SettingsLink functionality)
+                                NotificationCenter.default.post(name: NSNotification.Name("OpenSettings"), object: nil)
+                            },
+                            isPrimary: true,
+                            icon: "gear",
+                            uiScale: uiScale
+                        )
+                        .frame(minWidth: 200 * uiScale)
                     }
                     
                     HStack(spacing: 12 * uiScale) {
-                        Button {
-                            NSApplication.shared.terminate(nil)
-                        } label: {
-                            Text("終了")
-                                .font(.system(size: 14 * uiScale, weight: .medium))
-                                .frame(minWidth: 80 * uiScale)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        CustomButton(
+                            title: "終了",
+                            action: { NSApplication.shared.terminate(nil) },
+                            isPrimary: false,
+                            uiScale: uiScale
+                        )
+                        .frame(minWidth: 80 * uiScale)
                         
-                        Button {
-                            onRetry()
-                        } label: {
-                            Label("再試行", systemImage: "arrow.clockwise")
-                                .font(.system(size: 14 * uiScale, weight: .medium))
-                                .frame(minWidth: 100 * uiScale)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.large)
+                        CustomButton(
+                            title: "再試行",
+                            action: onRetry,
+                            isPrimary: false,
+                            icon: "arrow.clockwise",
+                            uiScale: uiScale
+                        )
+                        .frame(minWidth: 100 * uiScale)
                         .keyboardShortcut(.defaultAction)
                     }
                 }
@@ -363,26 +363,22 @@ struct TerminationFlowView: View {
             }
             
             HStack(spacing: 12 * uiScale) {
-                Button {
-                    onContinueWaiting()
-                } label: {
-                    Text("待機")
-                        .font(.system(size: 14 * uiScale, weight: .medium))
-                        .frame(minWidth: 100 * uiScale)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                CustomButton(
+                    title: "待機",
+                    action: onContinueWaiting,
+                    isPrimary: false,
+                    uiScale: uiScale
+                )
+                .frame(minWidth: 100 * uiScale)
                 
-                Button {
-                    onForceTerminate()
-                } label: {
-                    Text("強制終了")
-                        .font(.system(size: 14 * uiScale, weight: .medium))
-                        .frame(minWidth: 100 * uiScale)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(.orange)
+                CustomButton(
+                    title: "強制終了",
+                    action: onForceTerminate,
+                    isPrimary: true,
+                    isDestructive: true,
+                    uiScale: uiScale
+                )
+                .frame(minWidth: 100 * uiScale)
                 .keyboardShortcut(.defaultAction)
             }
         }
@@ -582,54 +578,43 @@ struct RunningAppsBlockingView: View {
     
     @ViewBuilder
     private func quitButton(for appInfo: RunningAppInfo) -> some View {
-        Button {
-            quitApp(appInfo.app)
-        } label: {
-            HStack(spacing: 6 * uiScale) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 14 * uiScale))
-                Text("終了")
-                    .font(.system(size: 14 * uiScale, weight: .semibold))
-            }
-            .padding(.horizontal, 16 * uiScale)
-            .padding(.vertical, 10 * uiScale)
-        }
-        .buttonStyle(.bordered)
-        .tint(.red)
+        CustomButton(
+            title: "終了",
+            action: { quitApp(appInfo.app) },
+            isPrimary: false,
+            isDestructive: true,
+            icon: "xmark.circle.fill",
+            uiScale: uiScale
+        )
     }
     
     @ViewBuilder
     private var actionButtons: some View {
         HStack(spacing: 16 * uiScale) {
-            Button {
-                onCancel()
-            } label: {
-                Text("キャンセル")
-                    .font(.system(size: 16 * uiScale, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44 * uiScale)
-            }
-            .buttonStyle(.bordered)
+            CustomButton(
+                title: "キャンセル",
+                action: onCancel,
+                isPrimary: false,
+                uiScale: uiScale
+            )
+            .frame(maxWidth: .infinity, maxHeight: 44 * uiScale)
             .keyboardShortcut(.cancelAction)
             
-            Button {
-                if let onQuitAllAndRetry = onQuitAllAndRetry {
-                    quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
-                } else {
-                    quitAllApps()
-                }
-            } label: {
-                HStack(spacing: 8 * uiScale) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 16 * uiScale))
-                    Text("すべて終了")
-                        .font(.system(size: 16 * uiScale, weight: .semibold))
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 44 * uiScale)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.orange)
+            CustomButton(
+                title: "すべて終了",
+                action: {
+                    if let onQuitAllAndRetry = onQuitAllAndRetry {
+                        quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
+                    } else {
+                        quitAllApps()
+                    }
+                },
+                isPrimary: true,
+                isDestructive: true,
+                icon: "xmark.circle.fill",
+                uiScale: uiScale
+            )
+            .frame(maxWidth: .infinity, maxHeight: 44 * uiScale)
             .keyboardShortcut(.defaultAction)
         }
     }
