@@ -1703,7 +1703,7 @@ private struct RecentAppLaunchButton: View {
             
             onLaunch()
         } label: {
-            let displayIconSize = iconSize  // Use standard size
+            let displayIconSize = iconSize * 1.4  // 40% larger for better visibility (512x512 source prevents blur)
             let cornerRadius = displayIconSize * 0.21  // Adjust corner radius proportionally
             let iconSpacing = padding * 1.0
             
