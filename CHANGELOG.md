@@ -7,22 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Initial release preparation
-- Comprehensive README with installation and usage instructions
-- MIT License
-- Homebrew Cask support for easy installation
-- Distribution documentation for free (unsigned) releases
+---
 
-### Changed
-- Reorganized development documents into `docs/` directory
-- Enhanced .gitignore with comprehensive Swift/Xcode exclusions
-- Improved project structure for better maintainability
+## [1.2.0] - 2025-11-13
+
+### 🎨 UI/UX Improvements
+
+#### Added
+- **統一モーダルシステム**: すべてのアラート・プロンプトを UnmountOverlayView パターンに統一
+  - SimpleAlertView 新規実装（共通アラートコンポーネント）
+  - 全てのモーダルが画面中央に正しく表示
+  - キーボードショートカット対応（Return, Escape）
+  - 一貫したガラスエフェクトデザイン
+
+#### Changed
+- **アイコングリッドレイアウトの最適化**
+  - 動的カラム数の復元（アプリ数に応じて1-10カラム）
+  - 小さなウィンドウでアイコンサイズを最大化
+  - 水平パディングを統一して視覚的中央揃えを修正
+  - すべてのアプリが常に表示される（画面外に隠れない）
+- **UIスペーシングの包括的削減**
+  - 行間隔の削減により視認性向上
+  - IPAインストール確認画面のスクロール不要化
+  - 設定画面の過剰な行間隔を修正
+- **ツールバーボタンの改善**
+  - 全イジェクトボタン: 赤色⏏︎アイコン（円なし）、サイズ22pt
+  - ヘルプボタン: サイズ22pt
+
+### Fixed
+- **モーダル表示位置の修正**: すべてのアラート・プロンプトがScrollView内に表示される問題を解決
+- **アイコングリッドの中央揃え**: 右寄りだった表示を完全に中央揃えに修正
+- **9番目のアプリ非表示問題**: 最小サイズ制約を削除し、常にすべてのアプリを表示
+- **ビルドエラーの完全解決**: 
+  - StandardAlert, KeyboardNavigableAlert, AlertButton の参照を完全削除
+  - GeneralSettingsView の Binding パラメータを削除
 
 ### Removed
-- Removed PlayCover repository clone (external dependency)
-- Removed old backup files and archives
-- Removed paid distribution documentation (focused on free distribution)
+- **古いアラートシステムの完全削除**:
+  - KeyboardNavigableAlert.swift
+  - ModalPresenter.swift
+  - UnifiedModalSystem.swift (旧実装)
+  - StandardAlert の残存参照
+- **不要な @State 変数**: showLanguageChangeAlert のローカル管理を削除（SettingsStore へ統一）
+
+### Technical
+- macOS 26.1 Tahoe / Xcode 26.1 / Swift 6.2 対応
+- Liquid Glass Design System 完全対応
+- SwiftUI 最新 API 使用（.onGeometryChange, .glassEffect）
+- MVVM + Service Layer architecture
 
 ---
 
