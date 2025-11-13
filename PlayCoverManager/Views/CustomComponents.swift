@@ -641,7 +641,7 @@ struct CustomContextMenuView: View {
 
 /// NSPopover presenter singleton for context menus - Swift 6.2
 @MainActor
-final class ContextMenuPresenter: ObservableObject {
+final class ContextMenuPresenter {
     static let shared = ContextMenuPresenter()
     private var currentPopover: NSPopover?
     

@@ -2602,12 +2602,14 @@ private struct SettingsView: View {
                         .font(.system(size: 13 * uiScale))
                         .fontWeight(.medium)
                     
-                    CustomPicker(selection: $languageOverride, uiScale: uiScale) {
+                    // Use standard Picker for Optional<String> since CustomPicker requires RawRepresentable
+                    Picker("", selection: $languageOverride) {
                         Text("システムデフォルト").tag(nil as String?)
                         ForEach(supportedLanguages, id: \.self) { lang in
                             Text(getLanguageDisplayName(lang)).tag(lang as String?)
                         }
                     }
+                    .labelsHidden()
                     .onChange(of: languageOverride) { _, newValue in
                         saveLanguageSetting(newValue)
                     }
