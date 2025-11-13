@@ -100,7 +100,7 @@ struct SettingsRootView: View {
                 
                 // Custom Tab Content
                 ScrollView {
-                    VStack(spacing: 24 * uiScale) {
+                    VStack(spacing: 6 * uiScale) {
                         // Tab selector - using unified CompactTabBar
                         CompactTabBar(tabs: SettingsTab.allCases, selectedTab: $selectedTab, uiScale: uiScale)
                             .padding(.horizontal, 32 * uiScale)
@@ -156,9 +156,9 @@ private struct GeneralSettingsView: View {
         ScrollView {
             VStack(spacing: 20 * uiScale) {
                 // Storage Card
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // Header with icon gradient
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -190,7 +190,7 @@ private struct GeneralSettingsView: View {
                     Divider()
                         .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         // Storage path section
                         VStack(alignment: .leading, spacing: 8 * uiScale) {
                             Text("保存先")
@@ -268,9 +268,9 @@ private struct GeneralSettingsView: View {
                 .liquidGlassCard(uiScale: uiScale)
                 
                 // Mount Settings Card
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // Header with icon gradient
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -302,8 +302,8 @@ private struct GeneralSettingsView: View {
                     Divider()
                         .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 12 * uiScale) {
-                        HStack(spacing: 12 * uiScale) {
+                    VStack(alignment: .leading, spacing: 6 * uiScale) {
+                        HStack(spacing: 6 * uiScale) {
                             VStack(alignment: .leading, spacing: 6 * uiScale) {
                                 Text("Finder に表示しない (-nobrowse)")
                                     .font(.system(size: 14 * uiScale, weight: .semibold))
@@ -333,9 +333,9 @@ private struct GeneralSettingsView: View {
                 
 
                 // Language Card
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // Header with icon gradient
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -367,7 +367,7 @@ private struct GeneralSettingsView: View {
                     Divider()
                         .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         VStack(alignment: .leading, spacing: 10 * uiScale) {
                             Text("アプリの言語")
                                 .font(.system(size: 13 * uiScale, weight: .semibold))
@@ -509,9 +509,9 @@ private struct DataSettingsView: View {
         ScrollView {
             VStack(spacing: 20 * uiScale) {
                 // Internal Data Handling Card
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // Header with icon gradient
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -543,7 +543,7 @@ private struct DataSettingsView: View {
                     Divider()
                         .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         VStack(alignment: .leading, spacing: 10 * uiScale) {
                             Text("既定の処理")
                                 .font(.system(size: 13 * uiScale, weight: .semibold))
@@ -682,7 +682,7 @@ struct IPAInstallerSheet: View {
                 
                 // Content area with phase views
                 ScrollView {
-                    VStack(spacing: 24 * uiScale) {
+                    VStack(spacing: 6 * uiScale) {
                         switch currentPhase {
                         case .selection:
                             selectionView
@@ -696,8 +696,8 @@ struct IPAInstallerSheet: View {
                             resultsView
                         }
                     }
-                    .padding(.horizontal, 32 * uiScale)
-                    .padding(.vertical, 24 * uiScale)
+                    .padding(.horizontal, 24 * uiScale)
+                    .padding(.vertical, 12 * uiScale)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
@@ -705,11 +705,11 @@ struct IPAInstallerSheet: View {
                 if currentPhase != .analyzing {
                     VStack(spacing: 0) {
                         Divider()
-                            .padding(.horizontal, 32 * uiScale)
+                            .padding(.horizontal, 24 * uiScale)
                         
                         bottomButtons
-                            .padding(.horizontal, 32 * uiScale)
-                            .padding(.vertical, 20 * uiScale)
+                            .padding(.horizontal, 24 * uiScale)
+                            .padding(.vertical, 12 * uiScale)
                     }
                     .background(
                         Color(nsColor: .controlBackgroundColor)
@@ -737,7 +737,7 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Selection View
     private var selectionView: some View {
-        VStack(spacing: 32 * uiScale) {
+        VStack(spacing: 16 * uiScale) {
             Spacer()
             
             // Icon with gradient background
@@ -764,7 +764,7 @@ struct IPAInstallerSheet: View {
                     .symbolRenderingMode(.hierarchical)
             }
             
-            VStack(spacing: 12 * uiScale) {
+            VStack(spacing: 6 * uiScale) {
                 Text("IPA ファイルを選択")
                     .font(.system(size: 28 * uiScale, weight: .bold))
                     .foregroundStyle(.primary)
@@ -789,12 +789,12 @@ struct IPAInstallerSheet: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 48 * uiScale)
+        .padding(.horizontal, 32 * uiScale)
     }
     
     // MARK: - Analyzing View
     private var analyzingView: some View {
-        VStack(spacing: 32 * uiScale) {
+        VStack(spacing: 16 * uiScale) {
             Spacer()
             
             // Animated icon
@@ -814,7 +814,7 @@ struct IPAInstallerSheet: View {
                     .controlSize(.large)
             }
             
-            VStack(spacing: 12 * uiScale) {
+            VStack(spacing: 6 * uiScale) {
                 Text("解析中")
                     .font(.system(size: 28 * uiScale, weight: .bold))
                     .foregroundStyle(.primary)
@@ -835,17 +835,17 @@ struct IPAInstallerSheet: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 48 * uiScale)
+        .padding(.horizontal, 32 * uiScale)
     }
     
     // MARK: - Confirmation View
     private var confirmationView: some View {
         ScrollView {
-            VStack(spacing: 20 * uiScale) {
+            VStack(spacing: 12 * uiScale) {
                 // Single or multiple app confirmation
                 if analyzedIPAs.count == 1, let info = analyzedIPAs.first {
                     // Single app confirmation with modern card
-                    VStack(spacing: 20 * uiScale) {
+                    VStack(spacing: 12 * uiScale) {
                         // App icon with shadow
                         if let icon = info.icon {
                             Image(nsImage: icon)
@@ -869,10 +869,10 @@ struct IPAInstallerSheet: View {
                         }
                         .padding(.horizontal, 20 * uiScale)
                     }
-                    .padding(.vertical, 24 * uiScale)
+                    .padding(.vertical, 12 * uiScale)
                     
                     // Install type card
-                    VStack(spacing: 16 * uiScale) {
+                    VStack(spacing: 8 * uiScale) {
                         installTypeIndicator(for: info)
                         
                         Text(installTypeMessage(for: info))
@@ -881,14 +881,14 @@ struct IPAInstallerSheet: View {
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(20 * uiScale)
+                    .padding(12 * uiScale)
                     .background(
                         RoundedRectangle.standard(.regular, scale: uiScale)
                             .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
                     )
                     
                     // Details card
-                    VStack(spacing: 12 * uiScale) {
+                    VStack(spacing: 6 * uiScale) {
                         HStack {
                             Text("バージョン")
                                 .font(.system(size: 14 * uiScale))
@@ -917,7 +917,7 @@ struct IPAInstallerSheet: View {
                                 .foregroundStyle(.primary)
                         }
                     }
-                    .padding(20 * uiScale)
+                    .padding(12 * uiScale)
                     .background(
                         RoundedRectangle.standard(.regular, scale: uiScale)
                             .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
@@ -925,10 +925,10 @@ struct IPAInstallerSheet: View {
                 
             } else if analyzedIPAs.count > 1 {
                 // Multiple apps confirmation with modern card layout
-                VStack(spacing: 20 * uiScale) {
+                VStack(spacing: 12 * uiScale) {
                     // Header card with summary
-                    VStack(spacing: 16 * uiScale) {
-                        HStack(spacing: 12 * uiScale) {
+                    VStack(spacing: 8 * uiScale) {
+                        HStack(spacing: 6 * uiScale) {
                             Image(systemName: "square.stack.3d.down.forward.fill")
                                 .font(.system(size: 32 * uiScale, weight: .medium))
                                 .foregroundStyle(
@@ -958,7 +958,7 @@ struct IPAInstallerSheet: View {
                         let others = analyzedIPAs.count - newInstalls - upgrades
                         let totalSize = analyzedIPAs.reduce(0) { $0 + $1.fileSize }
                         
-                        HStack(spacing: 12 * uiScale) {
+                        HStack(spacing: 6 * uiScale) {
                             if newInstalls > 0 {
                                 HStack(spacing: 4 * uiScale) {
                                     Image(systemName: "sparkles")
@@ -1003,7 +1003,7 @@ struct IPAInstallerSheet: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    .padding(20 * uiScale)
+                    .padding(12 * uiScale)
                     .background(
                         RoundedRectangle.standard(.regular, scale: uiScale)
                             .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
@@ -1012,7 +1012,7 @@ struct IPAInstallerSheet: View {
                     // App list with modern card design
                     VStack(spacing: 8 * uiScale) {
                         ForEach(analyzedIPAs) { info in
-                            HStack(spacing: 12 * uiScale) {
+                            HStack(spacing: 6 * uiScale) {
                                 // App icon with shadow
                                 if let icon = info.icon {
                                     Image(nsImage: icon)
@@ -1093,7 +1093,7 @@ struct IPAInstallerSheet: View {
                                 .buttonStyle(.plain)
                                 .help("リストから外す")
                             }
-                            .padding(16 * uiScale)
+                            .padding(12 * uiScale)
                             .background(
                                 RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
@@ -1107,15 +1107,15 @@ struct IPAInstallerSheet: View {
                     .foregroundStyle(.secondary)
             }
             }
-            .padding(.horizontal, 24 * uiScale)
+            .padding(.horizontal, 20 * uiScale)
         }
     }
     
     // MARK: - Installing View
     private var installingView: some View {
-        VStack(spacing: 24 * uiScale) {
+        VStack(spacing: 6 * uiScale) {
             // Header with animated icon
-            VStack(spacing: 16 * uiScale) {
+            VStack(spacing: 8 * uiScale) {
                 ZStack {
                     Circle()
                         .fill(
@@ -1156,7 +1156,7 @@ struct IPAInstallerSheet: View {
                     let totalItems = analyzedIPAs.count
                     let completed = service.installedApps.count + service.failedApps.count
                     
-                    VStack(spacing: 12 * uiScale) {
+                    VStack(spacing: 6 * uiScale) {
                         ProgressView()
                             .progressViewStyle(.linear)
                             .frame(width: 400 * uiScale)
@@ -1167,11 +1167,11 @@ struct IPAInstallerSheet: View {
                     }
                 }
             }
-            .padding(.top, 20 * uiScale)
+            .padding(.top, 12 * uiScale)
             
             // Installation log with cards
             ScrollView {
-                VStack(spacing: 12 * uiScale) {
+                VStack(spacing: 6 * uiScale) {
                     if let service = installerService {
                         // Completed installations
                         ForEach(service.installedAppDetails) { detail in
@@ -1212,7 +1212,7 @@ struct IPAInstallerSheet: View {
                                 
                                 Spacer()
                             }
-                            .padding(16 * uiScale)
+                            .padding(12 * uiScale)
                             .background(
                                 RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color.green.opacity(0.1))
@@ -1252,7 +1252,7 @@ struct IPAInstallerSheet: View {
                                 
                                 Spacer()
                             }
-                            .padding(16 * uiScale)
+                            .padding(12 * uiScale)
                             .background(
                                 RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color.blue.opacity(0.1))
@@ -1283,7 +1283,7 @@ struct IPAInstallerSheet: View {
                                 
                                 Spacer()
                             }
-                            .padding(16 * uiScale)
+                            .padding(12 * uiScale)
                             .background(
                                 RoundedRectangle.standard(.regular, scale: uiScale)
                                     .fill(Color.red.opacity(0.1))
@@ -1291,7 +1291,7 @@ struct IPAInstallerSheet: View {
                         }
                     }
                 }
-                .padding(.horizontal, 24 * uiScale)
+                .padding(.horizontal, 20 * uiScale)
             }
         }
         .onAppear {
@@ -1305,13 +1305,13 @@ struct IPAInstallerSheet: View {
     // MARK: - Results View
     private var resultsView: some View {
         ScrollView {
-            VStack(spacing: 24 * uiScale) {
+            VStack(spacing: 6 * uiScale) {
                 // Success icon
                 if let service = installerService {
                     let hasFailures = !service.failedApps.isEmpty
                     let hasSuccess = !service.installedAppDetails.isEmpty
                     
-                    VStack(spacing: 16 * uiScale) {
+                    VStack(spacing: 8 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -1350,11 +1350,11 @@ struct IPAInstallerSheet: View {
                             }
                         }
                     }
-                    .padding(.top, 20 * uiScale)
+                    .padding(.top, 12 * uiScale)
                     
                     // Success list
                     if !service.installedAppDetails.isEmpty {
-                        VStack(alignment: .leading, spacing: 12 * uiScale) {
+                        VStack(alignment: .leading, spacing: 6 * uiScale) {
                             Text("成功")
                                 .font(.system(size: 18 * uiScale, weight: .semibold))
                                 .foregroundStyle(.green)
@@ -1396,7 +1396,7 @@ struct IPAInstallerSheet: View {
                                     
                                     Spacer()
                                 }
-                                .padding(16 * uiScale)
+                                .padding(12 * uiScale)
                                 .background(
                                     RoundedRectangle.standard(.regular, scale: uiScale)
                                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
@@ -1407,7 +1407,7 @@ struct IPAInstallerSheet: View {
                     
                     // Failure list
                     if !service.failedApps.isEmpty {
-                        VStack(alignment: .leading, spacing: 12 * uiScale) {
+                        VStack(alignment: .leading, spacing: 6 * uiScale) {
                             Text("失敗")
                                 .font(.system(size: 18 * uiScale, weight: .semibold))
                                 .foregroundStyle(.red)
@@ -1435,7 +1435,7 @@ struct IPAInstallerSheet: View {
                                     
                                     Spacer()
                                 }
-                                .padding(16 * uiScale)
+                                .padding(12 * uiScale)
                                 .background(
                                     RoundedRectangle.standard(.regular, scale: uiScale)
                                         .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
@@ -1445,7 +1445,7 @@ struct IPAInstallerSheet: View {
                     }
                 }
             }
-            .padding(.horizontal, 24 * uiScale)
+            .padding(.horizontal, 20 * uiScale)
         }
     }
     
@@ -1502,7 +1502,7 @@ struct IPAInstallerSheet: View {
     
     // MARK: - Bottom Buttons
     private var bottomButtons: some View {
-        HStack(spacing: 12 * uiScale) {
+        HStack(spacing: 6 * uiScale) {
             // Hide cancel button during installation - too complex to safely cancel
             if currentPhase != .installing && currentPhase != .analyzing {
                 CustomButton(
@@ -1762,7 +1762,7 @@ struct AppUninstallerSheet: View {
                 
                 // Content area with phase views
                 ScrollView {
-                    VStack(spacing: 24 * uiScale) {
+                    VStack(spacing: 6 * uiScale) {
                         switch currentPhase {
                         case .loading:
                             loadingView
@@ -1776,8 +1776,8 @@ struct AppUninstallerSheet: View {
                             resultsView
                         }
                     }
-                    .padding(.horizontal, 32 * uiScale)
-                    .padding(.vertical, 24 * uiScale)
+                    .padding(.horizontal, 24 * uiScale)
+                    .padding(.vertical, 12 * uiScale)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 
@@ -1785,11 +1785,11 @@ struct AppUninstallerSheet: View {
                 if currentPhase != .loading {
                     VStack(spacing: 0) {
                         Divider()
-                            .padding(.horizontal, 32 * uiScale)
+                            .padding(.horizontal, 24 * uiScale)
                         
                         bottomButtons
-                            .padding(.horizontal, 32 * uiScale)
-                            .padding(.vertical, 20 * uiScale)
+                            .padding(.horizontal, 24 * uiScale)
+                            .padding(.vertical, 12 * uiScale)
                     }
                     .background(
                         Color(nsColor: .controlBackgroundColor)
@@ -1837,7 +1837,7 @@ struct AppUninstallerSheet: View {
                     .tint(.blue)
             }
             
-            VStack(spacing: 12 * uiScale) {
+            VStack(spacing: 6 * uiScale) {
                 Text("アプリ一覧を読み込み中...")
                     .font(.system(size: 24 * uiScale, weight: .bold))
                     .foregroundStyle(.primary)
@@ -1856,7 +1856,7 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Confirming View (Single or Multiple)
     private var confirmingView: some View {
-        VStack(spacing: 24 * uiScale) {
+        VStack(spacing: 6 * uiScale) {
             let selectedAppInfos = apps.filter { selectedApps.contains($0.bundleID) }
             
             if selectedAppInfos.count == 1, let app = selectedAppInfos.first {
@@ -1889,7 +1889,7 @@ struct AppUninstallerSheet: View {
                 }
                 
                 // Warning card
-                VStack(spacing: 16 * uiScale) {
+                VStack(spacing: 8 * uiScale) {
                     ZStack {
                         Circle()
                             .fill(
@@ -1935,7 +1935,7 @@ struct AppUninstallerSheet: View {
                 )
                 
                 // Size info card
-                VStack(spacing: 12 * uiScale) {
+                VStack(spacing: 6 * uiScale) {
                     HStack {
                         Text("アプリサイズ:")
                             .foregroundStyle(.secondary)
@@ -1974,8 +1974,8 @@ struct AppUninstallerSheet: View {
                 // Multiple apps confirmation with modern card design
                 
                 // Header card with summary
-                VStack(spacing: 16 * uiScale) {
-                    HStack(spacing: 12 * uiScale) {
+                VStack(spacing: 8 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -2018,7 +2018,7 @@ struct AppUninstallerSheet: View {
                 .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
                 
                 // Apps list card
-                VStack(alignment: .leading, spacing: 12 * uiScale) {
+                VStack(alignment: .leading, spacing: 6 * uiScale) {
                     Text("選択されたアプリ")
                         .font(.system(size: 15 * uiScale, weight: .semibold))
                         .foregroundStyle(.secondary)
@@ -2027,7 +2027,7 @@ struct AppUninstallerSheet: View {
                     ScrollView {
                         VStack(spacing: 8 * uiScale) {
                             ForEach(selectedAppInfos, id: \.bundleID) { app in
-                                HStack(spacing: 12 * uiScale) {
+                                HStack(spacing: 6 * uiScale) {
                                     // App icon
                                     if let icon = app.icon {
                                         Image(nsImage: icon)
@@ -2089,7 +2089,7 @@ struct AppUninstallerSheet: View {
                 .shadow(color: .black.opacity(0.05), radius: 8 * uiScale, x: 0, y: 2 * uiScale)
                 
                 // Warning card
-                VStack(spacing: 16 * uiScale) {
+                VStack(spacing: 8 * uiScale) {
                     ZStack {
                         Circle()
                             .fill(
@@ -2139,7 +2139,7 @@ struct AppUninstallerSheet: View {
                 let totalDiskImageSize = selectedAppInfos.reduce(0) { $0 + $1.diskImageSize }
                 let totalSelectedSize = totalAppSize + totalDiskImageSize
                 
-                VStack(spacing: 12 * uiScale) {
+                VStack(spacing: 6 * uiScale) {
                     HStack {
                         Text("アプリサイズ:")
                             .foregroundStyle(.secondary)
@@ -2182,9 +2182,9 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Selection View
     private var selectionView: some View {
-        VStack(alignment: .leading, spacing: 12 * uiScale) {
+        VStack(alignment: .leading, spacing: 6 * uiScale) {
             if apps.isEmpty {
-                VStack(spacing: 12 * uiScale) {
+                VStack(spacing: 6 * uiScale) {
                     Image(systemName: "tray")
                         .font(.system(size: 48 * uiScale))
                         .foregroundStyle(.secondary)
@@ -2203,7 +2203,7 @@ struct AppUninstallerSheet: View {
                 }
                 
                 List(apps, id: \.bundleID, selection: $selectedApps) { app in
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         if let icon = app.icon {
                             Image(nsImage: icon)
                                 .resizable()
@@ -2247,7 +2247,7 @@ struct AppUninstallerSheet: View {
     
     // MARK: - Uninstalling View
     private var uninstallingView: some View {
-        VStack(spacing: 24 * uiScale) {
+        VStack(spacing: 6 * uiScale) {
             // Header with gradient icon
             VStack(spacing: 20 * uiScale) {
                 ZStack {
@@ -2293,7 +2293,7 @@ struct AppUninstallerSheet: View {
                     let completed = service.uninstalledApps.count + service.failedApps.count
                     let progressValue = totalItems > 0 ? Double(completed) / Double(totalItems) : 0
                     
-                    VStack(spacing: 12 * uiScale) {
+                    VStack(spacing: 6 * uiScale) {
                         ProgressView(value: progressValue)
                             .frame(maxWidth: 500 * uiScale)
                             .tint(.red)
@@ -2320,11 +2320,11 @@ struct AppUninstallerSheet: View {
             
             // Uninstall log with modern cards
             ScrollView {
-                VStack(spacing: 12 * uiScale) {
+                VStack(spacing: 6 * uiScale) {
                     if let service = uninstallerService {
                         // Completed uninstalls
                         ForEach(service.uninstalledApps, id: \.self) { appName in
-                            HStack(spacing: 12 * uiScale) {
+                            HStack(spacing: 6 * uiScale) {
                                 ZStack {
                                     Circle()
                                         .fill(Color.green.opacity(0.15))
@@ -2362,7 +2362,7 @@ struct AppUninstallerSheet: View {
                         // Currently uninstalling
                         if !service.currentStatus.isEmpty && service.currentStatus != String(localized: "完了") && 
                            !service.uninstalledApps.contains(where: { service.currentStatus.contains($0) }) {
-                            HStack(spacing: 12 * uiScale) {
+                            HStack(spacing: 6 * uiScale) {
                                 ZStack {
                                     Circle()
                                         .fill(Color.blue.opacity(0.15))
@@ -2398,7 +2398,7 @@ struct AppUninstallerSheet: View {
                         
                         // Failed uninstalls
                         ForEach(service.failedApps, id: \.self) { error in
-                            HStack(spacing: 12 * uiScale) {
+                            HStack(spacing: 6 * uiScale) {
                                 ZStack {
                                     Circle()
                                         .fill(Color.red.opacity(0.15))
@@ -2449,7 +2449,7 @@ struct AppUninstallerSheet: View {
     // MARK: - Results View  
     private var resultsView: some View {
         ScrollView {
-            VStack(spacing: 24 * uiScale) {
+            VStack(spacing: 6 * uiScale) {
                 resultsHeaderView
                 resultsSuccessSection
                 resultsFailureSection
@@ -2505,7 +2505,7 @@ struct AppUninstallerSheet: View {
     @ViewBuilder
     private var resultsSuccessSection: some View {
         if let service = uninstallerService, !service.uninstalledApps.isEmpty {
-            VStack(alignment: .leading, spacing: 12 * uiScale) {
+            VStack(alignment: .leading, spacing: 6 * uiScale) {
                 HStack(spacing: 8 * uiScale) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 16 * uiScale))
@@ -2537,7 +2537,7 @@ struct AppUninstallerSheet: View {
     private func resultsSuccessAppsList(apps: [String]) -> some View {
         VStack(spacing: 8 * uiScale) {
             ForEach(apps, id: \.self) { appName in
-                HStack(spacing: 12 * uiScale) {
+                HStack(spacing: 6 * uiScale) {
                     ZStack {
                         Circle()
                             .fill(Color.green.opacity(0.15))
@@ -2572,7 +2572,7 @@ struct AppUninstallerSheet: View {
     @ViewBuilder
     private var resultsFailureSection: some View {
         if let service = uninstallerService, !service.failedApps.isEmpty {
-            VStack(alignment: .leading, spacing: 12 * uiScale) {
+            VStack(alignment: .leading, spacing: 6 * uiScale) {
                 HStack(spacing: 8 * uiScale) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 16 * uiScale))
@@ -2604,7 +2604,7 @@ struct AppUninstallerSheet: View {
     private func resultsFailureAppsList(errors: [String]) -> some View {
         VStack(spacing: 8 * uiScale) {
             ForEach(errors, id: \.self) { error in
-                HStack(spacing: 12 * uiScale) {
+                HStack(spacing: 6 * uiScale) {
                     ZStack {
                         Circle()
                             .fill(Color.red.opacity(0.15))
@@ -2800,9 +2800,9 @@ private struct MaintenanceSettingsView: View {
         ScrollView {
             VStack(spacing: 20 * uiScale) {
                 // Cache Card
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // Header with icon gradient
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -2834,7 +2834,7 @@ private struct MaintenanceSettingsView: View {
                     Divider()
                         .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         CustomLargeButton(
                             title: "アイコンキャッシュをクリア",
                             action: {
@@ -2865,9 +2865,9 @@ private struct MaintenanceSettingsView: View {
                 .liquidGlassCard(uiScale: uiScale)
                 
                 // PlayCover Shortcuts Card
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // Header with icon gradient
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -2899,7 +2899,7 @@ private struct MaintenanceSettingsView: View {
                     Divider()
                         .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         CustomLargeButton(
                             title: "~/Applications/PlayCover を削除",
                             action: {
@@ -2930,9 +2930,9 @@ private struct MaintenanceSettingsView: View {
                 .liquidGlassCard(uiScale: uiScale)
                 
                 // Reset Card
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // Header with icon gradient
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -2964,7 +2964,7 @@ private struct MaintenanceSettingsView: View {
                     Divider()
                         .padding(.vertical, 4 * uiScale)
                     
-                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         CustomLargeButton(
                             title: "設定をリセット",
                             action: {
@@ -3101,7 +3101,7 @@ private struct AboutView: View {
         ScrollView {
             VStack(spacing: 20 * uiScale) {
                 // App Icon and Name Card
-                VStack(spacing: 16 * uiScale) {
+                VStack(spacing: 8 * uiScale) {
                     if let icon = NSImage(named: "AppIcon") {
                         Image(nsImage: icon)
                             .resizable()
@@ -3128,7 +3128,7 @@ private struct AboutView: View {
                 )
                 
                 // Description Card
-                VStack(alignment: .leading, spacing: 12 * uiScale) {
+                VStack(alignment: .leading, spacing: 6 * uiScale) {
                     Label("概要", systemImage: "info.circle.fill")
                         .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.blue)
@@ -3154,7 +3154,7 @@ private struct AboutView: View {
                 )
                 
                 // System Requirements Card
-                VStack(alignment: .leading, spacing: 12 * uiScale) {
+                VStack(alignment: .leading, spacing: 6 * uiScale) {
                     Label("システム要件", systemImage: "checkmark.shield.fill")
                         .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.green)
@@ -3176,7 +3176,7 @@ private struct AboutView: View {
                 )
                 
                 // Links Card
-                VStack(alignment: .leading, spacing: 12 * uiScale) {
+                VStack(alignment: .leading, spacing: 6 * uiScale) {
                     Label("リンク", systemImage: "link.circle.fill")
                         .font(.system(size: 17 * uiScale, weight: .semibold))
                         .foregroundStyle(.purple)
@@ -3222,7 +3222,7 @@ private struct RequirementRow: View {
     let text: String
     
     var body: some View {
-        HStack(spacing: 12 * uiScale) {
+        HStack(spacing: 6 * uiScale) {
             Image(systemName: icon)
                 .font(.system(size: 20 * uiScale, weight: .semibold))
                 .foregroundStyle(.green)
@@ -3241,7 +3241,7 @@ private struct LinkButton: View {
     
     var body: some View {
         Link(destination: URL(string: url)!) {
-            HStack(spacing: 12 * uiScale) {
+            HStack(spacing: 6 * uiScale) {
                 Image(systemName: icon)
                     .font(.system(size: 20 * uiScale, weight: .semibold))
                     .foregroundStyle(.blue)

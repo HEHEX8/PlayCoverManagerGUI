@@ -361,7 +361,7 @@ struct QuickLauncherView: View {
     
     @ViewBuilder
     private var toolbarView: some View {
-        HStack(spacing: 16 * uiScale) {
+        HStack(spacing: 8 * uiScale) {
             // Hamburger menu button
             ModernToolbarButton(
                 icon: "line.3.horizontal",
@@ -380,13 +380,13 @@ struct QuickLauncherView: View {
             
             Spacer()
             
-            // Help button (shows keyboard shortcuts)
+            // Help button (shows keyboard shortcuts) - larger icon
             ModernToolbarButton(
                 icon: "questionmark.circle",
                 color: .secondary,
                 help: String(localized: "キーボードショートカット (⌘?)"),
                 size: toolbarButtonSize,
-                iconSize: toolbarButtonIconSize
+                iconSize: 22 * uiScale  // Larger icon
             ) {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     showingShortcutGuide.toggle()
@@ -394,13 +394,13 @@ struct QuickLauncherView: View {
             }
             .keyboardShortcut("/", modifiers: [.command])
             
-            // Unmount All & Quit button with modern styling
+            // Unmount All & Quit button - red eject icon without circle, larger
             ModernToolbarButton(
-                icon: "eject.circle",
-                color: .orange,
+                icon: "eject",  // No circle
+                color: .red,    // Red color
                 help: String(localized: "全イジェクト (⌘⇧E)"),
                 size: toolbarButtonSize,
-                iconSize: toolbarButtonIconSize
+                iconSize: 22 * uiScale  // Larger icon
             ) {
                 viewModel.unmountAll()
             }
@@ -1465,10 +1465,10 @@ private struct AppDetailSheet: View {
                 
                 // Content area
                 ScrollView {
-                    VStack(spacing: 24 * uiScale) {
+                    VStack(spacing: 12 * uiScale) {
                         // App info card
-                        VStack(spacing: 16 * uiScale) {
-                            HStack(spacing: 16 * uiScale) {
+                        VStack(spacing: 8 * uiScale) {
+                            HStack(spacing: 8 * uiScale) {
                                 // App icon
                                 if let icon = app.icon {
                                     Image(nsImage: icon)
@@ -1542,7 +1542,7 @@ private struct AppDetailSheet: View {
                         .liquidGlassCard(uiScale: uiScale)
                         
                         // Bottom action buttons
-                        HStack(spacing: 12 * uiScale) {
+                        HStack(spacing: 6 * uiScale) {
                             CustomLargeButton(
                                 title: "アプリ本体を表示",
                                 action: {
@@ -1591,7 +1591,7 @@ private struct EmptyAppListView: View {
             
             VStack(spacing: 32 * uiScale) {
                 // Icon and title card
-                VStack(spacing: 24 * uiScale) {
+                VStack(spacing: 12 * uiScale) {
                     Image(systemName: isSearchEmpty ? "magnifyingglass" : "tray")
                         .font(.system(size: 80 * uiScale))
                         .foregroundStyle(isSearchEmpty ? .blue : .secondary)
@@ -2076,9 +2076,9 @@ private struct OverviewView: View {
                 .font(.system(size: 17 * uiScale, weight: .semibold))
             
             ScrollView {
-                VStack(alignment: .leading, spacing: 16 * uiScale) {
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
                     // App Card
-                    HStack(spacing: 16 * uiScale) {
+                    HStack(spacing: 8 * uiScale) {
                         if let icon = app.icon {
                             Image(nsImage: icon)
                                 .resizable()
@@ -2116,7 +2116,7 @@ private struct OverviewView: View {
                     .cornerRadius(12 * uiScale)
                     
                     // Quick Stats
-                    HStack(spacing: 12 * uiScale) {
+                    HStack(spacing: 6 * uiScale) {
                         // Storage stat
                         StatCard(
                             icon: "internaldrive",
@@ -2930,7 +2930,7 @@ private struct DetailsView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16 * uiScale) {
+        VStack(alignment: .leading, spacing: 8 * uiScale) {
             Text("詳細情報")
                 .font(.system(size: 17 * uiScale, weight: .semibold))
             
@@ -2971,7 +2971,7 @@ private struct InfoContentView: View {
     @Binding var infoPlist: [String: Any]?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16 * uiScale) {
+        VStack(alignment: .leading, spacing: 8 * uiScale) {
             // Basic Info Section
             infoSection(title: String(localized: "基本情報")) {
                 infoRow(label: String(localized: "アプリ名"), value: app.displayName)
@@ -3356,7 +3356,7 @@ private struct AnalysisContentView: View {
     @State private var analysisResult: AppAnalysisResult?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16 * uiScale) {
+        VStack(alignment: .leading, spacing: 8 * uiScale) {
             HStack {
                 Text("アプリ解析")
                     .font(.system(size: 13 * uiScale))
@@ -3382,7 +3382,7 @@ private struct AnalysisContentView: View {
             
             if let result = analysisResult {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 16 * uiScale) {
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
                         // Bundle Structure
                         analysisSection(title: String(localized: "バンドル構造"), icon: "folder.fill") {
                             infoRow(label: String(localized: "総ファイル数"), value: "\(result.totalFiles) 個")
@@ -3469,7 +3469,7 @@ private struct AnalysisContentView: View {
                     .padding()
                 }
             } else {
-                VStack(spacing: 16 * uiScale) {
+                VStack(spacing: 8 * uiScale) {
                     Image(systemName: "magnifyingglass.circle")
                         .font(.system(size: 64 * uiScale))
                         .foregroundStyle(.secondary)
@@ -3985,7 +3985,7 @@ private struct DrawerMenuItem: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12 * uiScale) {
+            HStack(spacing: 6 * uiScale) {
                 icon
                 Text(title)
                     .font(.system(size: 15 * uiScale))
