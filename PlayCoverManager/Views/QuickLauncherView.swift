@@ -4318,7 +4318,7 @@ private struct ResponsiveAppGrid: View {
     @Binding var selectedAppForDetail: PlayCoverApp?
     @Binding var selectedAppForUninstall: IdentifiableString?
     
-    let calculateIconSize: (CGFloat, Int) -> CGFloat
+    let calculateIconSize: (CGFloat, Int, CGFloat) -> CGFloat
     let calculateSpacing: (CGFloat, Int) -> CGFloat
     let calculateFontSize: (CGFloat) -> CGFloat
     let calculateBadgeFontSize: (CGFloat) -> CGFloat
@@ -4329,7 +4329,7 @@ private struct ResponsiveAppGrid: View {
     var body: some View {
         GeometryReader { geometry in
             let appCount = viewModel.filteredApps.count
-            let iconSize = calculateIconSize(geometry.size.width, appCount, horizontalPadding: horizontalPadding)
+            let iconSize = calculateIconSize(geometry.size.width, appCount, horizontalPadding)
             let spacing = calculateSpacing(iconSize, appCount)
             let fontSize = calculateFontSize(iconSize)
             let badgeFontSize = calculateBadgeFontSize(iconSize)
