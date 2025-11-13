@@ -1186,9 +1186,9 @@ private struct iOSAppIconView: View {
                 }
             }
         }
-        .contextMenu {
-            Button("起動") {
-                // Trigger bounce animation
+        // Swift 6.2 + macOS 26.1: Custom context menu with dynamic scaling and icons
+        .customContextMenu(items: [
+            ContextMenuItem(title: "起動", icon: "play.fill") {
                 Task { @MainActor in
                     isAnimating = true
                     try? await Task.sleep(for: .milliseconds(100))
@@ -1196,28 +1196,29 @@ private struct iOSAppIconView: View {
                     try? await Task.sleep(for: .milliseconds(550))
                     isAnimating = false
                 }
-            }
-            Button("デバッグコンソールで起動") {
+            },
+            ContextMenuItem(title: "デバッグコンソールで起動", icon: "terminal.fill") {
                 launchInDebugConsole(app: app)
-            }
-            Divider()
-            Button("詳細と設定") { rightClickAction() }
-            Divider()
-            Button("アプリ本体を Finder で表示") {
+            },
+            ContextMenuItem.divider(),
+            ContextMenuItem(title: "詳細と設定", icon: "gearshape.fill") {
+                rightClickAction()
+            },
+            ContextMenuItem.divider(),
+            ContextMenuItem(title: "アプリ本体を Finder で表示", icon: "folder.fill") {
                 NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-            }
-            Button("コンテナを Finder で表示") {
+            },
+            ContextMenuItem(title: "コンテナを Finder で表示", icon: "externaldrive.fill") {
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 if FileManager.default.fileExists(atPath: containerURL.path) {
                     NSWorkspace.shared.activateFileViewerSelecting([containerURL])
                 }
-            }
-            Divider()
-            Button("アンインストール", role: .destructive) {
+            },
+            ContextMenuItem.divider(),
+            ContextMenuItem(title: "アンインストール", icon: "trash.fill", role: .destructive) {
                 uninstallAction()
             }
-            .foregroundStyle(.red)
-        }
+        ], uiScale: uiScale)
     }
     
     private func launchInDebugConsole(app: PlayCoverApp) {

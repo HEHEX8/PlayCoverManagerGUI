@@ -528,6 +528,178 @@ struct InfoBadge: View {
     }
 }
 
+// MARK: - Custom Context Menu (macOS 26.1 Tahoe)
+
+/// Context menu item configuration - Swift 6.2 optimized
+struct ContextMenuItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let icon: String?
+    let role: ButtonRole?
+    let action: () -> Void
+    
+    init(title: String, icon: String? = nil, role: ButtonRole? = nil, action: @escaping () -> Void) {
+        self.title = title
+        self.icon = icon
+        self.role = role
+        self.action = action
+    }
+    
+    static func divider() -> ContextMenuItem {
+        ContextMenuItem(title: "", icon: nil, role: nil, action: {})
+    }
+    
+    var isDivider: Bool { title.isEmpty }
+}
+
+/// Right-click gesture detector for macOS context menu - Swift 6.2
+struct RightClickCatcher: NSViewRepresentable {
+    var onRightClick: (NSView, NSPoint) -> Void
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = CatcherView()
+        view.onRightClick = onRightClick
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {}
+    
+    final class CatcherView: NSView {
+        var onRightClick: ((NSView, NSPoint) -> Void)?
+        
+        override var acceptsFirstResponder: Bool { true }
+        
+        override func rightMouseDown(with event: NSEvent) {
+            let point = convert(event.locationInWindow, from: nil)
+            onRightClick?(self, point)
+        }
+        
+        override func hitTest(_ point: NSPoint) -> NSView? { self }
+    }
+}
+
+/// Custom context menu view with Liquid Glass design - Swift 6.2
+struct CustomContextMenuView: View {
+    let items: [ContextMenuItem]
+    var uiScale: CGFloat = 1.0
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(items) { item in
+                if item.isDivider {
+                    Divider()
+                        .padding(.vertical, 4 * uiScale)
+                } else {
+                    Button(action: {
+                        item.action()
+                        onDismiss()
+                    }) {
+                        HStack(spacing: 10 * uiScale) {
+                            // macOS 26.1: Icon support in menu items
+                            if let icon = item.icon {
+                                Image(systemName: icon)
+                                    .font(.system(size: 14 * uiScale))
+                                    .frame(width: 16 * uiScale, alignment: .center)
+                                    .foregroundStyle(item.role == .destructive ? .red : .primary)
+                            }
+                            
+                            Text(item.title)
+                                .font(.system(size: 13 * uiScale))
+                                .foregroundStyle(item.role == .destructive ? .red : .primary)
+                            
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 12 * uiScale)
+                    .padding(.vertical, 6 * uiScale)
+                    .background(
+                        RoundedRectangle(cornerRadius: 4 * uiScale)
+                            .fill(Color.accentColor.opacity(0.0))
+                    )
+                    .onHover { hovering in
+                        // Hover effect handled by system
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 6 * uiScale)
+        .frame(minWidth: 200 * uiScale)
+        .background(
+            RoundedRectangle.standard(.medium, scale: uiScale)
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle.standard(.medium, scale: uiScale)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5 * uiScale)
+        )
+        .shadow(color: .black.opacity(0.2), radius: 12 * uiScale, x: 0, y: 4 * uiScale)
+    }
+}
+
+/// NSPopover presenter singleton for context menus - Swift 6.2
+@MainActor
+final class ContextMenuPresenter: ObservableObject {
+    static let shared = ContextMenuPresenter()
+    private var currentPopover: NSPopover?
+    
+    private init() {}
+    
+    func present(from anchorView: NSView, at point: NSPoint, items: [ContextMenuItem], uiScale: CGFloat = 1.0) {
+        dismiss()
+        
+        let menuView = CustomContextMenuView(items: items, uiScale: uiScale) { [weak self] in
+            self?.dismiss()
+        }
+        
+        let hostingController = NSHostingController(rootView: menuView)
+        hostingController.view.wantsLayer = true
+        
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.contentViewController = hostingController
+        popover.animates = true
+        
+        // Swift 6.2: Dynamic sizing with layout computation
+        hostingController.view.layoutSubtreeIfNeeded()
+        let fittingSize = hostingController.view.fittingSize
+        popover.contentSize = fittingSize
+        
+        let anchorRect = NSRect(x: point.x, y: point.y, width: 1, height: 1)
+        popover.show(relativeTo: anchorRect, of: anchorView, preferredEdge: .maxY)
+        
+        currentPopover = popover
+    }
+    
+    func dismiss() {
+        currentPopover?.performClose(nil)
+        currentPopover = nil
+    }
+}
+
+/// View modifier for adding custom context menu - Swift 6.2
+struct CustomContextMenuModifier: ViewModifier {
+    let items: [ContextMenuItem]
+    var uiScale: CGFloat = 1.0
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                RightClickCatcher { anchorView, point in
+                    ContextMenuPresenter.shared.present(
+                        from: anchorView,
+                        at: point,
+                        items: items,
+                        uiScale: uiScale
+                    )
+                }
+                .allowsHitTesting(true)
+            )
+    }
+}
+
 // MARK: - View Extensions for Swift 6.2
 
 extension View {
@@ -547,5 +719,10 @@ extension View {
             minWidth: minWidth.map { $0 * uiScale },
             minHeight: minHeight.map { $0 * uiScale }
         )
+    }
+    
+    /// Add custom context menu with dynamic scaling - macOS 26.1 Tahoe
+    func customContextMenu(items: [ContextMenuItem], uiScale: CGFloat = 1.0) -> some View {
+        self.modifier(CustomContextMenuModifier(items: items, uiScale: uiScale))
     }
 }
