@@ -46,19 +46,15 @@ struct QuickLauncherView: View {
         // Always use 10 columns for consistent center alignment
         let effectiveColumns = 10
         
-        // Calculate icon size iteratively to account for proportional spacing
-        // Spacing is 15% of icon size, so we need to solve:
-        // availableWidth = sidePadding + (iconSize * 10) + (iconSize * 0.15 * 9)
-        // availableWidth = sidePadding + iconSize * (10 + 1.35)
-        // availableWidth = sidePadding + iconSize * 11.35
-        // iconSize = (availableWidth - sidePadding) / 11.35
+        // Minimal fixed spacing to maximize icon size
+        let minimumSpacing: CGFloat = 4.0
         
-        let spacingRatio: CGFloat = 0.15  // spacing = iconSize * 0.15
         let totalColumns = CGFloat(effectiveColumns)
         let totalSpacings = CGFloat(effectiveColumns - 1)
+        let totalSpacingWidth = minimumSpacing * totalSpacings
         
-        let availableForContent = availableWidth - sidePadding
-        let calculatedSize = availableForContent / (totalColumns + (spacingRatio * totalSpacings))
+        let availableForIcons = availableWidth - sidePadding - totalSpacingWidth
+        let calculatedSize = availableForIcons / totalColumns
         
         // Only enforce maximum size, no minimum constraint
         let maxSize: CGFloat = 200.0
@@ -66,10 +62,10 @@ struct QuickLauncherView: View {
         return min(maxSize, max(1, calculatedSize))
     }
     
-    // Calculate dynamic spacing based on icon size
+    // Calculate spacing - always return fixed minimal spacing
     private func calculateSpacing(for iconSize: CGFloat, appCount: Int) -> CGFloat {
-        // Spacing is always 15% of icon size for consistent layout
-        return iconSize * 0.15
+        // Fixed minimal spacing to maximize icon size at all window sizes
+        return 4.0
     }
     
     // Calculate dynamic font size based on icon size
