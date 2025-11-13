@@ -664,12 +664,6 @@ struct QuickLauncherView: View {
         .modalPresenter(isPresented: $showingUninstaller) {
             AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
         }
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: selectedAppForDetail != nil)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showingSettings)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showingInstaller)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: selectedAppForUninstall != nil)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showingUninstaller)
         .frame(minWidth: 960, minHeight: 640)
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
