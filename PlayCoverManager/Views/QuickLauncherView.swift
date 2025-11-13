@@ -514,7 +514,8 @@ struct QuickLauncherView: View {
                         calculateFontSize: calculateFontSize,
                         calculateBadgeFontSize: calculateBadgeFontSize,
                         calculateBadgeSize: calculateBadgeSize,
-                        clearSearchFocus: { isSearchFieldFocused = false }
+                        clearSearchFocus: { isSearchFieldFocused = false },
+                        horizontalPadding: contentHorizontalPadding
                     )
                 }
                 
@@ -537,7 +538,8 @@ struct QuickLauncherView: View {
                     calculateFontSize: calculateFontSize,
                     calculateBadgeFontSize: calculateBadgeFontSize,
                     calculateBadgeSize: calculateBadgeSize,
-                    clearSearchFocus: { isSearchFieldFocused = false }
+                    clearSearchFocus: { isSearchFieldFocused = false },
+                    horizontalPadding: contentHorizontalPadding
                 )
             }
         }
@@ -4332,6 +4334,7 @@ private struct ResponsiveAppGrid: View {
     let calculateBadgeFontSize: (CGFloat) -> CGFloat
     let calculateBadgeSize: (CGFloat) -> CGFloat
     let clearSearchFocus: () -> Void
+    let horizontalPadding: CGFloat
     
     var body: some View {
         GeometryReader { geometry in
@@ -4363,7 +4366,7 @@ private struct ResponsiveAppGrid: View {
                         )
                     }
                 }
-                .padding(.horizontal, 32 * uiScale)
+                .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, 24 * uiScale)
                 .onAppear {
                     if !hasPerformedInitialAnimation {
