@@ -962,6 +962,7 @@ private struct iOSAppIconView: View {
     let isFocused: Bool  // Keyboard focus state
     let iconSize: CGFloat  // Dynamic icon size
     let fontSize: CGFloat  // Dynamic font size
+    let uiScale: CGFloat  // UI scale for dynamic scaling
     let tapAction: () -> Void
     let rightClickAction: () -> Void
     let uninstallAction: () -> Void
@@ -4460,7 +4461,8 @@ private struct AppGridCell: View {
                 shouldAnimate: !hasPerformedInitialAnimation,
                 isFocused: focusedAppIndex == index,
                 iconSize: iconSize,
-                fontSize: fontSize
+                fontSize: fontSize,
+                uiScale: uiScale
             ) {
                 // Tap action
                 clearSearchFocus()
