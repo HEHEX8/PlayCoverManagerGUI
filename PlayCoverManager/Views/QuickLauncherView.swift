@@ -39,8 +39,9 @@ struct QuickLauncherView: View {
     
     // Calculate dynamic icon size based on available width and app count
     // Formula: (availableWidth - totalSpacing - sidePadding) / effectiveColumnCount
-    private func calculateIconSize(for availableWidth: CGFloat, appCount: Int) -> CGFloat {
-        let sidePadding: CGFloat = 64.0  // 32 padding on each side
+    private func calculateIconSize(for availableWidth: CGFloat, appCount: Int, horizontalPadding: CGFloat) -> CGFloat {
+        // Total padding: left + right
+        let sidePadding = horizontalPadding * 2
         let minimumSpacing: CGFloat = 12.0
         
         // Determine effective column count based on app count
@@ -4339,7 +4340,7 @@ private struct ResponsiveAppGrid: View {
     var body: some View {
         GeometryReader { geometry in
             let appCount = viewModel.filteredApps.count
-            let iconSize = calculateIconSize(geometry.size.width, appCount)
+            let iconSize = calculateIconSize(geometry.size.width, appCount, horizontalPadding: horizontalPadding)
             let spacing = calculateSpacing(iconSize, appCount)
             let fontSize = calculateFontSize(iconSize)
             let badgeFontSize = calculateBadgeFontSize(iconSize)
