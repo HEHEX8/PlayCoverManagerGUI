@@ -265,7 +265,7 @@ struct CustomPicker<SelectionValue: Hashable, Content: View>: View where Selecti
                     }
             )
         }
-        .menuStyle(.borderlessButton)
+        // Removed .menuStyle(.borderlessButton) - causes menu items to be grayed out/disabled on macOS
         .animation(.smooth(duration: 0.2), value: selection)
     }
 }
