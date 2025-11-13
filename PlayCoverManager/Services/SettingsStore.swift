@@ -129,8 +129,23 @@ final class SettingsStore {
         }
     }
     
-    // Language change alert state - shown at QuickLauncherView level
+    // Alert states - all shown at QuickLauncherView level for proper centering
     var showLanguageChangeAlert: Bool = false
+    var showResetConfirmation: Bool = false
+    var showClearCacheConfirmation: Bool = false
+    
+    // Alert result states (for info/error messages after operations)
+    enum CacheOperationResult {
+        case cleared
+    }
+    var cacheOperationResult: CacheOperationResult? = nil
+    
+    enum ShortcutRemovalResult {
+        case success
+        case notFound
+        case error(String)
+    }
+    var shortcutRemovalResult: ShortcutRemovalResult? = nil
     
     // ASIF format is hardcoded - no user selection needed
     let diskImageFormat: DiskImageFormat = .asif

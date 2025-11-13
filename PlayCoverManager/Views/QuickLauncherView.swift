@@ -623,46 +623,71 @@ struct QuickLauncherView: View {
                 mainContent
             }
             
-            // Overlay modals (instead of sheets) for dynamic scaling support
-            // All modals use UnifiedModalSystem for consistent behavior
+            // Sheet overlays (AppDetail, Settings, IPA, Uninstaller)
+            // These are full-screen overlays, not small prompts
         }
-        .unifiedModal(isPresented: Binding(
-            get: { selectedAppForDetail != nil },
-            set: { if !$0 { selectedAppForDetail = nil; restoreWindowFocus() } }
-        )) {
+        .overlay {
             if let app = selectedAppForDetail {
-                AppDetailSheet(
-                    isPresented: Binding(
-                        get: { selectedAppForDetail != nil },
-                        set: { if !$0 { selectedAppForDetail = nil; restoreWindowFocus() } }
-                    ),
-                    app: app,
-                    viewModel: viewModel
-                )
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    AppDetailSheet(
+                        isPresented: Binding(
+                            get: { selectedAppForDetail != nil },
+                            set: { if !$0 { selectedAppForDetail = nil; restoreWindowFocus() } }
+                        ),
+                        app: app,
+                        viewModel: viewModel
+                    )
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
         }
-        .unifiedModal(isPresented: $showingSettings) {
-            SettingsRootView(isPresented: $showingSettings)
+        .overlay {
+            if showingSettings {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    SettingsRootView(isPresented: $showingSettings)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
         }
-        .unifiedModal(isPresented: $showingInstaller) {
-            IPAInstallerSheet(isPresented: $showingInstaller)
+        .overlay {
+            if showingInstaller {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    IPAInstallerSheet(isPresented: $showingInstaller)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
         }
-        .unifiedModal(isPresented: Binding(
-            get: { selectedAppForUninstall != nil },
-            set: { if !$0 { selectedAppForUninstall = nil; restoreWindowFocus() } }
-        )) {
+        .overlay {
             if let identifiableString = selectedAppForUninstall {
-                AppUninstallerSheet(
-                    isPresented: Binding(
-                        get: { selectedAppForUninstall != nil },
-                        set: { if !$0 { selectedAppForUninstall = nil; restoreWindowFocus() } }
-                    ),
-                    preSelectedBundleID: identifiableString.id
-                )
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    AppUninstallerSheet(
+                        isPresented: Binding(
+                            get: { selectedAppForUninstall != nil },
+                            set: { if !$0 { selectedAppForUninstall = nil; restoreWindowFocus() } }
+                        ),
+                        preSelectedBundleID: identifiableString.id
+                    )
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
             }
         }
-        .unifiedModal(isPresented: $showingUninstaller) {
-            AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
+        .overlay {
+            if showingUninstaller {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
         }
         .frame(minWidth: 960, minHeight: 640)
         .onGeometryChange(for: CGSize.self) { proxy in
@@ -674,6 +699,8 @@ struct QuickLauncherView: View {
             print("🔍 QuickLauncher window size updated: \(windowSize.width)x\(windowSize.height), calculated scale: \(scale)")
         }
         .overlay(alignment: .center) {
+            // All alerts/prompts at QuickLauncherView level (UnmountOverlayView pattern)
+            // Priority order: unmount > alerts > busy indicator
             if viewModel.unmountFlowState != .idle {
                 ZStack {
                     Color.black.opacity(0.3)
@@ -684,18 +711,54 @@ struct QuickLauncherView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .transition(.opacity)
+                .zIndex(1000)
+            } else if let error = viewModel.error {
+                // Error alert
+                SimpleAlertView(
+                    title: error.title,
+                    message: error.message,
+                    icon: "exclamationmark.triangle.fill",
+                    iconColor: .red,
+                    buttons: [
+                        SimpleAlertButton("OK", isPrimary: true, isDefault: true, isCancel: true) {
+                            viewModel.error = nil
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(999)
+            } else if let app = viewModel.pendingImageCreation {
+                // Disk image creation confirmation
+                SimpleAlertView(
+                    title: String(localized: "ディスクイメージが存在しません"),
+                    message: String(localized: "\(app.displayName) 用の ASIF ディスクイメージを作成しますか？"),
+                    icon: "questionmark.circle.fill",
+                    iconColor: .blue,
+                    buttons: [
+                        SimpleAlertButton("キャンセル", isCancel: true) {
+                            viewModel.cancelImageCreation()
+                        },
+                        SimpleAlertButton("作成", isPrimary: true, isDefault: true) {
+                            viewModel.confirmImageCreation()
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
                 .zIndex(998)
             } else if settingsStore.showLanguageChangeAlert {
-                // Language change restart prompt - at QuickLauncherView level (not ScrollView)
-                StandardAlert(
+                // Language change restart prompt
+                SimpleAlertView(
                     title: String(localized: "言語を変更しました"),
                     message: String(localized: "言語の変更を完全に反映するには、アプリを再起動する必要があります。"),
-                    icon: .info,
+                    icon: "info.circle.fill",
+                    iconColor: .blue,
                     buttons: [
-                        AlertButton("後で再起動", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                        SimpleAlertButton("後で再起動", isCancel: true) {
                             settingsStore.showLanguageChangeAlert = false
                         },
-                        AlertButton("今すぐ再起動", style: .borderedProminent, keyEquivalent: .default) {
+                        SimpleAlertButton("今すぐ再起動", isPrimary: true, isDefault: true) {
                             settingsStore.showLanguageChangeAlert = false
                             restartApp()
                         }
@@ -704,6 +767,118 @@ struct QuickLauncherView: View {
                 )
                 .transition(.scale.combined(with: .opacity))
                 .zIndex(997)
+            } else if let request = viewModel.pendingDataHandling {
+                // Data handling strategy selection
+                DataHandlingAlertView(
+                    request: request,
+                    defaultStrategy: settingsStore.defaultDataHandling,
+                    onSelect: { strategy in
+                        viewModel.applyDataHandling(strategy: strategy)
+                    },
+                    onCancel: {
+                        viewModel.pendingDataHandling = nil
+                    }
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(996)
+            } else if settingsStore.showResetConfirmation {
+                // Settings reset confirmation
+                SimpleAlertView(
+                    title: String(localized: "設定をリセットしますか？"),
+                    message: String(localized: "アプリが再起動され、初期設定ウィザードが表示されます。"),
+                    icon: "exclamationmark.triangle.fill",
+                    iconColor: .orange,
+                    buttons: [
+                        SimpleAlertButton("キャンセル", isCancel: true) {
+                            settingsStore.showResetConfirmation = false
+                        },
+                        SimpleAlertButton("リセット", isPrimary: true, isDefault: true) {
+                            settingsStore.showResetConfirmation = false
+                            resetSettings()
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(995)
+            } else if settingsStore.showClearCacheConfirmation {
+                // Cache clear confirmation
+                SimpleAlertView(
+                    title: String(localized: "キャッシュをクリアしますか?"),
+                    message: String(localized: "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。"),
+                    icon: "exclamationmark.triangle.fill",
+                    iconColor: .orange,
+                    buttons: [
+                        SimpleAlertButton("キャンセル", isCancel: true) {
+                            settingsStore.showClearCacheConfirmation = false
+                        },
+                        SimpleAlertButton("クリア", isPrimary: true, isDefault: true) {
+                            settingsStore.showClearCacheConfirmation = false
+                            settingsStore.cacheOperationResult = .cleared
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(994)
+            } else if let result = settingsStore.cacheOperationResult {
+                // Cache operation result
+                SimpleAlertView(
+                    title: String(localized: "キャッシュをクリアしました"),
+                    message: String(localized: "アプリを再起動すると、アイコンが再読み込みされます。"),
+                    icon: "info.circle.fill",
+                    iconColor: .blue,
+                    buttons: [
+                        SimpleAlertButton("OK", isPrimary: true, isDefault: true, isCancel: true) {
+                            settingsStore.cacheOperationResult = nil
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(993)
+            } else if let result = settingsStore.shortcutRemovalResult {
+                // Shortcut removal result
+                let (title, message, icon, color): (String, String, String, Color) = {
+                    switch result {
+                    case .success:
+                        return (
+                            String(localized: "削除完了"),
+                            String(localized: "~/Applications/PlayCover を削除しました。"),
+                            "checkmark.circle.fill",
+                            .green
+                        )
+                    case .notFound:
+                        return (
+                            String(localized: "ディレクトリが存在しません"),
+                            String(localized: "~/Applications/PlayCover は既に削除されています。"),
+                            "info.circle.fill",
+                            .blue
+                        )
+                    case .error(let errorMessage):
+                        return (
+                            String(localized: "削除失敗"),
+                            String(localized: "エラー: \(errorMessage)"),
+                            "exclamationmark.triangle.fill",
+                            .red
+                        )
+                    }
+                }()
+                
+                SimpleAlertView(
+                    title: title,
+                    message: message,
+                    icon: icon,
+                    iconColor: color,
+                    buttons: [
+                        SimpleAlertButton("OK", isPrimary: true, isDefault: true, isCancel: true) {
+                            settingsStore.shortcutRemovalResult = nil
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(992)
             } else if viewModel.isBusy && viewModel.isShowingStatus {
                 VStack(spacing: 12 * uiScale) {
                     ProgressView()
@@ -714,51 +889,6 @@ struct QuickLauncherView: View {
                 .padding()
                 .glassEffect(.regular.tint(.blue.opacity(0.2)), in: RoundedRectangle.standard(.regular, scale: uiScale))
                 .shadow(radius: 12 * uiScale)
-            }
-        }
-        .keyboardNavigableAlert(
-            isPresented: Binding(
-                get: { viewModel.error != nil },
-                set: { if !$0 { viewModel.error = nil } }
-            ),
-            title: viewModel.error?.title ?? "",
-            message: viewModel.error?.message ?? "",
-            buttons: [
-                AlertButton("OK", role: .cancel, style: .borderedProminent, keyEquivalent: .default) {
-                    viewModel.error = nil
-                }
-            ],
-            icon: .error
-        )
-        .keyboardNavigableAlert(
-            isPresented: Binding(
-                get: { viewModel.pendingImageCreation != nil },
-                set: { if !$0 { viewModel.cancelImageCreation() } }
-            ),
-            title: String(localized: "ディスクイメージが存在しません"),
-            message: String(localized: "\(viewModel.pendingImageCreation?.displayName ?? "") 用の ASIF ディスクイメージを作成しますか？"),
-            buttons: [
-                AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                    viewModel.cancelImageCreation()
-                },
-                AlertButton("作成", style: .borderedProminent, keyEquivalent: .default) {
-                    viewModel.confirmImageCreation()
-                }
-            ],
-            icon: .question
-        )
-        .overlay {
-            if viewModel.pendingDataHandling != nil {
-                DataHandlingAlertView(
-                    request: viewModel.pendingDataHandling!,
-                    defaultStrategy: settingsStore.defaultDataHandling,
-                    onSelect: { strategy in
-                        viewModel.applyDataHandling(strategy: strategy)
-                    },
-                    onCancel: {
-                        viewModel.pendingDataHandling = nil
-                    }
-                )
             }
         }
         .task {
@@ -889,6 +1019,18 @@ struct QuickLauncherView: View {
             // Fallback to normal termination
             NSApplication.shared.terminate(nil)
         }
+    }
+    
+    private func resetSettings() {
+        // Clear all user settings
+        UserDefaults.standard.removeObject(forKey: "diskImageDirectory")
+        UserDefaults.standard.removeObject(forKey: "diskImageDirectoryBookmark")
+        UserDefaults.standard.removeObject(forKey: "nobrowseEnabled")
+        UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
+        UserDefaults.standard.removeObject(forKey: "diskImageFormat")
+        
+        // Terminate app (will restart and show initial setup wizard)
+        Darwin.exit(0)
     }
 }
 
@@ -4273,6 +4415,7 @@ private struct DataHandlingAlertView: View {
             .glassEffect(.regular, in: RoundedRectangle.standard(.large, scale: uiScale))
             .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)  // CRITICAL: Full-screen for proper centering
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }

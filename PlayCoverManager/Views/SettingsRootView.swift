@@ -2802,8 +2802,6 @@ struct AppUninstallerSheet: View {
 private struct MaintenanceSettingsView: View {
     @Environment(\.uiScale) var uiScale
     @Environment(SettingsStore.self) private var settingsStore
-    @State private var showingResetConfirmation = false
-    @State private var showingClearCacheConfirmation = false
 
     var body: some View {
         ScrollView {
@@ -2847,7 +2845,7 @@ private struct MaintenanceSettingsView: View {
                         CustomLargeButton(
                             title: "アイコンキャッシュをクリア",
                             action: {
-                                showingClearCacheConfirmation = true
+                                settingsStore.showClearCacheConfirmation = true
                             },
                             isPrimary: false,
                             icon: "trash",
@@ -2912,7 +2910,7 @@ private struct MaintenanceSettingsView: View {
                         CustomLargeButton(
                             title: "~/Applications/PlayCover を削除",
                             action: {
-                                removePlayCoverShortcuts()
+                                removePlayCoverShortcuts(settingsStore: settingsStore)
                             },
                             isPrimary: false,
                             icon: "trash",
@@ -2977,7 +2975,7 @@ private struct MaintenanceSettingsView: View {
                         CustomLargeButton(
                             title: "設定をリセット",
                             action: {
-                                showingResetConfirmation = true
+                                settingsStore.showResetConfirmation = true
                             },
                             isPrimary: false,
                             isDestructive: true,
@@ -3010,87 +3008,30 @@ private struct MaintenanceSettingsView: View {
             .padding(.vertical, 20 * uiScale)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .keyboardNavigableAlert(
-            isPresented: $showingResetConfirmation,
-            title: String(localized: "設定をリセットしますか？"),
-            message: String(localized: "アプリが再起動され、初期設定ウィザードが表示されます。"),
-            buttons: [
-                AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                    showingResetConfirmation = false
-                },
-                AlertButton("リセット", role: .destructive, style: .destructive, keyEquivalent: .default) {
-                    resetSettings()
-                }
-            ],
-            icon: .warning
-        )
-        .keyboardNavigableAlert(
-            isPresented: $showingClearCacheConfirmation,
-            title: String(localized: "キャッシュをクリアしますか?"),
-            message: String(localized: "アイコンキャッシュがクリアされ、次回起動時に再読み込みされます。"),
-            buttons: [
-                AlertButton("キャンセル", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                    showingClearCacheConfirmation = false
-                },
-                AlertButton("クリア", role: .destructive, style: .destructive, keyEquivalent: .default) {
-                    clearIconCache()
-                }
-            ],
-            icon: .warning
-        )
     }
     
     private func clearIconCache() {
         // Icon cache is managed by LauncherService's NSCache
-        // We'll need to add a method to clear it
-        // For now, just show completion
-        let alert = NSAlert()
-        alert.messageText = String(localized: "キャッシュをクリアしました")
-        alert.informativeText = String(localized: "アプリを再起動すると、アイコンが再読み込みされます。")
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+        // TODO: Add actual cache clearing logic here
+        // For now, just show the result (handled by QuickLauncherView)
     }
     
-    private func removePlayCoverShortcuts() {
+    private func removePlayCoverShortcuts(settingsStore: SettingsStore) {
         let playCoverShortcutsDir = URL(fileURLWithPath: NSHomeDirectory())
             .appendingPathComponent("Applications/PlayCover", isDirectory: true)
-        
-        let alert = NSAlert()
         
         if FileManager.default.fileExists(atPath: playCoverShortcutsDir.path) {
             do {
                 try FileManager.default.removeItem(at: playCoverShortcutsDir)
                 Logger.debug("Removed PlayCover shortcuts directory: \(playCoverShortcutsDir.path)")
-                
-                alert.messageText = String(localized: "削除完了")
-                alert.informativeText = String(localized: "~/Applications/PlayCover を削除しました。")
-                alert.alertStyle = .informational
+                settingsStore.shortcutRemovalResult = .success
             } catch {
                 Logger.error("Failed to remove PlayCover shortcuts: \(error)")
-                
-                alert.messageText = String(localized: "削除失敗")
-                alert.informativeText = String(localized: "エラー: \(error.localizedDescription)")
-                alert.alertStyle = .warning
+                settingsStore.shortcutRemovalResult = .error(error.localizedDescription)
             }
         } else {
-            alert.messageText = String(localized: "ディレクトリが存在しません")
-            alert.informativeText = String(localized: "~/Applications/PlayCover は既に削除されています。")
-            alert.alertStyle = .informational
+            settingsStore.shortcutRemovalResult = .notFound
         }
-        
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
-    }
-    
-    private func resetSettings() {
-        UserDefaults.standard.removeObject(forKey: "diskImageDirectory")
-        UserDefaults.standard.removeObject(forKey: "diskImageDirectoryBookmark")
-        UserDefaults.standard.removeObject(forKey: "nobrowseEnabled")
-        UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
-        UserDefaults.standard.removeObject(forKey: "diskImageFormat")
-        
-        NSApp.sendAction(#selector(NSApplication.terminate(_:)), to: nil, from: nil)
     }
 }
 
