@@ -2961,7 +2961,7 @@ private struct DetailsView: View {
             
             // Sub-section selector
             Picker("", selection: $selectedSection) {
-                ForEach(DetailPanelSection.allCases) { section in
+                ForEach(DetailSection.allCases) { section in
                     Text(section.localizedTitle).tag(section)
                 }
             }
