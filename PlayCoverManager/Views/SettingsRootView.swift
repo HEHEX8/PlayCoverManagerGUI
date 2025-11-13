@@ -101,7 +101,7 @@ struct SettingsRootView: View {
                 // Custom Tab Content
                 ScrollView {
                     VStack(spacing: 24 * uiScale) {
-                        // Tab selector
+                        // Tab selector - compact horizontal design
                         HStack(spacing: 12 * uiScale) {
                             ForEach(SettingsTab.allCases) { tab in
                                 Button {
@@ -109,14 +109,15 @@ struct SettingsRootView: View {
                                         selectedTab = tab
                                     }
                                 } label: {
-                                    VStack(spacing: 8 * uiScale) {
+                                    HStack(spacing: 6 * uiScale) {
                                         Image(systemName: tab.icon)
-                                            .font(.system(size: 24 * uiScale, weight: .medium))
+                                            .font(.system(size: 14 * uiScale, weight: .medium))
                                         Text(tab.localizedTitle)
-                                            .font(.system(size: 12 * uiScale, weight: .medium))
+                                            .font(.system(size: 13 * uiScale, weight: .medium))
                                     }
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 16 * uiScale)
+                                    .padding(.horizontal, 12 * uiScale)
+                                    .padding(.vertical, 8 * uiScale)
                                     .background(
                                         RoundedRectangle.standard(.regular, scale: uiScale)
                                             .fill(selectedTab == tab ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
