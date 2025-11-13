@@ -132,9 +132,12 @@ struct QuickLauncherView: View {
         return scale
     }
     
+    // Unified horizontal padding for consistent visual alignment
+    private var horizontalPadding: CGFloat { 32 * uiScale }
+    
     // Toolbar dimensions
     private var toolbarHeight: CGFloat { 16 * uiScale }
-    private var toolbarHorizontalPadding: CGFloat { 24 * uiScale }
+    private var toolbarHorizontalPadding: CGFloat { horizontalPadding }
     private var toolbarButtonSize: CGFloat { 44 * uiScale }
     private var toolbarButtonIconSize: CGFloat { 17 * uiScale }
     
@@ -151,7 +154,7 @@ struct QuickLauncherView: View {
     private var recentAppPadding: CGFloat { 20 * uiScale }
     
     // General spacing
-    private var contentHorizontalPadding: CGFloat { 32 * uiScale }
+    private var contentHorizontalPadding: CGFloat { horizontalPadding }
     private var contentVerticalPadding: CGFloat { 24 * uiScale }
     
     // Current focused row (for multi-row navigation)
@@ -4399,6 +4402,8 @@ private struct AppGridRow: View {
         let maxColumns = max(1, appsInRow)
         
         HStack(spacing: spacing) {
+            Spacer(minLength: 0)
+            
             ForEach(0..<maxColumns, id: \.self) { columnIndex in
                 let index = rowIndex * 10 + columnIndex
                 if index < apps.count {
