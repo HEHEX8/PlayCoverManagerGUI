@@ -627,10 +627,7 @@ struct QuickLauncherView: View {
             if let app = selectedAppForDetail {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        selectedAppForDetail = nil
-                        restoreWindowFocus()
-                    }
+                    // Background tap disabled - prevents accidental dismissal
                 
                 AppDetailSheet(
                     isPresented: Binding(
@@ -646,10 +643,7 @@ struct QuickLauncherView: View {
             if showingSettings {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        showingSettings = false
-                        restoreWindowFocus()
-                    }
+                    // Background tap disabled - prevents accidental dismissal
                 
                 SettingsRootView(isPresented: $showingSettings)
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
@@ -658,10 +652,7 @@ struct QuickLauncherView: View {
             if showingInstaller {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        showingInstaller = false
-                        restoreWindowFocus()
-                    }
+                    // Background tap disabled - prevents accidental dismissal
                 
                 IPAInstallerSheet(isPresented: $showingInstaller)
                     .transition(.scale(scale: 0.95).combined(with: .opacity))
@@ -670,10 +661,7 @@ struct QuickLauncherView: View {
             if let identifiableString = selectedAppForUninstall {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        selectedAppForUninstall = nil
-                        restoreWindowFocus()
-                    }
+                    // Background tap disabled - prevents accidental dismissal
                 
                 AppUninstallerSheet(isPresented: Binding(
                     get: { selectedAppForUninstall != nil },
@@ -685,10 +673,7 @@ struct QuickLauncherView: View {
             if showingUninstaller {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        showingUninstaller = false
-                        restoreWindowFocus()
-                    }
+                    // Background tap disabled - prevents accidental dismissal
                 
                 AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
                     .transition(.scale(scale: 0.95).combined(with: .opacity))

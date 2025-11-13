@@ -217,12 +217,7 @@ extension View {
             if isPresented.wrappedValue {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        // Allow dismissing by clicking background if there's a cancel button
-                        if let cancelIndex = buttons.firstIndex(where: { $0.role == .cancel }) {
-                            buttons[cancelIndex].action()
-                        }
-                    }
+                    // Background tap disabled - no dismissing by clicking outside
                 
                 KeyboardNavigableAlert(
                     title: title,
