@@ -624,9 +624,9 @@ struct QuickLauncherView: View {
             }
             
             // Overlay modals (instead of sheets) for dynamic scaling support
-            // All modals use unified ModalPresenter for consistent center positioning
+            // All modals use UnifiedModalSystem for consistent behavior
         }
-        .modalPresenter(isPresented: Binding(
+        .unifiedModal(isPresented: Binding(
             get: { selectedAppForDetail != nil },
             set: { if !$0 { selectedAppForDetail = nil; restoreWindowFocus() } }
         )) {
@@ -641,13 +641,13 @@ struct QuickLauncherView: View {
                 )
             }
         }
-        .modalPresenter(isPresented: $showingSettings) {
+        .unifiedModal(isPresented: $showingSettings) {
             SettingsRootView(isPresented: $showingSettings)
         }
-        .modalPresenter(isPresented: $showingInstaller) {
+        .unifiedModal(isPresented: $showingInstaller) {
             IPAInstallerSheet(isPresented: $showingInstaller)
         }
-        .modalPresenter(isPresented: Binding(
+        .unifiedModal(isPresented: Binding(
             get: { selectedAppForUninstall != nil },
             set: { if !$0 { selectedAppForUninstall = nil; restoreWindowFocus() } }
         )) {
@@ -661,7 +661,7 @@ struct QuickLauncherView: View {
                 )
             }
         }
-        .modalPresenter(isPresented: $showingUninstaller) {
+        .unifiedModal(isPresented: $showingUninstaller) {
             AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
         }
         .frame(minWidth: 960, minHeight: 640)

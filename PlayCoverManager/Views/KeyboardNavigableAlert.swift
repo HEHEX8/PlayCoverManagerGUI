@@ -208,6 +208,8 @@ struct AlertIcon {
 // MARK: - View Extension for Easy Usage
 
 extension View {
+    /// Deprecated: Use .standardAlert() from UnifiedModalSystem instead
+    /// This wrapper maintained for backwards compatibility during migration
     func keyboardNavigableAlert(
         isPresented: Binding<Bool>,
         title: String,
@@ -216,21 +218,16 @@ extension View {
         icon: AlertIcon? = nil,
         defaultButtonIndex: Int? = nil
     ) -> some View {
-        ZStack {
-            self
-            
-            if isPresented.wrappedValue {
-                KeyboardNavigableAlert(
-                    title: title,
-                    message: message,
-                    buttons: buttons,
-                    icon: icon,
-                    defaultButtonIndex: defaultButtonIndex
-                )
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
+        // Delegate to unified system
+        self.standardAlert(
+            isPresented: isPresented,
+            title: title,
+            message: message,
+            icon: icon,
+            buttons: buttons,
+            uiScale: 1.0,  // Will be injected from environment
+            defaultButtonIndex: defaultButtonIndex
+        )
     }
 }
 
