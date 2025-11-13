@@ -42,38 +42,34 @@ struct QuickLauncherView: View {
     private func calculateIconSize(for availableWidth: CGFloat, appCount: Int, horizontalPadding: CGFloat) -> CGFloat {
         // Total padding: left + right
         let sidePadding = horizontalPadding * 2
-        let minimumSpacing: CGFloat = 12.0
         
         // Always use 10 columns for consistent center alignment
-        // This ensures all apps are always visible regardless of window size
         let effectiveColumns = 10
         
-        let spacingMultiplier = CGFloat(effectiveColumns - 1)
-        let totalSpacing = minimumSpacing * spacingMultiplier
+        // Calculate icon size iteratively to account for proportional spacing
+        // Spacing is 15% of icon size, so we need to solve:
+        // availableWidth = sidePadding + (iconSize * 10) + (iconSize * 0.15 * 9)
+        // availableWidth = sidePadding + iconSize * (10 + 1.35)
+        // availableWidth = sidePadding + iconSize * 11.35
+        // iconSize = (availableWidth - sidePadding) / 11.35
         
-        let availableForIcons = availableWidth - sidePadding - totalSpacing
-        let calculatedSize = availableForIcons / CGFloat(effectiveColumns)
+        let spacingRatio: CGFloat = 0.15  // spacing = iconSize * 0.15
+        let totalColumns = CGFloat(effectiveColumns)
+        let totalSpacings = CGFloat(effectiveColumns - 1)
+        
+        let availableForContent = availableWidth - sidePadding
+        let calculatedSize = availableForContent / (totalColumns + (spacingRatio * totalSpacings))
         
         // Only enforce maximum size, no minimum constraint
-        // This allows icons to shrink as much as needed for small windows
         let maxSize: CGFloat = 200.0
         
-        return min(maxSize, max(1, calculatedSize))  // Ensure at least 1pt
+        return min(maxSize, max(1, calculatedSize))
     }
     
-    // Calculate dynamic spacing based on icon size and app count
+    // Calculate dynamic spacing based on icon size
     private func calculateSpacing(for iconSize: CGFloat, appCount: Int) -> CGFloat {
-        // Spacing scales proportionally with icon size
-        // Base: 20pt spacing at 100pt icon = 0.2 ratio
-        // Increase spacing when fewer apps for more spacious layout
-        let baseSpacing = iconSize * 0.2
-        
-        if appCount < 10 && appCount > 0 {
-            // Add extra spacing when fewer than 10 apps
-            return baseSpacing * 1.5
-        }
-        
-        return baseSpacing
+        // Spacing is always 15% of icon size for consistent layout
+        return iconSize * 0.15
     }
     
     // Calculate dynamic font size based on icon size
