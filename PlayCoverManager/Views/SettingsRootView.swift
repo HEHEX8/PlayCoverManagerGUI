@@ -406,7 +406,6 @@ private struct GeneralSettingsView: View {
                                         }
                                     }
                                 ),
-                                style: .menu,
                                 uiScale: uiScale
                             ) {
                                 ForEach(SettingsStore.AppLanguage.allCases) { language in
@@ -580,7 +579,6 @@ private struct DataSettingsView: View {
                                     get: { settingsStore.defaultDataHandling },
                                     set: { settingsStore.defaultDataHandling = $0 }
                                 ),
-                                style: .menu,
                                 uiScale: uiScale
                             ) {
                                 ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in

@@ -2544,11 +2544,12 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                CustomPicker("", selection: $nobrowseOverride, style: .segmented, uiScale: uiScale) {
+                Picker("", selection: $nobrowseOverride) {
                     ForEach(NobrowseOverride.allCases) { option in
                         Text(option.localizedTitle).tag(option)
                     }
                 }
+                .pickerStyle(.segmented)
                 .onChange(of: nobrowseOverride) { _, newValue in
                     saveNobrowseSetting(newValue)
                 }
@@ -2572,7 +2573,7 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                CustomPicker("", selection: $dataHandlingOverride, style: .menu, uiScale: uiScale) {
+                CustomPicker(selection: $dataHandlingOverride, uiScale: uiScale) {
                     ForEach(DataHandlingOverride.allCases) { option in
                         Text(option.localizedTitle).tag(option)
                     }
@@ -2601,7 +2602,7 @@ private struct SettingsView: View {
                         .font(.system(size: 13 * uiScale))
                         .fontWeight(.medium)
                     
-                    CustomPicker("", selection: $languageOverride, style: .menu, uiScale: uiScale) {
+                    CustomPicker(selection: $languageOverride, uiScale: uiScale) {
                         Text("システムデフォルト").tag(nil as String?)
                         ForEach(supportedLanguages, id: \.self) { lang in
                             Text(getLanguageDisplayName(lang)).tag(lang as String?)
@@ -2933,11 +2934,12 @@ private struct DetailsView: View {
                 .font(.system(size: 17 * uiScale, weight: .semibold))
             
             // Sub-section selector
-            CustomPicker("", selection: $selectedSection, style: .segmented, uiScale: uiScale) {
+            Picker("", selection: $selectedSection) {
                 ForEach(DetailSection.allCases) { section in
                     Label(section.localizedTitle, systemImage: section.icon).tag(section)
                 }
             }
+            .pickerStyle(.segmented)
             .labelsHidden()
             
             ScrollView {
