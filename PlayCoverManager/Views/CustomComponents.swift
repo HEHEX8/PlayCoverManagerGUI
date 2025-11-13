@@ -601,14 +601,12 @@ struct CustomContextMenuView: View {
                                 Image(systemName: icon)
                                     .font(.system(size: 14 * uiScale))
                                     .frame(width: 16 * uiScale, alignment: .center)
-                                    // APPLE_DEV_2025: Use semantic colors for accessibility
-                                    .foregroundStyle(item.role == .destructive ? Color(nsColor: .systemRed) : .primary)
+                                    .foregroundStyle(item.role == .destructive ? .red : .primary)
                             }
                             
                             Text(item.title)
                                 .font(.system(size: 13 * uiScale))
-                                // APPLE_DEV_2025: Use semantic colors for accessibility
-                                .foregroundStyle(item.role == .destructive ? Color(nsColor: .systemRed) : .primary)
+                                .foregroundStyle(item.role == .destructive ? .red : .primary)
                             
                             Spacer()
                         }
@@ -629,8 +627,10 @@ struct CustomContextMenuView: View {
         }
         .padding(.vertical, 6 * uiScale)
         .frame(minWidth: 200 * uiScale)
-        // macOS 26.1 Tahoe: Use Liquid Glass instead of .ultraThinMaterial
-        .glassEffect(.regular, in: RoundedRectangle.standard(.medium, scale: uiScale))
+        .background(
+            RoundedRectangle.standard(.medium, scale: uiScale)
+                .fill(.ultraThinMaterial)
+        )
         .overlay(
             RoundedRectangle.standard(.medium, scale: uiScale)
                 .stroke(Color.primary.opacity(0.1), lineWidth: 0.5 * uiScale)
