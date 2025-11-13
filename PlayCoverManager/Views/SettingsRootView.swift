@@ -170,14 +170,7 @@ private struct GeneralSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var calculatingSize = false
     @State private var totalDiskUsage: Int64 = 0
-    @State private var previousLanguage: SettingsStore.AppLanguage
-
-    init(showLanguageChangeAlert: Binding<Bool>) {
-        self._showLanguageChangeAlert = showLanguageChangeAlert
-        // Initialize with current language
-        let store = SettingsStore()
-        _previousLanguage = State(initialValue: store.appLanguage)
-    }
+    @State private var previousLanguage: SettingsStore.AppLanguage = .system
 
     var body: some View {
         ScrollView {
