@@ -30,43 +30,48 @@ struct KeyboardNavigableAlert: View {
     }
     
     var body: some View {
-        VStack(spacing: 20 * uiScale) {
-            // Icon (optional)
-            if let icon = icon {
-                Image(systemName: icon.systemName)
-                    .font(.system(size: 64 * uiScale))
-                    .foregroundStyle(icon.color)
-            }
+        // UnmountOverlayView pattern: ZStack with full-screen frame
+        ZStack {
+            // Background overlay
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                // Background tap disabled - no dismissing by clicking outside
             
-            // Title
-            Text(title)
-                .font(.title2)
-                .fontWeight(.semibold)
-                .multilineTextAlignment(.center)
-            
-            // Message
-            Text(message)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 400 * uiScale)
-            
-            // Buttons
-            HStack(spacing: 12 * uiScale) {
-                ForEach(Array(buttons.enumerated()), id: \.offset) { index, button in
-                    makeButton(for: button, at: index)
+            // Modal content - naturally centered by ZStack
+            VStack(spacing: 20 * uiScale) {
+                // Icon (optional)
+                if let icon = icon {
+                    Image(systemName: icon.systemName)
+                        .font(.system(size: 64 * uiScale))
+                        .foregroundStyle(icon.color)
+                }
+                
+                // Title
+                Text(title)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
+                
+                // Message
+                Text(message)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400 * uiScale)
+                
+                // Buttons
+                HStack(spacing: 12 * uiScale) {
+                    ForEach(Array(buttons.enumerated()), id: \.offset) { index, button in
+                        makeButton(for: button, at: index)
+                    }
                 }
             }
+            .padding(32 * uiScale)
+            .frame(minWidth: 400 * uiScale)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
+            .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
         }
-        .padding(32 * uiScale)
-        .frame(minWidth: 400 * uiScale)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16 * uiScale))
-        .shadow(color: .black.opacity(0.3), radius: 20 * uiScale)
-        .onGeometryChange(for: CGSize.self) { proxy in
-            proxy.size
-        } action: { newSize in
-            // Track alert size for animations (macOS 26 API)
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear { setupKeyboardMonitor() }
         .onDisappear { cleanupKeyboardMonitor() }
     }
@@ -211,15 +216,21 @@ extension View {
         icon: AlertIcon? = nil,
         defaultButtonIndex: Int? = nil
     ) -> some View {
-        self.modalPresenter(isPresented: isPresented) {
-            KeyboardNavigableAlert(
-                title: title,
-                message: message,
-                buttons: buttons,
-                icon: icon,
-                defaultButtonIndex: defaultButtonIndex
-            )
+        ZStack {
+            self
+            
+            if isPresented.wrappedValue {
+                KeyboardNavigableAlert(
+                    title: title,
+                    message: message,
+                    buttons: buttons,
+                    icon: icon,
+                    defaultButtonIndex: defaultButtonIndex
+                )
+                .transition(.scale.combined(with: .opacity))
+            }
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
     }
 }
 

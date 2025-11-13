@@ -19,7 +19,8 @@ struct ModalPresenterModifier<ModalContent: View>: ViewModifier {
             content
             
             if isPresented {
-                // Full-screen container (UnmountOverlayView pattern)
+                // Modal content wrapped in ZStack with full-screen frame
+                // Following UnmountOverlayView pattern exactly
                 ZStack {
                     // Background dimming overlay
                     Color.black.opacity(0.4)
