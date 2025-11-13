@@ -293,14 +293,22 @@ struct ContentView: View {
 
 ### ⚠️ 後方互換性の注意
 
+**重要**: このプロジェクトは macOS 26.1 Tahoe 専用であり、後方互換性は考慮しない。
+
 ```swift
-// ❌ 古いコード（macOS 15以前）
+// ✅ このプロジェクトでの推奨実装（macOS 26.1専用）
+// .ultraThinMaterial と .glassEffect() は両方とも有効なAPI
+// 使い分け:
+// - .ultraThinMaterial: 標準的な半透明マテリアル（パフォーマンス良好）
+// - .glassEffect(): より高度なガラス効果（tint, interactive等の機能）
+
+// 標準的な実装（推奨）
 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
 
-// ✅ 新しいコード（macOS 26+）
+// 高度な効果が必要な場合
 .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
 
-// ✅ 両対応コード
+// 後方互換性が必要な他のプロジェクトの場合（このプロジェクトでは不要）
 if #available(macOS 26.0, iOS 26.0, *) {
     view.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
 } else {
@@ -1322,7 +1330,7 @@ struct AccessibleGlassCard<Content: View>: View {
 
 #### 2. セマンティックカラーの使用
 
-**❌ 避けるべき**: 固定カラー値
+**❌ 避けるべき**: RGBなどの固定カラー値（ダークモード対応できない）
 
 ```swift
 // ❌ 悪い例 - ダークモード・高コントラストで破綻
@@ -1330,18 +1338,25 @@ struct AccessibleGlassCard<Content: View>: View {
 .background(Color(white: 0.95))
 ```
 
-**✅ 推奨**: システムセマンティックカラー
+**✅ 推奨**: SwiftUIセマンティックカラー（システムが自動調整）
 
 ```swift
 // ✅ 良い例 - システムが自動調整
 .foregroundColor(.primary)           // ラベル・本文テキスト
 .foregroundColor(.secondary)         // 補助テキスト
+.foregroundColor(.red)               // 削除・エラー表示（システムカラー）
 .background(Color(nsColor: .windowBackgroundColor))
 .tint(.accentColor)                  // インタラクティブ要素
 ```
 
+**重要な注意**:
+- `.red`, `.blue`, `.green` 等のSwiftUI標準カラーは**セマンティックカラー**であり、ダークモード対応済み
+- `Color(red:green:blue:)` の固定RGB値とは異なる
+- `.red` は推奨、`Color(red: 1.0, green: 0, blue: 0)` は非推奨
+
 **利用可能なセマンティックカラー**:
 - `.primary` / `.secondary` / `.tertiary` - テキスト階層
+- `.red` / `.blue` / `.green` 等 - システムカラー（ダークモード対応済み）
 - `.accentColor` - インタラクティブ要素
 - `Color(nsColor: .windowBackgroundColor)` - 背景
 - `Color(nsColor: .controlBackgroundColor)` - コントロール背景
