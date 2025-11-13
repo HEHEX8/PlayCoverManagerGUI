@@ -211,28 +211,15 @@ extension View {
         icon: AlertIcon? = nil,
         defaultButtonIndex: Int? = nil
     ) -> some View {
-        ZStack {
-            self
-            
-            if isPresented.wrappedValue {
-                GeometryReader { geometry in
-                    Color.black.opacity(0.3)
-                        .ignoresSafeArea()
-                        // Background tap disabled - no dismissing by clicking outside
-                    
-                    KeyboardNavigableAlert(
-                        title: title,
-                        message: message,
-                        buttons: buttons,
-                        icon: icon,
-                        defaultButtonIndex: defaultButtonIndex
-                    )
-                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
-                    .transition(.scale.combined(with: .opacity))
-                }
-            }
+        self.modalPresenter(isPresented: isPresented) {
+            KeyboardNavigableAlert(
+                title: title,
+                message: message,
+                buttons: buttons,
+                icon: icon,
+                defaultButtonIndex: defaultButtonIndex
+            )
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
     }
 }
 
