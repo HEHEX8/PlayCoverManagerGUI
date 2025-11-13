@@ -9,6 +9,7 @@ struct SettingsRootView: View {
     @Environment(AppViewModel.self) private var appViewModel
     @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
     @State private var selectedTab: SettingsTab = .general
+    @State private var showLanguageChangeAlert = false
     
     enum SettingsTab: String, CaseIterable, Identifiable, TabItemProtocol {
         case general
@@ -109,7 +110,7 @@ struct SettingsRootView: View {
                         VStack(spacing: 0) {
                             switch selectedTab {
                             case .general:
-                                GeneralSettingsView()
+                                GeneralSettingsView(showLanguageChangeAlert: $showLanguageChangeAlert)
                             case .data:
                                 DataSettingsView()
                             case .maintenance:
@@ -133,20 +134,67 @@ struct SettingsRootView: View {
         .frame(minWidth: 800, minHeight: 600)
         .clipShape(RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
+        .overlay {
+            // Language change alert - at top level like UnmountOverlayView
+            if showLanguageChangeAlert {
+                StandardAlert(
+                    title: String(localized: "言語を変更しました"),
+                    message: String(localized: "言語の変更を完全に反映するには、アプリを再起動する必要があります。"),
+                    icon: .info,
+                    buttons: [
+                        AlertButton("後で再起動", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                            showLanguageChangeAlert = false
+                        },
+                        AlertButton("今すぐ再起動", style: .borderedProminent, keyEquivalent: .default) {
+                            restartApp()
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showLanguageChangeAlert)
+    }
+    
+    private func restartApp() {
+        let bundlePath = Bundle.main.bundlePath
+        
+        // Use shell script to wait and relaunch
+        // This approach bypasses AppDelegate termination flow
+        let script = """
+        sleep 0.3
+        open "\(bundlePath)"
+        """
+        
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", script]
+        
+        do {
+            try task.run()
+            // Use Darwin.exit to bypass AppDelegate
+            Darwin.exit(0)
+        } catch {
+            Logger.error("Failed to restart: \(error)")
+            // Fallback to normal termination
+            NSApplication.shared.terminate(nil)
+        }
     }
 }
 
 private struct GeneralSettingsView: View {
+    @Binding var showLanguageChangeAlert: Bool
     @Environment(\.uiScale) var uiScale
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var calculatingSize = false
     @State private var totalDiskUsage: Int64 = 0
-    @State private var showLanguageChangeAlert = false
     @State private var previousLanguage: SettingsStore.AppLanguage
 
-    init() {
+    init(showLanguageChangeAlert: Binding<Bool>) {
+        self._showLanguageChangeAlert = showLanguageChangeAlert
         // Initialize with current language
         let store = SettingsStore()
         _previousLanguage = State(initialValue: store.appLanguage)
@@ -424,46 +472,6 @@ private struct GeneralSettingsView: View {
             Task {
                 await calculateDiskUsage()
             }
-        }
-        .keyboardNavigableAlert(
-            isPresented: $showLanguageChangeAlert,
-            title: String(localized: "言語を変更しました"),
-            message: String(localized: "言語の変更を完全に反映するには、アプリを再起動する必要があります。"),
-            buttons: [
-                AlertButton("後で再起動", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                    previousLanguage = settingsStore.appLanguage
-                    showLanguageChangeAlert = false
-                },
-                AlertButton("今すぐ再起動", style: .borderedProminent, keyEquivalent: .default) {
-                    restartApp()
-                }
-            ],
-            icon: .info
-        )
-    }
-    
-    private func restartApp() {
-        let bundlePath = Bundle.main.bundlePath
-        
-        // Use shell script to wait and relaunch
-        // This approach bypasses AppDelegate termination flow
-        let script = """
-        sleep 0.3
-        open "\(bundlePath)"
-        """
-        
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/bin/sh")
-        task.arguments = ["-c", script]
-        
-        do {
-            try task.run()
-            // Use Darwin.exit to bypass AppDelegate
-            Darwin.exit(0)
-        } catch {
-            Logger.error("Failed to restart: \(error)")
-            // Fallback to normal termination
-            NSApplication.shared.terminate(nil)
         }
     }
     

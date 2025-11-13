@@ -129,6 +129,9 @@ final class SettingsStore {
         }
     }
     
+    // Language change alert state - shown at QuickLauncherView level
+    var showLanguageChangeAlert: Bool = false
+    
     // ASIF format is hardcoded - no user selection needed
     let diskImageFormat: DiskImageFormat = .asif
     
