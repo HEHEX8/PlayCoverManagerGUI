@@ -469,6 +469,68 @@ struct CompactTabBar<T: TabItemProtocol & Equatable>: View {
     }
 }
 
+// MARK: - Segmented Control
+
+/// Protocol for segmented control items (text-only options)
+protocol SegmentedItemProtocol: Identifiable, CaseIterable, Equatable {
+    var localizedTitle: String { get }
+}
+
+/// Custom segmented control button - Swift 6.2 optimized
+/// Replaces standard Picker with .segmented style for dynamic uiScale support
+struct SegmentedButton<T: SegmentedItemProtocol>: View {
+    let item: T
+    let isSelected: Bool
+    let action: () -> Void
+    var uiScale: CGFloat = 1.0
+    
+    var body: some View {
+        Button(action: action) {
+            Text(item.localizedTitle)
+                .font(.system(size: 13 * uiScale, weight: .medium))
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 12 * uiScale)
+                .padding(.vertical, 6 * uiScale)
+                .background(
+                    RoundedRectangle(cornerRadius: 6 * uiScale)
+                        .fill(isSelected ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.3))
+                )
+                .foregroundStyle(isSelected ? .white : .primary)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Segmented control container - unified implementation
+/// Use this instead of Picker with .segmented style for consistent uiScale behavior
+struct CustomSegmentedControl<T: SegmentedItemProtocol>: View {
+    let items: [T]
+    @Binding var selection: T
+    var uiScale: CGFloat = 1.0
+    
+    var body: some View {
+        HStack(spacing: 4 * uiScale) {
+            ForEach(items) { item in
+                SegmentedButton(
+                    item: item,
+                    isSelected: selection == item,
+                    action: {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            selection = item
+                        }
+                    },
+                    uiScale: uiScale
+                )
+            }
+        }
+        .padding(4 * uiScale)
+        .background(
+            RoundedRectangle(cornerRadius: 8 * uiScale)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        )
+    }
+}
+
 // MARK: - View Extensions for Swift 6.2
 
 extension View {

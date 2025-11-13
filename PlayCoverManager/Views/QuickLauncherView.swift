@@ -2480,7 +2480,7 @@ private struct SettingsView: View {
     @State private var languageOverride: String? = nil  // nil = system default, or language code like "ja", "en"
     @State private var supportedLanguages: [String] = []
     
-    enum NobrowseOverride: String, CaseIterable, Identifiable {
+    enum NobrowseOverride: String, CaseIterable, Identifiable, SegmentedItemProtocol {
         case useGlobal
         case enabled
         case disabled
@@ -2496,7 +2496,7 @@ private struct SettingsView: View {
         }
     }
     
-    enum DataHandlingOverride: String, CaseIterable, Identifiable {
+    enum DataHandlingOverride: String, CaseIterable, Identifiable, SegmentedItemProtocol {
         case useGlobal
         case discard
         case mergeThenDelete
@@ -2543,13 +2543,11 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                Picker("", selection: $nobrowseOverride) {
-                    ForEach(NobrowseOverride.allCases) { option in
-                        Text(option.localizedTitle).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                CustomSegmentedControl(
+                    items: NobrowseOverride.allCases,
+                    selection: $nobrowseOverride,
+                    uiScale: uiScale
+                )
                 .onChange(of: nobrowseOverride) { _, newValue in
                     saveNobrowseSetting(newValue)
                 }
@@ -2905,7 +2903,7 @@ private struct DetailsView: View {
     @State private var infoPlist: [String: Any]?
     @State private var selectedSection: DetailSection = .info
     
-    enum DetailSection: String, CaseIterable, Identifiable {
+    enum DetailSection: String, CaseIterable, Identifiable, SegmentedItemProtocol {
         case info
         case analysis
         
@@ -2937,13 +2935,11 @@ private struct DetailsView: View {
                 .font(.system(size: 17 * uiScale, weight: .semibold))
             
             // Sub-section selector
-            Picker("", selection: $selectedSection) {
-                ForEach(DetailSection.allCases) { section in
-                    Text(section.localizedTitle).tag(section)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            CustomSegmentedControl(
+                items: DetailSection.allCases,
+                selection: $selectedSection,
+                uiScale: uiScale
+            )
             
             ScrollView {
                 switch selectedSection {
