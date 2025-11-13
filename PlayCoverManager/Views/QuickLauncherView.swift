@@ -4399,8 +4399,6 @@ private struct AppGridRow: View {
         let maxColumns = max(1, appsInRow)
         
         HStack(spacing: spacing) {
-            Spacer(minLength: 0)
-            
             ForEach(0..<maxColumns, id: \.self) { columnIndex in
                 let index = rowIndex * 10 + columnIndex
                 if index < apps.count {
