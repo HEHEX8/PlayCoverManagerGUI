@@ -1187,9 +1187,9 @@ private struct iOSAppIconView: View {
                 }
             }
         }
-        // Swift 6.2 + macOS 26.1: Custom context menu with dynamic scaling and icons
-        .customContextMenu(items: [
-            ContextMenuItem(title: "起動", icon: "play.fill") {
+        // Standard context menu (macOS 26.1 supports icons in menu items)
+        .contextMenu {
+            Button {
                 Task { @MainActor in
                     isAnimating = true
                     try? await Task.sleep(for: .milliseconds(100))
@@ -1197,29 +1197,49 @@ private struct iOSAppIconView: View {
                     try? await Task.sleep(for: .milliseconds(550))
                     isAnimating = false
                 }
-            },
-            ContextMenuItem(title: "デバッグコンソールで起動", icon: "terminal.fill") {
+            } label: {
+                Label("起動", systemImage: "play.fill")
+            }
+            
+            Button {
                 launchInDebugConsole(app: app)
-            },
-            ContextMenuItem.divider(),
-            ContextMenuItem(title: "詳細と設定", icon: "gearshape.fill") {
+            } label: {
+                Label("デバッグコンソールで起動", systemImage: "terminal.fill")
+            }
+            
+            Divider()
+            
+            Button {
                 rightClickAction()
-            },
-            ContextMenuItem.divider(),
-            ContextMenuItem(title: "アプリ本体を Finder で表示", icon: "folder.fill") {
+            } label: {
+                Label("詳細と設定", systemImage: "gearshape.fill")
+            }
+            
+            Divider()
+            
+            Button {
                 NSWorkspace.shared.activateFileViewerSelecting([app.appURL])
-            },
-            ContextMenuItem(title: "コンテナを Finder で表示", icon: "externaldrive.fill") {
+            } label: {
+                Label("アプリ本体を Finder で表示", systemImage: "folder.fill")
+            }
+            
+            Button {
                 let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
                 if FileManager.default.fileExists(atPath: containerURL.path) {
                     NSWorkspace.shared.activateFileViewerSelecting([containerURL])
                 }
-            },
-            ContextMenuItem.divider(),
-            ContextMenuItem(title: "アンインストール", icon: "trash.fill", role: .destructive) {
-                uninstallAction()
+            } label: {
+                Label("コンテナを Finder で表示", systemImage: "externaldrive.fill")
             }
-        ], uiScale: uiScale)
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                uninstallAction()
+            } label: {
+                Label("アンインストール", systemImage: "trash.fill")
+            }
+        }
     }
     
     private func launchInDebugConsole(app: PlayCoverApp) {

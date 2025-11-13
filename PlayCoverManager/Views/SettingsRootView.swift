@@ -261,7 +261,7 @@ private struct GeneralSettingsView: View {
                         CustomLargeButton(
                             title: "保存先を変更",
                             action: {
-                                dismiss()
+                                // Don't dismiss - let the storage change flow handle UI
                                 appViewModel.requestStorageLocationChange()
                             },
                             isPrimary: true,
@@ -396,23 +396,20 @@ private struct GeneralSettingsView: View {
                                 .font(.system(size: 13 * uiScale, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             
-                            CustomPicker(
-                                selection: Binding(
-                                    get: { settingsStore.appLanguage },
-                                    set: { newValue in
-                                        if newValue != previousLanguage {
-                                            settingsStore.appLanguage = newValue
-                                            showLanguageChangeAlert = true
-                                        }
+                            Picker("", selection: Binding(
+                                get: { settingsStore.appLanguage },
+                                set: { newValue in
+                                    if newValue != previousLanguage {
+                                        settingsStore.appLanguage = newValue
+                                        showLanguageChangeAlert = true
                                     }
-                                ),
-                                uiScale: uiScale,
-                                labelProvider: { $0.localizedDescription }
-                            ) {
+                                }
+                            )) {
                                 ForEach(SettingsStore.AppLanguage.allCases) { language in
                                     Text(language.localizedDescription).tag(language)
                                 }
                             }
+                            .labelsHidden()
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(16 * uiScale)
@@ -575,18 +572,15 @@ private struct DataSettingsView: View {
                                 .font(.system(size: 13 * uiScale, weight: .semibold))
                                 .foregroundStyle(.secondary)
                             
-                            CustomPicker(
-                                selection: Binding<SettingsStore.InternalDataStrategy>(
-                                    get: { settingsStore.defaultDataHandling },
-                                    set: { settingsStore.defaultDataHandling = $0 }
-                                ),
-                                uiScale: uiScale,
-                                labelProvider: { $0.localizedDescription }
-                            ) {
+                            Picker("", selection: Binding<SettingsStore.InternalDataStrategy>(
+                                get: { settingsStore.defaultDataHandling },
+                                set: { settingsStore.defaultDataHandling = $0 }
+                            )) {
                                 ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
                                     Text(strategy.localizedDescription).tag(strategy)
                                 }
                             }
+                            .labelsHidden()
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(16 * uiScale)
