@@ -1389,7 +1389,7 @@ private struct AppDetailSheet: View {
         calculateUIScale(for: windowSize)
     }
     
-    enum SettingsTab: String, CaseIterable, Identifiable {
+    enum SettingsTab: String, CaseIterable, Identifiable, TabItemProtocol {
         case overview
         case settings
         case details
@@ -1524,31 +1524,8 @@ private struct AppDetailSheet: View {
                         .padding(24 * uiScale)
                         .liquidGlassCard(uiScale: uiScale)
                         
-                        // Tab selector
-                        HStack(spacing: 12 * uiScale) {
-                            ForEach(SettingsTab.allCases) { tab in
-                                Button {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        selectedTab = tab
-                                    }
-                                } label: {
-                                    VStack(spacing: 8 * uiScale) {
-                                        Image(systemName: tab.icon)
-                                            .font(.system(size: 24 * uiScale, weight: .medium))
-                                        Text(tab.localizedTitle)
-                                            .font(.system(size: 12 * uiScale, weight: .medium))
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 16 * uiScale)
-                                    .background(
-                                        RoundedRectangle.standard(.regular, scale: uiScale)
-                                            .fill(selectedTab == tab ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                                    )
-                                    .foregroundStyle(selectedTab == tab ? .white : .primary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
+                        // Tab selector - using unified CompactTabBar
+                        CompactTabBar(tabs: SettingsTab.allCases, selectedTab: $selectedTab, uiScale: uiScale)
                         
                         // Tab content
                         VStack(spacing: 0) {

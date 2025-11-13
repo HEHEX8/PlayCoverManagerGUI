@@ -10,7 +10,7 @@ struct SettingsRootView: View {
     @State private var windowSize: CGSize = CGSize(width: 700, height: 600)
     @State private var selectedTab: SettingsTab = .general
     
-    enum SettingsTab: String, CaseIterable, Identifiable {
+    enum SettingsTab: String, CaseIterable, Identifiable, TabItemProtocol {
         case general
         case data
         case maintenance
@@ -101,33 +101,9 @@ struct SettingsRootView: View {
                 // Custom Tab Content
                 ScrollView {
                     VStack(spacing: 24 * uiScale) {
-                        // Tab selector - compact horizontal design
-                        HStack(spacing: 12 * uiScale) {
-                            ForEach(SettingsTab.allCases) { tab in
-                                Button {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        selectedTab = tab
-                                    }
-                                } label: {
-                                    HStack(spacing: 6 * uiScale) {
-                                        Image(systemName: tab.icon)
-                                            .font(.system(size: 14 * uiScale, weight: .medium))
-                                        Text(tab.localizedTitle)
-                                            .font(.system(size: 13 * uiScale, weight: .medium))
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.horizontal, 12 * uiScale)
-                                    .padding(.vertical, 8 * uiScale)
-                                    .background(
-                                        RoundedRectangle.standard(.regular, scale: uiScale)
-                                            .fill(selectedTab == tab ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                                    )
-                                    .foregroundStyle(selectedTab == tab ? .white : .primary)
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(.horizontal, 32 * uiScale)
+                        // Tab selector - using unified CompactTabBar
+                        CompactTabBar(tabs: SettingsTab.allCases, selectedTab: $selectedTab, uiScale: uiScale)
+                            .padding(.horizontal, 32 * uiScale)
                         
                         // Tab content
                         VStack(spacing: 0) {

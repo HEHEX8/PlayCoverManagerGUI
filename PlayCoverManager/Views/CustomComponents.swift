@@ -408,6 +408,67 @@ struct InfoBadge: View {
     }
 }
 
+// MARK: - Compact Tab Button
+
+/// Protocol for tab items to ensure consistency across all tab implementations
+protocol TabItemProtocol: Identifiable, CaseIterable {
+    var localizedTitle: String { get }
+    var icon: String { get }
+}
+
+/// Compact horizontal tab button - Swift 6.2 optimized, unified implementation
+/// Use this for all tab implementations to ensure consistency and maintainability
+struct CompactTabButton<T: TabItemProtocol & Equatable>: View {
+    let tab: T
+    let isSelected: Bool
+    let action: () -> Void
+    var uiScale: CGFloat = 1.0
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6 * uiScale) {
+                Image(systemName: tab.icon)
+                    .font(.system(size: 14 * uiScale, weight: .medium))
+                Text(tab.localizedTitle)
+                    .font(.system(size: 13 * uiScale, weight: .medium))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 12 * uiScale)
+            .padding(.vertical, 8 * uiScale)
+            .background(
+                RoundedRectangle.standard(.regular, scale: uiScale)
+                    .fill(isSelected ? Color.blue : Color(nsColor: .controlBackgroundColor).opacity(0.5))
+            )
+            .foregroundStyle(isSelected ? .white : .primary)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Tab bar container for consistent tab layouts
+struct CompactTabBar<T: TabItemProtocol & Equatable>: View {
+    let tabs: [T]
+    @Binding var selectedTab: T
+    var uiScale: CGFloat = 1.0
+    
+    var body: some View {
+        HStack(spacing: 12 * uiScale) {
+            ForEach(tabs) { tab in
+                CompactTabButton(
+                    tab: tab,
+                    isSelected: selectedTab == tab,
+                    action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedTab = tab
+                        }
+                    },
+                    uiScale: uiScale
+                )
+            }
+        }
+    }
+}
+
 // MARK: - View Extensions for Swift 6.2
 
 extension View {
