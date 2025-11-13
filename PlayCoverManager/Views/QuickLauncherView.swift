@@ -2566,11 +2566,13 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                CustomSegmentedControl(
-                    selection: $nobrowseOverride,
-                    uiScale: uiScale,
-                    labelProvider: { $0.localizedTitle }
-                )
+                Picker("", selection: $nobrowseOverride) {
+                    ForEach(NobrowseOverride.allCases) { option in
+                        Text(option.localizedTitle).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
                 .onChange(of: nobrowseOverride) { _, newValue in
                     saveNobrowseSetting(newValue)
                 }
@@ -2594,11 +2596,12 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                CustomPicker(selection: $dataHandlingOverride, uiScale: uiScale, labelProvider: { $0.localizedTitle }) {
+                Picker("", selection: $dataHandlingOverride) {
                     ForEach(DataHandlingOverride.allCases) { option in
                         Text(option.localizedTitle).tag(option)
                     }
                 }
+                .labelsHidden()
                 .onChange(of: dataHandlingOverride) { _, newValue in
                     saveDataHandlingSetting(newValue)
                 }
@@ -2957,11 +2960,13 @@ private struct DetailsView: View {
                 .font(.system(size: 17 * uiScale, weight: .semibold))
             
             // Sub-section selector
-            CustomSegmentedControl(
-                selection: $selectedSection,
-                uiScale: uiScale,
-                labelProvider: { $0.localizedTitle }
-            )
+            Picker("", selection: $selectedSection) {
+                ForEach(DetailPanelSection.allCases) { section in
+                    Text(section.localizedTitle).tag(section)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
             
             ScrollView {
                 switch selectedSection {
