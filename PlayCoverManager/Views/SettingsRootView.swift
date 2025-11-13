@@ -406,7 +406,8 @@ private struct GeneralSettingsView: View {
                                         }
                                     }
                                 ),
-                                uiScale: uiScale
+                                uiScale: uiScale,
+                                labelProvider: { $0.localizedDescription }
                             ) {
                                 ForEach(SettingsStore.AppLanguage.allCases) { language in
                                     Text(language.localizedDescription).tag(language)
@@ -579,7 +580,8 @@ private struct DataSettingsView: View {
                                     get: { settingsStore.defaultDataHandling },
                                     set: { settingsStore.defaultDataHandling = $0 }
                                 ),
-                                uiScale: uiScale
+                                uiScale: uiScale,
+                                labelProvider: { $0.localizedDescription }
                             ) {
                                 ForEach(SettingsStore.InternalDataStrategy.allCases) { strategy in
                                     Text(strategy.localizedDescription).tag(strategy)

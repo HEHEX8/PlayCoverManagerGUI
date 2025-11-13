@@ -214,20 +214,23 @@ struct CustomLargeButton: View {
 
 // MARK: - Custom Picker
 
-/// Modern picker with dynamic scaling - Swift 6.2 optimized
-/// NOTE: For segmented style, use native Picker as CustomPicker doesn't support it properly
-struct CustomPicker<SelectionValue: Hashable, Content: View>: View {
+/// Modern dropdown picker with dynamic scaling - Swift 6.2 optimized
+/// Shows selected value with smooth animations
+struct CustomPicker<SelectionValue: Hashable, Content: View>: View where SelectionValue: RawRepresentable, SelectionValue.RawValue == String {
     @Binding var selection: SelectionValue
     let content: Content
+    let labelProvider: (SelectionValue) -> String
     var uiScale: CGFloat = 1.0
     
     init(
         selection: Binding<SelectionValue>,
         uiScale: CGFloat = 1.0,
+        labelProvider: @escaping (SelectionValue) -> String = { $0.rawValue },
         @ViewBuilder content: () -> Content
     ) {
         self._selection = selection
         self.uiScale = uiScale
+        self.labelProvider = labelProvider
         self.content = content()
     }
     
@@ -236,12 +239,23 @@ struct CustomPicker<SelectionValue: Hashable, Content: View>: View {
             content
         } label: {
             HStack(spacing: 8 * uiScale) {
+                // Show selected value
+                Text(labelProvider(selection))
+                    .font(.system(size: 13 * uiScale))
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                
+                Spacer(minLength: 4 * uiScale)
+                
+                // Chevron indicator
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 12 * uiScale))
+                    .font(.system(size: 11 * uiScale))
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 12 * uiScale)
             .padding(.vertical, 8 * uiScale)
+            .frame(minWidth: 120 * uiScale)
             .background(
                 RoundedRectangle.standard(.small, scale: uiScale)
                     .fill(Color(nsColor: .controlBackgroundColor))
@@ -252,6 +266,7 @@ struct CustomPicker<SelectionValue: Hashable, Content: View>: View {
             )
         }
         .menuStyle(.borderlessButton)
+        .animation(.smooth(duration: 0.2), value: selection)
     }
 }
 

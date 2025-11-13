@@ -2572,7 +2572,7 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                CustomPicker(selection: $dataHandlingOverride, uiScale: uiScale) {
+                CustomPicker(selection: $dataHandlingOverride, uiScale: uiScale, labelProvider: { $0.localizedTitle }) {
                     ForEach(DataHandlingOverride.allCases) { option in
                         Text(option.localizedTitle).tag(option)
                     }
