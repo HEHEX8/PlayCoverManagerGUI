@@ -2544,12 +2544,11 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                Picker("", selection: $nobrowseOverride) {
-                    ForEach(NobrowseOverride.allCases) { option in
-                        Text(option.localizedTitle).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
+                CustomSegmentedControl(
+                    selection: $nobrowseOverride,
+                    uiScale: uiScale,
+                    labelProvider: { $0.localizedTitle }
+                )
                 .onChange(of: nobrowseOverride) { _, newValue in
                     saveNobrowseSetting(newValue)
                 }
@@ -2934,13 +2933,11 @@ private struct DetailsView: View {
                 .font(.system(size: 17 * uiScale, weight: .semibold))
             
             // Sub-section selector
-            Picker("", selection: $selectedSection) {
-                ForEach(DetailSection.allCases) { section in
-                    Label(section.localizedTitle, systemImage: section.icon).tag(section)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
+            CustomSegmentedControl(
+                selection: $selectedSection,
+                uiScale: uiScale,
+                labelProvider: { $0.localizedTitle }
+            )
             
             ScrollView {
                 switch selectedSection {

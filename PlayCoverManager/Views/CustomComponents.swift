@@ -255,6 +255,68 @@ struct CustomPicker<SelectionValue: Hashable, Content: View>: View {
     }
 }
 
+// MARK: - Custom Segmented Control
+
+/// Modern segmented control with sliding pill animation - Swift 6.2 optimized
+/// Uses matchedGeometryEffect for smooth transitions
+struct CustomSegmentedControl<T>: View 
+where T: Hashable & CaseIterable & RawRepresentable & Identifiable, T.RawValue == String {
+    
+    @Binding var selection: T
+    let labelProvider: (T) -> String
+    var uiScale: CGFloat = 1.0
+    @Namespace private var animation
+    
+    private var items: [T] { Array(T.allCases) }
+    
+    init(
+        selection: Binding<T>,
+        uiScale: CGFloat = 1.0,
+        labelProvider: @escaping (T) -> String = { $0.rawValue }
+    ) {
+        self._selection = selection
+        self.uiScale = uiScale
+        self.labelProvider = labelProvider
+    }
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(items) { item in
+                Text(labelProvider(item))
+                    .font(.system(size: 13 * uiScale))
+                    .fontWeight(.medium)
+                    .padding(.vertical, 6 * uiScale)
+                    .padding(.horizontal, 12 * uiScale)
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(selection == item ? .white : .primary.opacity(0.7))
+                    .background {
+                        if selection == item {
+                            // Sliding pill that animates between items
+                            Capsule()
+                                .fill(Color.accentColor.gradient)
+                                .matchedGeometryEffect(id: "segmented_pill", in: animation)
+                        }
+                    }
+                    .contentShape(.rect) // Make entire area tappable
+                    .onTapGesture {
+                        withAnimation(.smooth(duration: 0.3)) {
+                            selection = item
+                        }
+                    }
+            }
+        }
+        .padding(4 * uiScale)
+        .background(
+            Capsule()
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        )
+        .overlay {
+            Capsule()
+                .strokeBorder(Color.primary.opacity(0.1), lineWidth: uiScale)
+        }
+    }
+}
+
 // MARK: - Custom Toggle
 
 /// Modern toggle with dynamic scaling - Swift 6.2 optimized
