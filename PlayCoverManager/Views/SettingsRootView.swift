@@ -426,7 +426,8 @@ private struct GeneralSettingsView: View {
                                 set: { newValue in
                                     if newValue != previousLanguage {
                                         settingsStore.appLanguage = newValue
-                                        showLanguageChangeAlert = true
+                                        // Trigger alert at QuickLauncherView level (not here!)
+                                        settingsStore.showLanguageChangeAlert = true
                                     }
                                 }
                             )) {

@@ -685,6 +685,25 @@ struct QuickLauncherView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .transition(.opacity)
                 .zIndex(998)
+            } else if settingsStore.showLanguageChangeAlert {
+                // Language change restart prompt - at QuickLauncherView level (not ScrollView)
+                StandardAlert(
+                    title: String(localized: "言語を変更しました"),
+                    message: String(localized: "言語の変更を完全に反映するには、アプリを再起動する必要があります。"),
+                    icon: .info,
+                    buttons: [
+                        AlertButton("後で再起動", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
+                            settingsStore.showLanguageChangeAlert = false
+                        },
+                        AlertButton("今すぐ再起動", style: .borderedProminent, keyEquivalent: .default) {
+                            settingsStore.showLanguageChangeAlert = false
+                            restartApp()
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(997)
             } else if viewModel.isBusy && viewModel.isShowingStatus {
                 VStack(spacing: 12 * uiScale) {
                     ProgressView()
@@ -843,6 +862,33 @@ struct QuickLauncherView: View {
             }
         }
         .uiScale(uiScale)  // Inject UI scale into environment for all child views
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func restartApp() {
+        let bundlePath = Bundle.main.bundlePath
+        
+        // Use shell script to wait and relaunch
+        // This approach bypasses AppDelegate termination flow
+        let script = """
+        sleep 0.3
+        open "\(bundlePath)"
+        """
+        
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", script]
+        
+        do {
+            try task.run()
+            // Use Darwin.exit to bypass AppDelegate
+            Darwin.exit(0)
+        } catch {
+            Logger.error("Failed to restart: \(error)")
+            // Fallback to normal termination
+            NSApplication.shared.terminate(nil)
+        }
     }
 }
 
