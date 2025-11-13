@@ -44,20 +44,9 @@ struct QuickLauncherView: View {
         let sidePadding = horizontalPadding * 2
         let minimumSpacing: CGFloat = 12.0
         
-        // Determine effective column count based on app count
-        let effectiveColumns: Int
-        if appCount == 0 {
-            effectiveColumns = 10  // Default
-        } else if appCount <= 5 {
-            // Very few apps: use actual count for larger icons
-            effectiveColumns = min(appCount, 5)
-        } else if appCount < 10 {
-            // Less than 10 apps: use actual count for optimal spacing
-            effectiveColumns = appCount
-        } else {
-            // 10 or more apps: use standard 10 columns
-            effectiveColumns = 10
-        }
+        // Always use 10 columns for consistent center alignment
+        // This ensures all apps are always visible regardless of window size
+        let effectiveColumns = 10
         
         let spacingMultiplier = CGFloat(effectiveColumns - 1)
         let totalSpacing = minimumSpacing * spacingMultiplier
@@ -65,11 +54,11 @@ struct QuickLauncherView: View {
         let availableForIcons = availableWidth - sidePadding - totalSpacing
         let calculatedSize = availableForIcons / CGFloat(effectiveColumns)
         
-        // Dynamic bounds based on app count
-        let minSize: CGFloat = appCount <= 5 ? 80 : 60
-        let maxSize: CGFloat = appCount <= 5 ? 200 : 150
+        // Only enforce maximum size, no minimum constraint
+        // This allows icons to shrink as much as needed for small windows
+        let maxSize: CGFloat = 200.0
         
-        return max(minSize, min(maxSize, calculatedSize))
+        return min(maxSize, max(1, calculatedSize))  // Ensure at least 1pt
     }
     
     // Calculate dynamic spacing based on icon size and app count
