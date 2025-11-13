@@ -3012,11 +3012,11 @@ private struct AboutView: View {
     @Environment(\.uiScale) var uiScale
     
     private var appVersion: String {
-        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        AppVersion.version
     }
     
     private var buildNumber: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        AppVersion.build
     }
     
     var body: some View {
@@ -3097,6 +3097,30 @@ private struct AboutView: View {
                         .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
                 )
                 
+                // Version Details Card
+                VStack(alignment: .leading, spacing: 6 * uiScale) {
+                    Label("バージョン情報", systemImage: "info.circle.fill")
+                        .font(.system(size: 17 * uiScale, weight: .semibold))
+                        .foregroundStyle(.cyan)
+                    
+                    Divider()
+                    
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
+                        InfoRow(label: "バージョン", value: AppVersion.version)
+                        InfoRow(label: "ビルド番号", value: AppVersion.build)
+                        InfoRow(label: "Swift", value: "6.2")
+                        InfoRow(label: "macOS", value: "26.1 Tahoe")
+                        InfoRow(label: "リリース日", value: "2025-11-13")
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20 * uiScale)
+                .background(
+                    RoundedRectangle.standard(.regular, scale: uiScale)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 4 * uiScale, x: 0, y: 2)
+                )
+                
                 // Links Card
                 VStack(alignment: .leading, spacing: 6 * uiScale) {
                     Label("リンク", systemImage: "link.circle.fill")
@@ -3108,6 +3132,7 @@ private struct AboutView: View {
                     VStack(spacing: 8 * uiScale) {
                         LinkButton(icon: "link", text: String(localized: "GitHub リポジトリ"), url: "https://github.com/HEHEX8/PlayCoverManagerGUI")
                         LinkButton(icon: "exclamationmark.bubble", text: String(localized: "問題を報告"), url: "https://github.com/HEHEX8/PlayCoverManagerGUI/issues")
+                        LinkButton(icon: "doc.text", text: String(localized: "リリースノート"), url: "https://github.com/HEHEX8/PlayCoverManagerGUI/releases")
                         LinkButton(icon: "gamecontroller", text: String(localized: "PlayCover プロジェクト"), url: "https://github.com/PlayCover/PlayCover")
                     }
                 }
@@ -3151,6 +3176,25 @@ private struct RequirementRow: View {
                 .frame(width: 24 * uiScale)
             Text(text)
                 .font(.system(size: 15 * uiScale))
+        }
+    }
+}
+
+private struct InfoRow: View {
+    @Environment(\.uiScale) var uiScale
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack(spacing: 6 * uiScale) {
+            Text(label)
+                .font(.system(size: 14 * uiScale))
+                .foregroundStyle(.secondary)
+                .frame(width: 100 * uiScale, alignment: .leading)
+            Text(value)
+                .font(.system(size: 14 * uiScale, weight: .medium))
+                .foregroundStyle(.primary)
+            Spacer()
         }
     }
 }

@@ -821,7 +821,7 @@ struct QuickLauncherView: View {
                 )
                 .transition(.scale.combined(with: .opacity))
                 .zIndex(994)
-            } else if let result = settingsStore.cacheOperationResult {
+            } else if settingsStore.cacheOperationResult != nil {
                 // Cache operation result
                 SimpleAlertView(
                     title: String(localized: "キャッシュをクリアしました"),
