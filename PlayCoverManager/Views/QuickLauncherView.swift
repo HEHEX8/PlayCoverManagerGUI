@@ -624,59 +624,75 @@ struct QuickLauncherView: View {
             }
             
             // Overlay modals (instead of sheets) for dynamic scaling support
+            // All modals are positioned at screen center regardless of scroll position
             if let app = selectedAppForDetail {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    // Background tap disabled - prevents accidental dismissal
-                
-                AppDetailSheet(
-                    isPresented: Binding(
-                        get: { selectedAppForDetail != nil },
-                        set: { if !$0 { selectedAppForDetail = nil; restoreWindowFocus() } }
-                    ),
-                    app: app,
-                    viewModel: viewModel
-                )
-                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                GeometryReader { geometry in
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        // Background tap disabled - prevents accidental dismissal
+                    
+                    AppDetailSheet(
+                        isPresented: Binding(
+                            get: { selectedAppForDetail != nil },
+                            set: { if !$0 { selectedAppForDetail = nil; restoreWindowFocus() } }
+                        ),
+                        app: app,
+                        viewModel: viewModel
+                    )
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
             }
             
             if showingSettings {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    // Background tap disabled - prevents accidental dismissal
-                
-                SettingsRootView(isPresented: $showingSettings)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+                GeometryReader { geometry in
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        // Background tap disabled - prevents accidental dismissal
+                    
+                    SettingsRootView(isPresented: $showingSettings)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
             }
             
             if showingInstaller {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    // Background tap disabled - prevents accidental dismissal
-                
-                IPAInstallerSheet(isPresented: $showingInstaller)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+                GeometryReader { geometry in
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        // Background tap disabled - prevents accidental dismissal
+                    
+                    IPAInstallerSheet(isPresented: $showingInstaller)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
             }
             
             if let identifiableString = selectedAppForUninstall {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    // Background tap disabled - prevents accidental dismissal
-                
-                AppUninstallerSheet(isPresented: Binding(
-                    get: { selectedAppForUninstall != nil },
-                    set: { if !$0 { selectedAppForUninstall = nil; restoreWindowFocus() } }
-                ), preSelectedBundleID: identifiableString.id)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+                GeometryReader { geometry in
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        // Background tap disabled - prevents accidental dismissal
+                    
+                    AppUninstallerSheet(isPresented: Binding(
+                        get: { selectedAppForUninstall != nil },
+                        set: { if !$0 { selectedAppForUninstall = nil; restoreWindowFocus() } }
+                    ), preSelectedBundleID: identifiableString.id)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
             }
             
             if showingUninstaller {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    // Background tap disabled - prevents accidental dismissal
-                
-                AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
-                    .transition(.scale(scale: 0.95).combined(with: .opacity))
+                GeometryReader { geometry in
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        // Background tap disabled - prevents accidental dismissal
+                    
+                    AppUninstallerSheet(isPresented: $showingUninstaller, preSelectedBundleID: nil)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        .transition(.scale(scale: 0.95).combined(with: .opacity))
+                }
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: selectedAppForDetail != nil)

@@ -215,18 +215,21 @@ extension View {
             self
             
             if isPresented.wrappedValue {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                    // Background tap disabled - no dismissing by clicking outside
-                
-                KeyboardNavigableAlert(
-                    title: title,
-                    message: message,
-                    buttons: buttons,
-                    icon: icon,
-                    defaultButtonIndex: defaultButtonIndex
-                )
-                .transition(.scale.combined(with: .opacity))
+                GeometryReader { geometry in
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        // Background tap disabled - no dismissing by clicking outside
+                    
+                    KeyboardNavigableAlert(
+                        title: title,
+                        message: message,
+                        buttons: buttons,
+                        icon: icon,
+                        defaultButtonIndex: defaultButtonIndex
+                    )
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isPresented.wrappedValue)
