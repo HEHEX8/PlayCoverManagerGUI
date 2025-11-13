@@ -100,50 +100,62 @@ struct SetupWizardView: View {
         }
         .overlay {
             if let error = viewModel.error {
-                if error.category == .permissionDenied {
-                    KeyboardNavigableAlert(
-                        title: error.title,
-                        message: error.message,
-                        buttons: [
-                            AlertButton("OK", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                                viewModel.error = nil
-                            },
-                            AlertButton("システム設定を開く", style: .borderedProminent, keyEquivalent: .default) {
-                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
-                                    NSWorkspace.shared.open(url)
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    
+                    if error.category == .permissionDenied {
+                        SimpleAlertView(
+                            title: error.title,
+                            message: error.message,
+                            icon: "exclamationmark.triangle.fill",
+                            iconColor: .orange,
+                            buttons: [
+                                SimpleAlertButton("OK", isCancel: true) {
+                                    viewModel.error = nil
+                                },
+                                SimpleAlertButton("システム設定を開く", isPrimary: true, isDefault: true) {
+                                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+                                        NSWorkspace.shared.open(url)
+                                    }
+                                    viewModel.error = nil
                                 }
-                                viewModel.error = nil
-                            }
-                        ],
-                        icon: .warning
-                    )
-                } else if error.requiresAction {
-                    KeyboardNavigableAlert(
-                        title: error.title,
-                        message: error.message,
-                        buttons: [
-                            AlertButton("OK", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                                viewModel.error = nil
-                            },
-                            AlertButton("設定を開く", style: .borderedProminent, keyEquivalent: .default) {
-                                viewModel.openSettings()
-                                viewModel.error = nil
-                            }
-                        ],
-                        icon: .error
-                    )
-                } else {
-                    KeyboardNavigableAlert(
-                        title: error.title,
-                        message: error.message,
-                        buttons: [
-                            AlertButton("OK", role: .cancel, style: .borderedProminent, keyEquivalent: .default) {
-                                viewModel.error = nil
-                            }
-                        ],
-                        icon: .error
-                    )
+                            ],
+                            uiScale: uiScale
+                        )
+                    } else if error.requiresAction {
+                        SimpleAlertView(
+                            title: error.title,
+                            message: error.message,
+                            icon: "exclamationmark.triangle.fill",
+                            iconColor: .red,
+                            buttons: [
+                                SimpleAlertButton("OK", isCancel: true) {
+                                    viewModel.error = nil
+                                },
+                                SimpleAlertButton("設定を開く", isPrimary: true, isDefault: true) {
+                                    viewModel.openSettings()
+                                    viewModel.error = nil
+                                }
+                            ],
+                            uiScale: uiScale
+                        )
+                    } else {
+                        SimpleAlertView(
+                            title: error.title,
+                            message: error.message,
+                            icon: "exclamationmark.triangle.fill",
+                            iconColor: .red,
+                            buttons: [
+                                SimpleAlertButton("OK", isPrimary: true, isDefault: true, isCancel: true) {
+                                    viewModel.error = nil
+                                }
+                            ],
+                            uiScale: uiScale
+                        )
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .transition(.scale.combined(with: .opacity))
             }
         }
         .uiScale(uiScale)  // Inject UI scale into environment for all child views

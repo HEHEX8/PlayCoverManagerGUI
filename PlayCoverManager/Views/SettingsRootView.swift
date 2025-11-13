@@ -110,7 +110,7 @@ struct SettingsRootView: View {
                         VStack(spacing: 0) {
                             switch selectedTab {
                             case .general:
-                                GeneralSettingsView(showLanguageChangeAlert: $showLanguageChangeAlert)
+                                GeneralSettingsView()
                             case .data:
                                 DataSettingsView()
                             case .maintenance:
@@ -134,27 +134,7 @@ struct SettingsRootView: View {
         .frame(minWidth: 800, minHeight: 600)
         .clipShape(RoundedRectangle.standard(.large, scale: uiScale))
         .shadow(color: .black.opacity(0.3), radius: 30 * uiScale, x: 0, y: 15 * uiScale)
-        .overlay {
-            // Language change alert - at top level like UnmountOverlayView
-            if showLanguageChangeAlert {
-                StandardAlert(
-                    title: String(localized: "言語を変更しました"),
-                    message: String(localized: "言語の変更を完全に反映するには、アプリを再起動する必要があります。"),
-                    icon: .info,
-                    buttons: [
-                        AlertButton("後で再起動", role: .cancel, style: .bordered, keyEquivalent: .cancel) {
-                            showLanguageChangeAlert = false
-                        },
-                        AlertButton("今すぐ再起動", style: .borderedProminent, keyEquivalent: .default) {
-                            restartApp()
-                        }
-                    ],
-                    uiScale: uiScale
-                )
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showLanguageChangeAlert)
+
     }
     
     private func restartApp() {
@@ -184,7 +164,6 @@ struct SettingsRootView: View {
 }
 
 private struct GeneralSettingsView: View {
-    @Binding var showLanguageChangeAlert: Bool
     @Environment(\.uiScale) var uiScale
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(AppViewModel.self) private var appViewModel
