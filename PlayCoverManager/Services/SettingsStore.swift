@@ -187,9 +187,12 @@ final class SettingsStore {
         }
         
         // Load maxConcurrentApps from UserDefaults (default: 3)
-        if userDefaults.object(forKey: Keys.maxConcurrentApps) != nil {
-            maxConcurrentApps = userDefaults.integer(forKey: Keys.maxConcurrentApps)
+        // If value is 0 (from old version), treat it as unset and use default
+        let savedValue = userDefaults.integer(forKey: Keys.maxConcurrentApps)
+        if savedValue > 0 {
+            maxConcurrentApps = savedValue
         } else {
+            // Value is 0 or doesn't exist - use default 3
             maxConcurrentApps = 3
             userDefaults.set(3, forKey: Keys.maxConcurrentApps)
         }
