@@ -277,12 +277,10 @@ struct QuickLauncherView: View {
             }
             return true
             
-        case 36, 49:  // Return (36) or Space (49)
-            // Launch focused app with animation
-            if let currentIndex = focusedAppIndex, currentIndex < apps.count {
-                launchAppAtIndex(currentIndex)
-            }
-            return true
+        case 36, 49:  // Return (36) or Space (49) - disabled, use number keys instead
+            // Individual app selection Enter/Space is unnecessary since number keys directly launch
+            // Return false to let the event pass through (may trigger default button elsewhere)
+            return false
             
         default:
             return false
@@ -559,11 +557,7 @@ struct QuickLauncherView: View {
                 titleFontSize: recentAppTitleFontSize,
                 subtitleFontSize: recentAppSubtitleFontSize,
                 padding: recentAppPadding,
-                isKeyboardShortcutEnabled: !showingSettings && !showingInstaller && 
-                                           !showingUninstaller && selectedAppForDetail == nil && 
-                                           selectedAppForUninstall == nil && !showingShortcutGuide && 
-                                           viewModel.unmountFlowState == .idle && !isDrawerOpen && 
-                                           !viewModel.showLaunchLimitAlert,
+                isKeyboardShortcutEnabled: true,  // Always enable - overlay blocking is handled by NSEvent monitor
                 onLaunch: {
                     viewModel.launch(app: recentApp)
                     Task { @MainActor in
@@ -943,9 +937,10 @@ struct QuickLauncherView: View {
                 }
                 
                 // Only handle specific key codes for app launching
+                // Note: Enter (36) and Space (49) removed - let them pass through for default button behavior
                 switch event.keyCode {
-                case 123, 124, 125, 126, 36, 49, 53,
-                     18, 19, 20, 21, 22, 23, 25, 26, 28, 29:
+                case 123, 124, 125, 126, 53,  // Arrows, Escape
+                     18, 19, 20, 21, 22, 23, 25, 26, 28, 29:  // Number keys 1-0
                     let handled = handleKeyCode(event.keyCode)
                     if handled {
                         return nil  // Consume event - we handled it
@@ -1249,13 +1244,13 @@ private struct iOSAppIconView: View {
                 x: 0, 
                 y: isHovering ? iconSize * 0.06 : iconSize * 0.02
             )
-            .overlay {
-                // Simple focus border (keyboard focus only)
-                if isFocused {
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .strokeBorder(Color.accentColor, lineWidth: iconSize * 0.03)
-                }
-            }
+            // Focus border removed - unnecessary visual clutter
+            // .overlay {
+            //     if isFocused {
+            //         RoundedRectangle(cornerRadius: cornerRadius)
+            //             .strokeBorder(Color.accentColor, lineWidth: iconSize * 0.03)
+            //     }
+            // }
             .overlay {
                 // Hover border glow
                 if isHovering {
