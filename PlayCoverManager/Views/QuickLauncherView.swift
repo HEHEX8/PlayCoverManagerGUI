@@ -1429,7 +1429,7 @@ private struct iOSAppIconView: View {
             } label: {
                 Label("イジェクト", systemImage: "eject.fill")
             }
-            .disabled(!app.isMounted)
+            .disabled(app.isRunning || !app.isMounted)
             
             Divider()
             
@@ -2910,6 +2910,12 @@ private struct SettingsView: View {
     }
     
     private func handleNobrowseChange(_ newValue: NobrowseOverride) {
+        // Check if app is running
+        if app.isRunning {
+            Logger.warning("Cannot change Finder setting while app is running")
+            return
+        }
+        
         // Check if container is currently mounted
         let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
         let diskImageService = DiskImageService(settings: settingsStore)

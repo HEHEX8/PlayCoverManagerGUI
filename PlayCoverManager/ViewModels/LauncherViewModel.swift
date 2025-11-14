@@ -817,6 +817,9 @@ final class LauncherViewModel {
         do {
             try await diskImageService.ejectDiskImage(for: containerURL, force: false)
             Logger.unmount("Successfully ejected container immediately for: \(bundleID)")
+            
+            // Update app status to reflect unmounted state
+            await updateAppStatus(bundleID: bundleID)
         } catch {
             Logger.error("Failed to immediately eject container for \(bundleID): \(error)")
         }
