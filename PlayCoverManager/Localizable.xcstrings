@@ -1507,6 +1507,9 @@
         }
       }
     },
+    "0" : {
+
+    },
     "5分以内に完了しませんでした" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -1663,6 +1666,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ASIF(僅限 macOS Tahoe)"
+          }
+        }
+      }
+    },
+    "ASIF保存先にアクセスできません" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to access disk image storage location."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法访问磁盘映像存储位置"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "無法訪問磁盤映像存儲位置"
           }
         }
       }
@@ -7412,27 +7438,7 @@
       }
     },
     "ディスクイメージ保存先にアクセスできません" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unable to access disk image storage location."
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法访问磁盘映像存储位置"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "無法訪問磁盤映像存儲位置"
-          }
-        }
-      }
+
     },
     "ディスクイメージ保存先を選択してください" : {
       "extractionState" : "manual",
@@ -7922,6 +7928,9 @@
           }
         }
       }
+    },
+    "バージョン情報" : {
+
     },
     "バイト" : {
       "extractionState" : "manual",
@@ -8764,28 +8773,6 @@
         }
       }
     },
-    "リストから外す" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Remove from List"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "从列表中删除"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "從列表中刪除"
-          }
-        }
-      }
-    },
     "リセット" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8854,6 +8841,9 @@
           }
         }
       }
+    },
+    "リリースノート" : {
+
     },
     "リンク" : {
       "extractionState" : "manual",
@@ -9733,6 +9723,12 @@
         }
       }
     },
+    "個" : {
+
+    },
+    "個（無制限）" : {
+
+    },
     "先にディスクイメージを作成してください。" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -10248,6 +10244,19 @@
         }
       }
     },
+    "最大同時起動数" : {
+
+    },
+    "最大同時起動数（%lld個）に達しているため、以下のアプリの起動をスキップしました：\n\n%@" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "最大同時起動数（%1$lld個）に達しているため、以下のアプリの起動をスキップしました：\n\n%2$@"
+          }
+        }
+      }
+    },
     "最小iOS" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -10699,6 +10708,12 @@
           }
         }
       }
+    },
+    "同時に起動できるアプリの最大数を制限します。0を設定すると無制限になります。制限数を超える起動申請があった場合、ダイアログで通知されます。" : {
+
+    },
+    "同時起動数の制限に達しました" : {
+
     },
     "問題を報告" : {
       "extractionState" : "manual",
@@ -13188,6 +13203,9 @@
         }
       }
     },
+    "起動制限" : {
+
+    },
     "起動時に内部データが見つかった場合の処理方法を設定します。" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -13282,28 +13300,6 @@
     },
     "選択されたアプリ" : {
 
-    },
-    "選択を解除" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Deselect"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "取消选择"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "取消選擇"
-          }
-        }
-      }
     },
     "閉じる" : {
       "extractionState" : "manual",

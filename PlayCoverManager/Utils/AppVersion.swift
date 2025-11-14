@@ -12,17 +12,17 @@ import Foundation
 /// Version is defined here and synced to project.pbxproj via build script
 enum AppVersion {
     /// Marketing version (semantic versioning)
-    static let version = "1.2.0"
+    static let version = "1.2.1"
     
     /// Build number (incremental)
     static let build = "1"
     
-    /// Full version string (e.g., "1.2.0 (1)")
+    /// Full version string
     static var fullVersion: String {
         "\(version) (Build \(build))"
     }
     
-    /// Short version string (e.g., "v1.2.0")
+    /// Short version string
     static var shortVersion: String {
         "v\(version)"
     }
