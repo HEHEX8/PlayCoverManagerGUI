@@ -299,6 +299,16 @@ final class LauncherService {
         }
     }
     
+    /// Check if app is running (synchronous version)
+    /// - Parameter bundleID: The bundle identifier of the app
+    /// - Returns: true if the app is currently running
+    public func isAppRunningSync(bundleID: String) -> Bool {
+        let runningApps = NSWorkspace.shared.runningApplications
+        return runningApps.contains { app in
+            app.bundleIdentifier == bundleID && !app.isTerminated
+        }
+    }
+    
     /// Get running app instance
     /// - Parameter bundleID: The bundle identifier of the app
     /// - Returns: NSRunningApplication if the app is running

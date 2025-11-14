@@ -445,6 +445,7 @@ struct RunningAppsBlockingView: View {
     
     @State private var appInfoList: [RunningAppInfo] = []
     @State private var isProcessing: Bool = false  // Processing state for "すべて終了"
+    @State private var failedToQuitApps: Set<String> = []  // Track apps that failed normal termination
     
     struct RunningAppInfo: Identifiable {
         let id: String  // bundle ID
@@ -578,18 +579,26 @@ struct RunningAppsBlockingView: View {
     
     @ViewBuilder
     private func quitButton(for appInfo: RunningAppInfo) -> some View {
+        let hasFailedOnce = failedToQuitApps.contains(appInfo.id)
         CustomButton(
-            title: "終了",
-            action: { quitApp(appInfo.app) },
+            title: hasFailedOnce ? "強制終了" : "終了",
+            action: { 
+                if hasFailedOnce {
+                    forceQuitApp(appInfo.app)
+                } else {
+                    quitApp(appInfo.app)
+                }
+            },
             isPrimary: false,
             isDestructive: true,
-            icon: "xmark.circle.fill",
+            icon: hasFailedOnce ? "xmark.octagon.fill" : "xmark.circle.fill",
             uiScale: uiScale
         )
     }
     
     @ViewBuilder
     private var actionButtons: some View {
+        let hasFailedApps = !failedToQuitApps.isEmpty
         HStack(spacing: 16 * uiScale) {
             CustomButton(
                 title: "キャンセル",
@@ -601,9 +610,11 @@ struct RunningAppsBlockingView: View {
             .keyboardShortcut(.cancelAction)
             
             CustomButton(
-                title: "すべて終了",
+                title: hasFailedApps ? "すべて強制終了" : "すべて終了",
                 action: {
-                    if let onQuitAllAndRetry = onQuitAllAndRetry {
+                    if hasFailedApps {
+                        forceQuitAllApps()
+                    } else if let onQuitAllAndRetry = onQuitAllAndRetry {
                         quitAllAppsAndRetry(onRetry: onQuitAllAndRetry)
                     } else {
                         quitAllApps()
@@ -611,7 +622,7 @@ struct RunningAppsBlockingView: View {
                 },
                 isPrimary: true,
                 isDestructive: true,
-                icon: "xmark.circle.fill",
+                icon: hasFailedApps ? "xmark.octagon.fill" : "xmark.circle.fill",
                 uiScale: uiScale
             )
             .frame(maxWidth: .infinity, maxHeight: 44 * uiScale)
@@ -635,12 +646,44 @@ struct RunningAppsBlockingView: View {
     
     private func quitApp(_ app: NSRunningApplication) {
         let launcherService = LauncherService()
-        _ = launcherService.terminateApp(bundleID: app.bundleIdentifier ?? "")
+        let bundleID = app.bundleIdentifier ?? ""
+        _ = launcherService.terminateApp(bundleID: bundleID)
         
         // Wait a moment and check if app is still running
         // Using Swift 6.2 structured concurrency instead of DispatchQueue
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(500))
+            
+            // Check if app is still running
+            if launcherService.isAppRunningSync(bundleID: bundleID) {
+                // App failed to quit - mark it for force quit
+                failedToQuitApps.insert(bundleID)
+            } else {
+                // App successfully quit - remove from failed list if it was there
+                failedToQuitApps.remove(bundleID)
+            }
+            
+            loadRunningApps()
+            
+            // If all apps are closed, automatically proceed
+            if appInfoList.isEmpty {
+                onCancel()  // Close dialog and let the system retry
+            }
+        }
+    }
+    
+    private func forceQuitApp(_ app: NSRunningApplication) {
+        let launcherService = LauncherService()
+        let bundleID = app.bundleIdentifier ?? ""
+        _ = launcherService.forceTerminateApp(bundleID: bundleID)
+        
+        // Wait a moment and check if app is closed
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            
+            // Remove from failed list since we force quit
+            failedToQuitApps.remove(bundleID)
+            
             loadRunningApps()
             
             // If all apps are closed, automatically proceed
@@ -662,12 +705,50 @@ struct RunningAppsBlockingView: View {
         // Using Swift 6.2 structured concurrency instead of DispatchQueue
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(500))
+            
+            // Check which apps are still running and mark them as failed
+            for bundleID in runningAppBundleIDs {
+                if launcherService.isAppRunningSync(bundleID: bundleID) {
+                    failedToQuitApps.insert(bundleID)
+                } else {
+                    failedToQuitApps.remove(bundleID)
+                }
+            }
+            
             loadRunningApps()
             
             // If all apps are closed, automatically proceed
             if appInfoList.isEmpty {
                 // For ⌘Q flow: retry unmount
                 // For ALL unmount flow: just close dialog
+                if let retry = onQuitAllAndRetry {
+                    retry()
+                } else {
+                    onCancel()
+                }
+            }
+        }
+    }
+    
+    private func forceQuitAllApps() {
+        let launcherService = LauncherService()
+        
+        // Force terminate all running apps
+        for bundleID in runningAppBundleIDs {
+            _ = launcherService.forceTerminateApp(bundleID: bundleID)
+        }
+        
+        // Wait a moment and reload
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(300))
+            
+            // Clear failed apps list
+            failedToQuitApps.removeAll()
+            
+            loadRunningApps()
+            
+            // If all apps are closed, automatically proceed
+            if appInfoList.isEmpty {
                 if let retry = onQuitAllAndRetry {
                     retry()
                 } else {

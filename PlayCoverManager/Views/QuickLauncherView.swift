@@ -559,6 +559,11 @@ struct QuickLauncherView: View {
                 titleFontSize: recentAppTitleFontSize,
                 subtitleFontSize: recentAppSubtitleFontSize,
                 padding: recentAppPadding,
+                isKeyboardShortcutEnabled: !showingSettings && !showingInstaller && 
+                                           !showingUninstaller && selectedAppForDetail == nil && 
+                                           selectedAppForUninstall == nil && !showingShortcutGuide && 
+                                           viewModel.unmountFlowState == .idle && !isDrawerOpen && 
+                                           !viewModel.showLaunchLimitAlert,
                 onLaunch: {
                     viewModel.launch(app: recentApp)
                     Task { @MainActor in
@@ -1867,6 +1872,7 @@ private struct RecentAppLaunchButton: View {
     var titleFontSize: CGFloat = 17
     var subtitleFontSize: CGFloat = 13
     var padding: CGFloat = 20
+    let isKeyboardShortcutEnabled: Bool
     let onLaunch: () -> Void
     
     @State private var rippleTrigger = 0
@@ -1999,7 +2005,7 @@ private struct RecentAppLaunchButton: View {
                 isHovered = hovering
             }
         }
-        .keyboardShortcut(.defaultAction)
+        .modifier(ConditionalKeyboardShortcut(isEnabled: isKeyboardShortcutEnabled))
         .onChange(of: app.bundleIdentifier) { oldValue, newValue in
             // Detect app change and trigger rich transition
             if !oldValue.isEmpty && oldValue != newValue {
@@ -4707,5 +4713,18 @@ private struct AppGridCell: View {
             }
         }
         .frame(width: iconSize)
+    }
+}
+
+// MARK: - Conditional Keyboard Shortcut Modifier
+private struct ConditionalKeyboardShortcut: ViewModifier {
+    let isEnabled: Bool
+    
+    func body(content: Content) -> some View {
+        if isEnabled {
+            content.keyboardShortcut(.defaultAction)
+        } else {
+            content
+        }
     }
 }
