@@ -80,17 +80,13 @@ struct SettingsRootView: View {
                     
                     Spacer()
                     
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24 * uiScale))
-                            .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .buttonStyle(.plain)
+                    IconButton(
+                        icon: "xmark.circle.fill",
+                        action: { isPresented = false },
+                        help: "閉じる (Esc)",
+                        uiScale: uiScale
+                    )
                     .keyboardShortcut(.escape, modifiers: [])
-                    .help("閉じる (Esc)")
                 }
                 .padding(.horizontal, 32 * uiScale)
                 .padding(.top, 24 * uiScale)
@@ -718,17 +714,13 @@ struct IPAInstallerSheet: View {
                     
                     // Hide close button during analyzing and installing phases
                     if currentPhase != .analyzing && currentPhase != .installing {
-                        Button {
-                            isPresented = false
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 24 * uiScale))
-                                .foregroundStyle(.secondary)
-                                .symbolRenderingMode(.hierarchical)
-                        }
-                        .buttonStyle(.plain)
+                        IconButton(
+                            icon: "xmark.circle.fill",
+                            action: { isPresented = false },
+                            help: "閉じる (Esc)",
+                            uiScale: uiScale
+                        )
                         .keyboardShortcut(.escape, modifiers: [])
-                        .help("閉じる (Esc)")
                     }
                 }
                 .padding(.horizontal, 32 * uiScale)
@@ -1140,16 +1132,13 @@ struct IPAInstallerSheet: View {
                                 Spacer()
                                 
                                 // Remove from list button
-                                Button {
-                                    removeIPAFromList(info)
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 20 * uiScale))
-                                        .foregroundStyle(.secondary)
-                                        .symbolRenderingMode(.hierarchical)
-                                }
-                                .buttonStyle(.plain)
-                                .help("リストから外す")
+                                IconButton(
+                                    icon: "xmark.circle.fill",
+                                    action: { removeIPAFromList(info) },
+                                    help: "リストから外す",
+                                    size: 20,
+                                    uiScale: uiScale
+                                )
                             }
                             .padding(12 * uiScale)
                             .background(
@@ -1806,17 +1795,13 @@ struct AppUninstallerSheet: View {
                     
                     // Hide close button during uninstalling phase
                     if currentPhase != .uninstalling {
-                        Button {
-                            isPresented = false
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 24 * uiScale))
-                                .foregroundStyle(.secondary)
-                                .symbolRenderingMode(.hierarchical)
-                        }
-                        .buttonStyle(.plain)
+                        IconButton(
+                            icon: "xmark.circle.fill",
+                            action: { isPresented = false },
+                            help: "閉じる (Esc)",
+                            uiScale: uiScale
+                        )
                         .keyboardShortcut(.escape, modifiers: [])
-                        .help("閉じる (Esc)")
                     }
                 }
                 .padding(.horizontal, 32 * uiScale)
@@ -2126,16 +2111,13 @@ struct AppUninstallerSheet: View {
                                     Spacer()
                                     
                                     // Remove button
-                                    Button {
-                                        removeAppFromSelection(app.bundleID)
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .font(.system(size: 20 * uiScale))
-                                            .foregroundStyle(.secondary)
-                                            .symbolRenderingMode(.hierarchical)
-                                    }
-                                    .buttonStyle(.plain)
-                                    .help("選択を解除")
+                                    IconButton(
+                                        icon: "xmark.circle.fill",
+                                        action: { removeAppFromSelection(app.bundleID) },
+                                        help: "選択を解除",
+                                        size: 20,
+                                        uiScale: uiScale
+                                    )
                                 }
                                 .padding(12 * uiScale)
                                 .background(
@@ -3289,6 +3271,7 @@ private struct LinkButton: View {
     let icon: String
     let text: String
     let url: String
+    @State private var isHovered = false
     
     var body: some View {
         Link(destination: URL(string: url)!) {
@@ -3305,8 +3288,16 @@ private struct LinkButton: View {
                     .foregroundStyle(.secondary)
             }
             .padding(12 * uiScale)
-            .background(Color.blue.opacity(0.1), in: RoundedRectangle.standard(.small, scale: uiScale))
+            .background(
+                RoundedRectangle.standard(.small, scale: uiScale)
+                    .fill(Color.blue.opacity(isHovered ? 0.15 : 0.1))
+            )
+            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
         }
         .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }

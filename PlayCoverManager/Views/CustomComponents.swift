@@ -212,6 +212,55 @@ struct CustomLargeButton: View {
     }
 }
 
+// MARK: - Icon Button
+
+/// Icon-only button with hover effects - for close buttons, remove buttons, etc.
+/// Follows same pattern as AlertButton in SimpleAlertView for consistency
+struct IconButton: View {
+    let iconName: String
+    let action: () -> Void
+    let help: String?
+    let size: CGFloat
+    let color: Color
+    var uiScale: CGFloat = 1.0
+    
+    @State private var isHovered = false
+    
+    init(
+        icon: String,
+        action: @escaping () -> Void,
+        help: String? = nil,
+        size: CGFloat = 24,
+        color: Color = .secondary,
+        uiScale: CGFloat = 1.0
+    ) {
+        self.iconName = icon
+        self.action = action
+        self.help = help
+        self.size = size
+        self.color = color
+        self.uiScale = uiScale
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: iconName)
+                .font(.system(size: size * uiScale))
+                .foregroundStyle(isHovered ? color.opacity(0.8) : color)
+                .symbolRenderingMode(.hierarchical)
+                .frame(minWidth: 44 * uiScale, minHeight: 44 * uiScale)
+                .contentShape(Rectangle())
+                .scaleEffect(isHovered ? 1.1 : 1.0)
+                .animation(.easeInOut(duration: 0.15), value: isHovered)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .help(help ?? "")
+    }
+}
+
 // MARK: - Custom Toggle
 
 /// Modern toggle with dynamic scaling - Swift 6.2 optimized
