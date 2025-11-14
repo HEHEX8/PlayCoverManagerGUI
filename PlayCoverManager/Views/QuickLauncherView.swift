@@ -2675,8 +2675,6 @@ private struct SettingsView: View {
     @State private var dataHandlingOverride: DataHandlingOverride = .useGlobal
     @State private var languageOverride: String? = nil  // nil = system default, or language code like "ja", "en"
     @State private var supportedLanguages: [String] = []
-    @State private var showingUnmountPrompt = false
-    @State private var pendingNobrowseChange: NobrowseOverride?
     
     enum NobrowseOverride: String, CaseIterable, Identifiable, SegmentedItemProtocol {
         case useGlobal
@@ -2845,31 +2843,6 @@ private struct SettingsView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay {
-            if showingUnmountPrompt {
-                ZStack {
-                    Color.black.opacity(0.4)
-                        .ignoresSafeArea()
-                    
-                    SimpleAlertView(
-                        title: "イジェクトが必要です",
-                        message: "Finder表示設定を変更するには、マウント中のディスクイメージをイジェクトする必要があります。\n\nイジェクトしてから設定を適用しますか？",
-                        icon: "externaldrive.fill",
-                        iconColor: .orange,
-                        buttons: [
-                            SimpleAlertButton("キャンセル", isCancel: true) {
-                                cancelNobrowseChange()
-                            },
-                            SimpleAlertButton("イジェクトして適用", isPrimary: true, isDefault: true) {
-                                confirmNobrowseChangeWithUnmount()
-                            }
-                        ],
-                        uiScale: uiScale
-                    )
-                }
-                .transition(.opacity)
-            }
-        }
         .onAppear {
             // Load supported languages first, then current settings
             loadSupportedLanguages()
@@ -2950,38 +2923,21 @@ private struct SettingsView: View {
         }
         
         if isMounted {
-            // Show unmount prompt
-            pendingNobrowseChange = newValue
-            showingUnmountPrompt = true
+            // Request immediate eject from ViewModel
+            Task {
+                await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
+                
+                // Apply setting after eject
+                await MainActor.run {
+                    nobrowseOverride = newValue
+                    saveNobrowseSetting(newValue)
+                }
+            }
         } else {
             // Apply immediately if not mounted
             nobrowseOverride = newValue
             saveNobrowseSetting(newValue)
         }
-    }
-    
-    private func confirmNobrowseChangeWithUnmount() {
-        guard let newValue = pendingNobrowseChange else { return }
-        
-        // Close prompt and perform immediate eject
-        showingUnmountPrompt = false
-        
-        Task {
-            await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
-            
-            // Apply setting after eject attempt
-            await MainActor.run {
-                nobrowseOverride = newValue
-                saveNobrowseSetting(newValue)
-                pendingNobrowseChange = nil
-            }
-        }
-    }
-    
-    private func cancelNobrowseChange() {
-        // Revert to previous value
-        pendingNobrowseChange = nil
-        showingUnmountPrompt = false
     }
     
     private func loadSupportedLanguages() {
