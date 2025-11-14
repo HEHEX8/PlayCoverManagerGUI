@@ -183,36 +183,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let runningApps = NSWorkspace.shared.runningApplications
         let matchingApps = runningApps.filter { $0.bundleIdentifier == bundleID }
         
-        // If more than 1 instance (self + others)
+        // If more than 1 instance (self + others) - prevent duplicate launch
         if matchingApps.count > 1 {
             Task { @MainActor in
                 let alert = NSAlert()
                 alert.messageText = "PlayCover Manager は既に起動しています"
                 alert.informativeText = """
-                    複数のインスタンスが同時に実行されています。
+                    PlayCover Manager は既に実行中です。
                     
-                    これによりディスクイメージの競合が発生し、アンマウントに失敗する可能性があります。
+                    複数のインスタンスを同時に実行すると、ディスクイメージの競合が発生し、
+                    アンマウントに失敗する可能性があります。
                     
                     実行中のインスタンス: \(matchingApps.count)個
                     
-                    このインスタンスを終了してもよろしいですか？
+                    このインスタンスを終了します。
                     """
                 alert.alertStyle = .warning
-                alert.addButton(withTitle: "このインスタンスを終了")
-                alert.addButton(withTitle: "続行（非推奨）")
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
                 
-                let response = alert.runModal()
-                if response == .alertFirstButtonReturn {
-                    NSApplication.shared.terminate(nil)
-                } else {
-                    // Show another warning about potential issues
-                    let warningAlert = NSAlert()
-                    warningAlert.messageText = "注意"
-                    warningAlert.informativeText = "複数インスタンスの実行により、⌘Q終了時にディスクのアンマウントに失敗する可能性があります。"
-                    warningAlert.alertStyle = .informational
-                    warningAlert.addButton(withTitle: "了解")
-                    warningAlert.runModal()
-                }
+                // Always terminate this instance to prevent conflicts
+                NSApplication.shared.terminate(nil)
             }
         }
     }
