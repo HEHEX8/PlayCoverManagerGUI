@@ -557,7 +557,10 @@ struct QuickLauncherView: View {
                 titleFontSize: recentAppTitleFontSize,
                 subtitleFontSize: recentAppSubtitleFontSize,
                 padding: recentAppPadding,
-                isKeyboardShortcutEnabled: true,  // Always enable - overlay blocking is handled by NSEvent monitor
+                isKeyboardShortcutEnabled: !showingSettings && !showingInstaller && !showingUninstaller && 
+                                         selectedAppForDetail == nil && selectedAppForUninstall == nil &&
+                                         !showingShortcutGuide && viewModel.unmountFlowState == .idle &&
+                                         !isDrawerOpen && !viewModel.showLaunchLimitAlert,
                 onLaunch: {
                     viewModel.launch(app: recentApp)
                     Task { @MainActor in
