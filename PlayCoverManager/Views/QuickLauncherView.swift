@@ -1644,17 +1644,13 @@ private struct AppDetailSheet: View {
                     
                     Spacer()
                     
-                    Button {
-                        isPresented = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 24 * uiScale))
-                            .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .buttonStyle(.plain)
+                    IconButton(
+                        icon: "xmark.circle.fill",
+                        action: { isPresented = false },
+                        help: "閉じる (Esc)",
+                        uiScale: uiScale
+                    )
                     .keyboardShortcut(.escape, modifiers: [])
-                    .help("閉じる (Esc)")
                 }
                 .padding(.horizontal, 32 * uiScale)
                 .padding(.top, 24 * uiScale)
@@ -2834,13 +2830,13 @@ private struct SettingsView: View {
             }
             
             // Reset button
-            Button(role: .destructive) {
-                resetToGlobalDefaults()
-            } label: {
-                Label("グローバル設定に戻す", systemImage: "arrow.counterclockwise")
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.red)
+            CustomButton(
+                title: "グローバル設定に戻す",
+                action: resetToGlobalDefaults,
+                isDestructive: true,
+                icon: "arrow.counterclockwise",
+                uiScale: uiScale
+            )
             
             Spacer()
         }
@@ -4027,15 +4023,17 @@ private struct DrawerPanel: View {
                 
                 Spacer()
                 
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        isOpen = false
-                    }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14 * uiScale))
-                }
-                .buttonStyle(.plain)
+                IconButton(
+                    icon: "xmark",
+                    action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            isOpen = false
+                        }
+                    },
+                    help: "閉じる",
+                    size: 14,
+                    uiScale: uiScale
+                )
             }
             .padding(16 * uiScale)
             
@@ -4251,17 +4249,16 @@ private struct KeyboardShortcutGuide: View {
                 
                 Spacer()
                 
-                Button {
-                    withAnimation(.easeOut(duration: 0.2)) {
-                        isShowing = false
-                    }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 24 * uiScale))
-                        .foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-                .help(String(localized: "閉じる (Esc)"))
+                IconButton(
+                    icon: "xmark.circle.fill",
+                    action: {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            isShowing = false
+                        }
+                    },
+                    help: String(localized: "閉じる (Esc)"),
+                    uiScale: uiScale
+                )
             }
             .padding(24 * uiScale)
             .glassEffect(.regular, in: .rect)
