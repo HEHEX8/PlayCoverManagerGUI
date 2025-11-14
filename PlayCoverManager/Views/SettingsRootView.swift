@@ -435,6 +435,83 @@ private struct GeneralSettingsView: View {
                 }
                 .padding(24 * uiScale)
                 .liquidGlassCard(uiScale: uiScale)
+                
+                // Launch Limit Card
+                VStack(alignment: .leading, spacing: 8 * uiScale) {
+                    // Header with icon gradient
+                    HStack(spacing: 6 * uiScale) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.orange.opacity(0.2), Color.yellow.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 40 * uiScale, height: 40 * uiScale)
+                            
+                            Image(systemName: "gauge.with.dots.needle.67percent")
+                                .font(.system(size: 18 * uiScale, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.orange, .yellow],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        
+                        Text("起動制限")
+                            .font(.system(size: 20 * uiScale, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
+                    
+                    Divider()
+                        .padding(.vertical, 4 * uiScale)
+                    
+                    VStack(alignment: .leading, spacing: 8 * uiScale) {
+                        VStack(alignment: .leading, spacing: 10 * uiScale) {
+                            Text("最大同時起動数")
+                                .font(.system(size: 13 * uiScale, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                            
+                            HStack(spacing: 12 * uiScale) {
+                                TextField("0", value: Binding(
+                                    get: { settingsStore.maxConcurrentApps },
+                                    set: { newValue in
+                                        settingsStore.maxConcurrentApps = max(0, newValue)
+                                    }
+                                ), format: .number)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 80 * uiScale)
+                                .font(.system(size: 14 * uiScale))
+                                
+                                Text(settingsStore.maxConcurrentApps == 0 ? "個（無制限）" : "個")
+                                    .font(.system(size: 14 * uiScale))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        HStack(spacing: 6 * uiScale) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 12 * uiScale))
+                                .foregroundStyle(.orange)
+                            Text("同時に起動できるアプリの最大数を制限します。0を設定すると無制限になります。制限数を超える起動申請があった場合、ダイアログで通知されます。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(12 * uiScale)
+                        .background(
+                            RoundedRectangle.standard(.small, scale: uiScale)
+                                .fill(Color.orange.opacity(0.05))
+                        )
+                    }
+                }
+                .padding(24 * uiScale)
+                .liquidGlassCard(uiScale: uiScale)
             }
             .padding(.horizontal, 24 * uiScale)
             .padding(.vertical, 20 * uiScale)

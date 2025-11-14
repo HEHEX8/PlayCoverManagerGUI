@@ -10,6 +10,7 @@ final class SettingsStore {
         static let defaultDataHandling = "defaultDataHandling"
         static let imageFormat = "diskImageFormat"
         static let appLanguage = "appLanguage"
+        static let maxConcurrentApps = "maxConcurrentApps"
     }
 
     enum AppLanguage: String, CaseIterable, Identifiable {
@@ -146,6 +147,13 @@ final class SettingsStore {
         case error(String)
     }
     var shortcutRemovalResult: ShortcutRemovalResult? = nil
+    
+    // Concurrent app launch limit (0 = unlimited)
+    var maxConcurrentApps: Int = 0 {
+        didSet {
+            UserDefaults.standard.set(maxConcurrentApps, forKey: Keys.maxConcurrentApps)
+        }
+    }
     
     // ASIF format is hardcoded - no user selection needed
     let diskImageFormat: DiskImageFormat = .asif

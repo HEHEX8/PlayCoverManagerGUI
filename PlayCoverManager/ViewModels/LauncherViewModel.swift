@@ -45,6 +45,14 @@ final class LauncherViewModel {
     
     // Track if current unmount is for storage change (vs quit)
     @ObservationIgnored private var isStorageChangeFlow: Bool = false
+    
+    // Concurrent app launch control
+    var launchPendingApps: Set<String> = []  // Apps waiting for launch decision (show spinner)
+    var launchThrottledApps: [PlayCoverApp] = []  // Apps throttled due to limit
+    var showLaunchLimitAlert: Bool = false
+    @ObservationIgnored private var runningAppCount: Int = 0
+    @ObservationIgnored private var launchQueue: [PlayCoverApp] = []
+    @ObservationIgnored private var isProcessingLaunchQueue: Bool = false
 
     // Services and dependencies - not tracked by Observable (no UI impact)
     @ObservationIgnored private let playCoverPaths: PlayCoverPaths
@@ -182,6 +190,18 @@ final class LauncherViewModel {
     }
     
     private func handleAppTerminated(bundleID: String) async {
+        // Decrement running app count
+        if runningAppCount > 0 {
+            runningAppCount -= 1
+            Logger.lifecycle("Running app count decreased: \(runningAppCount)")
+            
+            // Remove from pending if still there
+            launchPendingApps.remove(bundleID)
+            
+            // Process launch queue if there are waiting apps
+            await processLaunchQueue()
+        }
+        
         // Always update status first, even if we skip creating a new task
         await updateAppStatus(bundleID: bundleID)
         
@@ -301,6 +321,10 @@ final class LauncherViewModel {
             // Update running apps set for consistency
             // Swift 6.2: Use compactMap for better performance than filter+map
             previouslyRunningApps = Set(apps.compactMap { $0.isRunning ? $0.bundleIdentifier : nil })
+            
+            // Initialize running app count
+            runningAppCount = previouslyRunningApps.count
+            Logger.lifecycle("Initialized running app count: \(runningAppCount)")
         } catch {
             self.error = AppError.environment(String(localized: "アプリ一覧の更新に失敗"), message: error.localizedDescription, underlying: error)
         }
@@ -322,8 +346,73 @@ final class LauncherViewModel {
 
     func launch(app: PlayCoverApp) {
         Logger.lifecycle("Launch requested for: \(app.displayName) (\(app.bundleIdentifier))")
+        
+        // Add to pending apps (show spinner)
+        launchPendingApps.insert(app.bundleIdentifier)
+        
         // Swift 6.2: Task.immediate for instant UI feedback
-        Task.immediate { await performLaunch(app: app, resume: false) }
+        Task.immediate { 
+            await enqueueLaunch(app: app, resume: false)
+        }
+    }
+    
+    private func enqueueLaunch(app: PlayCoverApp, resume: Bool) async {
+        let maxConcurrent = settings.maxConcurrentApps
+        
+        // If unlimited (0) or first app, launch immediately
+        if maxConcurrent == 0 || runningAppCount == 0 {
+            Logger.lifecycle("Launching immediately: \(app.displayName) (unlimited or first app)")
+            await performLaunch(app: app, resume: resume)
+            return
+        }
+        
+        // Add to queue for sequential processing
+        launchQueue.append(app)
+        Logger.lifecycle("Added to launch queue: \(app.displayName) (queue size: \(launchQueue.count))")
+        
+        // Process queue if not already processing
+        await processLaunchQueue()
+    }
+    
+    @MainActor
+    private func processLaunchQueue() async {
+        guard !isProcessingLaunchQueue else {
+            Logger.lifecycle("Launch queue already being processed, skipping")
+            return
+        }
+        
+        isProcessingLaunchQueue = true
+        defer { isProcessingLaunchQueue = false }
+        
+        while !launchQueue.isEmpty {
+            let app = launchQueue.removeFirst()
+            Logger.lifecycle("Processing queued app: \(app.displayName) (remaining: \(launchQueue.count))")
+            
+            let maxConcurrent = settings.maxConcurrentApps
+            
+            // Check if we can launch
+            if maxConcurrent == 0 || runningAppCount < maxConcurrent {
+                Logger.lifecycle("Launching: \(app.displayName) (running: \(runningAppCount)/\(maxConcurrent))")
+                await performLaunch(app: app, resume: false)
+            } else {
+                Logger.lifecycle("Launch limit reached, throttling: \(app.displayName)")
+                // Add to throttled apps
+                launchThrottledApps.append(app)
+                // Remove from pending (no more spinner)
+                launchPendingApps.remove(app.bundleIdentifier)
+            }
+        }
+        
+        // Show alert if any apps were throttled
+        if !launchThrottledApps.isEmpty {
+            Logger.lifecycle("Showing launch limit alert for \(launchThrottledApps.count) apps")
+            showLaunchLimitAlert = true
+        }
+    }
+    
+    func dismissLaunchLimitAlert() {
+        launchThrottledApps.removeAll()
+        showLaunchLimitAlert = false
     }
 
     private func performLaunch(app: PlayCoverApp, resume: Bool) async {
@@ -400,6 +489,13 @@ final class LauncherViewModel {
             }
             try await launcherService.openApp(app, preferredLanguage: preferredLanguage)
             Logger.lifecycle("Successfully launched \(app.displayName)")
+            
+            // Increment running app count
+            runningAppCount += 1
+            Logger.lifecycle("Running app count: \(runningAppCount)")
+            
+            // Remove from pending (hide spinner)
+            launchPendingApps.remove(app.bundleIdentifier)
             pendingLaunchContext = nil
             
             // Cancel any pending unmount task (user relaunched before unmount)

@@ -879,6 +879,25 @@ struct QuickLauncherView: View {
                 )
                 .transition(.scale.combined(with: .opacity))
                 .zIndex(992)
+            } else if viewModel.showLaunchLimitAlert {
+                // Launch limit alert - show throttled apps
+                let throttledAppNames = viewModel.launchThrottledApps.map { $0.displayName }.joined(separator: "、")
+                let maxConcurrent = settingsStore.maxConcurrentApps
+                
+                SimpleAlertView(
+                    title: String(localized: "同時起動数の制限に達しました"),
+                    message: String(localized: "最大同時起動数（\(maxConcurrent)個）に達しているため、以下のアプリの起動をスキップしました：\n\n\(throttledAppNames)"),
+                    icon: "exclamationmark.triangle.fill",
+                    iconColor: .orange,
+                    buttons: [
+                        SimpleAlertButton("OK", isPrimary: true, isDefault: true, isCancel: true) {
+                            viewModel.dismissLaunchLimitAlert()
+                        }
+                    ],
+                    uiScale: uiScale
+                )
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(991)
             } else if viewModel.isBusy && viewModel.isShowingStatus {
                 VStack(spacing: 12 * uiScale) {
                     ProgressView()
@@ -1116,6 +1135,7 @@ private struct iOSAppIconView: View {
     let iconSize: CGFloat  // Dynamic icon size
     let fontSize: CGFloat  // Dynamic font size
     let uiScale: CGFloat  // UI scale for dynamic scaling
+    let isPending: Bool  // Launch pending state (show spinner)
     let tapAction: () -> Void
     let rightClickAction: () -> Void
     let uninstallAction: () -> Void
@@ -1242,6 +1262,21 @@ private struct iOSAppIconView: View {
             .overlay(alignment: .bottom) {
                 statusIndicator
                     .offset(x: 0, y: iconSize * 0.06)  // Shift down slightly from bottom edge
+            }
+            .overlay {
+                // Launch pending spinner overlay
+                if isPending {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(Color.black.opacity(0.4))
+                        
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .tint(.white)
+                            .scaleEffect(iconSize / 100.0)  // Scale with icon size
+                    }
+                    .transition(.opacity)
+                }
             }
             // Press & bounce & hover animation
             .scaleEffect(currentScale)
@@ -4511,7 +4546,8 @@ private struct ResponsiveAppGrid: View {
                             badgeFontSize: badgeFontSize,
                             badgeSize: badgeSize,
                             launchApp: viewModel.launch,
-                            clearSearchFocus: clearSearchFocus
+                            clearSearchFocus: clearSearchFocus,
+                            launchPendingApps: viewModel.launchPendingApps
                         )
                     }
                 }
@@ -4548,6 +4584,7 @@ private struct AppGridRow: View {
     let badgeSize: CGFloat
     let launchApp: (PlayCoverApp) -> Void
     let clearSearchFocus: () -> Void
+    let launchPendingApps: Set<String>
     
     var body: some View {
         let appsInRow = min(10, apps.count - (rowIndex * 10))
@@ -4574,7 +4611,8 @@ private struct AppGridRow: View {
                         badgeFontSize: badgeFontSize,
                         badgeSize: badgeSize,
                         launchApp: launchApp,
-                        clearSearchFocus: clearSearchFocus
+                        clearSearchFocus: clearSearchFocus,
+                        launchPendingApps: launchPendingApps
                     )
                 }
             }
@@ -4603,6 +4641,7 @@ private struct AppGridCell: View {
     let badgeSize: CGFloat
     let launchApp: (PlayCoverApp) -> Void
     let clearSearchFocus: () -> Void
+    let launchPendingApps: Set<String>
     
     var body: some View {
         let keyNumber = columnIndex == 9 ? "0" : "\(columnIndex + 1)"
@@ -4615,7 +4654,8 @@ private struct AppGridCell: View {
                 isFocused: focusedAppIndex == index,
                 iconSize: iconSize,
                 fontSize: fontSize,
-                uiScale: uiScale
+                uiScale: uiScale,
+                isPending: launchPendingApps.contains(app.bundleIdentifier)
             ) {
                 // Tap action
                 clearSearchFocus()
