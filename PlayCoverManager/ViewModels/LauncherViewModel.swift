@@ -748,10 +748,20 @@ final class LauncherViewModel {
     func completeUnmount() {
         unmountFlowState = .idle
         
-        // PlayCover container has been ejected at this point
-        // App cannot continue normally, so terminate
-        Logger.unmount("PlayCover container ejected, terminating app")
-        NSApplication.shared.terminate(nil)
+        // Check if this was a storage change flow
+        if isStorageChangeFlow {
+            Logger.unmount("Storage change unmount completed, showing storage selection")
+            isStorageChangeFlow = false
+            restoreWindowFocus()
+            
+            // Notify AppViewModel to show storage selection
+            onStorageChangeCompleted?()
+        } else {
+            // PlayCover container has been ejected at this point
+            // App cannot continue normally, so terminate
+            Logger.unmount("PlayCover container ejected, terminating app")
+            NSApplication.shared.terminate(nil)
+        }
     }
     
     func dismissUnmountError() {
@@ -1487,8 +1497,9 @@ final class LauncherViewModel {
         guard case .storageChangeConfirming = unmountFlowState else { return }
         
         isStorageChangeFlow = true  // Mark as storage change flow
-        // Swift 6.2: Task.immediate for immediate unmount operation
-        Task.immediate { await performUnmountForStorageChange() }
+        pendingUnmountTask = true  // Apply to PlayCover container
+        // Use same unmount flow as ALL eject
+        Task.immediate { await performUnmountAllAndQuit(applyToPlayCoverContainer: true) }
     }
     
     /// Cancel storage location change
@@ -1498,79 +1509,7 @@ final class LauncherViewModel {
         restoreWindowFocus()
     }
     
-    /// Perform unmount all for storage location change (does not quit)
-    private func performUnmountForStorageChange() async {
-        CriticalOperationService.shared.beginOperation("ストレージ変更のアンマウント")
-        defer {
-            CriticalOperationService.shared.endOperation()
-        }
-        
-        // Cancel all active auto-unmount tasks
-        Logger.unmount("Cancelling \(activeUnmountTasks.count) active auto-unmount tasks for storage change")
-        for (_, task) in activeUnmountTasks {
-            task.cancel()
-        }
-        activeUnmountTasks.removeAll()
-        try? await Task.sleep(for: .seconds(1.0))
-        
-        // Explicitly release all locks
-        for app in apps {
-            await lockService.unlockContainer(for: app.bundleIdentifier)
-            _ = await lockService.confirmUnlockCompleted()
-        }
-        
-        await MainActor.run {
-            unmountFlowState = .processing(status: String(localized: "すべてのディスクイメージをアンマウント中…"))
-        }
-        
-        var successCount = 0
-        var failedCount = 0
-        
-        // Unmount all app containers
-        for app in apps {
-            let container = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-            
-            // Check if container is actually mounted
-            let descriptor = try? diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: container)
-            guard let descriptor = descriptor, descriptor.isMounted else {
-                continue
-            }
-            
-            do {
-                try await diskImageService.ejectDiskImage(for: container, force: false)
-                successCount += 1
-            } catch {
-                failedCount += 1
-            }
-        }
-        
-        // Unmount PlayCover container
-        let playCoverContainer = playCoverPaths.containerRootURL
-        let isMounted = (try? diskImageService.isMounted(at: playCoverContainer)) ?? false
-        if isMounted {
-            do {
-                try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
-                successCount += 1
-            } catch {
-                failedCount += 1
-            }
-        }
-        
-        await MainActor.run {
-            if failedCount > 0 {
-                // Some failed - offer force unmount
-                unmountFlowState = .forceUnmountOffering(failedCount: failedCount, applyToPlayCoverContainer: true)
-            } else {
-                // All succeeded - proceed to storage selection
-                unmountFlowState = .idle
-                restoreWindowFocus()
-                
-                // Notify AppViewModel to show storage selection
-                onStorageChangeCompleted?()
-            }
-        }
-    }
-    
+
     // MARK: - Process Cleanup
     
     /// Clean up lingering processes from previous failed installations or crashes
