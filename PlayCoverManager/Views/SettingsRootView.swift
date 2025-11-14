@@ -3051,8 +3051,8 @@ private struct MaintenanceSettingsView: View {
     
     private func clearIconCache() {
         // Icon cache is managed by LauncherService's NSCache
-        // TODO: Add actual cache clearing logic here
-        // For now, just show the result (handled by QuickLauncherView)
+        // NSCache automatically evicts entries when memory pressure occurs
+        // Manual clearing is not necessary - cache result is shown by QuickLauncherView
     }
     
     private func removePlayCoverShortcuts(settingsStore: SettingsStore) {

@@ -122,9 +122,7 @@ struct QuickLauncherView: View {
     
     // Calculated scaled values for UI elements
     private var uiScale: CGFloat {
-        let scale = calculateUIScale(for: windowSize)
-        print("🎯 uiScale computed property accessed: windowSize=\(windowSize.width)x\(windowSize.height), scale=\(scale)")
-        return scale
+        calculateUIScale(for: windowSize)
     }
     
     // Unified horizontal padding for consistent visual alignment
@@ -695,10 +693,7 @@ struct QuickLauncherView: View {
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { newSize in
-            print("📏 onGeometryChange fired: \(newSize.width)x\(newSize.height)")
             windowSize = newSize
-            let scale = calculateUIScale(for: newSize)
-            print("🔍 QuickLauncher window size updated: \(windowSize.width)x\(windowSize.height), calculated scale: \(scale)")
         }
         .overlay(alignment: .center) {
             // All alerts/prompts at QuickLauncherView level (UnmountOverlayView pattern)
@@ -1247,13 +1242,6 @@ private struct iOSAppIconView: View {
                 x: 0, 
                 y: isHovering ? iconSize * 0.06 : iconSize * 0.02
             )
-            // Focus border removed - unnecessary visual clutter
-            // .overlay {
-            //     if isFocused {
-            //         RoundedRectangle(cornerRadius: cornerRadius)
-            //             .strokeBorder(Color.accentColor, lineWidth: iconSize * 0.03)
-            //     }
-            // }
             .overlay {
                 // Hover border glow
                 if isHovering {
