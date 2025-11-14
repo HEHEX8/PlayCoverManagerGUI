@@ -782,7 +782,7 @@ final class LauncherViewModel {
     }
     
     /// Immediately eject container (skip 30 second wait, for manual eject operations)
-    func immediateEjectContainer(for bundleID: String) async throws {
+    func immediateEjectContainer(for bundleID: String) async {
         // Cancel existing auto-unmount task if running
         if let task = activeUnmountTasks[bundleID] {
             task.cancel()
@@ -819,7 +819,6 @@ final class LauncherViewModel {
             Logger.unmount("Successfully ejected container immediately for: \(bundleID)")
         } catch {
             Logger.error("Failed to immediately eject container for \(bundleID): \(error)")
-            throw error
         }
     }
     

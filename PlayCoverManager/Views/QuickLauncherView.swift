@@ -2967,21 +2967,13 @@ private struct SettingsView: View {
         showingUnmountPrompt = false
         
         Task {
-            do {
-                try await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
-                
-                // Apply setting after successful eject
-                await MainActor.run {
-                    nobrowseOverride = newValue
-                    saveNobrowseSetting(newValue)
-                    pendingNobrowseChange = nil
-                }
-            } catch {
-                // Eject failed - revert
-                await MainActor.run {
-                    pendingNobrowseChange = nil
-                    Logger.error("Failed to eject for Finder setting change: \(error)")
-                }
+            await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
+            
+            // Apply setting after eject attempt
+            await MainActor.run {
+                nobrowseOverride = newValue
+                saveNobrowseSetting(newValue)
+                pendingNobrowseChange = nil
             }
         }
     }
@@ -4775,11 +4767,7 @@ private struct AppGridCell: View {
                 selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
             } ejectAction: {
                 Task {
-                    do {
-                        try await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
-                    } catch {
-                        Logger.error("Eject failed from context menu: \(error)")
-                    }
+                    await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
                 }
             }
             
