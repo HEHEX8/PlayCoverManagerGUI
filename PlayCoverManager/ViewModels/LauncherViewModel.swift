@@ -1042,8 +1042,9 @@ final class LauncherViewModel {
             volumesAfter = await diskImageService.countMountedVolumes(under: storageDir)
         }
         
-        // Step 3: If external drive, eject the whole drive  
-        if let storageDir = settings.diskImageDirectory {
+        // Step 3: If external drive, eject the whole drive
+        // Skip for storage change flow (user is changing storage location)
+        if !isStorageChangeFlow, let storageDir = settings.diskImageDirectory {
             
             // Check if path is under /Volumes/ (typical external mount point)
             let isUnderVolumes = storageDir.path.hasPrefix("/Volumes/")
@@ -1497,9 +1498,9 @@ final class LauncherViewModel {
         guard case .storageChangeConfirming = unmountFlowState else { return }
         
         isStorageChangeFlow = true  // Mark as storage change flow
-        pendingUnmountTask = false  // Do NOT apply to PlayCover container (same as ⌘Q)
-        // Use same unmount flow as ⌘Q (without PlayCover container)
-        Task.immediate { await performUnmountAllAndQuit(applyToPlayCoverContainer: false) }
+        pendingUnmountTask = true  // MUST apply to PlayCover container (changing storage location)
+        // Use same unmount flow as ⌘Q (app containers + PlayCover container, no drive eject)
+        Task.immediate { await performUnmountAllAndQuit(applyToPlayCoverContainer: true) }
     }
     
     /// Cancel storage location change
