@@ -782,7 +782,7 @@ final class LauncherViewModel {
     }
     
     /// Immediately eject container (skip 30 second wait, for manual eject operations)
-    func immediateEjectContainer(for bundleID: String) async {
+    func immediateEjectContainer(for bundleID: String) async throws {
         // Cancel existing auto-unmount task if running
         if let task = activeUnmountTasks[bundleID] {
             task.cancel()

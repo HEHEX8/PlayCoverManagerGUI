@@ -4775,7 +4775,11 @@ private struct AppGridCell: View {
                 selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
             } ejectAction: {
                 Task {
-                    await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
+                    do {
+                        try await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
+                    } catch {
+                        Logger.error("Eject failed from context menu: \(error)")
+                    }
                 }
             }
             
