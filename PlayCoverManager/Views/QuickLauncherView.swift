@@ -922,7 +922,8 @@ struct QuickLauncherView: View {
             eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 if showingSettings || showingInstaller || showingUninstaller || 
                    selectedAppForDetail != nil || selectedAppForUninstall != nil ||
-                   showingShortcutGuide || viewModel.unmountFlowState != .idle {
+                   showingShortcutGuide || viewModel.unmountFlowState != .idle ||
+                   isDrawerOpen || viewModel.showLaunchLimitAlert {
                     return event
                 }
                 if isSearchFieldFocused {

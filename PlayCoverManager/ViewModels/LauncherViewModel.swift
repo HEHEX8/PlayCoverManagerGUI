@@ -359,9 +359,14 @@ final class LauncherViewModel {
     private func enqueueLaunch(app: PlayCoverApp, resume: Bool) async {
         let maxConcurrent = settings.maxConcurrentApps
         
-        // If unlimited (0) or first app, launch immediately
-        if maxConcurrent == 0 || runningAppCount == 0 {
-            Logger.lifecycle("Launching immediately: \(app.displayName) (unlimited or first app)")
+        // If unlimited (0), first app, or app is already running, launch immediately
+        // Already running apps only bring window to front, not actual multi-launch
+        if maxConcurrent == 0 || runningAppCount == 0 || app.isRunning {
+            if app.isRunning {
+                Logger.lifecycle("Launching immediately: \(app.displayName) (already running, will only activate window)")
+            } else {
+                Logger.lifecycle("Launching immediately: \(app.displayName) (unlimited or first app)")
+            }
             await performLaunch(app: app, resume: resume)
             return
         }

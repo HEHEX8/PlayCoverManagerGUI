@@ -148,8 +148,8 @@ final class SettingsStore {
     }
     var shortcutRemovalResult: ShortcutRemovalResult? = nil
     
-    // Concurrent app launch limit (0 = unlimited)
-    var maxConcurrentApps: Int = 0 {
+    // Concurrent app launch limit (0 = unlimited, default = 3)
+    var maxConcurrentApps: Int = 3 {
         didSet {
             UserDefaults.standard.set(maxConcurrentApps, forKey: Keys.maxConcurrentApps)
         }
@@ -184,6 +184,14 @@ final class SettingsStore {
             appLanguage = language
         } else {
             appLanguage = .system
+        }
+        
+        // Load maxConcurrentApps from UserDefaults (default: 3)
+        if userDefaults.object(forKey: Keys.maxConcurrentApps) != nil {
+            maxConcurrentApps = userDefaults.integer(forKey: Keys.maxConcurrentApps)
+        } else {
+            maxConcurrentApps = 3
+            userDefaults.set(3, forKey: Keys.maxConcurrentApps)
         }
         
         // Apply language on init
