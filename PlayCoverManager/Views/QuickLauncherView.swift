@@ -4633,6 +4633,11 @@ private struct ResponsiveAppGrid: View {
                             badgeFontSize: badgeFontSize,
                             badgeSize: badgeSize,
                             launchApp: viewModel.launch,
+                            ejectApp: { app in
+                                Task {
+                                    await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
+                                }
+                            },
                             clearSearchFocus: clearSearchFocus,
                             launchPendingApps: viewModel.launchPendingApps
                         )
@@ -4670,6 +4675,7 @@ private struct AppGridRow: View {
     let badgeFontSize: CGFloat
     let badgeSize: CGFloat
     let launchApp: (PlayCoverApp) -> Void
+    let ejectApp: (PlayCoverApp) -> Void
     let clearSearchFocus: () -> Void
     let launchPendingApps: Set<String>
     
@@ -4698,6 +4704,7 @@ private struct AppGridRow: View {
                         badgeFontSize: badgeFontSize,
                         badgeSize: badgeSize,
                         launchApp: launchApp,
+                        ejectApp: ejectApp,
                         clearSearchFocus: clearSearchFocus,
                         launchPendingApps: launchPendingApps
                     )
@@ -4727,6 +4734,7 @@ private struct AppGridCell: View {
     let badgeFontSize: CGFloat
     let badgeSize: CGFloat
     let launchApp: (PlayCoverApp) -> Void
+    let ejectApp: (PlayCoverApp) -> Void
     let clearSearchFocus: () -> Void
     let launchPendingApps: Set<String>
     
@@ -4766,9 +4774,7 @@ private struct AppGridCell: View {
             } uninstallAction: {
                 selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
             } ejectAction: {
-                Task {
-                    await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
-                }
+                ejectApp(app)
             }
             
             // Number key indicator badge
