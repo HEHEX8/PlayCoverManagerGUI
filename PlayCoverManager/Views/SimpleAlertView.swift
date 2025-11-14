@@ -13,9 +13,16 @@ struct SimpleAlertView: View {
     var body: some View {
         // UnmountOverlayView pattern: full-screen ZStack with centered content
         ZStack {
-            // Background overlay
+            // Background overlay - tap to dismiss if cancel button exists
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // Dismiss on background tap if cancel button exists
+                    if let cancelButton = buttons.first(where: { $0.isCancel }) {
+                        cancelButton.action()
+                    }
+                }
             
             // Alert content
             VStack(spacing: 20 * uiScale) {
@@ -36,17 +43,7 @@ struct SimpleAlertView: View {
                 HStack(spacing: 12 * uiScale) {
                     ForEach(buttons.indices, id: \.self) { index in
                         let button = buttons[index]
-                        Button(button.title) {
-                            button.action()
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundStyle(button.isPrimary ? .white : .primary)
-                        .padding(.horizontal, 20 * uiScale)
-                        .padding(.vertical, 8 * uiScale)
-                        .frame(minWidth: 120 * uiScale, minHeight: 36 * uiScale)
-                        .background(buttonBackground(for: button))
-                        .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
-                        .keyboardShortcut(button.isDefault ? .defaultAction : (button.isCancel ? .cancelAction : .init(.end)))
+                        AlertButton(button: button, uiScale: uiScale)
                     }
                 }
             }
@@ -90,5 +87,65 @@ struct SimpleAlertButton {
         self.isDefault = isDefault
         self.isCancel = isCancel
         self.action = action
+    }
+}
+
+// MARK: - Alert Button with Hover Effect
+private struct AlertButton: View {
+    let button: SimpleAlertButton
+    let uiScale: CGFloat
+    @State private var isHovered = false
+    
+    var body: some View {
+        Button(action: button.action) {
+            Text(button.title)
+                .font(.system(size: 15 * uiScale, weight: .medium))
+                .foregroundStyle(button.isPrimary ? .white : .primary)
+                .frame(minWidth: 120 * uiScale, minHeight: 44 * uiScale)
+                .background(buttonBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 8 * uiScale))
+                .scaleEffect(isHovered ? 1.05 : 1.0)
+                .animation(.easeInOut(duration: 0.15), value: isHovered)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .keyboardShortcut(button.isDefault ? .defaultAction : (button.isCancel ? .cancelAction : .init(.end)))
+    }
+    
+    @ViewBuilder
+    private var buttonBackground: some View {
+        if button.isPrimary {
+            ZStack {
+                if isHovered {
+                    LinearGradient(
+                        colors: [Color.accentColor.opacity(0.9), Color.accentColor.opacity(0.8)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                } else {
+                    LinearGradient(
+                        colors: [Color.accentColor, Color.accentColor.opacity(0.9)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+            }
+        } else {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8 * uiScale)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 8 * uiScale)
+                            .strokeBorder(Color.primary.opacity(isHovered ? 0.4 : 0.2), lineWidth: 1 * uiScale)
+                    }
+                
+                if isHovered {
+                    RoundedRectangle(cornerRadius: 8 * uiScale)
+                        .fill(Color.primary.opacity(0.05))
+                }
+            }
+        }
     }
 }

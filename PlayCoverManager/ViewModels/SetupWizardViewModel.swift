@@ -99,6 +99,14 @@ final class SetupWizardViewModel {
         panel.prompt = String(localized: "選択")
         panel.title = String(localized: "ディスクイメージの保存先")
         panel.message = String(localized: "ASIF ディスクイメージを保存するフォルダを選択してください。")
+        
+        // Optimize: Set default directory to user's home for faster open
+        panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+        
+        // Optimize: Disable animations and unnecessary features
+        panel.animationBehavior = .none
+        panel.showsHiddenFiles = false
+        
         if panel.runModal() == .OK, let url = panel.url {
             storageURL = url
             settings.diskImageDirectory = url

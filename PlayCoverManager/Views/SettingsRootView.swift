@@ -1626,6 +1626,14 @@ struct IPAInstallerSheet: View {
         }
         panel.message = String(localized: "インストールする IPA ファイルを選択してください")
         
+        // Optimize: Set default directory to Downloads for faster open
+        panel.directoryURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        
+        // Optimize: Disable animations and unnecessary features
+        panel.animationBehavior = .none
+        panel.showsHiddenFiles = false
+        panel.treatsFilePackagesAsDirectories = false
+        
         if panel.runModal() == .OK {
             let newIPAs = panel.urls.filter { !selectedIPAs.contains($0) }
             selectedIPAs.append(contentsOf: newIPAs)
