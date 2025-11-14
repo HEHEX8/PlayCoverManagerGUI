@@ -178,14 +178,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var forceTerminateTimer: Timer?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Check for multiple running instances (synchronously)
+        // Check for multiple running instances before showing any UI
         let bundleID = Bundle.main.bundleIdentifier ?? "io.playcover.PlayCoverManager"
         let runningApps = NSWorkspace.shared.runningApplications
-        let matchingApps = runningApps.filter { $0.bundleIdentifier == bundleID }
+        let matchingApps = runningApps.filter { 
+            $0.bundleIdentifier == bundleID && !$0.isTerminated 
+        }
         
         // If more than 1 instance (self + others) - prevent duplicate launch
         if matchingApps.count > 1 {
-            // Show alert synchronously
+            // Show alert synchronously on main thread before any window appears
             let alert = NSAlert()
             alert.messageText = "PlayCover Manager は既に起動しています"
             alert.informativeText = """
@@ -197,6 +199,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 """
             alert.alertStyle = .warning
             alert.addButton(withTitle: "OK")
+            
+            // Ensure alert is shown on top
+            NSApp.activate(ignoringOtherApps: true)
             alert.runModal()
             
             // Terminate immediately without showing main window
