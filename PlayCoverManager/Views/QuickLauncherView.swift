@@ -2686,8 +2686,8 @@ private struct SettingsView: View {
         var localizedTitle: String {
             switch self {
             case .useGlobal: return String(localized: "グローバル設定を使用")
-            case .enabled: return String(localized: "Finderに表示しない")
-            case .disabled: return String(localized: "Finderに表示する")
+            case .enabled: return String(localized: "Finderに表示しない（デフォルト）")
+            case .disabled: return String(localized: "Finderに表示する（バグ対策）")
             }
         }
     }
@@ -2735,25 +2735,27 @@ private struct SettingsView: View {
             
             // Nobrowse setting
             VStack(alignment: .leading, spacing: 8 * uiScale) {
-                Text("Finder での表示設定")
+                Text("Finder 表示設定（空き容量認識バグ対策）")
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                Picker("", selection: Binding(
-                    get: { nobrowseOverride },
-                    set: { newValue in
-                        handleNobrowseChange(newValue)
-                    }
-                )) {
+                Picker("", selection: $nobrowseOverride) {
                     ForEach(NobrowseOverride.allCases) { option in
                         Text(option.localizedTitle).tag(option)
                     }
                 }
                 .labelsHidden()
+                .onChange(of: nobrowseOverride) { _, newValue in
+                    saveNobrowseSetting(newValue)
+                }
                 
-                Text("このアプリのディスクイメージを Finder に表示するかどうかを設定します。")
+                Text("一部のアプリで空き容量が正しく認識されない問題の対策設定です。\nディスクイメージを Finder に表示すると改善する場合があります。")
                     .font(.system(size: 11 * uiScale))
                     .foregroundStyle(.secondary)
+                
+                Text("※ 設定は次回アプリ起動時（マウント時）に反映されます")
+                    .font(.system(size: 11 * uiScale))
+                    .foregroundStyle(.orange)
                 
                 if nobrowseOverride == .useGlobal {
                     Text("現在のグローバル設定: \(settingsStore.nobrowseEnabled ? "Finderに表示しない" : "Finderに表示する")")
@@ -2909,43 +2911,7 @@ private struct SettingsView: View {
         perAppSettings.setPreferredLanguage(language, for: app.bundleIdentifier)
     }
     
-    private func handleNobrowseChange(_ newValue: NobrowseOverride) {
-        // Check if app is running
-        if app.isRunning {
-            Logger.warning("Cannot change Finder setting while app is running")
-            return
-        }
-        
-        // Check if container is currently mounted
-        let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-        let diskImageService = DiskImageService(settings: settingsStore)
-        
-        let isMounted: Bool
-        do {
-            let descriptor = try diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: containerURL)
-            isMounted = descriptor.isMounted
-        } catch {
-            isMounted = false
-        }
-        
-        if isMounted {
-            // Request immediate eject from ViewModel
-            Task {
-                await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
-                
-                // Apply setting after eject
-                await MainActor.run {
-                    nobrowseOverride = newValue
-                    saveNobrowseSetting(newValue)
-                }
-            }
-        } else {
-            // Apply immediately if not mounted
-            nobrowseOverride = newValue
-            saveNobrowseSetting(newValue)
-        }
-    }
-    
+
     private func loadSupportedLanguages() {
         guard let bundle = Bundle(url: app.appURL),
               let infoPlist = bundle.infoDictionary else {
