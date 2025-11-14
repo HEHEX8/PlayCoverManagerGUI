@@ -350,33 +350,14 @@ final class LauncherViewModel {
         // Add to pending apps (show spinner)
         launchPendingApps.insert(app.bundleIdentifier)
         
-        // Swift 6.2: Task.immediate for instant UI feedback
-        Task.immediate { 
-            await enqueueLaunch(app: app, resume: false)
-        }
-    }
-    
-    private func enqueueLaunch(app: PlayCoverApp, resume: Bool) async {
-        let maxConcurrent = settings.maxConcurrentApps
-        
-        // If unlimited (0), first app, or app is already running, launch immediately
-        // Already running apps only bring window to front, not actual multi-launch
-        if maxConcurrent == 0 || runningAppCount == 0 || app.isRunning {
-            if app.isRunning {
-                Logger.lifecycle("Launching immediately: \(app.displayName) (already running, will only activate window)")
-            } else {
-                Logger.lifecycle("Launching immediately: \(app.displayName) (unlimited or first app)")
-            }
-            await performLaunch(app: app, resume: resume)
-            return
-        }
-        
-        // Add to queue for sequential processing
+        // Add to queue synchronously to maintain order
         launchQueue.append(app)
         Logger.lifecycle("Added to launch queue: \(app.displayName) (queue size: \(launchQueue.count))")
         
-        // Process queue if not already processing
-        await processLaunchQueue()
+        // Trigger queue processing asynchronously (only one task will process at a time)
+        Task.immediate { 
+            await self.processLaunchQueue()
+        }
     }
     
     @MainActor
@@ -395,12 +376,29 @@ final class LauncherViewModel {
             
             let maxConcurrent = settings.maxConcurrentApps
             
-            // Check if we can launch
-            if maxConcurrent == 0 || runningAppCount < maxConcurrent {
+            // Special cases that always launch
+            let shouldLaunchImmediately = maxConcurrent == 0 || app.isRunning
+            
+            if shouldLaunchImmediately {
+                if app.isRunning {
+                    Logger.lifecycle("Launching: \(app.displayName) (already running, will only activate window)")
+                } else {
+                    Logger.lifecycle("Launching: \(app.displayName) (unlimited mode)")
+                }
+                await performLaunch(app: app, resume: false)
+                // Wait for launch to complete and count to update before processing next
+                // performLaunch increments runningAppCount at the end
+                continue
+            }
+            
+            // Check if we can launch based on current count
+            if runningAppCount < maxConcurrent {
                 Logger.lifecycle("Launching: \(app.displayName) (running: \(runningAppCount)/\(maxConcurrent))")
                 await performLaunch(app: app, resume: false)
+                // Wait for launch to complete and count to update before processing next
+                // This ensures sequential processing with accurate count tracking
             } else {
-                Logger.lifecycle("Launch limit reached, throttling: \(app.displayName)")
+                Logger.lifecycle("Launch limit reached, throttling: \(app.displayName) (running: \(runningAppCount)/\(maxConcurrent))")
                 // Add to throttled apps
                 launchThrottledApps.append(app)
                 // Remove from pending (no more spinner)
