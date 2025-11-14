@@ -781,6 +781,48 @@ final class LauncherViewModel {
         return perAppSettings
     }
     
+    /// Immediately eject container (skip 30 second wait, for manual eject operations)
+    func immediateEjectContainer(for bundleID: String) async {
+        // Cancel existing auto-unmount task if running
+        if let task = activeUnmountTasks[bundleID] {
+            task.cancel()
+            activeUnmountTasks.removeValue(forKey: bundleID)
+            Logger.unmount("Cancelled auto-unmount task for immediate eject: \(bundleID)")
+        }
+        
+        let containerURL = PlayCoverPaths.containerURL(for: bundleID)
+        
+        Logger.unmount("Immediate eject requested for: \(bundleID)")
+        
+        // Check if mounted
+        let descriptor = try? diskImageService.diskImageDescriptor(for: bundleID, containerURL: containerURL)
+        guard let descriptor = descriptor, descriptor.isMounted else {
+            Logger.unmount("Container not mounted, nothing to eject")
+            return
+        }
+        
+        Logger.unmount("Container is mounted, proceeding with immediate eject")
+        
+        // Synchronize preferences to ensure settings are saved
+        CFPreferencesAppSynchronize(bundleID as CFString)
+        
+        // Force filesystem sync to disk
+        sync()
+        Logger.unmount("Filesystem sync completed")
+        
+        // Release our lock immediately (no wait)
+        await lockService.unlockContainer(for: bundleID)
+        
+        // Try to eject directly
+        do {
+            try await diskImageService.ejectDiskImage(for: containerURL, force: false)
+            Logger.unmount("Successfully ejected container immediately for: \(bundleID)")
+        } catch {
+            Logger.error("Failed to immediately eject container for \(bundleID): \(error)")
+            throw error
+        }
+    }
+    
     private func unmountContainer(for bundleID: String) async {
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
         

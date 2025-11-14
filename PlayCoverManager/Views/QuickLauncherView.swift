@@ -1149,6 +1149,7 @@ private struct iOSAppIconView: View {
     let tapAction: () -> Void
     let rightClickAction: () -> Void
     let uninstallAction: () -> Void
+    let ejectAction: () -> Void
     
     @State private var isAnimating = false
     @State private var hasAppeared = false
@@ -1422,6 +1423,13 @@ private struct iOSAppIconView: View {
             } label: {
                 Label("コンテナを Finder で表示", systemImage: "externaldrive.fill")
             }
+            
+            Button {
+                ejectAction()
+            } label: {
+                Label("イジェクト", systemImage: "eject.fill")
+            }
+            .disabled(!app.isMounted)
             
             Divider()
             
@@ -2667,6 +2675,8 @@ private struct SettingsView: View {
     @State private var dataHandlingOverride: DataHandlingOverride = .useGlobal
     @State private var languageOverride: String? = nil  // nil = system default, or language code like "ja", "en"
     @State private var supportedLanguages: [String] = []
+    @State private var showingUnmountPrompt = false
+    @State private var pendingNobrowseChange: NobrowseOverride?
     
     enum NobrowseOverride: String, CaseIterable, Identifiable, SegmentedItemProtocol {
         case useGlobal
@@ -2731,14 +2741,17 @@ private struct SettingsView: View {
                     .font(.system(size: 13 * uiScale))
                     .fontWeight(.medium)
                 
-                CustomSegmentedControl(
-                    items: NobrowseOverride.allCases,
-                    selection: $nobrowseOverride,
-                    uiScale: uiScale
-                )
-                .onChange(of: nobrowseOverride) { _, newValue in
-                    saveNobrowseSetting(newValue)
+                Picker("", selection: Binding(
+                    get: { nobrowseOverride },
+                    set: { newValue in
+                        handleNobrowseChange(newValue)
+                    }
+                )) {
+                    ForEach(NobrowseOverride.allCases) { option in
+                        Text(option.localizedTitle).tag(option)
+                    }
                 }
+                .labelsHidden()
                 
                 Text("このアプリのディスクイメージを Finder に表示するかどうかを設定します。")
                     .font(.system(size: 11 * uiScale))
@@ -2832,6 +2845,31 @@ private struct SettingsView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay {
+            if showingUnmountPrompt {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                    
+                    SimpleAlertView(
+                        title: "イジェクトが必要です",
+                        message: "Finder表示設定を変更するには、マウント中のディスクイメージをイジェクトする必要があります。\n\nイジェクトしてから設定を適用しますか？",
+                        icon: "externaldrive.fill",
+                        iconColor: .orange,
+                        buttons: [
+                            SimpleAlertButton("キャンセル", isCancel: true) {
+                                cancelNobrowseChange()
+                            },
+                            SimpleAlertButton("イジェクトして適用", isPrimary: true, isDefault: true) {
+                                confirmNobrowseChangeWithUnmount()
+                            }
+                        ],
+                        uiScale: uiScale
+                    )
+                }
+                .transition(.opacity)
+            }
+        }
         .onAppear {
             // Load supported languages first, then current settings
             loadSupportedLanguages()
@@ -2896,6 +2934,62 @@ private struct SettingsView: View {
     private func saveLanguageSetting(_ language: String?) {
         let perAppSettings = viewModel.getPerAppSettings()
         perAppSettings.setPreferredLanguage(language, for: app.bundleIdentifier)
+    }
+    
+    private func handleNobrowseChange(_ newValue: NobrowseOverride) {
+        // Check if container is currently mounted
+        let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+        let diskImageService = DiskImageService(settings: settingsStore)
+        
+        let isMounted: Bool
+        do {
+            let descriptor = try diskImageService.diskImageDescriptor(for: app.bundleIdentifier, containerURL: containerURL)
+            isMounted = descriptor.isMounted
+        } catch {
+            isMounted = false
+        }
+        
+        if isMounted {
+            // Show unmount prompt
+            pendingNobrowseChange = newValue
+            showingUnmountPrompt = true
+        } else {
+            // Apply immediately if not mounted
+            nobrowseOverride = newValue
+            saveNobrowseSetting(newValue)
+        }
+    }
+    
+    private func confirmNobrowseChangeWithUnmount() {
+        guard let newValue = pendingNobrowseChange else { return }
+        
+        // Close prompt and perform immediate eject
+        showingUnmountPrompt = false
+        
+        Task {
+            do {
+                try await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
+                
+                // Apply setting after successful eject
+                await MainActor.run {
+                    nobrowseOverride = newValue
+                    saveNobrowseSetting(newValue)
+                    pendingNobrowseChange = nil
+                }
+            } catch {
+                // Eject failed - revert
+                await MainActor.run {
+                    pendingNobrowseChange = nil
+                    Logger.error("Failed to eject for Finder setting change: \(error)")
+                }
+            }
+        }
+    }
+    
+    private func cancelNobrowseChange() {
+        // Revert to previous value
+        pendingNobrowseChange = nil
+        showingUnmountPrompt = false
     }
     
     private func loadSupportedLanguages() {
@@ -4679,6 +4773,10 @@ private struct AppGridCell: View {
                 selectedAppForDetail = app
             } uninstallAction: {
                 selectedAppForUninstall = IdentifiableString(app.bundleIdentifier)
+            } ejectAction: {
+                Task {
+                    await viewModel.immediateEjectContainer(for: app.bundleIdentifier)
+                }
             }
             
             // Number key indicator badge
