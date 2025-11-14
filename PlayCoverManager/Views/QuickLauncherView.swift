@@ -920,25 +920,34 @@ struct QuickLauncherView: View {
         }
         .onAppear {
             eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                if showingSettings || showingInstaller || showingUninstaller || 
-                   selectedAppForDetail != nil || selectedAppForUninstall != nil ||
-                   showingShortcutGuide || viewModel.unmountFlowState != .idle ||
-                   isDrawerOpen || viewModel.showLaunchLimitAlert {
+                // Only handle keyboard shortcuts when QuickLauncher is the active, visible view
+                // Block shortcuts when any overlay/modal is displayed
+                let isOverlayVisible = showingSettings || showingInstaller || showingUninstaller || 
+                                       selectedAppForDetail != nil || selectedAppForUninstall != nil ||
+                                       showingShortcutGuide || viewModel.unmountFlowState != .idle ||
+                                       isDrawerOpen || viewModel.showLaunchLimitAlert
+                
+                // If any overlay is visible, don't intercept ANY keys - pass all events to overlays
+                guard !isOverlayVisible else {
                     return event
                 }
-                if isSearchFieldFocused {
+                
+                // Don't handle shortcuts when search field is focused
+                guard !isSearchFieldFocused else {
                     return event
                 }
+                
+                // Only handle specific key codes for app launching
                 switch event.keyCode {
                 case 123, 124, 125, 126, 36, 49, 53,
                      18, 19, 20, 21, 22, 23, 25, 26, 28, 29:
                     let handled = handleKeyCode(event.keyCode)
                     if handled {
-                        return nil
+                        return nil  // Consume event - we handled it
                     }
-                    return event
+                    return event  // Pass through - we didn't handle it
                 default:
-                    return event
+                    return event  // Pass through - not our key
                 }
             }
         }
@@ -1048,6 +1057,8 @@ struct QuickLauncherView: View {
         UserDefaults.standard.removeObject(forKey: "nobrowseEnabled")
         UserDefaults.standard.removeObject(forKey: "defaultDataHandling")
         UserDefaults.standard.removeObject(forKey: "diskImageFormat")
+        UserDefaults.standard.removeObject(forKey: "maxConcurrentApps")
+        UserDefaults.standard.removeObject(forKey: "appLanguage")
         
         // Terminate app (will restart and show initial setup wizard)
         Darwin.exit(0)
