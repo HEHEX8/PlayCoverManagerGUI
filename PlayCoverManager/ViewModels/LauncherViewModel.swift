@@ -1497,9 +1497,9 @@ final class LauncherViewModel {
         guard case .storageChangeConfirming = unmountFlowState else { return }
         
         isStorageChangeFlow = true  // Mark as storage change flow
-        pendingUnmountTask = true  // Apply to PlayCover container
-        // Use same unmount flow as ALL eject
-        Task.immediate { await performUnmountAllAndQuit(applyToPlayCoverContainer: true) }
+        pendingUnmountTask = false  // Do NOT apply to PlayCover container (same as ⌘Q)
+        // Use same unmount flow as ⌘Q (without PlayCover container)
+        Task.immediate { await performUnmountAllAndQuit(applyToPlayCoverContainer: false) }
     }
     
     /// Cancel storage location change
