@@ -178,34 +178,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var forceTerminateTimer: Timer?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Check for multiple running instances
+        // Check for multiple running instances (synchronously)
         let bundleID = Bundle.main.bundleIdentifier ?? "io.playcover.PlayCoverManager"
         let runningApps = NSWorkspace.shared.runningApplications
         let matchingApps = runningApps.filter { $0.bundleIdentifier == bundleID }
         
         // If more than 1 instance (self + others) - prevent duplicate launch
         if matchingApps.count > 1 {
-            Task { @MainActor in
-                let alert = NSAlert()
-                alert.messageText = "PlayCover Manager は既に起動しています"
-                alert.informativeText = """
-                    PlayCover Manager は既に実行中です。
-                    
-                    複数のインスタンスを同時に実行すると、ディスクイメージの競合が発生し、
-                    アンマウントに失敗する可能性があります。
-                    
-                    実行中のインスタンス: \(matchingApps.count)個
-                    
-                    このインスタンスを終了します。
-                    """
-                alert.alertStyle = .warning
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
+            // Show alert synchronously
+            let alert = NSAlert()
+            alert.messageText = "PlayCover Manager は既に起動しています"
+            alert.informativeText = """
+                PlayCover Manager は既に実行中です。
                 
-                // Always terminate this instance to prevent conflicts
-                NSApplication.shared.terminate(nil)
-            }
+                複数のインスタンスを同時に実行すると、ディスクイメージの競合が発生する可能性があります。
+                
+                このインスタンスを終了します。
+                """
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+            
+            // Terminate immediately without showing main window
+            NSApplication.shared.terminate(nil)
+            return
         }
+        
+        // Restore window mode (fullscreen or windowed)
+        restoreWindowMode()
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
@@ -295,6 +295,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             Task { @MainActor [weak self] in
                 self?.handleTimeout()
             }
+        }
+    }
+    
+    // MARK: - Window Mode Management
+    
+    private func restoreWindowMode() {
+        // Restore fullscreen state from UserDefaults
+        let wasFullscreen = UserDefaults.standard.bool(forKey: "WindowWasFullscreen")
+        
+        // Wait for window to be ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if let window = NSApplication.shared.windows.first {
+                if wasFullscreen {
+                    // Enter fullscreen mode
+                    window.toggleFullScreen(nil)
+                }
+                // If not fullscreen, window opens at default size (no size restoration)
+            }
+        }
+    }
+    
+    func applicationWillTerminate(_ notification: Notification) {
+        // Save current window mode (fullscreen or not)
+        if let window = NSApplication.shared.windows.first {
+            let isFullscreen = (window.styleMask.contains(.fullScreen))
+            UserDefaults.standard.set(isFullscreen, forKey: "WindowWasFullscreen")
         }
     }
 }
