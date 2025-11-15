@@ -677,55 +677,107 @@ final class DiskImageService {
         // Use diskutil info to get device characteristics
         let output = try await processRunner.run("/usr/sbin/diskutil", ["info", diskID])
         
-        // Check USB connection speed first (if applicable)
-        if output.contains("USB") {
-            let usbSpeed = detectUSBSpeed(from: output)
-            if usbSpeed == .usb1 || usbSpeed == .usb2 {
-                return .usbSlow(usbSpeed)
-            }
-        }
-        
-        // Parse output for "Solid State" indication
+        // Parse output for "Solid State" indication first
+        // ONLY SSD is considered fast - everything else is slow
         if output.contains("Solid State:") {
             if output.range(of: "Solid State:\\s+Yes", options: .regularExpression) != nil {
+                // Additional check: if it's USB 2.0 or lower, still reject it
+                if output.contains("USB") {
+                    let usbSpeed = try? await detectUSBSpeed(for: devicePath)
+                    if usbSpeed == .usb1 || usbSpeed == .usb2 {
+                        return .usbSlow(usbSpeed ?? .usb2)
+                    }
+                }
                 return .ssd
-            } else if output.range(of: "Solid State:\\s+No", options: .regularExpression) != nil {
-                return .hdd
             }
         }
         
-        // Fallback: Check if it's a network volume
+        // Check if it's a network volume
         if output.contains("Protocol:") && (output.contains("SMB") || output.contains("NFS") || output.contains("AFP")) {
             return .network
         }
         
-        return .unknown
-    }
-    
-    /// Detect USB connection speed from diskutil output
-    private func detectUSBSpeed(from output: String) -> USBSpeed {
-        // Check for USB speed indicators in diskutil output
-        // Example patterns:
-        // "Device / Media Name:       USB 2.0"
-        // "Device / Media Name:       USB 3.0"
-        // "Protocol:                  USB"
-        
-        // Try to find explicit USB version (e.g., "USB 2.0", "USB 3.0")
-        if let range = output.range(of: "USB\\s+([0-9.]+)", options: .regularExpression) {
-            let versionString = String(output[range])
-            if versionString.contains("3.") || versionString.contains("3 ") {
-                return .usb3OrHigher
-            } else if versionString.contains("2.") || versionString.contains("2 ") {
-                return .usb2
-            } else if versionString.contains("1.") || versionString.contains("1 ") {
-                return .usb1
+        // Check USB connection speed (if applicable)
+        if output.contains("USB") {
+            let usbSpeed = try? await detectUSBSpeed(for: devicePath)
+            if usbSpeed == .usb1 || usbSpeed == .usb2 {
+                return .usbSlow(usbSpeed ?? .usb2)
             }
         }
         
-        // If no explicit version found but it's USB, assume USB 3.0 or higher
-        // (Modern systems default to USB 3.0+, and USB 2.0 is rare)
-        // This prevents false positives where USB 3.0 devices are detected as 2.0
-        return .usb3OrHigher
+        // Everything else (HDD, unknown, etc.) is slow
+        return .hdd
+    }
+    
+    /// Detect USB connection speed using system_profiler
+    /// - Parameter devicePath: Device path (e.g., /dev/disk2)
+    /// - Returns: USB speed classification
+    private func detectUSBSpeed(for devicePath: String) async throws -> USBSpeed {
+        // Use system_profiler to get accurate USB speed information
+        // This provides "Speed: 480 Mb/s" (USB 2.0) or "Speed: 5 Gb/s" (USB 3.0) etc.
+        let output = try await processRunner.run("/usr/sbin/system_profiler", ["SPUSBDataType"])
+        
+        // Find the device in the output by searching for BSD Name or location
+        let diskName = devicePath.replacingOccurrences(of: "/dev/", with: "")
+        
+        // Look for the device entry and its associated speed
+        // Example output:
+        //   Portable SSD:
+        //     ...
+        //     BSD Name: disk2
+        //     Speed: Up to 5 Gb/s
+        
+        // Split output into device sections
+        let lines = output.components(separatedBy: .newlines)
+        var foundDevice = false
+        var speedMbps: Double = 0
+        
+        for (index, line) in lines.enumerated() {
+            // Check if this line contains our disk
+            if line.contains("BSD Name:") && line.contains(diskName) {
+                foundDevice = true
+            }
+            
+            // If we found our device, look for Speed in nearby lines
+            if foundDevice && line.contains("Speed:") {
+                // Extract speed value
+                // Patterns: "Speed: 480 Mb/s", "Speed: Up to 5 Gb/s", "Speed: 10 Gb/s"
+                if let speedRange = line.range(of: "([0-9.]+)\\s*(Mb/s|Gb/s)", options: .regularExpression) {
+                    let speedString = String(line[speedRange])
+                    
+                    if speedString.contains("Gb/s") {
+                        // Convert Gb/s to Mb/s
+                        if let value = Double(speedString.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) {
+                            speedMbps = value * 1000
+                        }
+                    } else if speedString.contains("Mb/s") {
+                        if let value = Double(speedString.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) {
+                            speedMbps = value
+                        }
+                    }
+                }
+                break
+            }
+            
+            // Stop searching after moving to a different device section
+            if foundDevice && index > 0 && !line.hasPrefix(" ") && !line.isEmpty {
+                break
+            }
+        }
+        
+        // Classify based on speed
+        // USB 1.x: up to 12 Mb/s
+        // USB 2.0: 480 Mb/s
+        // USB 3.0: 5000 Mb/s (5 Gb/s)
+        // USB 3.1+: 10000+ Mb/s (10+ Gb/s)
+        
+        if speedMbps < 100 {
+            return .usb1
+        } else if speedMbps <= 480 {
+            return .usb2
+        } else {
+            return .usb3OrHigher
+        }
     }
     
     /// USB connection speed
