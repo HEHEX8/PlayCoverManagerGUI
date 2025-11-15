@@ -175,6 +175,7 @@ struct SetupWizardView: View {
             StorageStepView(
                 storageURL: viewModel.storageURL,
                 chooseStorageDirectory: viewModel.chooseStorageDirectory,
+                viewModel: viewModel,
                 uiScale: uiScale
             )
             
@@ -370,6 +371,7 @@ private struct PlayCoverStepView: View {
 private struct StorageStepView: View {
     let storageURL: URL?
     let chooseStorageDirectory: () -> Void
+    let viewModel: SetupWizardViewModel
     var uiScale: CGFloat = 1.0
     
     private var pathExists: Bool {

@@ -722,10 +722,9 @@ final class DiskImageService {
             }
         }
         
-        // Try system_profiler for more detailed USB info
-        // Note: This is slower but more accurate
-        if let diskBSD = output.range(of: "Device Identifier:\\s+(\\S+)", options: .regularExpression) {
-            // For now, assume USB 2.0 as safe default if we can't determine
+        // If we have a device identifier but couldn't determine USB version,
+        // assume USB 2.0 as safe default
+        if output.range(of: "Device Identifier:", options: .caseInsensitive) != nil {
             return .usb2
         }
         
