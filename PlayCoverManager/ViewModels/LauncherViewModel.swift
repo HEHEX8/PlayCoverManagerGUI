@@ -171,12 +171,6 @@ final class LauncherViewModel {
                     await self.handleAppTerminated(bundleID: bundleID)
                 }
                 
-                // Check if all iOS apps have stopped running (green -> orange/red)
-                // Only activate after at least one app was running
-                if !self.previouslyRunningApps.isEmpty && currentRunning.isEmpty {
-                    await self.checkAndActivateIfAllAppsStopped()
-                }
-                
                 // Update tracking set
                 self.previouslyRunningApps = currentRunning
             }
@@ -203,6 +197,12 @@ final class LauncherViewModel {
             
             // Remove from pending if still there
             launchPendingApps.remove(bundleID)
+            
+            // If all apps stopped, bring PlayCoverManager to front
+            if runningAppCount == 0 {
+                Logger.lifecycle("All iOS apps stopped - bringing PlayCoverManager to front")
+                NSApplication.shared.activate(ignoringOtherApps: true)
+            }
             
             // Process launch queue if there are waiting apps
             await processLaunchQueue()
@@ -264,19 +264,6 @@ final class LauncherViewModel {
         apps = newApps
         
         applySearch()
-    }
-    
-    /// Check if all apps are in standby (orange) or shutdown (red) state, and activate PlayCoverManager
-    private func checkAndActivateIfAllAppsStopped() async {
-        // Check if all apps are NOT running (green state)
-        let allAppsNotRunning = apps.allSatisfy { !$0.isRunning }
-        
-        guard allAppsNotRunning else {
-            return  // Still have running apps (green)
-        }
-        
-        Logger.lifecycle("All iOS apps stopped running - bringing PlayCoverManager to front")
-        NSApplication.shared.activate(ignoringOtherApps: true)
     }
     
     // MARK: - Public Helper Methods for AppViewModel
