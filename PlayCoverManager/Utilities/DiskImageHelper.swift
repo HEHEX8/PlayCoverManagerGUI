@@ -19,7 +19,9 @@ final class DiskImageHelper {
         perAppSettings: PerAppSettingsStore,
         globalSettings: SettingsStore
     ) -> Bool {
-        return perAppSettings.getNobrowse(for: bundleID, globalDefault: globalSettings.nobrowseEnabled)
+        // showInFinder is inverted: true = show (nobrowse=false), false = hide (nobrowse=true)
+        let showInFinder = perAppSettings.getNobrowse(for: bundleID, globalDefault: globalSettings.showInFinder)
+        return !showInFinder
     }
     
     // MARK: - Disk Image State

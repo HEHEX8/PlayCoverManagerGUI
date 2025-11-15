@@ -321,10 +321,10 @@ private struct GeneralSettingsView: View {
                     VStack(alignment: .leading, spacing: 6 * uiScale) {
                         HStack(spacing: 6 * uiScale) {
                             VStack(alignment: .leading, spacing: 6 * uiScale) {
-                                Text("Finder に表示しない (-nobrowse)")
+                                Text("Finder に表示する")
                                     .font(.system(size: 14 * uiScale, weight: .semibold))
                                     .foregroundStyle(.primary)
-                                Text("有効にすると、マウントされたディスクイメージが Finder のサイドバーに表示されなくなります。")
+                                Text("オンにすると、マウントされたディスクイメージが Finder のサイドバーに表示されます。オフにすると表示されません（-nobrowse）。")
                                     .font(.system(size: 11 * uiScale))
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
@@ -333,7 +333,7 @@ private struct GeneralSettingsView: View {
                             CustomToggle(
                                 title: "",
                                 subtitle: nil,
-                                isOn: Binding(get: { settingsStore.nobrowseEnabled }, set: { settingsStore.nobrowseEnabled = $0 }),
+                                isOn: Binding(get: { settingsStore.showInFinder }, set: { settingsStore.showInFinder = $0 }),
                                 uiScale: uiScale
                             )
                         }

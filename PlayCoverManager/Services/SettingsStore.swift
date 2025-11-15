@@ -89,8 +89,8 @@ final class SettingsStore {
         didSet { saveDiskImageDirectory() }
     }
 
-    var nobrowseEnabled: Bool = true {
-        didSet { UserDefaults.standard.set(nobrowseEnabled, forKey: Keys.nobrowseEnabled) }
+    var showInFinder: Bool = true {
+        didSet { UserDefaults.standard.set(showInFinder, forKey: Keys.nobrowseEnabled) }
     }
 
     var defaultDataHandling: InternalDataStrategy = .default {
@@ -150,7 +150,7 @@ final class SettingsStore {
         if userDefaults.object(forKey: Keys.nobrowseEnabled) == nil {
             userDefaults.set(true, forKey: Keys.nobrowseEnabled)
         }
-        nobrowseEnabled = userDefaults.bool(forKey: Keys.nobrowseEnabled)
+        showInFinder = userDefaults.bool(forKey: Keys.nobrowseEnabled)
         if let raw = userDefaults.string(forKey: Keys.defaultDataHandling),
            let strategy = InternalDataStrategy(rawValue: raw) {
             defaultDataHandling = strategy

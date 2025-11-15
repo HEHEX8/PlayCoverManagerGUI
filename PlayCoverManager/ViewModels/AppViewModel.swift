@@ -135,7 +135,8 @@ final class AppViewModel {
         let mountPoint = playCoverPaths.containerRootURL
         do {
             // Use PlayCover's own mount method (not our helper since this is PlayCover's container)
-            let nobrowse = settings.nobrowseEnabled
+            // showInFinder is inverted: true = show (nobrowse=false), false = hide (nobrowse=true)
+            let nobrowse = !settings.showInFinder
             try await environmentService.ensureMount(of: diskImageURL, mountPoint: mountPoint, nobrowse: nobrowse)
             
             // Acquire lock on PlayCover container to prevent unmounting while in use
