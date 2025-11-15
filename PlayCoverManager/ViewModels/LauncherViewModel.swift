@@ -893,15 +893,16 @@ final class LauncherViewModel {
         
         Logger.unmount("Container is mounted, proceeding with eject")
         
-        // Synchronize preferences to ensure settings are saved (non-blocking)
-        Task.detached {
-            CFPreferencesAppSynchronize(bundleID as CFString)
+        // Synchronize preferences and filesystem in parallel (but wait for completion)
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                CFPreferencesAppSynchronize(bundleID as CFString)
+            }
+            group.addTask {
+                sync()
+            }
         }
-        
-        // Force filesystem sync to disk (run in background)
-        Task.detached {
-            sync()
-        }
+        Logger.unmount("Filesystem sync completed")
         
         // Wait 30 seconds before attempting eject
         // This allows quick app relaunches without remounting, and gives cfprefsd time to release
@@ -1075,13 +1076,13 @@ final class LauncherViewModel {
                 _ = await lockService.confirmUnlockCompleted()
                 Logger.unmount("Released PlayCover container lock")
                 
-                // Sync filesystem in background
-                Task.detached {
-                    sync()
+                // Sync filesystem (wait for completion to ensure data is written)
+                await withTaskGroup(of: Void.self) { group in
+                    group.addTask {
+                        sync()
+                    }
                 }
-                
-                // Small delay to allow sync to start
-                try? await Task.sleep(for: .milliseconds(50))
+                Logger.unmount("Filesystem sync completed")
                 
                 do {
                     try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
