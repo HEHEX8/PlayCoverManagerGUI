@@ -202,12 +202,11 @@ final class LauncherViewModel {
             if runningAppCount == 0 {
                 Logger.lifecycle("All iOS apps stopped - bringing PlayCoverManager to front")
                 
-                // If PlayCoverManager is in fullscreen, exit fullscreen first
-                if let window = NSApplication.shared.windows.first, window.styleMask.contains(.fullScreen) {
-                    window.toggleFullScreen(nil)
-                }
-                
-                NSApplication.shared.activate(ignoringOtherApps: true)
+                // Use 'open' command to properly switch spaces (works in fullscreen)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+                process.arguments = ["-a", "PlayCoverManager"]
+                try? process.run()
             }
             
             // Process launch queue if there are waiting apps
