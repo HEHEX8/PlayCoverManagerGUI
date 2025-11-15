@@ -2689,8 +2689,8 @@ private struct SettingsView: View {
         var localizedTitle: String {
             switch self {
             case .useGlobal: return String(localized: "グローバル設定を使用")
-            case .enabled: return String(localized: "Finderに表示しない（デフォルト）")
-            case .disabled: return String(localized: "Finderに表示する（バグ対策）")
+            case .enabled: return String(localized: "Finderに表示する")
+            case .disabled: return String(localized: "Finderに表示しない")
             }
         }
     }
@@ -2761,7 +2761,7 @@ private struct SettingsView: View {
                     .foregroundStyle(.orange)
                 
                 if nobrowseOverride == .useGlobal {
-                    Text("現在のグローバル設定: \(settingsStore.nobrowseEnabled ? "Finderに表示しない" : "Finderに表示する")")
+                    Text("現在のグローバル設定: \(settingsStore.showInFinder ? "Finderに表示する" : "Finderに表示しない")")
                         .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                 }
@@ -2859,9 +2859,9 @@ private struct SettingsView: View {
         let perAppSettings = viewModel.getPerAppSettings()
         let settings = perAppSettings.getSettings(for: app.bundleIdentifier)
         
-        // Load nobrowse setting
-        if let nobrowse = settings.nobrowseEnabled {
-            nobrowseOverride = nobrowse ? .enabled : .disabled
+        // Load nobrowse setting (showInFinder inverted)
+        if let showInFinder = settings.nobrowseEnabled {
+            nobrowseOverride = showInFinder ? .enabled : .disabled
         } else {
             nobrowseOverride = .useGlobal
         }
@@ -2894,12 +2894,13 @@ private struct SettingsView: View {
     
     private func saveNobrowseSetting(_ override: NobrowseOverride) {
         let perAppSettings = viewModel.getPerAppSettings()
+        // Note: Storage uses showInFinder semantics (true = show, false = hide)
         switch override {
         case .useGlobal:
             perAppSettings.setNobrowse(nil, for: app.bundleIdentifier)
-        case .enabled:
+        case .enabled:  // Finderに表示する
             perAppSettings.setNobrowse(true, for: app.bundleIdentifier)
-        case .disabled:
+        case .disabled:  // Finderに表示しない
             perAppSettings.setNobrowse(false, for: app.bundleIdentifier)
         }
     }
