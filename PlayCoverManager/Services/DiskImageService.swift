@@ -720,6 +720,8 @@ final class DiskImageService {
         // Find the device in the output by searching for BSD Name or location
         let diskName = devicePath.replacingOccurrences(of: "/dev/", with: "")
         
+        Logger.storage("USB速度検出開始: デバイス \(diskName)")
+        
         // Look for the device entry and its associated speed
         // Example output:
         //   Portable SSD:
@@ -731,28 +733,42 @@ final class DiskImageService {
         let lines = output.components(separatedBy: .newlines)
         var foundDevice = false
         var speedMbps: Double = 0
+        var deviceSection: [String] = []
         
         for (index, line) in lines.enumerated() {
             // Check if this line contains our disk
             if line.contains("BSD Name:") && line.contains(diskName) {
                 foundDevice = true
+                Logger.storage("デバイス発見: \(line.trimmingCharacters(in: .whitespaces))")
+            }
+            
+            // Collect device section for debugging
+            if foundDevice {
+                deviceSection.append(line)
             }
             
             // If we found our device, look for Speed in nearby lines
             if foundDevice && line.contains("Speed:") {
+                Logger.storage("速度情報発見: \(line.trimmingCharacters(in: .whitespaces))")
+                
                 // Extract speed value
                 // Patterns: "Speed: 480 Mb/s", "Speed: Up to 5 Gb/s", "Speed: 10 Gb/s"
                 if let speedRange = line.range(of: "([0-9.]+)\\s*(Mb/s|Gb/s)", options: .regularExpression) {
                     let speedString = String(line[speedRange])
+                    Logger.storage("抽出した速度文字列: \(speedString)")
                     
                     if speedString.contains("Gb/s") {
                         // Convert Gb/s to Mb/s
-                        if let value = Double(speedString.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) {
+                        let numericString = speedString.components(separatedBy: CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted).joined()
+                        if let value = Double(numericString) {
                             speedMbps = value * 1000
+                            Logger.storage("Gb/s -> Mb/s 変換: \(value) Gb/s = \(speedMbps) Mb/s")
                         }
                     } else if speedString.contains("Mb/s") {
-                        if let value = Double(speedString.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) {
+                        let numericString = speedString.components(separatedBy: CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted).joined()
+                        if let value = Double(numericString) {
                             speedMbps = value
+                            Logger.storage("Mb/s 速度: \(speedMbps) Mb/s")
                         }
                     }
                 }
@@ -761,8 +777,15 @@ final class DiskImageService {
             
             // Stop searching after moving to a different device section
             if foundDevice && index > 0 && !line.hasPrefix(" ") && !line.isEmpty {
+                Logger.storage("デバイスセクション終了")
                 break
             }
+        }
+        
+        // Log device section if speed not found
+        if speedMbps == 0 && foundDevice {
+            Logger.storage("警告: 速度情報が見つかりませんでした。デバイスセクション:")
+            deviceSection.forEach { Logger.storage("  \($0)") }
         }
         
         // Classify based on speed
@@ -771,11 +794,16 @@ final class DiskImageService {
         // USB 3.0: 5000 Mb/s (5 Gb/s)
         // USB 3.1+: 10000+ Mb/s (10+ Gb/s)
         
+        Logger.storage("最終速度: \(speedMbps) Mb/s")
+        
         if speedMbps < 100 {
+            Logger.storage("判定: USB 1.x")
             return .usb1
         } else if speedMbps <= 480 {
+            Logger.storage("判定: USB 2.0")
             return .usb2
         } else {
+            Logger.storage("判定: USB 3.0以上")
             return .usb3OrHigher
         }
     }

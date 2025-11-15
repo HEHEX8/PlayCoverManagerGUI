@@ -399,19 +399,47 @@ private struct StorageStepView: View {
                     VStack(spacing: 12 * uiScale) {
                         if pathExists {
                             // Path exists - show green checkmark
-                            HStack(spacing: 12 * uiScale) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 32 * uiScale))
-                                    .foregroundStyle(.green)
+                            VStack(spacing: 12 * uiScale) {
+                                HStack(spacing: 12 * uiScale) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.system(size: 32 * uiScale))
+                                        .foregroundStyle(.green)
+                                    
+                                    VStack(alignment: .leading, spacing: 4 * uiScale) {
+                                        Text("保存先")
+                                            .font(.system(size: 12 * uiScale))
+                                            .foregroundStyle(.secondary)
+                                        Text(url.path)
+                                            .font(.system(size: 15 * uiScale, design: .monospaced))
+                                            .lineLimit(2)
+                                            .truncationMode(.middle)
+                                    }
+                                }
                                 
-                                VStack(alignment: .leading, spacing: 4 * uiScale) {
-                                    Text("保存先")
-                                        .font(.system(size: 12 * uiScale))
-                                        .foregroundStyle(.secondary)
-                                    Text(url.path)
-                                        .font(.system(size: 15 * uiScale, design: .monospaced))
-                                        .lineLimit(2)
-                                        .truncationMode(.middle)
+                                // Storage type information
+                                if let storageType = viewModel.storageType {
+                                    HStack(spacing: 8 * uiScale) {
+                                        Image(systemName: storageTypeIcon(for: storageType))
+                                            .font(.system(size: 14 * uiScale))
+                                            .foregroundStyle(storageTypeColor(for: storageType))
+                                        
+                                        Text(storageTypeDescription(for: storageType))
+                                            .font(.system(size: 13 * uiScale))
+                                            .foregroundStyle(.secondary)
+                                        
+                                        Spacer()
+                                        
+                                        // Speed badge
+                                        Text(storageType.isSlow ? "低速モード" : "高速モード")
+                                            .font(.system(size: 11 * uiScale, weight: .medium))
+                                            .padding(.horizontal, 8 * uiScale)
+                                            .padding(.vertical, 4 * uiScale)
+                                            .background(
+                                                storageType.isSlow ? Color.orange.opacity(0.2) : Color.green.opacity(0.2),
+                                                in: RoundedRectangle.standard(.small, scale: uiScale)
+                                            )
+                                            .foregroundStyle(storageType.isSlow ? .orange : .green)
+                                    }
                                 }
                             }
                             .padding(20 * uiScale)
@@ -507,6 +535,61 @@ private struct StorageStepView: View {
         .padding(.horizontal, 40 * uiScale)
         .padding(.bottom, 40 * uiScale)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // Helper functions for storage type display
+    private func storageTypeIcon(for type: DiskImageService.StorageType) -> String {
+        switch type {
+        case .ssd:
+            return "bolt.circle.fill"
+        case .hdd:
+            return "externaldrive.fill"
+        case .network:
+            return "network"
+        case .usbSlow:
+            return "exclamationmark.triangle.fill"
+        case .unknown:
+            return "questionmark.circle.fill"
+        }
+    }
+    
+    private func storageTypeColor(for type: DiskImageService.StorageType) -> Color {
+        switch type {
+        case .ssd:
+            return .green
+        case .hdd:
+            return .orange
+        case .network:
+            return .orange
+        case .usbSlow:
+            return .red
+        case .unknown:
+            return .gray
+        }
+    }
+    
+    private func storageTypeDescription(for type: DiskImageService.StorageType) -> String {
+        switch type {
+        case .ssd:
+            return "SSD検出"
+        case .hdd:
+            return "HDD検出"
+        case .network:
+            return "ネットワークドライブ検出"
+        case .usbSlow(let speed):
+            switch speed {
+            case .usb1:
+                return "USB 1.0検出（非推奨）"
+            case .usb2:
+                return "USB 2.0検出（非推奨）"
+            case .usb3OrHigher:
+                return "USB 3.0以上検出"
+            case .unknown:
+                return "USB検出（速度不明）"
+            }
+        case .unknown:
+            return "ストレージタイプ不明"
+        }
     }
 }
 
