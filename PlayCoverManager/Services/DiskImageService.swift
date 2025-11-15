@@ -781,11 +781,45 @@ final class DiskImageService {
     /// - Parameter diskID: Disk identifier (e.g., disk2, disk11)
     /// - Returns: USB speed classification
     private func detectUSBSpeed(for diskID: String) async throws -> USBSpeed {
+        Logger.storage("=== USB速度検出開始: デバイス \(diskID) ===")
+        
+        // STEP 0: Check if this is an APFS container and find physical device
+        let physicalDisk: String
+        do {
+            let diskutilOutput = try await processRunner.run("/usr/sbin/diskutil", ["info", diskID])
+            
+            // Check if this is APFS Container
+            if diskutilOutput.contains("APFS Container") || diskutilOutput.contains("Synthesized") {
+                Logger.storage("APFSコンテナ検出: \(diskID)")
+                
+                // Try to find parent device from "Part of Whole:" field
+                if let range = diskutilOutput.range(of: "Part of Whole:\\s+(disk\\d+)", options: .regularExpression) {
+                    let match = String(diskutilOutput[range])
+                    if let diskRange = match.range(of: "disk\\d+", options: .regularExpression) {
+                        physicalDisk = String(match[diskRange])
+                        Logger.storage("物理デバイス発見: \(physicalDisk)")
+                    } else {
+                        physicalDisk = diskID
+                        Logger.storage("物理デバイスが見つからない、元のIDを使用")
+                    }
+                } else {
+                    physicalDisk = diskID
+                    Logger.storage("Part of Whole情報なし、元のIDを使用")
+                }
+            } else {
+                physicalDisk = diskID
+                Logger.storage("物理デバイス: \(diskID)")
+            }
+        } catch {
+            physicalDisk = diskID
+            Logger.storage("diskutil infoエラー、元のIDを使用: \(error)")
+        }
+        
         // Try different ioreg commands to find USB speed information
         // Strategy 1: Use IOUSB plane instead of class filter
         let output = try await processRunner.run("/usr/sbin/ioreg", ["-r", "-p", "IOUSB", "-l"])
         
-        Logger.storage("=== USB速度検出開始（ioreg使用）: デバイス \(diskID) ===")
+        Logger.storage("検索対象: \(physicalDisk)")
         
         let lines = output.components(separatedBy: .newlines)
         
@@ -803,11 +837,11 @@ final class DiskImageService {
             Logger.storage("⚠️ ioreg出力に\"Speed\"キーワードが一つも見つかりませんでした")
         }
         
-        // STEP 2: Find BSD Name line
+        // STEP 2: Find BSD Name line (using physical disk)
         Logger.storage("--- BSD Name検索 ---")
         var bsdNameLineIndex: Int?
         for (index, line) in lines.enumerated() {
-            if line.contains("\"BSD Name\"") && line.contains(diskID) {
+            if line.contains("\"BSD Name\"") && line.contains(physicalDisk) {
                 bsdNameLineIndex = index
                 Logger.storage("✓ BSD Name発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
                 
@@ -824,7 +858,7 @@ final class DiskImageService {
         }
         
         guard let bsdIndex = bsdNameLineIndex else {
-            Logger.storage("⚠️ BSD Nameが見つかりませんでした - USB 3.0+と仮定")
+            Logger.storage("⚠️ BSD Nameが見つかりませんでした（\(physicalDisk)）- USB 3.0+と仮定")
             return .usb3OrHigher
         }
         
