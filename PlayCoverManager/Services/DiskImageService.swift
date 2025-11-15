@@ -687,9 +687,19 @@ final class DiskImageService {
         
         // Check USB connection speed (reject USB 2.0 or lower)
         if output.contains("USB") {
-            let usbSpeed = try? await detectUSBSpeed(for: diskID)
-            if usbSpeed == .usb1 || usbSpeed == .usb2 {
-                return .usbSlow(usbSpeed ?? .usb2)
+            // Try to detect USB version from diskutil output first
+            let usbSpeed = detectUSBSpeedFromDiskutil(output: output)
+            
+            // If not found in diskutil, try system_profiler (may not work reliably)
+            let finalSpeed: USBSpeed
+            if usbSpeed == .unknown {
+                finalSpeed = (try? await detectUSBSpeed(for: diskID)) ?? .usb3OrHigher
+            } else {
+                finalSpeed = usbSpeed
+            }
+            
+            if finalSpeed == .usb1 || finalSpeed == .usb2 {
+                return .usbSlow(finalSpeed)
             }
         }
         
@@ -704,6 +714,55 @@ final class DiskImageService {
         
         // Default to HDD for unknown solid state status
         return .hdd(protocol: protocolInfo)
+    }
+    
+    /// Detect USB speed from diskutil output
+    /// Looks for patterns like "USB 2.0", "USB 3.0", "USB 3.1" in Device/Media Name
+    private func detectUSBSpeedFromDiskutil(output: String) -> USBSpeed {
+        Logger.storage("diskutil出力からUSB速度を検出中...")
+        
+        // Look for "Device / Media Name:" line
+        // Examples: "Device / Media Name:  APPLE SSD AP0512M Media", "Device / Media Name:  USB 2.0"
+        if let range = output.range(of: "Device / Media Name:.*", options: .regularExpression) {
+            let line = String(output[range])
+            Logger.storage("Device/Media Name: \(line)")
+            
+            // Check for USB version in the name
+            if line.range(of: "USB\\s*3\\.", options: .regularExpression) != nil {
+                Logger.storage("diskutilからUSB 3.x検出")
+                return .usb3OrHigher
+            } else if line.range(of: "USB\\s*2\\.", options: .regularExpression) != nil {
+                Logger.storage("diskutilからUSB 2.0検出")
+                return .usb2
+            } else if line.range(of: "USB\\s*1\\.", options: .regularExpression) != nil {
+                Logger.storage("diskutilからUSB 1.x検出")
+                return .usb1
+            }
+        }
+        
+        // Try alternative: look for "Removable Media:" and any USB version nearby
+        let lines = output.components(separatedBy: .newlines)
+        for (index, line) in lines.enumerated() {
+            if line.contains("USB") {
+                Logger.storage("USB参照行発見: \(line.trimmingCharacters(in: .whitespaces))")
+                
+                // Check surrounding lines for version info
+                let searchRange = max(0, index-3)...min(lines.count-1, index+3)
+                for i in searchRange {
+                    let contextLine = lines[i]
+                    if contextLine.range(of: "USB\\s*3", options: .regularExpression) != nil {
+                        Logger.storage("周辺行からUSB 3.x検出")
+                        return .usb3OrHigher
+                    } else if contextLine.range(of: "USB\\s*2", options: .regularExpression) != nil {
+                        Logger.storage("周辺行からUSB 2.0検出")
+                        return .usb2
+                    }
+                }
+            }
+        }
+        
+        Logger.storage("diskutilからUSB速度を検出できませんでした")
+        return .unknown
     }
     
     /// Extract protocol information from diskutil output
