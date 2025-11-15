@@ -215,28 +215,22 @@ final class LauncherViewModel {
             await processLaunchQueue()
         }
         
-        // Always update status first, even if we skip creating a new task
+        // Update status immediately (shows orange - terminated but mounted)
         await updateAppStatus(bundleID: bundleID)
         
         // If there's already an unmount task for this app, don't create another one
-        // This prevents duplicate unmount attempts from KVO firing multiple times
         guard activeUnmountTasks[bundleID] == nil else {
-            Logger.lifecycle("Unmount task already active for \(bundleID), skipping duplicate task creation but status updated")
+            Logger.lifecycle("Unmount task already active for \(bundleID), skipping duplicate")
             return
         }
         
-        // Create new auto-unmount task and track it
-        let task = Task {
-            await unmountContainer(for: bundleID)
+        // Create background auto-unmount task (don't wait for it)
+        let task = Task.detached { [weak self] in
+            await self?.unmountContainer(for: bundleID)
+            // Update status after unmount completes (will show red)
+            await self?.updateAppStatus(bundleID: bundleID)
         }
         activeUnmountTasks[bundleID] = task
-        
-        // Wait for completion and cleanup tracking
-        await task.value
-        activeUnmountTasks.removeValue(forKey: bundleID)
-        
-        // Update status after unmount completes (will show red)
-        await updateAppStatus(bundleID: bundleID)
     }
     
     /// Update status for a single app (efficient, doesn't check all apps)
@@ -843,11 +837,15 @@ final class LauncherViewModel {
         
         Logger.unmount("Container is mounted, proceeding with immediate eject")
         
-        // Synchronize preferences to ensure settings are saved
-        CFPreferencesAppSynchronize(bundleID as CFString)
-        
-        // Force filesystem sync to disk
-        sync()
+        // Synchronize preferences and filesystem in parallel (don't block)
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                CFPreferencesAppSynchronize(bundleID as CFString)
+            }
+            group.addTask {
+                sync()
+            }
+        }
         Logger.unmount("Filesystem sync completed")
         
         // Release our lock immediately (no wait)
@@ -895,12 +893,15 @@ final class LauncherViewModel {
         
         Logger.unmount("Container is mounted, proceeding with eject")
         
-        // Synchronize preferences to ensure settings are saved
-        CFPreferencesAppSynchronize(bundleID as CFString)
+        // Synchronize preferences to ensure settings are saved (non-blocking)
+        Task.detached {
+            CFPreferencesAppSynchronize(bundleID as CFString)
+        }
         
-        // Force filesystem sync to disk
-        sync()
-        Logger.unmount("Filesystem sync completed")
+        // Force filesystem sync to disk (run in background)
+        Task.detached {
+            sync()
+        }
         
         // Wait 30 seconds before attempting eject
         // This allows quick app relaunches without remounting, and gives cfprefsd time to release
@@ -952,11 +953,17 @@ final class LauncherViewModel {
         
         // Explicitly release all locks to ensure no file handles remain
         Logger.unmount("Releasing all container locks...")
+        let lockReleaseStart = CFAbsoluteTimeGetCurrent()
+        
+        // Release all locks (actor handles serialization internally)
         for app in apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
-            // Flush actor queue to ensure file handle is closed
-            _ = await lockService.confirmUnlockCompleted()
         }
+        // Single confirmation to flush actor queue
+        _ = await lockService.confirmUnlockCompleted()
+        
+        let lockReleaseElapsed = CFAbsoluteTimeGetCurrent() - lockReleaseStart
+        Logger.performance("Lock release: \(String(format: "%.0f", lockReleaseElapsed * 1000))ms")
         Logger.unmount("Lock cleanup completed")
         
         // Set initial processing state
@@ -1007,9 +1014,15 @@ final class LauncherViewModel {
                     
                     Logger.unmount("Container still mounted for \(bundleID), attempting normal eject")
                     
-                    // Sync preferences and filesystem
-                    CFPreferencesAppSynchronize(bundleID as CFString)
-                    sync()
+                    // Sync preferences and filesystem in parallel
+                    await withTaskGroup(of: Void.self) { syncGroup in
+                        syncGroup.addTask {
+                            CFPreferencesAppSynchronize(bundleID as CFString)
+                        }
+                        syncGroup.addTask {
+                            sync()
+                        }
+                    }
                     
                     do {
                         try await self.diskImageService.ejectDiskImage(for: container, force: false)
@@ -1062,8 +1075,13 @@ final class LauncherViewModel {
                 _ = await lockService.confirmUnlockCompleted()
                 Logger.unmount("Released PlayCover container lock")
                 
-                // Sync filesystem
-                sync()
+                // Sync filesystem in background
+                Task.detached {
+                    sync()
+                }
+                
+                // Small delay to allow sync to start
+                try? await Task.sleep(for: .milliseconds(50))
                 
                 do {
                     try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
@@ -1225,13 +1243,15 @@ final class LauncherViewModel {
             task.cancel()
         }
         activeUnmountTasks.removeAll()
-        try? await Task.sleep(for: .seconds(1.0))
         
-        // Explicitly release all locks
+        // Shorter wait time since we're force unmounting anyway
+        try? await Task.sleep(for: .milliseconds(100))
+        
+        // Release all locks efficiently
         for app in apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
-            _ = await lockService.confirmUnlockCompleted()
         }
+        _ = await lockService.confirmUnlockCompleted()
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
@@ -1305,13 +1325,15 @@ final class LauncherViewModel {
             task.cancel()
         }
         activeUnmountTasks.removeAll()
-        try? await Task.sleep(for: .seconds(1.0))
         
-        // Explicitly release all locks
+        // Shorter wait time since we're force unmounting anyway
+        try? await Task.sleep(for: .milliseconds(100))
+        
+        // Release all locks efficiently
         for app in apps {
             await lockService.unlockContainer(for: app.bundleIdentifier)
-            _ = await lockService.confirmUnlockCompleted()
         }
+        _ = await lockService.confirmUnlockCompleted()
         
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "強制アンマウント中…"))
