@@ -910,6 +910,9 @@ struct QuickLauncherView: View {
         .task {
             if viewModel.filteredApps.isEmpty {
                 await viewModel.refresh()
+            } else {
+                // Even if apps are already loaded, trigger pre-mount on startup
+                await viewModel.preMountLastLaunchedAppIfNeeded()
             }
             viewModel.onStorageChangeCompleted = { [weak appViewModel] in
                 appViewModel?.completeStorageLocationChange()

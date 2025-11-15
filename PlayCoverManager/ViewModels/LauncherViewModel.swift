@@ -1678,6 +1678,11 @@ final class LauncherViewModel {
     
     // MARK: - Pre-mount Management
     
+    /// Public wrapper for pre-mounting (called from QuickLauncherView)
+    func preMountLastLaunchedAppIfNeeded() async {
+        await preMountLastLaunchedApp()
+    }
+    
     /// Pre-mount last launched app for quick access
     private func preMountLastLaunchedApp() async {
         // Find last launched app
