@@ -781,103 +781,71 @@ final class DiskImageService {
     /// - Parameter diskID: Disk identifier (e.g., disk2, disk11)
     /// - Returns: USB speed classification
     private func detectUSBSpeed(for diskID: String) async throws -> USBSpeed {
-        // Use ioreg to get USB device information
-        // This works reliably on Apple Silicon Macs with macOS Sequoia
-        let output = try await processRunner.run("/usr/sbin/ioreg", ["-r", "-c", "IOUSBDevice", "-l"])
+        // Use ioreg to get USB device tree including parent devices
+        // Need to search through the entire USB tree to find Speed property
+        let output = try await processRunner.run("/usr/sbin/ioreg", ["-r", "-c", "IOUSBHostDevice", "-l"])
         
         Logger.storage("USB速度検出開始（ioreg使用）: デバイス \(diskID)")
         
-        // ioreg output contains properties like:
-        // "Speed" = 0 (Low Speed - 1.5 Mbps)
-        // "Speed" = 1 (Full Speed - 12 Mbps) 
-        // "Speed" = 2 (High Speed - 480 Mbps - USB 2.0)
-        // "Speed" = 3 (Super Speed - 5 Gbps - USB 3.0)
-        // "Speed" = 4 (Super Speed Plus - 10+ Gbps - USB 3.1+)
+        // ioreg output: Speed is in the parent IOUSBHostDevice, not in IOMedia
+        // Need to find BSD Name, then search backwards to find the parent device with Speed
         
-        // Look for BSD Name in ioreg output
         let lines = output.components(separatedBy: .newlines)
-        var deviceSection: [String] = []
-        var inTargetDevice = false
-        var speedValue: Int?
+        var bsdNameLineIndex: Int?
         
-        for line in lines {
-            // Check if we're entering a new device entry (starts with +-)
-            if line.contains("+-o ") {
-                // If we were in target device and found speed, we're done
-                if inTargetDevice && speedValue != nil {
-                    break
-                }
-                inTargetDevice = false
-                deviceSection = []
-            }
-            
-            // Check for BSD Name matching our disk
+        // First, find the line with BSD Name
+        for (index, line) in lines.enumerated() {
             if line.contains("\"BSD Name\"") && line.contains(diskID) {
-                inTargetDevice = true
-                Logger.storage("ioregでデバイス発見: \(line.trimmingCharacters(in: .whitespaces))")
-            }
-            
-            if inTargetDevice {
-                deviceSection.append(line)
-                
-                // Look for "Speed" = value
-                if line.contains("\"Speed\"") {
-                    // Extract the numeric value
-                    // Pattern: "Speed" = 3
-                    if let range = line.range(of: "\"Speed\"\\s*=\\s*(\\d+)", options: .regularExpression) {
-                        let match = String(line[range])
-                        if let numRange = match.range(of: "\\d+", options: .regularExpression) {
-                            let numStr = String(match[numRange])
-                            speedValue = Int(numStr)
-                            Logger.storage("ioreg速度値発見: Speed = \(speedValue ?? -1)")
-                        }
-                    }
-                }
+                bsdNameLineIndex = index
+                Logger.storage("ioregでBSD Name発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
+                break
             }
         }
         
-        // Fallback: search for any Mass Storage device with Speed
-        if speedValue == nil {
-            Logger.storage("ターゲットデバイスで速度が見つかりません。Mass Storageデバイスを検索...")
-            var maxSpeed: Int = 0
-            var currentDeviceIsStorage = false
+        guard let bsdIndex = bsdNameLineIndex else {
+            Logger.storage("警告: BSD Nameが見つかりませんでした")
+            return .usb3OrHigher
+        }
+        
+        // Search backwards from BSD Name to find the parent IOUSBHostDevice with "Speed"
+        var speedValue: Int?
+        for index in stride(from: bsdIndex, through: max(0, bsdIndex - 200), by: -1) {
+            let line = lines[index]
             
-            for line in lines {
-                if line.contains("+-o ") {
-                    currentDeviceIsStorage = false
-                }
+            // Look for IOUSBHostDevice entry (parent USB device)
+            if line.contains("IOUSBHostDevice") {
+                Logger.storage("親USBデバイス発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
                 
-                // Check if this is a storage-related device
-                if line.range(of: "Mass Storage|Storage|Media|Disk", options: .regularExpression) != nil {
-                    currentDeviceIsStorage = true
-                    Logger.storage("ストレージデバイス発見: \(line.trimmingCharacters(in: .whitespaces))")
-                }
-                
-                if currentDeviceIsStorage && line.contains("\"Speed\"") {
-                    if let range = line.range(of: "\"Speed\"\\s*=\\s*(\\d+)", options: .regularExpression) {
-                        let match = String(line[range])
-                        if let numRange = match.range(of: "\\d+", options: .regularExpression) {
-                            let numStr = String(match[numRange])
-                            if let speed = Int(numStr), speed > maxSpeed {
-                                maxSpeed = speed
-                                Logger.storage("ストレージ速度更新: Speed = \(speed)")
+                // Search forward from this device for Speed property
+                for searchIndex in index...min(lines.count - 1, index + 50) {
+                    let searchLine = lines[searchIndex]
+                    
+                    // Stop if we hit another device
+                    if searchIndex > index && searchLine.contains("+-o ") {
+                        break
+                    }
+                    
+                    if searchLine.contains("\"Speed\"") {
+                        if let range = searchLine.range(of: "\"Speed\"\\s*=\\s*(\\d+)", options: .regularExpression) {
+                            let match = String(searchLine[range])
+                            if let numRange = match.range(of: "\\d+", options: .regularExpression) {
+                                let numStr = String(match[numRange])
+                                speedValue = Int(numStr)
+                                Logger.storage("Speed発見（行\(searchIndex)）: Speed = \(speedValue ?? -1)")
+                                break
                             }
                         }
                     }
                 }
-            }
-            
-            if maxSpeed > 0 {
-                speedValue = maxSpeed
+                
+                if speedValue != nil {
+                    break
+                }
             }
         }
         
         guard let speed = speedValue else {
-            Logger.storage("警告: USB速度情報が見つかりませんでした")
-            if !deviceSection.isEmpty {
-                Logger.storage("デバイスセクション:")
-                deviceSection.forEach { Logger.storage("  \($0)") }
-            }
+            Logger.storage("警告: USB速度情報が見つかりませんでした（親デバイスから200行検索）")
             return .usb3OrHigher
         }
         
