@@ -389,18 +389,24 @@ final class LauncherViewModel {
             
             let maxConcurrent = settings.maxConcurrentApps
             
-            // Special cases that always launch
-            let shouldLaunchImmediately = maxConcurrent == 0 || app.isRunning
-            
-            if shouldLaunchImmediately {
-                if app.isRunning {
-                    Logger.lifecycle("Launching: \(app.displayName) (already running, will only activate window)")
-                } else {
-                    Logger.lifecycle("Launching: \(app.displayName) (unlimited mode)")
+            // Special case: App already running - just activate it
+            if app.isRunning {
+                Logger.lifecycle("App already running: \(app.displayName), activating only")
+                // Remove from pending immediately
+                launchPendingApps.remove(app.bundleIdentifier)
+                
+                // Activate the running app directly
+                if let runningApp = launcherService.getRunningApp(bundleID: app.bundleIdentifier) {
+                    runningApp.activate(options: .activateIgnoringOtherApps)
+                    Logger.lifecycle("Successfully activated: \(app.displayName)")
                 }
+                continue
+            }
+            
+            // Special case: Unlimited mode
+            if maxConcurrent == 0 {
+                Logger.lifecycle("Launching: \(app.displayName) (unlimited mode)")
                 await performLaunch(app: app, resume: false)
-                // Wait for launch to complete and count to update before processing next
-                // performLaunch increments runningAppCount at the end
                 continue
             }
             
@@ -524,12 +530,8 @@ final class LauncherViewModel {
                 Logger.lifecycle("Cancelled auto-unmount for \(app.bundleIdentifier) due to launch")
             }
             
-            // Refresh to update lastLaunchedFlag and status
-            // This ensures the launched app becomes the "recent app"
-            Task.immediate {
-                try? await Task.sleep(for: .seconds(0.5))
-                await refresh()
-            }
+            // Update only this app's status immediately (no refresh needed)
+            await updateAppStatus(bundleID: app.bundleIdentifier)
         } catch let error as AppError {
             self.error = error
         } catch {
