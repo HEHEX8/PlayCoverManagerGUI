@@ -447,11 +447,11 @@ private struct GeneralSettingsView: View {
                                 )
                                 .frame(width: 40 * uiScale, height: 40 * uiScale)
                             
-                            Image(systemName: "gauge.with.dots.needle.67percent")
+                            Image(systemName: "play.rectangle.on.rectangle")
                                 .font(.system(size: 18 * uiScale, weight: .medium))
                                 .foregroundStyle(
                                     LinearGradient(
-                                        colors: [.orange, .yellow],
+                                        colors: [.blue, .purple],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
@@ -459,7 +459,7 @@ private struct GeneralSettingsView: View {
                                 .symbolRenderingMode(.hierarchical)
                         }
                         
-                        Text("起動制限")
+                        Text("起動設定")
                             .font(.system(size: 20 * uiScale, weight: .bold))
                             .foregroundStyle(.primary)
                     }
@@ -514,15 +514,17 @@ private struct GeneralSettingsView: View {
                                 
                                 Spacer()
                                 
-                                Toggle("", isOn: Binding(
-                                    get: { 
-                                        UserDefaults.standard.bool(forKey: "AlwaysLaunchManagerFullscreen")
-                                    },
-                                    set: { newValue in
-                                        UserDefaults.standard.set(newValue, forKey: "AlwaysLaunchManagerFullscreen")
-                                    }
-                                ))
-                                .labelsHidden()
+                                CustomSwitch(
+                                    isOn: Binding(
+                                        get: { 
+                                            UserDefaults.standard.bool(forKey: "AlwaysLaunchManagerFullscreen")
+                                        },
+                                        set: { newValue in
+                                            UserDefaults.standard.set(newValue, forKey: "AlwaysLaunchManagerFullscreen")
+                                        }
+                                    ),
+                                    uiScale: uiScale
+                                )
                             }
                             
                             Text("オンの場合、PlayCoverManager起動時に常にフルスクリーンモードになります。オフの場合は、終了時のウィンドウモードを記憶します。")
@@ -539,13 +541,15 @@ private struct GeneralSettingsView: View {
                                 
                                 Spacer()
                                 
-                                Toggle("", isOn: Binding(
-                                    get: { settingsStore.alwaysLaunchFullscreen },
-                                    set: { newValue in
-                                        settingsStore.alwaysLaunchFullscreen = newValue
-                                    }
-                                ))
-                                .labelsHidden()
+                                CustomSwitch(
+                                    isOn: Binding(
+                                        get: { settingsStore.alwaysLaunchFullscreen },
+                                        set: { newValue in
+                                            settingsStore.alwaysLaunchFullscreen = newValue
+                                        }
+                                    ),
+                                    uiScale: uiScale
+                                )
                             }
                             
                             Text(settingsStore.alwaysLaunchFullscreen 

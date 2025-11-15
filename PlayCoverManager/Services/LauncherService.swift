@@ -226,21 +226,37 @@ final class LauncherService {
             clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
-        // Use 'open' command for compatibility with PlayCover apps
-        // NSWorkspace.open() doesn't work correctly with PlayCover-wrapped iOS apps
-        // The 'open' command handles the app bundle correctly, just like Finder
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        
         if shouldLaunchFullscreen {
-            // Launch app with --args to pass fullscreen flag
-            process.arguments = [app.appURL.path, "--args", "-AppleFullScreen", "YES"]
-        } else {
+            // For fullscreen launch, use AppleScript to set fullscreen after launch
+            let script = """
+            tell application "\(app.appURL.lastPathComponent.replacingOccurrences(of: ".app", with: ""))"
+                activate
+                delay 0.5
+                tell application "System Events"
+                    keystroke "f" using {command down, control down}
+                end tell
+            end tell
+            """
+            
+            // Launch app first with 'open' command
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
             process.arguments = [app.appURL.path]
+            try process.run()
+            
+            // Wait a moment then execute AppleScript for fullscreen
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
+                let appleScript = NSAppleScript(source: script)
+                appleScript?.executeAndReturnError(nil)
+            }
+        } else {
+            // Normal launch
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+            process.arguments = [app.appURL.path]
+            try process.run()
         }
-        
-        try process.run()
-        // Don't wait for exit - return immediately like Finder double-click
         
         writeLastLaunchFlag(for: app.bundleIdentifier)
     }

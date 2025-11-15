@@ -601,3 +601,51 @@ extension View {
         )
     }
 }
+
+// MARK: - Custom Switch (Toggle)
+
+/// Custom switch component that respects dynamic UI scaling
+struct CustomSwitch: View {
+    @Binding var isOn: Bool
+    var uiScale: CGFloat = 1.0
+    
+    @State private var isHovered = false
+    
+    private let switchWidth: CGFloat = 42
+    private let switchHeight: CGFloat = 24
+    private let thumbSize: CGFloat = 20
+    private let thumbPadding: CGFloat = 2
+    
+    var body: some View {
+        ZStack(alignment: isOn ? .trailing : .leading) {
+            // Background track
+            RoundedRectangle(cornerRadius: (switchHeight / 2) * uiScale)
+                .fill(isOn ? Color.accentColor : Color.gray.opacity(0.3))
+                .frame(width: switchWidth * uiScale, height: switchHeight * uiScale)
+                .overlay {
+                    RoundedRectangle(cornerRadius: (switchHeight / 2) * uiScale)
+                        .strokeBorder(Color.white.opacity(isHovered ? 0.3 : 0), lineWidth: 2 * uiScale)
+                }
+                .animation(.easeInOut(duration: 0.2), value: isOn)
+                .animation(.easeInOut(duration: 0.15), value: isHovered)
+            
+            // Thumb
+            Circle()
+                .fill(Color.white)
+                .frame(width: thumbSize * uiScale, height: thumbSize * uiScale)
+                .shadow(color: .black.opacity(0.2), radius: 2 * uiScale, x: 0, y: 1 * uiScale)
+                .padding(thumbPadding * uiScale)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isOn)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isOn.toggle()
+            }
+        }
+        .onHover { hovering in
+            isHovered = hovering
+        }
+        .frame(width: switchWidth * uiScale, height: switchHeight * uiScale)
+    }
+}
