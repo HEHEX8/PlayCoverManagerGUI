@@ -687,7 +687,7 @@ final class DiskImageService {
         
         // Check USB connection speed (reject USB 2.0 or lower)
         if output.contains("USB") {
-            let usbSpeed = try? await detectUSBSpeed(for: devicePath)
+            let usbSpeed = try? await detectUSBSpeed(for: diskID)
             if usbSpeed == .usb1 || usbSpeed == .usb2 {
                 return .usbSlow(usbSpeed ?? .usb2)
             }
@@ -719,17 +719,14 @@ final class DiskImageService {
     }
     
     /// Detect USB connection speed using system_profiler
-    /// - Parameter devicePath: Device path (e.g., /dev/disk2)
+    /// - Parameter diskID: Disk identifier (e.g., disk2, disk11)
     /// - Returns: USB speed classification
-    private func detectUSBSpeed(for devicePath: String) async throws -> USBSpeed {
+    private func detectUSBSpeed(for diskID: String) async throws -> USBSpeed {
         // Use system_profiler to get accurate USB speed information
         // This provides "Speed: 480 Mb/s" (USB 2.0) or "Speed: 5 Gb/s" (USB 3.0) etc.
         let output = try await processRunner.run("/usr/sbin/system_profiler", ["SPUSBDataType"])
         
-        // Find the device in the output by searching for BSD Name or location
-        let diskName = devicePath.replacingOccurrences(of: "/dev/", with: "")
-        
-        Logger.storage("USB速度検出開始: デバイス \(diskName)")
+        Logger.storage("USB速度検出開始: デバイス \(diskID)")
         
         // Look for the device entry and its associated speed
         // Example output:
@@ -746,7 +743,7 @@ final class DiskImageService {
         
         // First, find the line with BSD Name
         for (index, line) in lines.enumerated() {
-            if line.contains("BSD Name:") && line.contains(diskName) {
+            if line.contains("BSD Name:") && line.contains(diskID) {
                 deviceIndex = index
                 Logger.storage("デバイス発見: \(line.trimmingCharacters(in: .whitespaces))")
                 break
