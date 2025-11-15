@@ -788,23 +788,57 @@ final class DiskImageService {
         do {
             let diskutilOutput = try await processRunner.run("/usr/sbin/diskutil", ["info", diskID])
             
-            // Check if this is APFS Container
-            if diskutilOutput.contains("APFS Container") || diskutilOutput.contains("Synthesized") {
-                Logger.storage("APFSコンテナ検出: \(diskID)")
+            // Check if this is APFS Container or logical volume
+            if diskutilOutput.contains("APFS Container") || diskutilOutput.contains("Synthesized") || diskutilOutput.contains("APFS Volume") {
+                Logger.storage("APFSボリューム/コンテナ検出: \(diskID)")
                 
-                // Try to find parent device from "Part of Whole:" field
-                if let range = diskutilOutput.range(of: "Part of Whole:\\s+(disk\\d+)", options: .regularExpression) {
-                    let match = String(diskutilOutput[range])
-                    if let diskRange = match.range(of: "disk\\d+", options: .regularExpression) {
-                        physicalDisk = String(match[diskRange])
-                        Logger.storage("物理デバイス発見: \(physicalDisk)")
+                // Log the entire diskutil output to debug
+                Logger.storage("--- diskutil info \(diskID) 出力（抜粋）---")
+                let lines = diskutilOutput.components(separatedBy: .newlines)
+                for line in lines {
+                    if line.contains("Part of Whole") || line.contains("APFS") || line.contains("Physical Store") {
+                        Logger.storage(line.trimmingCharacters(in: .whitespaces))
+                    }
+                }
+                
+                // Try multiple patterns to find parent device
+                // Pattern 1: "Part of Whole: disk10"
+                if let match = diskutilOutput.range(of: "Part of Whole:\\s*(disk\\d+)", options: .regularExpression) {
+                    let line = String(diskutilOutput[match])
+                    if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
+                        physicalDisk = String(line[diskMatch])
+                        Logger.storage("✓ 物理デバイス発見（Part of Whole）: \(physicalDisk)")
                     } else {
                         physicalDisk = diskID
-                        Logger.storage("物理デバイスが見つからない、元のIDを使用")
+                        Logger.storage("⚠️ disk番号の抽出失敗")
+                    }
+                }
+                // Pattern 2: "Physical Store disk10"
+                else if let match = diskutilOutput.range(of: "Physical Store\\s*(disk\\d+)", options: .regularExpression) {
+                    let line = String(diskutilOutput[match])
+                    if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
+                        physicalDisk = String(line[diskMatch])
+                        Logger.storage("✓ 物理デバイス発見（Physical Store）: \(physicalDisk)")
+                    } else {
+                        physicalDisk = diskID
+                        Logger.storage("⚠️ disk番号の抽出失敗")
+                    }
+                }
+                // Pattern 3: Just extract disk number (e.g., disk11 -> disk10)
+                else if diskID.hasSuffix("1") || diskID.hasSuffix("2") || diskID.hasSuffix("3") || diskID.hasSuffix("4") || diskID.hasSuffix("5") {
+                    // APFS containers typically: disk10 = physical, disk11/12/13... = volumes
+                    let baseNum = diskID.dropLast()
+                    let lastDigit = diskID.last!
+                    if let digit = Int(String(lastDigit)), digit > 0 {
+                        physicalDisk = baseNum + "0"
+                        Logger.storage("⚠️ パターンマッチ失敗、推測: \(physicalDisk)")
+                    } else {
+                        physicalDisk = diskID
+                        Logger.storage("⚠️ 推測失敗、元のIDを使用")
                     }
                 } else {
                     physicalDisk = diskID
-                    Logger.storage("Part of Whole情報なし、元のIDを使用")
+                    Logger.storage("⚠️ 物理デバイス情報なし、元のIDを使用")
                 }
             } else {
                 physicalDisk = diskID
