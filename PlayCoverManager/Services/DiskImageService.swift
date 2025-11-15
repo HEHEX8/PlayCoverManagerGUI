@@ -712,8 +712,8 @@ final class DiskImageService {
         // Examples: "Protocol: SATA", "Protocol: USB", "Protocol: PCI-Express"
         if let range = output.range(of: "Protocol:\\s*(.+)", options: .regularExpression) {
             let line = String(output[range])
-            let protocol = line.replacingOccurrences(of: "Protocol:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
-            return protocol.isEmpty ? nil : protocol
+            let protocolValue = line.replacingOccurrences(of: "Protocol:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return protocolValue.isEmpty ? nil : protocolValue
         }
         return nil
     }
