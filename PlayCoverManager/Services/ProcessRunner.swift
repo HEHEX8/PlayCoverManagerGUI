@@ -83,10 +83,10 @@ final class ProcessRunner: Sendable {
     func run(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil, timeout: TimeInterval? = nil) async throws -> String {
         if let timeout = timeout {
             return try await withTimeout(seconds: timeout) {
-                try await executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
+                try await self.executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
             }
         } else {
-            return try await executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
+            return try await self.executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
         }
     }
     
