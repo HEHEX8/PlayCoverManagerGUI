@@ -565,37 +565,28 @@ final class LauncherViewModel {
             let launchStart = CFAbsoluteTimeGetCurrent()
             try await launcherService.openApp(app, preferredLanguage: preferredLanguage, shouldLaunchFullscreen: shouldLaunchFullscreen)
             Logger.performance("App launch command: \(String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - launchStart) * 1000))ms")
-            Logger.lifecycle("Successfully launched \(app.displayName)")
-            
-            // Increment running app count
-            runningAppCount += 1
-            Logger.lifecycle("Running app count: \(runningAppCount)")
+            Logger.lifecycle("Launch command succeeded for \(app.displayName)")
             
             // Remove from pending (hide spinner)
             launchPendingApps.remove(app.bundleIdentifier)
             pendingLaunchContext = nil
             
-            // Verify app actually launched after a delay
-            Task {
-                try? await Task.sleep(for: .seconds(3))
-                
-                // Check if app is actually running
-                let isRunning = NSWorkspace.shared.runningApplications.contains { runningApp in
-                    runningApp.bundleIdentifier == app.bundleIdentifier
-                }
-                
-                if !isRunning {
-                    Logger.lifecycle("App \(app.displayName) failed to launch (not in running apps), decrementing count")
-                    await MainActor.run {
-                        if self.runningAppCount > 0 {
-                            self.runningAppCount -= 1
-                            Logger.lifecycle("Running app count corrected: \(self.runningAppCount)")
-                            
-                            // Process launch queue if there are waiting apps
-                            Task { await self.processLaunchQueue() }
-                        }
-                    }
-                }
+            // Wait and verify app actually launched, then increment count
+            try? await Task.sleep(for: .seconds(3))
+            
+            // Check if app is actually running
+            let isRunning = NSWorkspace.shared.runningApplications.contains { runningApp in
+                runningApp.bundleIdentifier == app.bundleIdentifier
+            }
+            
+            if isRunning {
+                // Only increment count if app actually launched
+                runningAppCount += 1
+                Logger.lifecycle("App \(app.displayName) confirmed running, count: \(runningAppCount)")
+            } else {
+                Logger.lifecycle("App \(app.displayName) failed to launch (not in running apps)")
+                // Don't increment count, and process next in queue
+                await processLaunchQueue()
             }
             
             // Cancel any pending unmount task (user relaunched before unmount)
@@ -616,18 +607,10 @@ final class LauncherViewModel {
             await updateAppStatus(bundleID: app.bundleIdentifier)
             Logger.performance("Status update: \(String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - statusUpdateStart) * 1000))ms")
         } catch let error as AppError {
-            // Decrement running app count on failure
-            if runningAppCount > 0 {
-                runningAppCount -= 1
-                Logger.lifecycle("Launch failed, running app count: \(runningAppCount)")
-            }
+            // No need to decrement count as it was never incremented
             self.error = error
         } catch {
-            // Decrement running app count on failure
-            if runningAppCount > 0 {
-                runningAppCount -= 1
-                Logger.lifecycle("Launch failed, running app count: \(runningAppCount)")
-            }
+            // No need to decrement count as it was never incremented
             self.error = AppError.diskImage(String(localized: "アプリの起動に失敗"), message: error.localizedDescription, underlying: error)
         }
     }
