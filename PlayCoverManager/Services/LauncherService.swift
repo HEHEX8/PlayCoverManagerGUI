@@ -226,9 +226,9 @@ final class LauncherService {
             clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
-        // If fullscreen requested, write fullscreen preference before launch
+        // If fullscreen requested, manipulate saved application state
         if shouldLaunchFullscreen {
-            setAppFullscreenPreference(bundleID: app.bundleIdentifier, fullscreen: true)
+            try? setupFullscreenState(bundleID: app.bundleIdentifier, appURL: app.appURL)
         }
         
         // Use 'open' command for compatibility with PlayCover apps
@@ -242,29 +242,54 @@ final class LauncherService {
         writeLastLaunchFlag(for: app.bundleIdentifier)
     }
     
-    /// Set app fullscreen preference using defaults write
-    private func setAppFullscreenPreference(bundleID: String, fullscreen: Bool) {
-        // Write multiple possible fullscreen preference keys
-        let keys = [
-            ("NSFullScreenWindowState", "1"),
-            ("NSWindowWasFullScreen", "1"),
-            ("AppleFullScreen", "YES")
+    /// Setup fullscreen state in Saved Application State directory
+    private func setupFullscreenState(bundleID: String, appURL: URL) throws {
+        // Path to container's Saved Application State directory
+        let containerPath = PlayCoverPaths.containerURL(for: bundleID)
+        let savedStateDir = containerPath
+            .appendingPathComponent("Data")
+            .appendingPathComponent("Library")
+            .appendingPathComponent("Saved Application State")
+            .appendingPathComponent("\(bundleID).savedState")
+        
+        // Create directory if it doesn't exist
+        try? FileManager.default.createDirectory(at: savedStateDir, withIntermediateDirectories: true)
+        
+        // Create or modify windows.plist with fullscreen state
+        let windowsPlist = savedStateDir.appendingPathComponent("windows.plist")
+        
+        // Create a basic fullscreen window state
+        let windowState: [String: Any] = [
+            "NSWindow Frame": "0 0 3840 2160", // Large frame
+            "NSWindowCollectionBehavior": 128, // NSWindowCollectionBehaviorFullScreenPrimary
+            "NSWindowStyleMask": 32768 // NSWindowStyleMaskFullScreen
         ]
         
-        for (key, value) in keys {
+        let plistData: [String: Any] = [
+            "windows": [windowState]
+        ]
+        
+        do {
+            let data = try PropertyListSerialization.data(fromPropertyList: plistData, format: .binary, options: 0)
+            try data.write(to: windowsPlist)
+            Logger.debug("Created fullscreen window state for \(bundleID)")
+        } catch {
+            Logger.error("Failed to create window state plist: \(error)")
+        }
+        
+        // Also set UserDefaults preferences as fallback
+        let defaults = [
+            ("NSFullScreenEnabled", "1"),
+            ("NSWindowWasFullScreen", "1")
+        ]
+        
+        for (key, value) in defaults {
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
             process.arguments = ["write", bundleID, key, value]
-            
-            do {
-                try process.run()
-                process.waitUntilExit()
-            } catch {
-                Logger.error("Failed to set fullscreen preference \(key): \(error)")
-            }
+            try? process.run()
+            process.waitUntilExit()
         }
-        
-        Logger.debug("Set fullscreen preferences for \(bundleID)")
     }
     
     /// Set app-specific language preference using defaults write
