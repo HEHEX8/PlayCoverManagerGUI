@@ -865,139 +865,85 @@ final class DiskImageService {
             Logger.storage("diskutil infoエラー、元のIDを使用: \(error)")
         }
         
-        // Try different ioreg commands to find USB speed information
-        // Strategy 1: Use IOUSB plane instead of class filter
-        let output = try await processRunner.run("/usr/sbin/ioreg", ["-r", "-p", "IOUSB", "-l"])
+        // Use system_profiler to get USB device information with JSON output
+        Logger.storage("system_profiler でUSB情報を取得中...")
+        let output = try await processRunner.run("/usr/sbin/system_profiler", ["-json", "SPUSBDataType"])
         
         Logger.storage("検索対象: \(physicalDisk)")
         
-        let lines = output.components(separatedBy: .newlines)
-        
-        // STEP 1: Find all lines containing "Speed" keyword and log them
-        Logger.storage("--- ioreg出力から全てのSpeed行を抽出 ---")
-        var speedLines: [(lineNumber: Int, content: String)] = []
-        for (index, line) in lines.enumerated() {
-            if line.contains("\"Speed\"") {
-                speedLines.append((lineNumber: index, content: line))
-                Logger.storage("行\(index): \(line.trimmingCharacters(in: .whitespaces))")
-            }
-        }
-        
-        if speedLines.isEmpty {
-            Logger.storage("⚠️ ioreg出力に\"Speed\"キーワードが一つも見つかりませんでした")
-        }
-        
-        // STEP 2: Find BSD Name line (using physical disk)
-        Logger.storage("--- BSD Name検索 ---")
-        var bsdNameLineIndex: Int?
-        for (index, line) in lines.enumerated() {
-            if line.contains("\"BSD Name\"") && line.contains(physicalDisk) {
-                bsdNameLineIndex = index
-                Logger.storage("✓ BSD Name発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
-                
-                // Log context around BSD Name (±10 lines)
-                Logger.storage("--- BSD Name周辺のコンテキスト（±10行）---")
-                let contextStart = max(0, index - 10)
-                let contextEnd = min(lines.count - 1, index + 10)
-                for i in contextStart...contextEnd {
-                    let prefix = i == index ? ">>> " : "    "
-                    Logger.storage("\(prefix)行\(i): \(lines[i].trimmingCharacters(in: .whitespaces))")
-                }
-                break
-            }
-        }
-        
-        guard let bsdIndex = bsdNameLineIndex else {
-            Logger.storage("⚠️ BSD Nameが見つかりませんでした（\(physicalDisk)）- USB 3.0+と仮定")
+        // Parse JSON output
+        guard let jsonData = output.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
+              let usbDataType = json["SPUSBDataType"] as? [[String: Any]] else {
+            Logger.storage("⚠️ JSON パースに失敗 - USB 3.0+と仮定")
             return .usb3OrHigher
         }
         
-        // STEP 3: Search for Speed in multiple ways
-        Logger.storage("--- Speed検索（複数戦略）---")
-        var speedValue: Int?
+        Logger.storage("JSON パース成功、USBデバイスツリーを探索中...")
         
-        // Strategy A: Search backwards for IOUSBHostDevice with Speed
-        Logger.storage("戦略A: 上方向にIOUSBHostDevice検索（300行）")
-        for index in stride(from: bsdIndex, through: max(0, bsdIndex - 300), by: -1) {
-            let line = lines[index]
-            
-            // Look for IOUSBHostDevice or IOUSBDevice entry
-            if line.contains("IOUSBHostDevice") || line.contains("IOUSBDevice") {
-                Logger.storage("  USB親デバイス候補発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
+        // Recursively search for the device with matching BSD name
+        func findDevice(in items: [[String: Any]], indent: Int = 0) -> [String: Any]? {
+            for item in items {
+                let indentStr = String(repeating: "  ", count: indent)
                 
-                // Search forward from this device for Speed property (within 100 lines)
-                for searchIndex in index...min(lines.count - 1, index + 100) {
-                    let searchLine = lines[searchIndex]
-                    
-                    // Stop if we hit another device at same level
-                    if searchIndex > index && searchLine.range(of: "^\\s*\\+-o ", options: .regularExpression) != nil {
-                        Logger.storage("  次のデバイスに到達（行\(searchIndex)）、検索終了")
-                        break
-                    }
-                    
-                    if searchLine.contains("\"Speed\"") {
-                        if let range = searchLine.range(of: "\"Speed\"\\s*=\\s*(\\d+)", options: .regularExpression) {
-                            let match = String(searchLine[range])
-                            if let numRange = match.range(of: "\\d+", options: .regularExpression) {
-                                let numStr = String(match[numRange])
-                                speedValue = Int(numStr)
-                                Logger.storage("  ✓ Speed発見（行\(searchIndex)）: Speed = \(speedValue ?? -1)")
-                                Logger.storage("  親デバイス行: \(lines[index].trimmingCharacters(in: .whitespaces))")
-                                break
-                            }
-                        }
+                // Check if this device has BSD Name matching our disk
+                if let bsdName = item["bsd_name"] as? String {
+                    Logger.storage("\(indentStr)BSD Name発見: \(bsdName)")
+                    if bsdName == physicalDisk {
+                        Logger.storage("\(indentStr)✓ 一致！ \(physicalDisk)")
+                        return item
                     }
                 }
                 
-                if speedValue != nil {
-                    break
-                }
-            }
-        }
-        
-        // Strategy B: If not found, search entire output for Speed near disk name
-        if speedValue == nil {
-            Logger.storage("戦略B: 全体検索（diskID周辺）")
-            for speedInfo in speedLines {
-                let distance = abs(speedInfo.lineNumber - bsdIndex)
-                if distance < 500 {  // Within 500 lines
-                    Logger.storage("  Speed候補（距離\(distance)行, 行\(speedInfo.lineNumber)）: \(speedInfo.content.trimmingCharacters(in: .whitespaces))")
-                    
-                    if let range = speedInfo.content.range(of: "\"Speed\"\\s*=\\s*(\\d+)", options: .regularExpression) {
-                        let match = String(speedInfo.content[range])
-                        if let numRange = match.range(of: "\\d+", options: .regularExpression) {
-                            let numStr = String(match[numRange])
-                            speedValue = Int(numStr)
-                            Logger.storage("  ✓ Speedを採用: Speed = \(speedValue ?? -1)")
-                            break
-                        }
+                // Recursively search in _items
+                if let subItems = item["_items"] as? [[String: Any]] {
+                    if let found = findDevice(in: subItems, indent: indent + 1) {
+                        return found
                     }
                 }
             }
+            return nil
         }
         
-        guard let speed = speedValue else {
-            Logger.storage("❌ USB速度情報が見つかりませんでした - USB 3.0+と仮定")
-            Logger.storage("=== USB速度検出終了 ===")
+        guard let device = findDevice(in: usbDataType) else {
+            Logger.storage("⚠️ デバイス \(physicalDisk) が見つかりませんでした - USB 3.0+と仮定")
             return .usb3OrHigher
         }
         
-        // Classify based on ioreg Speed value
-        Logger.storage("最終速度値: Speed = \(speed)")
+        Logger.storage("✓ デバイス情報取得成功")
         
+        // Extract device_speed field
+        guard let deviceSpeed = device["device_speed"] as? String else {
+            Logger.storage("⚠️ device_speed フィールドなし - USB 3.0+と仮定")
+            return .usb3OrHigher
+        }
+        
+        Logger.storage("device_speed: \(deviceSpeed)")
+        
+        // Map device_speed to USB speed classification
+        // Reference: https://gist.github.com/benfry/304938b9a4e27ded65c0b36eb70b8272
         let result: USBSpeed
-        switch speed {
-        case 0, 1:  // Low/Full Speed (1.5-12 Mbps)
-            Logger.storage("✓ 判定: USB 1.x")
+        switch deviceSpeed {
+        case "low_speed":  // USB 1.0: 1.5 Mbps
+            Logger.storage("✓ 判定: USB 1.0 (low_speed)")
             result = .usb1
-        case 2:  // High Speed (480 Mbps)
-            Logger.storage("✓ 判定: USB 2.0")
+        case "full_speed":  // USB 1.1: 12 Mbps
+            Logger.storage("✓ 判定: USB 1.1 (full_speed)")
+            result = .usb1
+        case "high_speed":  // USB 2.0: 480 Mbps
+            Logger.storage("✓ 判定: USB 2.0 (high_speed)")
             result = .usb2
-        case 3, 4:  // Super Speed / Super Speed Plus (5+ Gbps)
-            Logger.storage("✓ 判定: USB 3.0以上")
+        case "super_speed":  // USB 3.0: 5 Gbps
+            Logger.storage("✓ 判定: USB 3.0 (super_speed)")
+            result = .usb3OrHigher
+        case "super_speed_plus":  // USB 3.1+: 10 Gbps+
+            Logger.storage("✓ 判定: USB 3.1+ (super_speed_plus)")
+            result = .usb3OrHigher
+        case "super_speed_plus_gen2x2":  // USB 3.2: 20 Gbps
+            Logger.storage("✓ 判定: USB 3.2 (super_speed_plus_gen2x2)")
             result = .usb3OrHigher
         default:
-            Logger.storage("⚠️ 判定: 不明な速度値(\(speed))、USB 3.0+と仮定")
+            Logger.storage("⚠️ 不明な速度: \(deviceSpeed) - USB 3.0+と仮定")
             result = .usb3OrHigher
         }
         
