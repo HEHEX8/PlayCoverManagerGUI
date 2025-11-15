@@ -71,6 +71,10 @@ final class LauncherViewModel {
     // Track active auto-unmount tasks to prevent duplicates and allow cancellation
     @ObservationIgnored private var activeUnmountTasks: [String: Task<Void, Never>] = [:]
     
+    // Pre-mount management for last launched apps
+    @ObservationIgnored private var preMountedApp: String? = nil  // Currently pre-mounted app bundle ID
+    @ObservationIgnored private var lastLaunchedApp: String? = nil  // Last launched app bundle ID
+    
     // KVO observation for runningApplications (more efficient than notifications)
     // @ObservationIgnored prevents Observable macro from tracking this property
     @ObservationIgnored private var runningAppsObservation: NSKeyValueObservation?
@@ -411,7 +415,7 @@ final class LauncherViewModel {
                 
                 // Activate the running app directly
                 if let runningApp = launcherService.getRunningApp(bundleID: app.bundleIdentifier) {
-                    runningApp.activate(options: .activateIgnoringOtherApps)
+                    runningApp.activate()
                     Logger.lifecycle("Successfully activated: \(app.displayName)")
                 }
                 continue
