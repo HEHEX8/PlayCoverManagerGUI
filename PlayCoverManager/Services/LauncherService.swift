@@ -226,11 +226,6 @@ final class LauncherService {
             clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
-        // If fullscreen requested, manipulate saved application state
-        if shouldLaunchFullscreen {
-            try? setupFullscreenState(bundleID: app.bundleIdentifier, appURL: app.appURL)
-        }
-        
         // Use 'open' command for compatibility with PlayCover apps
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
@@ -240,55 +235,68 @@ final class LauncherService {
         // Don't wait for exit - return immediately like Finder double-click
         
         writeLastLaunchFlag(for: app.bundleIdentifier)
+        
+        // If fullscreen requested, wait for app to start and send fullscreen keystroke
+        if shouldLaunchFullscreen {
+            Task.detached {
+                await self.waitAndToggleFullscreen(bundleID: app.bundleIdentifier)
+            }
+        }
     }
     
-    /// Setup fullscreen state in Saved Application State directory
-    private func setupFullscreenState(bundleID: String, appURL: URL) throws {
-        // Path to container's Saved Application State directory
-        let containerPath = PlayCoverPaths.containerURL(for: bundleID)
-        let savedStateDir = containerPath
-            .appendingPathComponent("Data")
-            .appendingPathComponent("Library")
-            .appendingPathComponent("Saved Application State")
-            .appendingPathComponent("\(bundleID).savedState")
+    /// Wait for app to launch and toggle fullscreen using AppleScript
+    private func waitAndToggleFullscreen(bundleID: String) async {
+        Logger.debug("Waiting for \(bundleID) to launch for fullscreen toggle")
         
-        // Create directory if it doesn't exist
-        try? FileManager.default.createDirectory(at: savedStateDir, withIntermediateDirectories: true)
+        // Poll for app launch (max 10 seconds)
+        var attempts = 0
+        let maxAttempts = 40  // 10 seconds (250ms intervals)
         
-        // Create or modify windows.plist with fullscreen state
-        let windowsPlist = savedStateDir.appendingPathComponent("windows.plist")
-        
-        // Create a basic fullscreen window state
-        let windowState: [String: Any] = [
-            "NSWindow Frame": "0 0 3840 2160", // Large frame
-            "NSWindowCollectionBehavior": 128, // NSWindowCollectionBehaviorFullScreenPrimary
-            "NSWindowStyleMask": 32768 // NSWindowStyleMaskFullScreen
-        ]
-        
-        let plistData: [String: Any] = [
-            "windows": [windowState]
-        ]
-        
-        do {
-            let data = try PropertyListSerialization.data(fromPropertyList: plistData, format: .binary, options: 0)
-            try data.write(to: windowsPlist)
-            Logger.debug("Created fullscreen window state for \(bundleID)")
-        } catch {
-            Logger.error("Failed to create window state plist: \(error)")
+        while attempts < maxAttempts {
+            if await isAppRunning(bundleID: bundleID) {
+                Logger.debug("\(bundleID) is now running, sending fullscreen keystroke")
+                
+                // Wait a bit for window to initialize
+                try? await Task.sleep(for: .milliseconds(500))
+                
+                // Send Cmd+Ctrl+F keystroke via AppleScript
+                sendFullscreenKeystroke(bundleID: bundleID)
+                return
+            }
+            
+            try? await Task.sleep(for: .milliseconds(250))
+            attempts += 1
         }
         
-        // Also set UserDefaults preferences as fallback
-        let defaults = [
-            ("NSFullScreenEnabled", "1"),
-            ("NSWindowWasFullScreen", "1")
-        ]
+        Logger.debug("Timeout waiting for \(bundleID) to launch")
+    }
+    
+    /// Send fullscreen keystroke to app using AppleScript
+    private func sendFullscreenKeystroke(bundleID: String) {
+        // AppleScript to send Cmd+Ctrl+F to the app
+        let script = """
+        tell application "System Events"
+            tell (first process whose bundle identifier is "\(bundleID)")
+                keystroke "f" using {command down, control down}
+            end tell
+        end tell
+        """
         
-        for (key, value) in defaults {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
-            process.arguments = ["write", bundleID, key, value]
-            try? process.run()
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+        
+        do {
+            try process.run()
             process.waitUntilExit()
+            
+            if process.terminationStatus == 0 {
+                Logger.debug("Successfully sent fullscreen keystroke to \(bundleID)")
+            } else {
+                Logger.error("Failed to send fullscreen keystroke to \(bundleID), exit code: \(process.terminationStatus)")
+            }
+        } catch {
+            Logger.error("Failed to execute AppleScript for fullscreen: \(error)")
         }
     }
     
