@@ -257,7 +257,7 @@ final class LauncherService {
                 Logger.debug("\(bundleID) is now running, sending fullscreen keystroke")
                 
                 // Wait a bit for window to initialize
-                try? await Task.sleep(for: .milliseconds(1000))
+                try? await Task.sleep(for: .milliseconds(2000))
                 
                 // Send Cmd+Ctrl+F keystroke via AppleScript
                 sendFullscreenKeystroke(bundleID: bundleID)
