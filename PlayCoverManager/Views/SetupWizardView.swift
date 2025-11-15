@@ -546,8 +546,6 @@ private struct StorageStepView: View {
             return "externaldrive.fill"
         case .network:
             return "network"
-        case .usbSlow:
-            return "exclamationmark.triangle.fill"
         case .unknown:
             return "questionmark.circle.fill"
         }
@@ -561,8 +559,6 @@ private struct StorageStepView: View {
             return .orange
         case .network:
             return .orange
-        case .usbSlow:
-            return .red
         case .unknown:
             return .gray
         }
