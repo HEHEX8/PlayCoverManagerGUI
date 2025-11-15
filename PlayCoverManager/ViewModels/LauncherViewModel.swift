@@ -251,8 +251,6 @@ final class LauncherViewModel {
         let isRunning = await launcherService.isAppRunning(bundleID: bundleID)
         let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
         
-
-        
         let updatedApp = PlayCoverApp(
             bundleIdentifier: app.bundleIdentifier,
             displayName: app.displayName,
@@ -265,12 +263,23 @@ final class LauncherViewModel {
             isMounted: isMounted
         )
         
-        // Force SwiftUI update by replacing entire array
+        // Update main array
         var newApps = apps
         newApps[index] = updatedApp
         apps = newApps
         
-        applySearch()
+        // Update filtered array if needed (more efficient than full applySearch)
+        if !searchText.isEmpty {
+            // Only update if this app is in filtered results
+            if let filteredIndex = filteredApps.firstIndex(where: { $0.bundleIdentifier == bundleID }) {
+                var newFiltered = filteredApps
+                newFiltered[filteredIndex] = updatedApp
+                filteredApps = newFiltered
+            }
+        } else {
+            // No search active, filteredApps should mirror apps
+            filteredApps = newApps
+        }
     }
     
     // MARK: - Public Helper Methods for AppViewModel
@@ -438,6 +447,7 @@ final class LauncherViewModel {
     }
 
     private func performLaunch(app: PlayCoverApp, resume: Bool) async {
+        let startTime = CFAbsoluteTimeGetCurrent()
         Logger.lifecycle("Starting launch flow for \(app.bundleIdentifier) (resume: \(resume))")
         isBusy = true
         isShowingStatus = false  // Don't show status overlay for normal launch
@@ -445,22 +455,20 @@ final class LauncherViewModel {
         defer { 
             isBusy = false
             isShowingStatus = false
+            let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+            Logger.performance("Total launch time for \(app.displayName): \(String(format: "%.0f", elapsed * 1000))ms")
         }
         do {
             let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
-            Logger.debug("Container URL: \(containerURL.path)")
             
-            // Clean up any lingering processes from previous failed installations/launches
-            await cleanupLingeringProcesses(for: app.bundleIdentifier, containerURL: containerURL)
-            
-            // Check disk image state
-            Logger.diskImage("Checking disk image state for \(app.bundleIdentifier)")
+            // Check disk image state (fast check)
+            let stateCheckStart = CFAbsoluteTimeGetCurrent()
             let state = try DiskImageHelper.checkDiskImageState(
                 for: app.bundleIdentifier,
                 containerURL: containerURL,
                 diskImageService: diskImageService
             )
-            Logger.diskImage("Disk image exists: \(state.imageExists), mounted: \(state.isMounted)")
+            Logger.performance("Disk image state check: \(String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - stateCheckStart) * 1000))ms")
             
             guard state.imageExists else {
                 Logger.lifecycle("Disk image not found, requesting creation for \(app.bundleIdentifier)")
@@ -469,10 +477,11 @@ final class LauncherViewModel {
                 return
             }
 
-            // Check for internal data if not mounted and not resuming
+            // Check for internal data if not mounted and not resuming (fast check)
             if !resume && !state.isMounted {
-                Logger.debug("Checking for internal data at \(containerURL.path)")
+                let dataCheckStart = CFAbsoluteTimeGetCurrent()
                 let internalItems = try detectInternalData(at: containerURL)
+                Logger.performance("Internal data check: \(String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - dataCheckStart) * 1000))ms")
                 if !internalItems.isEmpty {
                     Logger.lifecycle("Internal data found (\(internalItems.count) items), requesting user action")
                     pendingLaunchContext = LaunchContext(app: app, containerURL: containerURL)
@@ -481,7 +490,7 @@ final class LauncherViewModel {
                 }
             }
 
-            // Mount if needed
+            // Mount if needed (potentially slow)
             if !state.isMounted {
                 Logger.diskImage("Mounting disk image for \(app.bundleIdentifier)")
                 try await Logger.measureAsync("Mount disk image") {
@@ -498,21 +507,22 @@ final class LauncherViewModel {
                 Logger.diskImage("Disk image already mounted, skipping mount")
             }
 
-            // Swift 6.2: Acquire lock on container before launching (actor method)
-            Logger.debug("Acquiring lock for \(app.bundleIdentifier)")
+            // Acquire lock (fast non-blocking)
+            let lockStart = CFAbsoluteTimeGetCurrent()
             _ = await lockService.lockContainer(for: app.bundleIdentifier, at: containerURL)
+            Logger.performance("Lock acquisition: \(String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - lockStart) * 1000))ms")
             
-            // Get preferred language from per-app settings
+            // Get preferred language (fast)
             let preferredLanguage = perAppSettings.getPreferredLanguage(for: app.bundleIdentifier)
             
-            // Determine if app should launch in fullscreen
+            // Determine fullscreen setting (fast)
             let shouldLaunchFullscreen = determineShouldLaunchFullscreen()
             
+            // Launch app (potentially slow - external process)
             Logger.lifecycle("Launching \(app.displayName)... (fullscreen: \(shouldLaunchFullscreen))")
-            if let language = preferredLanguage {
-                Logger.debug("Using preferred language: \(language)")
-            }
+            let launchStart = CFAbsoluteTimeGetCurrent()
             try await launcherService.openApp(app, preferredLanguage: preferredLanguage, shouldLaunchFullscreen: shouldLaunchFullscreen)
+            Logger.performance("App launch command: \(String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - launchStart) * 1000))ms")
             Logger.lifecycle("Successfully launched \(app.displayName)")
             
             // Increment running app count
@@ -531,7 +541,9 @@ final class LauncherViewModel {
             }
             
             // Update only this app's status immediately (no refresh needed)
+            let statusUpdateStart = CFAbsoluteTimeGetCurrent()
             await updateAppStatus(bundleID: app.bundleIdentifier)
+            Logger.performance("Status update: \(String(format: "%.0f", (CFAbsoluteTimeGetCurrent() - statusUpdateStart) * 1000))ms")
         } catch let error as AppError {
             self.error = error
         } catch {
