@@ -10,6 +10,7 @@ struct CommandResult {
 
 enum ProcessRunnerError: Error {
     case commandFailed(command: [String], exitCode: Int32, stderr: String)
+    case timeout(seconds: TimeInterval)
 }
 
 final class ProcessRunner: Sendable {
@@ -79,8 +80,40 @@ final class ProcessRunner: Sendable {
     /// Execute process asynchronously using Swift 6.2 structured concurrency
     /// Marked as @concurrent to explicitly run on concurrent executor (not caller's actor)
     @concurrent
-    func run(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil) async throws -> String {
-        try await executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
+    func run(_ launchPath: String, _ arguments: [String], currentDirectoryURL: URL? = nil, environment: [String: String]? = nil, timeout: TimeInterval? = nil) async throws -> String {
+        if let timeout = timeout {
+            return try await withTimeout(seconds: timeout) {
+                try await executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
+            }
+        } else {
+            return try await executor.execute(launchPath, arguments, currentDirectoryURL: currentDirectoryURL, environment: environment)
+        }
+    }
+    
+    /// Execute with timeout
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            // Add the actual operation
+            group.addTask {
+                try await operation()
+            }
+            
+            // Add timeout task
+            group.addTask {
+                try await Task.sleep(for: .seconds(seconds))
+                throw ProcessRunnerError.timeout(seconds: seconds)
+            }
+            
+            // Wait for first result
+            guard let result = try await group.next() else {
+                throw ProcessRunnerError.timeout(seconds: seconds)
+            }
+            
+            // Cancel remaining tasks
+            group.cancelAll()
+            
+            return result
+        }
     }
 
     /// Execute process synchronously (use run() for async contexts)
@@ -96,6 +129,8 @@ extension ProcessRunnerError: LocalizedError {
             let cmd = command.joined(separator: " ")
             let tail = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             return "Command failed (exit code: \(exitCode))\n\(cmd)\n\(tail)"
+        case .timeout(let seconds):
+            return "Command timed out after \(Int(seconds)) seconds. Storage may be too slow or unresponsive."
         }
     }
 }

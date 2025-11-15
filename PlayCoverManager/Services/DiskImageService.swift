@@ -242,12 +242,29 @@ final class DiskImageService {
         try fileManager.createDirectoryIfNeeded(at: mountPoint)
         
         // Mount ASIF disk image using diskutil (mounts read-write by default)
+        // Use longer timeout for slow storage (180s)
+        let timeout: TimeInterval = 180
+        
         var args = ["image", "attach", imageURL.path, "--mountPoint", mountPoint.path]
         if nobrowse {
             args.append("--nobrowse")
         }
         
-        _ = try await processRunner.run("/usr/sbin/diskutil", args)
+        Logger.diskImage("Running: diskutil \(args.joined(separator: " ")) (timeout: \(Int(timeout))s)")
+        
+        do {
+            _ = try await processRunner.run("/usr/sbin/diskutil", args, timeout: timeout)
+        } catch let error as ProcessRunnerError {
+            if case .timeout(let seconds) = error {
+                Logger.error("Mount timed out after \(seconds)s - storage may be too slow")
+                throw AppError.diskImage(
+                    String(localized: "マウントがタイムアウトしました"),
+                    message: String(localized: "ストレージの応答が遅すぎます。\n\nより高速なストレージ（SSD）の使用を推奨します。"),
+                    underlying: error
+                )
+            }
+            throw error
+        }
     }
     
     func unmountVolume(_ volumeURL: URL) async throws {
@@ -434,8 +451,8 @@ final class DiskImageService {
     func ejectDiskImage(for volumePath: URL, force: Bool = false) async throws {
         Logger.diskImage("ejectDiskImage called for: \(volumePath.path)")
         
-        // Get device identifier for the volume
-        let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", volumePath.path])
+        // Get device identifier for the volume (with timeout)
+        let infoOutput = try? await processRunner.run("/usr/sbin/diskutil", ["info", "-plist", volumePath.path], timeout: 30)
         guard let infoPlist = infoOutput?.parsePlist(),
               let deviceId = infoPlist["DeviceIdentifier"] as? String else {
             Logger.error("Failed to get device identifier")
@@ -449,14 +466,28 @@ final class DiskImageService {
         Logger.diskImage("Parent device: \(parentDevice), force: \(force)")
         
         // Eject the parent device (unmounts all volumes and detaches device)
+        // Use longer timeout for slow storage (180s) vs fast storage (60s)
+        let timeout: TimeInterval = 180
+        
         do {
             var args = ["eject", parentDevice]
             if force {
                 args.append("-force")
             }
-            Logger.diskImage("Running: diskutil \(args.joined(separator: " "))")
-            let output = try await processRunner.run("/usr/sbin/diskutil", args)
+            Logger.diskImage("Running: diskutil \(args.joined(separator: " ")) (timeout: \(Int(timeout))s)")
+            let output = try await processRunner.run("/usr/sbin/diskutil", args, timeout: timeout)
             Logger.diskImage("Eject succeeded: \(output)")
+        } catch let error as ProcessRunnerError {
+            if case .timeout(let seconds) = error {
+                Logger.error("Eject timed out after \(seconds)s - storage may be too slow")
+                throw AppError.diskImage(
+                    String(localized: "アンマウントがタイムアウトしました"),
+                    message: String(localized: "ストレージの応答が遅すぎます。\n\nより高速なストレージ（SSD）の使用を推奨します。"),
+                    underlying: error
+                )
+            }
+            Logger.error("Eject failed: \(error)")
+            throw error
         } catch {
             Logger.error("Eject failed: \(error)")
             throw error
@@ -629,6 +660,68 @@ final class DiskImageService {
         }
         
         return volumeNames.isEmpty && blockingProcess == nil ? nil : (volumeNames, blockingProcess)
+    }
+    
+    // MARK: - Storage Type Detection
+    
+    /// Detect storage type (SSD, HDD, etc.) for a given path
+    func detectStorageType(for url: URL) async throws -> StorageType {
+        // Get device path for the volume
+        guard let devicePath = try? await getDevicePath(for: url) else {
+            return .unknown
+        }
+        
+        // Extract disk identifier (e.g., disk1 from /dev/disk1s1)
+        let diskID = devicePath.replacingOccurrences(of: "/dev/", with: "").replacingOccurrences(of: "s[0-9]+$", with: "", options: .regularExpression)
+        
+        // Use diskutil info to get device characteristics
+        let output = try await processRunner.run("/usr/sbin/diskutil", ["info", diskID])
+        
+        // Parse output for "Solid State" indication
+        if output.contains("Solid State:") {
+            if output.range(of: "Solid State:\\s+Yes", options: .regularExpression) != nil {
+                return .ssd
+            } else if output.range(of: "Solid State:\\s+No", options: .regularExpression) != nil {
+                return .hdd
+            }
+        }
+        
+        // Fallback: Check if it's a network volume
+        if output.contains("Protocol:") && (output.contains("SMB") || output.contains("NFS") || output.contains("AFP")) {
+            return .network
+        }
+        
+        return .unknown
+    }
+    
+    /// Storage type enumeration
+    enum StorageType {
+        case ssd
+        case hdd
+        case network
+        case unknown
+        
+        var localizedDescription: String {
+            switch self {
+            case .ssd:
+                return String(localized: "SSD")
+            case .hdd:
+                return String(localized: "HDD")
+            case .network:
+                return String(localized: "ネットワークドライブ")
+            case .unknown:
+                return String(localized: "不明")
+            }
+        }
+        
+        var isSlow: Bool {
+            switch self {
+            case .ssd:
+                return false
+            case .hdd, .network, .unknown:
+                return true
+            }
+        }
     }
 }
 

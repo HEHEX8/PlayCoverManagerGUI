@@ -477,6 +477,27 @@ private struct StorageStepView: View {
                         .font(.system(size: 11 * uiScale))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
+                    
+                    // Storage type warning
+                    if viewModel.showStorageWarning, let storageType = viewModel.storageType {
+                        HStack(spacing: 8 * uiScale) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 14 * uiScale))
+                                .foregroundStyle(.orange)
+                            VStack(alignment: .leading, spacing: 4 * uiScale) {
+                                Text("選択されたストレージ: \(storageType.localizedDescription)")
+                                    .font(.system(size: 12 * uiScale, weight: .semibold))
+                                    .foregroundStyle(.primary)
+                                Text("このストレージタイプは動作が遅くなる可能性があります。\nSSDの使用を推奨します。")
+                                    .font(.system(size: 11 * uiScale))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(12 * uiScale)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(8 * uiScale)
+                    }
                 }
                 .padding(.horizontal, 20 * uiScale)
             }

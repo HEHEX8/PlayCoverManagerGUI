@@ -45,6 +45,8 @@ final class SetupWizardViewModel {
     var statusMessage: String = ""
     var error: AppError?
     var storageURL: URL?
+    var storageType: DiskImageService.StorageType?
+    var showStorageWarning: Bool = false
     var completionMessage: String = String(localized: "セットアップが完了しました。")
 
     var onCompletion: (() -> Void)?
@@ -110,6 +112,27 @@ final class SetupWizardViewModel {
         if panel.runModal() == .OK, let url = panel.url {
             storageURL = url
             settings.diskImageDirectory = url
+            
+            // Detect storage type
+            Task {
+                await detectStorageType(for: url)
+            }
+        }
+    }
+    
+    func detectStorageType(for url: URL) async {
+        do {
+            let type = try await diskImageService.detectStorageType(for: url)
+            await MainActor.run {
+                storageType = type
+                showStorageWarning = type.isSlow
+            }
+        } catch {
+            Logger.error("Failed to detect storage type: \(error)")
+            await MainActor.run {
+                storageType = .unknown
+                showStorageWarning = true
+            }
         }
     }
 
