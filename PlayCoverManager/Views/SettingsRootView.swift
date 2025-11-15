@@ -901,7 +901,7 @@ struct IPAInstallerSheet: View {
                 for provider in providers {
                     if let url = try? await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<URL?, Error>) in
                         _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, error in
-                            if let error = error {
+                            if error != nil {
                                 continuation.resume(returning: nil)
                             } else if let data = data,
                                       let urlString = String(data: data, encoding: .utf8),
@@ -911,7 +911,7 @@ struct IPAInstallerSheet: View {
                                 continuation.resume(returning: nil)
                             }
                         }
-                    }), let url = url {
+                    }) {
                         urls.append(url)
                     }
                 }
@@ -1245,7 +1245,7 @@ struct IPAInstallerSheet: View {
                 for provider in providers {
                     if let url = try? await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<URL?, Error>) in
                         _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, error in
-                            if let error = error {
+                            if error != nil {
                                 continuation.resume(returning: nil)
                             } else if let data = data,
                                       let urlString = String(data: data, encoding: .utf8),
@@ -1255,7 +1255,7 @@ struct IPAInstallerSheet: View {
                                 continuation.resume(returning: nil)
                             }
                         }
-                    }), let url = url {
+                    }) {
                         urls.append(url)
                     }
                 }
