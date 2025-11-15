@@ -224,6 +224,12 @@ final class LauncherViewModel {
             return
         }
         
+        // Skip auto-unmount if this is the last launched app (keep it pre-mounted)
+        if bundleID == lastLaunchedApp {
+            Logger.lifecycle("Skipping auto-unmount for last launched app: \(bundleID)")
+            return
+        }
+        
         // Create background auto-unmount task (don't wait for it)
         let task = Task.detached { [weak self] in
             await self?.unmountContainer(for: bundleID)
@@ -341,6 +347,11 @@ final class LauncherViewModel {
             // Initialize running app count
             runningAppCount = previouslyRunningApps.count
             Logger.lifecycle("Initialized running app count: \(runningAppCount)")
+            
+            // Pre-mount last launched app in background
+            Task.detached { [weak self] in
+                await self?.preMountLastLaunchedApp()
+            }
         } catch {
             self.error = AppError.environment(String(localized: "アプリ一覧の更新に失敗"), message: error.localizedDescription, underlying: error)
         }
@@ -533,6 +544,12 @@ final class LauncherViewModel {
                 activeUnmountTasks.removeValue(forKey: app.bundleIdentifier)
                 Logger.lifecycle("Cancelled auto-unmount for \(app.bundleIdentifier) due to launch")
             }
+            
+            // Handle pre-mount logic (eject unused pre-mounted app)
+            await handlePreMountOnLaunch(launchedApp: app)
+            
+            // Update last launched tracking
+            await updateLastLaunchedTracking(bundleID: app.bundleIdentifier)
             
             // Update only this app's status immediately (no refresh needed)
             let statusUpdateStart = CFAbsoluteTimeGetCurrent()
@@ -1650,6 +1667,110 @@ final class LauncherViewModel {
         } catch {
             Logger.lifecycle("Failed to check for lingering processes: \(error)")
         }
+    }
+    
+    // MARK: - Pre-mount Management
+    
+    /// Pre-mount last launched app for quick access
+    private func preMountLastLaunchedApp() async {
+        // Find last launched app
+        guard let lastApp = apps.first(where: { $0.lastLaunchedFlag }) else {
+            Logger.lifecycle("Pre-mount: No last launched app found")
+            return
+        }
+        
+        Logger.lifecycle("Pre-mount: Starting pre-mount for \(lastApp.displayName)")
+        
+        let containerURL = PlayCoverPaths.containerURL(for: lastApp.bundleIdentifier)
+        
+        do {
+            // Check disk image state
+            let state = try DiskImageHelper.checkDiskImageState(
+                for: lastApp.bundleIdentifier,
+                containerURL: containerURL,
+                diskImageService: diskImageService
+            )
+            
+            guard state.imageExists else {
+                Logger.lifecycle("Pre-mount: Disk image not found for \(lastApp.displayName)")
+                return
+            }
+            
+            // Skip if already mounted
+            if state.isMounted {
+                Logger.lifecycle("Pre-mount: \(lastApp.displayName) already mounted")
+                // Track as pre-mounted
+                await MainActor.run {
+                    self.preMountedApp = lastApp.bundleIdentifier
+                    self.lastLaunchedApp = lastApp.bundleIdentifier
+                }
+                return
+            }
+            
+            // Mount disk image
+            Logger.lifecycle("Pre-mount: Mounting \(lastApp.displayName)")
+            try await DiskImageHelper.mountDiskImageIfNeeded(
+                for: lastApp.bundleIdentifier,
+                containerURL: containerURL,
+                diskImageService: diskImageService,
+                perAppSettings: perAppSettings,
+                globalSettings: settings
+            )
+            Logger.lifecycle("Pre-mount: Successfully mounted \(lastApp.displayName)")
+            
+            // Track as pre-mounted
+            await MainActor.run {
+                self.preMountedApp = lastApp.bundleIdentifier
+                self.lastLaunchedApp = lastApp.bundleIdentifier
+            }
+            
+            // Update app status
+            await updateAppStatus(bundleID: lastApp.bundleIdentifier)
+            
+        } catch {
+            Logger.error("Pre-mount: Failed to mount \(lastApp.displayName): \(error)")
+        }
+    }
+    
+    /// Handle pre-mounted app when launching different app
+    func handlePreMountOnLaunch(launchedApp: PlayCoverApp) async {
+        guard let preMounted = preMountedApp else { return }
+        
+        // If launching the pre-mounted app, just keep it mounted
+        if launchedApp.bundleIdentifier == preMounted {
+            Logger.lifecycle("Pre-mount: Launching pre-mounted app \(launchedApp.displayName)")
+            return
+        }
+        
+        // Launching a different app - eject the pre-mounted one if not running
+        Logger.lifecycle("Pre-mount: Different app launched, checking if pre-mounted app should be ejected")
+        
+        let isPreMountedRunning = await launcherService.isAppRunning(bundleID: preMounted)
+        if !isPreMountedRunning {
+            Logger.lifecycle("Pre-mount: Ejecting unused pre-mounted app")
+            await immediateEjectContainer(for: preMounted)
+        }
+        
+        // Clear pre-mount tracking
+        preMountedApp = nil
+    }
+    
+    /// Update last launched app tracking when app is launched
+    func updateLastLaunchedTracking(bundleID: String) async {
+        // Check if last launched app changed
+        if let previous = lastLaunchedApp, previous != bundleID {
+            Logger.lifecycle("Pre-mount: Last launched app changed from \(previous) to \(bundleID)")
+            
+            // If previous app is not running, eject it immediately
+            let isPreviousRunning = await launcherService.isAppRunning(bundleID: previous)
+            if !isPreviousRunning {
+                Logger.lifecycle("Pre-mount: Ejecting previous last-launched app \(previous)")
+                await immediateEjectContainer(for: previous)
+            }
+        }
+        
+        // Update tracking
+        lastLaunchedApp = bundleID
     }
     
 }
