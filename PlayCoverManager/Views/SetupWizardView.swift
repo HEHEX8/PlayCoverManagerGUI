@@ -542,7 +542,7 @@ private struct StorageStepView: View {
         switch type {
         case .ssd:
             return "bolt.circle.fill"
-        case .hdd:
+        case .other:
             return "externaldrive.fill"
         case .network:
             return "network"
@@ -555,7 +555,7 @@ private struct StorageStepView: View {
         switch type {
         case .ssd:
             return .green
-        case .hdd:
+        case .other:
             return .orange
         case .network:
             return .orange

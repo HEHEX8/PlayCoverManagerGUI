@@ -690,12 +690,12 @@ final class DiskImageService {
             if output.range(of: "Solid State:\\s+Yes", options: .regularExpression) != nil {
                 return .ssd(protocol: protocolInfo)
             } else if output.range(of: "Solid State:\\s+No", options: .regularExpression) != nil {
-                return .hdd(protocol: protocolInfo)
+                return .other(protocol: protocolInfo)
             }
         }
         
-        // Default to HDD for unknown solid state status
-        return .hdd(protocol: protocolInfo)
+        // Default to other for unknown solid state status
+        return .other(protocol: protocolInfo)
     }
     
     /// Extract protocol information from diskutil output
@@ -713,24 +713,27 @@ final class DiskImageService {
     /// Storage type enumeration
     enum StorageType {
         case ssd(protocol: String?)  // SSD with optional protocol info
-        case hdd(protocol: String?)  // HDD with optional protocol info
+        case other(protocol: String?)  // Non-SSD storage (HDD, USB, etc.)
         case network(protocol: String?)  // Network drive with protocol
         case unknown
         
         var localizedDescription: String {
             switch self {
             case .ssd(let proto):
-                if let proto = proto {
+                // SSD: display "SSD" or "SSD (protocol)"
+                if let proto = proto, !proto.isEmpty {
                     return "SSD (\(proto))"
                 }
                 return "SSD"
-            case .hdd(let proto):
-                if let proto = proto {
-                    return "HDD (\(proto))"
+            case .other(let proto):
+                // Non-SSD: display protocol as-is, or "HDD" as fallback
+                if let proto = proto, !proto.isEmpty {
+                    return proto
                 }
                 return "HDD"
             case .network(let proto):
-                if let proto = proto {
+                // Network: display protocol or generic label
+                if let proto = proto, !proto.isEmpty {
                     return "ネットワークドライブ (\(proto))"
                 }
                 return "ネットワークドライブ"
@@ -743,7 +746,7 @@ final class DiskImageService {
             switch self {
             case .ssd:
                 return false
-            case .hdd, .network, .unknown:
+            case .other, .network, .unknown:
                 return true
             }
         }
