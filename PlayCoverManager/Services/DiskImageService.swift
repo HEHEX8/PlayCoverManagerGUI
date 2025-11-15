@@ -782,46 +782,72 @@ final class DiskImageService {
     /// - Returns: USB speed classification
     private func detectUSBSpeed(for diskID: String) async throws -> USBSpeed {
         // Use ioreg to get USB device tree including parent devices
-        // Need to search through the entire USB tree to find Speed property
+        // Try multiple strategies to find USB speed information
         let output = try await processRunner.run("/usr/sbin/ioreg", ["-r", "-c", "IOUSBHostDevice", "-l"])
         
-        Logger.storage("USB速度検出開始（ioreg使用）: デバイス \(diskID)")
-        
-        // ioreg output: Speed is in the parent IOUSBHostDevice, not in IOMedia
-        // Need to find BSD Name, then search backwards to find the parent device with Speed
+        Logger.storage("=== USB速度検出開始（ioreg使用）: デバイス \(diskID) ===")
         
         let lines = output.components(separatedBy: .newlines)
-        var bsdNameLineIndex: Int?
         
-        // First, find the line with BSD Name
+        // STEP 1: Find all lines containing "Speed" keyword and log them
+        Logger.storage("--- ioreg出力から全てのSpeed行を抽出 ---")
+        var speedLines: [(lineNumber: Int, content: String)] = []
+        for (index, line) in lines.enumerated() {
+            if line.contains("\"Speed\"") {
+                speedLines.append((lineNumber: index, content: line))
+                Logger.storage("行\(index): \(line.trimmingCharacters(in: .whitespaces))")
+            }
+        }
+        
+        if speedLines.isEmpty {
+            Logger.storage("⚠️ ioreg出力に\"Speed\"キーワードが一つも見つかりませんでした")
+        }
+        
+        // STEP 2: Find BSD Name line
+        Logger.storage("--- BSD Name検索 ---")
+        var bsdNameLineIndex: Int?
         for (index, line) in lines.enumerated() {
             if line.contains("\"BSD Name\"") && line.contains(diskID) {
                 bsdNameLineIndex = index
-                Logger.storage("ioregでBSD Name発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
+                Logger.storage("✓ BSD Name発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
+                
+                // Log context around BSD Name (±10 lines)
+                Logger.storage("--- BSD Name周辺のコンテキスト（±10行）---")
+                let contextStart = max(0, index - 10)
+                let contextEnd = min(lines.count - 1, index + 10)
+                for i in contextStart...contextEnd {
+                    let prefix = i == index ? ">>> " : "    "
+                    Logger.storage("\(prefix)行\(i): \(lines[i].trimmingCharacters(in: .whitespaces))")
+                }
                 break
             }
         }
         
         guard let bsdIndex = bsdNameLineIndex else {
-            Logger.storage("警告: BSD Nameが見つかりませんでした")
+            Logger.storage("⚠️ BSD Nameが見つかりませんでした - USB 3.0+と仮定")
             return .usb3OrHigher
         }
         
-        // Search backwards from BSD Name to find the parent IOUSBHostDevice with "Speed"
+        // STEP 3: Search for Speed in multiple ways
+        Logger.storage("--- Speed検索（複数戦略）---")
         var speedValue: Int?
-        for index in stride(from: bsdIndex, through: max(0, bsdIndex - 200), by: -1) {
+        
+        // Strategy A: Search backwards for IOUSBHostDevice with Speed
+        Logger.storage("戦略A: 上方向にIOUSBHostDevice検索（300行）")
+        for index in stride(from: bsdIndex, through: max(0, bsdIndex - 300), by: -1) {
             let line = lines[index]
             
-            // Look for IOUSBHostDevice entry (parent USB device)
-            if line.contains("IOUSBHostDevice") {
-                Logger.storage("親USBデバイス発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
+            // Look for IOUSBHostDevice or IOUSBDevice entry
+            if line.contains("IOUSBHostDevice") || line.contains("IOUSBDevice") {
+                Logger.storage("  USB親デバイス候補発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
                 
-                // Search forward from this device for Speed property
-                for searchIndex in index...min(lines.count - 1, index + 50) {
+                // Search forward from this device for Speed property (within 100 lines)
+                for searchIndex in index...min(lines.count - 1, index + 100) {
                     let searchLine = lines[searchIndex]
                     
-                    // Stop if we hit another device
-                    if searchIndex > index && searchLine.contains("+-o ") {
+                    // Stop if we hit another device at same level
+                    if searchIndex > index && searchLine.range(of: "^\\s*\\+-o ", options: .regularExpression) != nil {
+                        Logger.storage("  次のデバイスに到達（行\(searchIndex)）、検索終了")
                         break
                     }
                     
@@ -831,7 +857,8 @@ final class DiskImageService {
                             if let numRange = match.range(of: "\\d+", options: .regularExpression) {
                                 let numStr = String(match[numRange])
                                 speedValue = Int(numStr)
-                                Logger.storage("Speed発見（行\(searchIndex)）: Speed = \(speedValue ?? -1)")
+                                Logger.storage("  ✓ Speed発見（行\(searchIndex)）: Speed = \(speedValue ?? -1)")
+                                Logger.storage("  親デバイス行: \(lines[index].trimmingCharacters(in: .whitespaces))")
                                 break
                             }
                         }
@@ -844,28 +871,54 @@ final class DiskImageService {
             }
         }
         
+        // Strategy B: If not found, search entire output for Speed near disk name
+        if speedValue == nil {
+            Logger.storage("戦略B: 全体検索（diskID周辺）")
+            for speedInfo in speedLines {
+                let distance = abs(speedInfo.lineNumber - bsdIndex)
+                if distance < 500 {  // Within 500 lines
+                    Logger.storage("  Speed候補（距離\(distance)行, 行\(speedInfo.lineNumber)）: \(speedInfo.content.trimmingCharacters(in: .whitespaces))")
+                    
+                    if let range = speedInfo.content.range(of: "\"Speed\"\\s*=\\s*(\\d+)", options: .regularExpression) {
+                        let match = String(speedInfo.content[range])
+                        if let numRange = match.range(of: "\\d+", options: .regularExpression) {
+                            let numStr = String(match[numRange])
+                            speedValue = Int(numStr)
+                            Logger.storage("  ✓ Speedを採用: Speed = \(speedValue ?? -1)")
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        
         guard let speed = speedValue else {
-            Logger.storage("警告: USB速度情報が見つかりませんでした（親デバイスから200行検索）")
+            Logger.storage("❌ USB速度情報が見つかりませんでした - USB 3.0+と仮定")
+            Logger.storage("=== USB速度検出終了 ===")
             return .usb3OrHigher
         }
         
         // Classify based on ioreg Speed value
         Logger.storage("最終速度値: Speed = \(speed)")
         
+        let result: USBSpeed
         switch speed {
         case 0, 1:  // Low/Full Speed (1.5-12 Mbps)
-            Logger.storage("判定: USB 1.x")
-            return .usb1
+            Logger.storage("✓ 判定: USB 1.x")
+            result = .usb1
         case 2:  // High Speed (480 Mbps)
-            Logger.storage("判定: USB 2.0")
-            return .usb2
+            Logger.storage("✓ 判定: USB 2.0")
+            result = .usb2
         case 3, 4:  // Super Speed / Super Speed Plus (5+ Gbps)
-            Logger.storage("判定: USB 3.0以上")
-            return .usb3OrHigher
+            Logger.storage("✓ 判定: USB 3.0以上")
+            result = .usb3OrHigher
         default:
-            Logger.storage("判定: 不明な速度値、USB 3.0+と仮定")
-            return .usb3OrHigher
+            Logger.storage("⚠️ 判定: 不明な速度値(\(speed))、USB 3.0+と仮定")
+            result = .usb3OrHigher
         }
+        
+        Logger.storage("=== USB速度検出終了 ===")
+        return result
     }
     
     /// USB connection speed
