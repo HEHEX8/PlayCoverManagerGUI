@@ -206,6 +206,10 @@ final class LauncherViewModel {
     }
     
     private func handleAppLaunched(bundleID: String) async {
+        // Increment running app count
+        runningAppCount += 1
+        Logger.lifecycle("App launched, running app count: \(runningAppCount)")
+        
         // Cancel any pending unmount task for this app (user relaunched before unmount)
         if let task = activeUnmountTasks[bundleID] {
             task.cancel()
@@ -571,23 +575,8 @@ final class LauncherViewModel {
             launchPendingApps.remove(app.bundleIdentifier)
             pendingLaunchContext = nil
             
-            // Wait and verify app actually launched, then increment count
-            try? await Task.sleep(for: .seconds(3))
-            
-            // Check if app is actually running
-            let isRunning = NSWorkspace.shared.runningApplications.contains { runningApp in
-                runningApp.bundleIdentifier == app.bundleIdentifier
-            }
-            
-            if isRunning {
-                // Only increment count if app actually launched
-                runningAppCount += 1
-                Logger.lifecycle("App \(app.displayName) confirmed running, count: \(runningAppCount)")
-            } else {
-                Logger.lifecycle("App \(app.displayName) failed to launch (not in running apps)")
-                // Don't increment count, and process next in queue
-                await processLaunchQueue()
-            }
+            // Note: runningAppCount will be incremented by handleAppLaunched() via KVO
+            // If launch fails, KVO won't detect it and count won't be incremented
             
             // Cancel any pending unmount task (user relaunched before unmount)
             if let task = activeUnmountTasks[app.bundleIdentifier] {
