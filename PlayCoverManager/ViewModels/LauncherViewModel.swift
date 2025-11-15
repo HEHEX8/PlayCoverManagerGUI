@@ -171,6 +171,15 @@ final class LauncherViewModel {
                     await self.handleAppTerminated(bundleID: bundleID)
                 }
                 
+                // Check if all iOS apps have stopped (after at least one was running)
+                let hadRunningApps = !self.previouslyRunningApps.isEmpty
+                let allAppsStopped = currentRunning.isEmpty
+                
+                if hadRunningApps && allAppsStopped {
+                    Logger.lifecycle("All iOS apps stopped - bringing PlayCoverManager to front")
+                    NSApplication.shared.activate(ignoringOtherApps: true)
+                }
+                
                 // Update tracking set
                 self.previouslyRunningApps = currentRunning
             }
