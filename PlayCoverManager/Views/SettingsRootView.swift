@@ -873,7 +873,7 @@ struct IPAInstallerSheet: View {
                     .font(.system(size: 28 * uiScale, weight: .bold))
                     .foregroundStyle(.primary)
                 
-                Text("インストールする IPA ファイルを選択してください")
+                Text("IPAファイルをドラッグ&ドロップ、またはボタンで選択")
                     .font(.system(size: 15 * uiScale))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -894,6 +894,22 @@ struct IPAInstallerSheet: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 32 * uiScale)
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            Task {
+                var urls: [URL] = []
+                for provider in providers {
+                    if let url = try? await provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) as? URL {
+                        urls.append(url)
+                    }
+                }
+                if !urls.isEmpty {
+                    await MainActor.run {
+                        addIPAFiles(urls)
+                    }
+                }
+            }
+            return true
+        }
     }
     
     // MARK: - Analyzing View
@@ -1681,13 +1697,24 @@ struct IPAInstallerSheet: View {
         panel.treatsFilePackagesAsDirectories = false  // Don't treat .app bundles as directories
         
         if panel.runModal() == .OK {
-            let newIPAs = panel.urls.filter { !selectedIPAs.contains($0) }
-            selectedIPAs.append(contentsOf: newIPAs)
-            
-            // Start analysis
-            Task {
-                await analyzeSelectedIPAs()
-            }
+            addIPAFiles(panel.urls)
+        }
+    }
+    
+    private func addIPAFiles(_ urls: [URL]) {
+        // Filter only .ipa files
+        let ipaFiles = urls.filter { $0.pathExtension.lowercased() == "ipa" }
+        
+        // Filter out duplicates
+        let newIPAs = ipaFiles.filter { !selectedIPAs.contains($0) }
+        
+        guard !newIPAs.isEmpty else { return }
+        
+        selectedIPAs.append(contentsOf: newIPAs)
+        
+        // Start analysis
+        Task {
+            await analyzeSelectedIPAs()
         }
     }
     
