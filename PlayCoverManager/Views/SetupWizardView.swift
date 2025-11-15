@@ -569,27 +569,7 @@ private struct StorageStepView: View {
     }
     
     private func storageTypeDescription(for type: DiskImageService.StorageType) -> String {
-        switch type {
-        case .ssd:
-            return "SSD検出"
-        case .hdd:
-            return "HDD検出"
-        case .network:
-            return "ネットワークドライブ検出"
-        case .usbSlow(let speed):
-            switch speed {
-            case .usb1:
-                return "USB 1.0検出（非推奨）"
-            case .usb2:
-                return "USB 2.0検出（非推奨）"
-            case .usb3OrHigher:
-                return "USB 3.0以上検出"
-            case .unknown:
-                return "USB検出（速度不明）"
-            }
-        case .unknown:
-            return "ストレージタイプ不明"
-        }
+        return type.localizedDescription
     }
 }
 

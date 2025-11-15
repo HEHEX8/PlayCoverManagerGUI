@@ -677,27 +677,15 @@ final class DiskImageService {
         // Use diskutil info to get device characteristics
         let output = try await processRunner.run("/usr/sbin/diskutil", ["info", diskID])
         
-        // Parse output for "Solid State" indication first
-        // ONLY SSD is considered fast - everything else is slow
-        if output.contains("Solid State:") {
-            if output.range(of: "Solid State:\\s+Yes", options: .regularExpression) != nil {
-                // Additional check: if it's USB 2.0 or lower, still reject it
-                if output.contains("USB") {
-                    let usbSpeed = try? await detectUSBSpeed(for: devicePath)
-                    if usbSpeed == .usb1 || usbSpeed == .usb2 {
-                        return .usbSlow(usbSpeed ?? .usb2)
-                    }
-                }
-                return .ssd
-            }
-        }
+        // Extract protocol information
+        let protocolInfo = extractProtocolInfo(from: output)
         
-        // Check if it's a network volume
+        // Check if it's a network volume first
         if output.contains("Protocol:") && (output.contains("SMB") || output.contains("NFS") || output.contains("AFP")) {
-            return .network
+            return .network(protocol: protocolInfo)
         }
         
-        // Check USB connection speed (if applicable)
+        // Check USB connection speed (reject USB 2.0 or lower)
         if output.contains("USB") {
             let usbSpeed = try? await detectUSBSpeed(for: devicePath)
             if usbSpeed == .usb1 || usbSpeed == .usb2 {
@@ -705,8 +693,29 @@ final class DiskImageService {
             }
         }
         
-        // Everything else (HDD, unknown, etc.) is slow
-        return .hdd
+        // Check if it's SSD
+        if output.contains("Solid State:") {
+            if output.range(of: "Solid State:\\s+Yes", options: .regularExpression) != nil {
+                return .ssd(protocol: protocolInfo)
+            } else if output.range(of: "Solid State:\\s+No", options: .regularExpression) != nil {
+                return .hdd(protocol: protocolInfo)
+            }
+        }
+        
+        // Default to HDD for unknown solid state status
+        return .hdd(protocol: protocolInfo)
+    }
+    
+    /// Extract protocol information from diskutil output
+    private func extractProtocolInfo(from output: String) -> String? {
+        // Look for "Protocol:" line
+        // Examples: "Protocol: SATA", "Protocol: USB", "Protocol: PCI-Express"
+        if let range = output.range(of: "Protocol:\\s*(.+)", options: .regularExpression) {
+            let line = String(output[range])
+            let protocol = line.replacingOccurrences(of: "Protocol:", with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return protocol.isEmpty ? nil : protocol
+        }
+        return nil
     }
     
     /// Detect USB connection speed using system_profiler
@@ -818,31 +827,40 @@ final class DiskImageService {
     
     /// Storage type enumeration
     enum StorageType {
-        case ssd
-        case hdd
-        case network
-        case usbSlow(USBSpeed)  // USB 1.0 or 2.0
+        case ssd(protocol: String?)  // SSD with optional protocol info
+        case hdd(protocol: String?)  // HDD with optional protocol info
+        case network(protocol: String?)  // Network drive with protocol
+        case usbSlow(USBSpeed)  // USB 1.0 or 2.0 (prohibited)
         case unknown
         
         var localizedDescription: String {
             switch self {
-            case .ssd:
-                return String(localized: "SSD")
-            case .hdd:
-                return String(localized: "HDD")
-            case .network:
-                return String(localized: "ネットワークドライブ")
+            case .ssd(let proto):
+                if let proto = proto {
+                    return "SSD (\(proto))"
+                }
+                return "SSD"
+            case .hdd(let proto):
+                if let proto = proto {
+                    return "HDD (\(proto))"
+                }
+                return "HDD"
+            case .network(let proto):
+                if let proto = proto {
+                    return "ネットワークドライブ (\(proto))"
+                }
+                return "ネットワークドライブ"
             case .usbSlow(let speed):
                 switch speed {
                 case .usb1:
-                    return String(localized: "USB 1.0")
+                    return "USB 1.0（非対応）"
                 case .usb2:
-                    return String(localized: "USB 2.0")
+                    return "USB 2.0（非対応）"
                 default:
-                    return String(localized: "USB（低速）")
+                    return "USB（低速・非対応）"
                 }
             case .unknown:
-                return String(localized: "不明")
+                return "不明"
             }
         }
         

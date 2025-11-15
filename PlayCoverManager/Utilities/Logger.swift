@@ -40,6 +40,14 @@ enum Logger {
         #endif
     }
     
+    /// Log storage detection operations
+    nonisolated static func storage(_ message: String) {
+        #if DEBUG
+        let log = OSLog(subsystem: subsystem, category: "Storage")
+        os_log("%{public}@", log: log, type: .debug, message)
+        #endif
+    }
+    
     /// Log performance metrics
     nonisolated static func performance(_ message: String) {
         #if DEBUG
