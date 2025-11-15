@@ -57,18 +57,24 @@ final class AppViewModel {
 
     private func runStartupChecks() async {
         do {
-            // Check macOS version first (ASIF requires Tahoe 26.0+)
-            try environmentService.checkASIFSupport()
+            // Parallel environment checks
+            async let asifCheck: () = { try environmentService.checkASIFSupport() }()
+            async let fdaCheck: Bool = { environmentService.checkFullDiskAccess() }()
+            async let playCoverDetection = { try environmentService.detectPlayCover() }()
             
-            // Check Full Disk Access permission (required for ~/Library/Containers)
-            guard environmentService.checkFullDiskAccess() else {
+            // Wait for ASIF check
+            try await asifCheck
+            
+            // Wait for Full Disk Access check
+            guard try await fdaCheck else {
                 throw AppError.permissionDenied(
                     String(localized: "フルディスクアクセス権限が必要です"),
                     message: String(localized: "このアプリは ~/Library/Containers/ にアクセスする必要があります。\n\n対処方法：\n1. システム設定を開く（⌘Space で「システム設定」を検索）\n2. プライバシーとセキュリティ > フルディスクアクセス\n3. 「+」ボタンで PlayCover Manager を追加\n4. アプリを再起動してください")
                 )
             }
             
-            let playCoverPaths = try environmentService.detectPlayCover()
+            // Wait for PlayCover detection
+            let playCoverPaths = try await playCoverDetection
             self.playCoverPaths = playCoverPaths
 
             guard let baseDirectory = settings.diskImageDirectory else {
@@ -148,7 +154,39 @@ final class AppViewModel {
 
     private func loadLauncher(playCoverPaths: PlayCoverPaths) async {
         do {
-            let apps = try await launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
+            // Fetch app list with isMounted status already populated
+            let fetchedApps = try await launcherService.fetchInstalledApps(at: playCoverPaths.applicationsRootURL)
+            
+            // Parallel fetch of mount status for all apps
+            let apps = await withTaskGroup(of: (Int, PlayCoverApp).self) { group in
+                for (index, app) in fetchedApps.enumerated() {
+                    group.addTask { [diskImageService] in
+                        let containerURL = PlayCoverPaths.containerURL(for: app.bundleIdentifier)
+                        let isMounted = (try? diskImageService?.isMounted(at: containerURL)) ?? false
+                        
+                        return (index, PlayCoverApp(
+                            bundleIdentifier: app.bundleIdentifier,
+                            displayName: app.displayName,
+                            standardName: app.standardName,
+                            version: app.version,
+                            appURL: app.appURL,
+                            icon: app.icon,
+                            lastLaunchedFlag: app.lastLaunchedFlag,
+                            isRunning: app.isRunning,
+                            isMounted: isMounted
+                        ))
+                    }
+                }
+                
+                var result: [(Int, PlayCoverApp)] = []
+                for await item in group {
+                    result.append(item)
+                }
+                
+                // Sort by original index to maintain order
+                return result.sorted { $0.0 < $1.0 }.map { $0.1 }
+            }
+            
             let vm = LauncherViewModel(apps: apps,
                                        playCoverPaths: playCoverPaths,
                                        diskImageService: diskImageService,
