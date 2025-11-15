@@ -226,72 +226,45 @@ final class LauncherService {
             clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
-        // Launch app using NSWorkspace for better control
-        let workspace = NSWorkspace.shared
-        let configuration = NSWorkspace.OpenConfiguration()
+        // If fullscreen requested, write fullscreen preference before launch
+        if shouldLaunchFullscreen {
+            setAppFullscreenPreference(bundleID: app.bundleIdentifier, fullscreen: true)
+        }
         
-        // Try to launch with NSWorkspace first
-        do {
-            let runningApp = try await workspace.openApplication(at: app.appURL, configuration: configuration)
-            
-            // If fullscreen requested, toggle fullscreen after launch
-            if shouldLaunchFullscreen {
-                Task {
-                    // Wait for app window to appear
-                    try? await Task.sleep(for: .seconds(1.5))
-                    
-                    // Find the app's window and toggle fullscreen
-                    if let window = NSApplication.shared.windows.first(where: { window in
-                        window.isVisible && runningApp.processIdentifier == window.windowNumber
-                    }) {
-                        window.toggleFullScreen(nil)
-                    } else {
-                        // Fallback: Use AppleScript to send fullscreen keystroke
-                        let appName = app.appURL.deletingPathExtension().lastPathComponent
-                        let script = """
-                        tell application "System Events"
-                            tell process "\(appName)"
-                                set frontmost to true
-                                keystroke "f" using {command down, control down}
-                            end tell
-                        end tell
-                        """
-                        let appleScript = NSAppleScript(source: script)
-                        var error: NSDictionary?
-                        appleScript?.executeAndReturnError(&error)
-                        if let error = error {
-                            Logger.error("AppleScript fullscreen toggle failed: \(error)")
-                        }
-                    }
-                }
-            }
-        } catch {
-            // Fallback to 'open' command if NSWorkspace fails
-            Logger.warning("NSWorkspace launch failed, using 'open' command: \(error)")
+        // Use 'open' command for compatibility with PlayCover apps
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = [app.appURL.path]
+        
+        try process.run()
+        // Don't wait for exit - return immediately like Finder double-click
+        
+        writeLastLaunchFlag(for: app.bundleIdentifier)
+    }
+    
+    /// Set app fullscreen preference using defaults write
+    private func setAppFullscreenPreference(bundleID: String, fullscreen: Bool) {
+        // Write multiple possible fullscreen preference keys
+        let keys = [
+            ("NSFullScreenWindowState", "1"),
+            ("NSWindowWasFullScreen", "1"),
+            ("AppleFullScreen", "YES")
+        ]
+        
+        for (key, value) in keys {
             let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-            process.arguments = [app.appURL.path]
-            try process.run()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+            process.arguments = ["write", bundleID, key, value]
             
-            if shouldLaunchFullscreen {
-                Task {
-                    try? await Task.sleep(for: .seconds(1.5))
-                    let appName = app.appURL.deletingPathExtension().lastPathComponent
-                    let script = """
-                    tell application "System Events"
-                        tell process "\(appName)"
-                            set frontmost to true
-                            keystroke "f" using {command down, control down}
-                        end tell
-                    end tell
-                    """
-                    let appleScript = NSAppleScript(source: script)
-                    appleScript?.executeAndReturnError(nil)
-                }
+            do {
+                try process.run()
+                process.waitUntilExit()
+            } catch {
+                Logger.error("Failed to set fullscreen preference \(key): \(error)")
             }
         }
         
-        writeLastLaunchFlag(for: app.bundleIdentifier)
+        Logger.debug("Set fullscreen preferences for \(bundleID)")
     }
     
     /// Set app-specific language preference using defaults write
