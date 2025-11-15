@@ -895,17 +895,29 @@ struct IPAInstallerSheet: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 32 * uiScale)
         .onDrop(of: [.fileURL], isTargeted: nil) { providers in
-            Task {
+            Task { @MainActor in
                 var urls: [URL] = []
+                
                 for provider in providers {
-                    if let url = try? await provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier) as? URL {
+                    if let url = try? await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<URL?, Error>) in
+                        _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, error in
+                            if let error = error {
+                                continuation.resume(returning: nil)
+                            } else if let data = data,
+                                      let urlString = String(data: data, encoding: .utf8),
+                                      let url = URL(string: urlString) {
+                                continuation.resume(returning: url)
+                            } else {
+                                continuation.resume(returning: nil)
+                            }
+                        }
+                    }), let url = url {
                         urls.append(url)
                     }
                 }
+                
                 if !urls.isEmpty {
-                    await MainActor.run {
-                        addIPAFiles(urls)
-                    }
+                    addIPAFiles(urls)
                 }
             }
             return true
@@ -1225,6 +1237,34 @@ struct IPAInstallerSheet: View {
             }
             }
             .padding(.horizontal, 20 * uiScale)
+        }
+        .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            Task { @MainActor in
+                var urls: [URL] = []
+                
+                for provider in providers {
+                    if let url = try? await withCheckedThrowingContinuation({ (continuation: CheckedContinuation<URL?, Error>) in
+                        _ = provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, error in
+                            if let error = error {
+                                continuation.resume(returning: nil)
+                            } else if let data = data,
+                                      let urlString = String(data: data, encoding: .utf8),
+                                      let url = URL(string: urlString) {
+                                continuation.resume(returning: url)
+                            } else {
+                                continuation.resume(returning: nil)
+                            }
+                        }
+                    }), let url = url {
+                        urls.append(url)
+                    }
+                }
+                
+                if !urls.isEmpty {
+                    addIPAFiles(urls)
+                }
+            }
+            return true
         }
     }
     
