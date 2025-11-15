@@ -741,6 +741,14 @@ final class DiskImageService {
         var deviceIndex: Int? = nil
         var deviceSection: [String] = []
         
+        // Debug: Log all lines containing "BSD Name:" or the disk ID
+        Logger.storage("デバッグ: BSD Name を含む行を検索中...")
+        for (index, line) in lines.enumerated() {
+            if line.contains("BSD Name:") {
+                Logger.storage("  行\(index): \(line.trimmingCharacters(in: .whitespaces))")
+            }
+        }
+        
         // First, find the line with BSD Name
         for (index, line) in lines.enumerated() {
             if line.contains("BSD Name:") && line.contains(diskID) {
@@ -751,8 +759,9 @@ final class DiskImageService {
         }
         
         guard let devIndex = deviceIndex else {
-            Logger.storage("警告: デバイスが見つかりませんでした")
-            return .usb3OrHigher  // Assume USB 3.0+ if not found
+            Logger.storage("警告: デバイスが見つかりませんでした。検索対象: '\(diskID)'")
+            // Try alternative: search for any mass storage device with Speed info
+            return try await detectUSBSpeedFallback(from: output)
         }
         
         // Search backwards from device to find the parent USB bus speed
@@ -813,6 +822,70 @@ final class DiskImageService {
             return .usb2
         } else {
             Logger.storage("判定: USB 3.0以上")
+            return .usb3OrHigher
+        }
+    }
+    
+    /// Fallback USB speed detection when BSD Name is not found
+    /// Looks for any USB Mass Storage device with Speed information
+    private func detectUSBSpeedFallback(from output: String) async throws -> USBSpeed {
+        Logger.storage("フォールバック: 全USBストレージデバイスの速度を確認")
+        
+        let lines = output.components(separatedBy: .newlines)
+        var maxSpeedMbps: Double = 0
+        
+        // Look for any "Mass Storage" or similar device with Speed info
+        var inStorageDevice = false
+        for line in lines {
+            // Check if we're in a storage-related device section
+            if line.range(of: "Mass Storage|Storage|SSD|USB.*Disk", options: .regularExpression) != nil {
+                inStorageDevice = true
+                Logger.storage("ストレージデバイスセクション発見: \(line.trimmingCharacters(in: .whitespaces))")
+            }
+            
+            // Reset when we move to a new top-level device
+            if !line.hasPrefix(" ") && !line.isEmpty && !line.contains("USB") {
+                inStorageDevice = false
+            }
+            
+            // Extract speed if we're in a storage device section
+            if inStorageDevice && line.contains("Speed:") {
+                if let speedRange = line.range(of: "([0-9.]+)\\s*(Mb/s|Gb/s)", options: .regularExpression) {
+                    let speedString = String(line[speedRange])
+                    var speedMbps: Double = 0
+                    
+                    if speedString.contains("Gb/s") {
+                        let numericString = speedString.components(separatedBy: CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted).joined()
+                        if let value = Double(numericString) {
+                            speedMbps = value * 1000
+                        }
+                    } else if speedString.contains("Mb/s") {
+                        let numericString = speedString.components(separatedBy: CharacterSet.decimalDigits.union(CharacterSet(charactersIn: ".")).inverted).joined()
+                        if let value = Double(numericString) {
+                            speedMbps = value
+                        }
+                    }
+                    
+                    if speedMbps > maxSpeedMbps {
+                        maxSpeedMbps = speedMbps
+                        Logger.storage("フォールバック速度更新: \(speedMbps) Mb/s")
+                    }
+                }
+            }
+        }
+        
+        if maxSpeedMbps == 0 {
+            Logger.storage("フォールバック失敗: 速度情報が見つかりません。USB 3.0+と仮定")
+            return .usb3OrHigher
+        }
+        
+        Logger.storage("フォールバック最終速度: \(maxSpeedMbps) Mb/s")
+        
+        if maxSpeedMbps < 100 {
+            return .usb1
+        } else if maxSpeedMbps <= 480 {
+            return .usb2
+        } else {
             return .usb3OrHigher
         }
     }
