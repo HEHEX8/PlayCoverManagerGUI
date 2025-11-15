@@ -328,6 +328,14 @@ final class AppViewModel {
         _ = await lockService.confirmUnlockCompleted()
         Logger.unmount("Lock cleanup completed")
         
+        // Sync all preferences and filesystem ONCE before ejecting
+        Logger.unmount("Syncing preferences and filesystem...")
+        for app in launcherVM.apps {
+            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+        }
+        sync()
+        Logger.unmount("Sync completed")
+        
         // Steps 2 & 3: Parallel unmount of all containers (apps + PlayCover)
         // Collect all eject tasks and execute them concurrently
         await withTaskGroup(of: (success: Bool, bundleID: String).self) { group in
@@ -349,10 +357,6 @@ final class AppViewModel {
                     guard let self = self else { return (false, bundleID) }
                     
                     Logger.unmount("Container still mounted for \(bundleID), attempting normal eject")
-                    
-                    // Sync preferences and filesystem (both are synchronous and instant)
-                    CFPreferencesAppSynchronize(bundleID as CFString)
-                    sync()
                     
                     do {
                         try await self.diskImageService.ejectDiskImage(for: containerURL, force: false)
@@ -389,9 +393,6 @@ final class AppViewModel {
                     await self.lockService.unlockContainer(for: playCoverBundleID)
                     _ = await self.lockService.confirmUnlockCompleted()
                     Logger.unmount("Released PlayCover container lock")
-                    
-                    // Sync filesystem (no wait needed - sync() is synchronous and instant)
-                    sync()
                     
                     do {
                         try await self.diskImageService.ejectDiskImage(for: playCoverContainer, force: false)

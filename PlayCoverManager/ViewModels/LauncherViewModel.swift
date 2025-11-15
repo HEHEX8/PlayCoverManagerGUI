@@ -991,6 +991,14 @@ final class LauncherViewModel {
         Logger.performance("Lock release: \(String(format: "%.0f", lockReleaseElapsed * 1000))ms")
         Logger.unmount("Lock cleanup completed")
         
+        // Sync all preferences and filesystem ONCE before ejecting
+        Logger.unmount("Syncing preferences and filesystem...")
+        for app in apps {
+            CFPreferencesAppSynchronize(app.bundleIdentifier as CFString)
+        }
+        sync()
+        Logger.unmount("Sync completed")
+        
         // Set initial processing state
         await MainActor.run {
             unmountFlowState = .processing(status: String(localized: "ディスクイメージをアンマウントしています…"))
@@ -1038,16 +1046,6 @@ final class LauncherViewModel {
                     guard let self = self else { return (false, bundleID) }
                     
                     Logger.unmount("Container still mounted for \(bundleID), attempting normal eject")
-                    
-                    // Sync preferences and filesystem in parallel
-                    await withTaskGroup(of: Void.self) { syncGroup in
-                        syncGroup.addTask {
-                            CFPreferencesAppSynchronize(bundleID as CFString)
-                        }
-                        syncGroup.addTask {
-                            sync()
-                        }
-                    }
                     
                     do {
                         try await self.diskImageService.ejectDiskImage(for: container, force: false)
@@ -1099,14 +1097,6 @@ final class LauncherViewModel {
                 await lockService.unlockContainer(for: playCoverPaths.bundleIdentifier)
                 _ = await lockService.confirmUnlockCompleted()
                 Logger.unmount("Released PlayCover container lock")
-                
-                // Sync filesystem (wait for completion to ensure data is written)
-                await withTaskGroup(of: Void.self) { group in
-                    group.addTask {
-                        sync()
-                    }
-                }
-                Logger.unmount("Filesystem sync completed")
                 
                 do {
                     try await diskImageService.ejectDiskImage(for: playCoverContainer, force: false)
