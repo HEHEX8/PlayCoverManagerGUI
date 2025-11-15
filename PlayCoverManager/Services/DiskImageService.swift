@@ -865,85 +865,97 @@ final class DiskImageService {
             Logger.storage("diskutil infoエラー、元のIDを使用: \(error)")
         }
         
-        // Use system_profiler to get USB device information with JSON output
-        Logger.storage("system_profiler でUSB情報を取得中...")
-        let output = try await processRunner.run("/usr/sbin/system_profiler", ["-json", "SPUSBDataType"])
+        // Use ioreg to get USB device information
+        Logger.storage("ioreg -p IOUSB でUSB情報を取得中...")
+        let output = try await processRunner.run("/usr/sbin/ioreg", ["-p", "IOUSB"])
         
         Logger.storage("検索対象: \(physicalDisk)")
         
-        // Parse JSON output
-        guard let jsonData = output.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
-              let usbDataType = json["SPUSBDataType"] as? [[String: Any]] else {
-            Logger.storage("⚠️ JSON パースに失敗 - USB 3.0+と仮定")
-            return .usb3OrHigher
-        }
+        let lines = output.components(separatedBy: .newlines)
         
-        Logger.storage("JSON パース成功、USBデバイスツリーを探索中...")
+        // Search for lines containing the physical disk and speed information
+        var foundDevice = false
+        var deviceSpeed: String?
         
-        // Recursively search for the device with matching BSD name
-        func findDevice(in items: [[String: Any]], indent: Int = 0) -> [String: Any]? {
-            for item in items {
-                let indentStr = String(repeating: "  ", count: indent)
+        for (index, line) in lines.enumerated() {
+            // Look for BSD Name matching our physical disk
+            if line.contains("BSD Name") && line.contains(physicalDisk) {
+                foundDevice = true
+                Logger.storage("✓ BSD Name発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
                 
-                // Check if this device has BSD Name matching our disk
-                if let bsdName = item["bsd_name"] as? String {
-                    Logger.storage("\(indentStr)BSD Name発見: \(bsdName)")
-                    if bsdName == physicalDisk {
-                        Logger.storage("\(indentStr)✓ 一致！ \(physicalDisk)")
-                        return item
+                // Search backwards to find speed information (within 50 lines)
+                let searchStart = max(0, index - 50)
+                for searchIndex in stride(from: index, through: searchStart, by: -1) {
+                    let searchLine = lines[searchIndex]
+                    
+                    // Look for speed patterns: "5 Gb/s", "480 Mb/s", "12 Mb/s", etc.
+                    if let range = searchLine.range(of: "(\\d+(?:\\.\\d+)?\\s*[GM]b/s)", options: .regularExpression) {
+                        let match = String(searchLine[range])
+                        deviceSpeed = match
+                        Logger.storage("✓ 速度情報発見（行\(searchIndex)）: \(match)")
+                        Logger.storage("  コンテキスト: \(searchLine.trimmingCharacters(in: .whitespaces))")
+                        break
                     }
                 }
                 
-                // Recursively search in _items
-                if let subItems = item["_items"] as? [[String: Any]] {
-                    if let found = findDevice(in: subItems, indent: indent + 1) {
-                        return found
-                    }
+                if deviceSpeed != nil {
+                    break
                 }
             }
-            return nil
         }
         
-        guard let device = findDevice(in: usbDataType) else {
+        guard foundDevice else {
             Logger.storage("⚠️ デバイス \(physicalDisk) が見つかりませんでした - USB 3.0+と仮定")
             return .usb3OrHigher
         }
         
-        Logger.storage("✓ デバイス情報取得成功")
-        
-        // Extract device_speed field
-        guard let deviceSpeed = device["device_speed"] as? String else {
-            Logger.storage("⚠️ device_speed フィールドなし - USB 3.0+と仮定")
+        guard let speed = deviceSpeed else {
+            Logger.storage("⚠️ 速度情報が見つかりませんでした - USB 3.0+と仮定")
             return .usb3OrHigher
         }
         
-        Logger.storage("device_speed: \(deviceSpeed)")
+        Logger.storage("速度文字列: \(speed)")
         
-        // Map device_speed to USB speed classification
-        // Reference: https://gist.github.com/benfry/304938b9a4e27ded65c0b36eb70b8272
+        // Parse speed string and classify
         let result: USBSpeed
-        switch deviceSpeed {
-        case "low_speed":  // USB 1.0: 1.5 Mbps
-            Logger.storage("✓ 判定: USB 1.0 (low_speed)")
-            result = .usb1
-        case "full_speed":  // USB 1.1: 12 Mbps
-            Logger.storage("✓ 判定: USB 1.1 (full_speed)")
-            result = .usb1
-        case "high_speed":  // USB 2.0: 480 Mbps
-            Logger.storage("✓ 判定: USB 2.0 (high_speed)")
-            result = .usb2
-        case "super_speed":  // USB 3.0: 5 Gbps
-            Logger.storage("✓ 判定: USB 3.0 (super_speed)")
-            result = .usb3OrHigher
-        case "super_speed_plus":  // USB 3.1+: 10 Gbps+
-            Logger.storage("✓ 判定: USB 3.1+ (super_speed_plus)")
-            result = .usb3OrHigher
-        case "super_speed_plus_gen2x2":  // USB 3.2: 20 Gbps
-            Logger.storage("✓ 判定: USB 3.2 (super_speed_plus_gen2x2)")
-            result = .usb3OrHigher
-        default:
-            Logger.storage("⚠️ 不明な速度: \(deviceSpeed) - USB 3.0+と仮定")
+        
+        // Extract numeric value and unit
+        if let match = speed.range(of: "(\\d+(?:\\.\\d+)?)\\s*([GM]b/s)", options: .regularExpression) {
+            let speedStr = String(speed[match])
+            
+            // Check if it's in Mb/s or Gb/s
+            if speedStr.contains("Mb/s") {
+                // Mbps: 1.5, 12, 480
+                if let value = Double(speedStr.replacingOccurrences(of: " Mb/s", with: "").trimmingCharacters(in: .whitespaces)) {
+                    if value <= 12 {
+                        Logger.storage("✓ 判定: USB 1.x (\(value) Mb/s)")
+                        result = .usb1
+                    } else if value <= 480 {
+                        Logger.storage("✓ 判定: USB 2.0 (\(value) Mb/s)")
+                        result = .usb2
+                    } else {
+                        Logger.storage("⚠️ 不明な速度: \(value) Mb/s - USB 3.0+と仮定")
+                        result = .usb3OrHigher
+                    }
+                } else {
+                    Logger.storage("⚠️ 速度値のパース失敗 - USB 3.0+と仮定")
+                    result = .usb3OrHigher
+                }
+            } else if speedStr.contains("Gb/s") {
+                // Gbps: 5, 10, 20, 40
+                if let value = Double(speedStr.replacingOccurrences(of: " Gb/s", with: "").trimmingCharacters(in: .whitespaces)) {
+                    Logger.storage("✓ 判定: USB 3.0以上 (\(value) Gb/s)")
+                    result = .usb3OrHigher
+                } else {
+                    Logger.storage("⚠️ 速度値のパース失敗 - USB 3.0+と仮定")
+                    result = .usb3OrHigher
+                }
+            } else {
+                Logger.storage("⚠️ 不明な単位 - USB 3.0+と仮定")
+                result = .usb3OrHigher
+            }
+        } else {
+            Logger.storage("⚠️ 速度文字列のパース失敗 - USB 3.0+と仮定")
             result = .usb3OrHigher
         }
         
