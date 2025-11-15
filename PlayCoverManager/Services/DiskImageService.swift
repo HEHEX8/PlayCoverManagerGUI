@@ -781,9 +781,9 @@ final class DiskImageService {
     /// - Parameter diskID: Disk identifier (e.g., disk2, disk11)
     /// - Returns: USB speed classification
     private func detectUSBSpeed(for diskID: String) async throws -> USBSpeed {
-        // Use ioreg to get USB device tree including parent devices
-        // Try multiple strategies to find USB speed information
-        let output = try await processRunner.run("/usr/sbin/ioreg", ["-r", "-c", "IOUSBHostDevice", "-l"])
+        // Try different ioreg commands to find USB speed information
+        // Strategy 1: Use IOUSB plane instead of class filter
+        let output = try await processRunner.run("/usr/sbin/ioreg", ["-r", "-p", "IOUSB", "-l"])
         
         Logger.storage("=== USB速度検出開始（ioreg使用）: デバイス \(diskID) ===")
         
