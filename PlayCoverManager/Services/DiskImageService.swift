@@ -738,26 +738,33 @@ final class DiskImageService {
         //     BSD Name: disk2
         //     Speed: Up to 5 Gb/s
         
-        // Split output into device sections
+        // Split output into lines
         let lines = output.components(separatedBy: .newlines)
-        var foundDevice = false
         var speedMbps: Double = 0
+        var deviceIndex: Int? = nil
         var deviceSection: [String] = []
         
+        // First, find the line with BSD Name
         for (index, line) in lines.enumerated() {
-            // Check if this line contains our disk
             if line.contains("BSD Name:") && line.contains(diskName) {
-                foundDevice = true
+                deviceIndex = index
                 Logger.storage("デバイス発見: \(line.trimmingCharacters(in: .whitespaces))")
+                break
             }
+        }
+        
+        guard let devIndex = deviceIndex else {
+            Logger.storage("警告: デバイスが見つかりませんでした")
+            return .usb3OrHigher  // Assume USB 3.0+ if not found
+        }
+        
+        // Search backwards from device to find the parent USB bus speed
+        // The speed is typically listed in the parent device or bus section
+        for index in stride(from: devIndex, through: 0, by: -1) {
+            let line = lines[index]
+            deviceSection.insert(line, at: 0)
             
-            // Collect device section for debugging
-            if foundDevice {
-                deviceSection.append(line)
-            }
-            
-            // If we found our device, look for Speed in nearby lines
-            if foundDevice && line.contains("Speed:") {
+            if line.contains("Speed:") {
                 Logger.storage("速度情報発見: \(line.trimmingCharacters(in: .whitespaces))")
                 
                 // Extract speed value
@@ -783,18 +790,14 @@ final class DiskImageService {
                 }
                 break
             }
-            
-            // Stop searching after moving to a different device section
-            if foundDevice && index > 0 && !line.hasPrefix(" ") && !line.isEmpty {
-                Logger.storage("デバイスセクション終了")
-                break
-            }
         }
         
         // Log device section if speed not found
-        if speedMbps == 0 && foundDevice {
+        if speedMbps == 0 {
             Logger.storage("警告: 速度情報が見つかりませんでした。デバイスセクション:")
             deviceSection.forEach { Logger.storage("  \($0)") }
+            // If speed not found, assume USB 3.0+ (better to allow than block)
+            return .usb3OrHigher
         }
         
         // Classify based on speed
