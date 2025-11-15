@@ -802,23 +802,39 @@ final class DiskImageService {
                 }
                 
                 // Try multiple patterns to find parent device
-                // Pattern 1: "Part of Whole: disk10"
-                if let match = diskutilOutput.range(of: "Part of Whole:\\s*(disk\\d+)", options: .regularExpression) {
+                // Pattern 1 (優先): "APFS Physical Store: disk10s2" -> extract "disk10"
+                if let match = diskutilOutput.range(of: "APFS Physical Store:\\s*(disk\\d+)", options: .regularExpression) {
                     let line = String(diskutilOutput[match])
                     if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
-                        physicalDisk = String(line[diskMatch])
-                        Logger.storage("✓ 物理デバイス発見（Part of Whole）: \(physicalDisk)")
+                        let diskWithPartition = String(line[diskMatch])
+                        // Remove partition suffix (e.g., disk10s2 -> disk10)
+                        physicalDisk = diskWithPartition.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
+                        Logger.storage("✓ 物理デバイス発見（APFS Physical Store）: \(diskWithPartition) → \(physicalDisk)")
                     } else {
                         physicalDisk = diskID
                         Logger.storage("⚠️ disk番号の抽出失敗")
                     }
                 }
-                // Pattern 2: "Physical Store disk10"
+                // Pattern 2: "Part of Whole: disk10"
+                else if let match = diskutilOutput.range(of: "Part of Whole:\\s*(disk\\d+)", options: .regularExpression) {
+                    let line = String(diskutilOutput[match])
+                    if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
+                        let extracted = String(line[diskMatch])
+                        // Remove partition suffix if exists
+                        physicalDisk = extracted.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
+                        Logger.storage("✓ 物理デバイス発見（Part of Whole）: \(extracted) → \(physicalDisk)")
+                    } else {
+                        physicalDisk = diskID
+                        Logger.storage("⚠️ disk番号の抽出失敗")
+                    }
+                }
+                // Pattern 3: "Physical Store disk10"
                 else if let match = diskutilOutput.range(of: "Physical Store\\s*(disk\\d+)", options: .regularExpression) {
                     let line = String(diskutilOutput[match])
                     if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
-                        physicalDisk = String(line[diskMatch])
-                        Logger.storage("✓ 物理デバイス発見（Physical Store）: \(physicalDisk)")
+                        let extracted = String(line[diskMatch])
+                        physicalDisk = extracted.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
+                        Logger.storage("✓ 物理デバイス発見（Physical Store）: \(extracted) → \(physicalDisk)")
                     } else {
                         physicalDisk = diskID
                         Logger.storage("⚠️ disk番号の抽出失敗")
