@@ -710,7 +710,7 @@ final class DiskImageService {
         // "Device / Media Name:       USB 3.0"
         // "Protocol:                  USB"
         
-        // Try to find USB version
+        // Try to find explicit USB version (e.g., "USB 2.0", "USB 3.0")
         if let range = output.range(of: "USB\\s+([0-9.]+)", options: .regularExpression) {
             let versionString = String(output[range])
             if versionString.contains("3.") || versionString.contains("3 ") {
@@ -722,13 +722,10 @@ final class DiskImageService {
             }
         }
         
-        // If we have a device identifier but couldn't determine USB version,
-        // assume USB 2.0 as safe default
-        if output.range(of: "Device Identifier:", options: .caseInsensitive) != nil {
-            return .usb2
-        }
-        
-        return .unknown
+        // If no explicit version found but it's USB, assume USB 3.0 or higher
+        // (Modern systems default to USB 3.0+, and USB 2.0 is rare)
+        // This prevents false positives where USB 3.0 devices are detected as 2.0
+        return .usb3OrHigher
     }
     
     /// USB connection speed
