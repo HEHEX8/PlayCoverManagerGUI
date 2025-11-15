@@ -424,6 +424,11 @@ final class LauncherService {
         }
         return false
     }
+    
+    // Public version for LauncherViewModel to update app status
+    func readLastLaunchFlagPublic(for bundleID: String) async -> Bool {
+        await readLastLaunchFlag(for: bundleID)
+    }
 
     private func writeLastLaunchFlag(for bundleID: String) {
         let url = mapDataURL()

@@ -252,8 +252,11 @@ final class LauncherViewModel {
         
         let app = apps[index]
         let containerURL = PlayCoverPaths.containerURL(for: bundleID)
-        let isRunning = await launcherService.isAppRunning(bundleID: bundleID)
-        let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
+        
+        // Swift 6.2: Use async let for concurrent fetching
+        async let isRunning = launcherService.isAppRunning(bundleID: bundleID)
+        async let isMounted = (try? diskImageService.isMounted(at: containerURL)) ?? false
+        async let lastLaunchedFlag = launcherService.readLastLaunchFlagPublic(for: bundleID)
         
         let updatedApp = PlayCoverApp(
             bundleIdentifier: app.bundleIdentifier,
@@ -262,9 +265,9 @@ final class LauncherViewModel {
             version: app.version,
             appURL: app.appURL,
             icon: app.icon,
-            lastLaunchedFlag: app.lastLaunchedFlag,
-            isRunning: isRunning,
-            isMounted: isMounted
+            lastLaunchedFlag: await lastLaunchedFlag,
+            isRunning: await isRunning,
+            isMounted: await isMounted
         )
         
         // Update main array
@@ -352,8 +355,8 @@ final class LauncherViewModel {
             runningAppCount = previouslyRunningApps.count
             Logger.lifecycle("Initialized running app count: \(runningAppCount)")
             
-            // Pre-mount last launched app in background
-            Task.detached { [weak self] in
+            // Pre-mount last launched app in background (after apps array is populated)
+            Task { [weak self] in
                 await self?.preMountLastLaunchedApp()
             }
         } catch {
@@ -1775,6 +1778,33 @@ final class LauncherViewModel {
         
         // Update tracking
         lastLaunchedApp = bundleID
+        
+        // Update all apps' lastLaunchedFlag in the UI
+        await updateAllLastLaunchedFlags()
+    }
+    
+    /// Update all apps' lastLaunchedFlag from disk
+    private func updateAllLastLaunchedFlags() async {
+        var updatedApps: [PlayCoverApp] = []
+        
+        for app in apps {
+            let lastLaunchedFlag = await launcherService.readLastLaunchFlagPublic(for: app.bundleIdentifier)
+            let updatedApp = PlayCoverApp(
+                bundleIdentifier: app.bundleIdentifier,
+                displayName: app.displayName,
+                standardName: app.standardName,
+                version: app.version,
+                appURL: app.appURL,
+                icon: app.icon,
+                lastLaunchedFlag: lastLaunchedFlag,
+                isRunning: app.isRunning,
+                isMounted: app.isMounted
+            )
+            updatedApps.append(updatedApp)
+        }
+        
+        apps = updatedApps
+        applySearch()
     }
     
 }
