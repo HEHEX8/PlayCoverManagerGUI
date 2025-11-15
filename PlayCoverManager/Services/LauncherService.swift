@@ -226,36 +226,69 @@ final class LauncherService {
             clearAppLanguage(bundleID: app.bundleIdentifier)
         }
         
-        if shouldLaunchFullscreen {
-            // For fullscreen launch, use AppleScript to set fullscreen after launch
-            let script = """
-            tell application "\(app.appURL.lastPathComponent.replacingOccurrences(of: ".app", with: ""))"
-                activate
-                delay 0.5
-                tell application "System Events"
-                    keystroke "f" using {command down, control down}
-                end tell
-            end tell
-            """
+        // Launch app using NSWorkspace for better control
+        let workspace = NSWorkspace.shared
+        let configuration = NSWorkspace.OpenConfiguration()
+        
+        // Try to launch with NSWorkspace first
+        do {
+            let runningApp = try await workspace.openApplication(at: app.appURL, configuration: configuration)
             
-            // Launch app first with 'open' command
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-            process.arguments = [app.appURL.path]
-            try process.run()
-            
-            // Wait a moment then execute AppleScript for fullscreen
-            Task {
-                try? await Task.sleep(for: .milliseconds(500))
-                let appleScript = NSAppleScript(source: script)
-                appleScript?.executeAndReturnError(nil)
+            // If fullscreen requested, toggle fullscreen after launch
+            if shouldLaunchFullscreen {
+                Task {
+                    // Wait for app window to appear
+                    try? await Task.sleep(for: .seconds(1.5))
+                    
+                    // Find the app's window and toggle fullscreen
+                    if let window = NSApplication.shared.windows.first(where: { window in
+                        window.isVisible && runningApp.processIdentifier == window.windowNumber
+                    }) {
+                        window.toggleFullScreen(nil)
+                    } else {
+                        // Fallback: Use AppleScript to send fullscreen keystroke
+                        let appName = app.appURL.deletingPathExtension().lastPathComponent
+                        let script = """
+                        tell application "System Events"
+                            tell process "\(appName)"
+                                set frontmost to true
+                                keystroke "f" using {command down, control down}
+                            end tell
+                        end tell
+                        """
+                        let appleScript = NSAppleScript(source: script)
+                        var error: NSDictionary?
+                        appleScript?.executeAndReturnError(&error)
+                        if let error = error {
+                            Logger.error("AppleScript fullscreen toggle failed: \(error)")
+                        }
+                    }
+                }
             }
-        } else {
-            // Normal launch
+        } catch {
+            // Fallback to 'open' command if NSWorkspace fails
+            Logger.warning("NSWorkspace launch failed, using 'open' command: \(error)")
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
             process.arguments = [app.appURL.path]
             try process.run()
+            
+            if shouldLaunchFullscreen {
+                Task {
+                    try? await Task.sleep(for: .seconds(1.5))
+                    let appName = app.appURL.deletingPathExtension().lastPathComponent
+                    let script = """
+                    tell application "System Events"
+                        tell process "\(appName)"
+                            set frontmost to true
+                            keystroke "f" using {command down, control down}
+                        end tell
+                    end tell
+                    """
+                    let appleScript = NSAppleScript(source: script)
+                    appleScript?.executeAndReturnError(nil)
+                }
+            }
         }
         
         writeLastLaunchFlag(for: app.bundleIdentifier)
