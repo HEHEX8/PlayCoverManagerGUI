@@ -20,15 +20,6 @@ final class SettingsStore {
         case english = "en"
         case chinese = "zh-Hans"
         case chineseTraditional = "zh-Hant"
-        case korean = "ko"
-        case french = "fr"
-        case german = "de"
-        case spanish = "es"
-        case italian = "it"
-        case russian = "ru"
-        case portuguese = "pt"
-        case arabic = "ar"
-        case hindi = "hi"
         
         var id: String { rawValue }
         
@@ -61,24 +52,6 @@ final class SettingsStore {
                 return "zh-Hans"
             case .chineseTraditional:
                 return "zh-Hant"
-            case .korean:
-                return "ko"
-            case .french:
-                return "fr"
-            case .german:
-                return "de"
-            case .spanish:
-                return "es"
-            case .italian:
-                return "it"
-            case .russian:
-                return "ru"
-            case .portuguese:
-                return "pt"
-            case .arabic:
-                return "ar"
-            case .hindi:
-                return "hi"
             }
         }
     }
