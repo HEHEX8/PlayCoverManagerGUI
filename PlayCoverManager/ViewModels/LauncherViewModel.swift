@@ -486,11 +486,14 @@ final class LauncherViewModel {
             // Get preferred language from per-app settings
             let preferredLanguage = perAppSettings.getPreferredLanguage(for: app.bundleIdentifier)
             
-            Logger.lifecycle("Launching \(app.displayName)...")
+            // Determine if app should launch in fullscreen
+            let shouldLaunchFullscreen = determineShouldLaunchFullscreen()
+            
+            Logger.lifecycle("Launching \(app.displayName)... (fullscreen: \(shouldLaunchFullscreen))")
             if let language = preferredLanguage {
                 Logger.debug("Using preferred language: \(language)")
             }
-            try await launcherService.openApp(app, preferredLanguage: preferredLanguage)
+            try await launcherService.openApp(app, preferredLanguage: preferredLanguage, shouldLaunchFullscreen: shouldLaunchFullscreen)
             Logger.lifecycle("Successfully launched \(app.displayName)")
             
             // Increment running app count
@@ -833,6 +836,22 @@ final class LauncherViewModel {
         } catch {
             Logger.error("Failed to immediately eject container for \(bundleID): \(error)")
         }
+    }
+    
+    /// Determine if iOS app should launch in fullscreen based on settings and current window state
+    @MainActor
+    private func determineShouldLaunchFullscreen() -> Bool {
+        // Check "always fullscreen" setting first
+        if settings.alwaysLaunchFullscreen {
+            return true
+        }
+        
+        // Otherwise, match PlayCoverManager's current window mode
+        if let window = NSApplication.shared.windows.first {
+            return window.styleMask.contains(.fullScreen)
+        }
+        
+        return false
     }
     
     private func unmountContainer(for bundleID: String) async {

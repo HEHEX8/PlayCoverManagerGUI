@@ -11,6 +11,7 @@ final class SettingsStore {
         static let imageFormat = "diskImageFormat"
         static let appLanguage = "appLanguage"
         static let maxConcurrentApps = "maxConcurrentApps"
+        static let alwaysLaunchFullscreen = "alwaysLaunchFullscreen"
     }
 
     enum AppLanguage: String, CaseIterable, Identifiable {
@@ -155,6 +156,12 @@ final class SettingsStore {
         }
     }
     
+    var alwaysLaunchFullscreen: Bool = false {
+        didSet {
+            UserDefaults.standard.set(alwaysLaunchFullscreen, forKey: Keys.alwaysLaunchFullscreen)
+        }
+    }
+    
     // ASIF format is hardcoded - no user selection needed
     let diskImageFormat: DiskImageFormat = .asif
     
@@ -196,6 +203,9 @@ final class SettingsStore {
             maxConcurrentApps = 3
             userDefaults.set(3, forKey: Keys.maxConcurrentApps)
         }
+        
+        // Load alwaysLaunchFullscreen setting (default: false)
+        alwaysLaunchFullscreen = userDefaults.bool(forKey: Keys.alwaysLaunchFullscreen)
         
         // Apply language on init
         applyLanguage()

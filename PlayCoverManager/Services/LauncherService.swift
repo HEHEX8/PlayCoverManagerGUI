@@ -217,7 +217,7 @@ final class LauncherService {
         return icon
     }
     
-    func openApp(_ app: PlayCoverApp, preferredLanguage: String? = nil) async throws {
+    func openApp(_ app: PlayCoverApp, preferredLanguage: String? = nil, shouldLaunchFullscreen: Bool = false) async throws {
         // Set or clear app-specific language preference
         if let language = preferredLanguage {
             setAppLanguage(bundleID: app.bundleIdentifier, language: language)
@@ -231,7 +231,13 @@ final class LauncherService {
         // The 'open' command handles the app bundle correctly, just like Finder
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        process.arguments = [app.appURL.path]
+        
+        if shouldLaunchFullscreen {
+            // Launch app with --args to pass fullscreen flag
+            process.arguments = [app.appURL.path, "--args", "-AppleFullScreen", "YES"]
+        } else {
+            process.arguments = [app.appURL.path]
+        }
         
         try process.run()
         // Don't wait for exit - return immediately like Finder double-click

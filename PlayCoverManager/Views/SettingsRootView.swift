@@ -504,6 +504,26 @@ private struct GeneralSettingsView: View {
                             RoundedRectangle.standard(.small, scale: uiScale)
                                 .fill(Color.orange.opacity(0.05))
                         )
+                        
+                        // Always launch fullscreen toggle
+                        VStack(alignment: .leading, spacing: 12 * uiScale) {
+                            HStack {
+                                Text("常にフルスクリーンで起動")
+                                    .font(.system(size: 13 * uiScale, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: $settingsStore.alwaysLaunchFullscreen)
+                                    .labelsHidden()
+                            }
+                            
+                            Text(settingsStore.alwaysLaunchFullscreen 
+                                 ? "iOSアプリは常にフルスクリーンモードで起動します。"
+                                 : "iOSアプリはPlayCoverManagerのウィンドウモード（フルスクリーン/ウィンドウ）に応じて起動します。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
                 .padding(24 * uiScale)
