@@ -126,6 +126,16 @@ final class SetupWizardViewModel {
             await MainActor.run {
                 storageType = type
                 showStorageWarning = type.isSlow
+                
+                // Reject USB 2.0 or lower
+                if type.isProhibited, let reason = type.prohibitedReason {
+                    error = AppError.environment(
+                        String(localized: "このストレージは使用できません"),
+                        message: reason
+                    )
+                    storageURL = nil
+                    settings.diskImageDirectory = nil
+                }
             }
         } catch {
             Logger.error("Failed to detect storage type: \(error)")

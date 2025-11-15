@@ -75,6 +75,10 @@ final class LauncherViewModel {
     @ObservationIgnored private var preMountedApp: String? = nil  // Currently pre-mounted app bundle ID
     @ObservationIgnored private var lastLaunchedApp: String? = nil  // Last launched app bundle ID
     
+    // Storage type cache (detected once at startup)
+    @ObservationIgnored private var cachedStorageType: DiskImageService.StorageType?
+    @ObservationIgnored private var isSlowStorage: Bool = false
+    
     // KVO observation for runningApplications (more efficient than notifications)
     // @ObservationIgnored prevents Observable macro from tracking this property
     @ObservationIgnored private var runningAppsObservation: NSKeyValueObservation?
@@ -104,6 +108,26 @@ final class LauncherViewModel {
         
         // Setup real-time app lifecycle monitoring
         setupAppLifecycleMonitoring()
+        
+        // Detect storage type in background
+        Task.detached { [weak self] in
+            await self?.detectAndCacheStorageType()
+        }
+    }
+    
+    private func detectAndCacheStorageType() async {
+        guard let storageDir = settings.diskImageDirectory else { return }
+        
+        do {
+            let storageType = try await diskImageService.detectStorageType(for: storageDir)
+            await MainActor.run {
+                self.cachedStorageType = storageType
+                self.isSlowStorage = storageType.isSlow
+                Logger.lifecycle("Storage type detected: \(storageType.localizedDescription), slow: \(storageType.isSlow)")
+            }
+        } catch {
+            Logger.error("Failed to detect storage type: \(error)")
+        }
     }
     
     nonisolated deinit {
@@ -408,7 +432,13 @@ final class LauncherViewModel {
             let app = launchQueue.removeFirst()
             Logger.lifecycle("Processing queued app: \(app.displayName) (remaining: \(launchQueue.count))")
             
-            let maxConcurrent = settings.maxConcurrentApps
+            var maxConcurrent = settings.maxConcurrentApps
+            
+            // Check if storage is slow - if so, force sequential launching (max = 1)
+            if isSlowStorage && maxConcurrent != 0 {
+                Logger.lifecycle("Slow storage detected, forcing sequential launch (max = 1)")
+                maxConcurrent = 1
+            }
             
             // Special case: App already running - just activate it
             if app.isRunning {

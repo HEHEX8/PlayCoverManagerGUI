@@ -677,6 +677,14 @@ final class DiskImageService {
         // Use diskutil info to get device characteristics
         let output = try await processRunner.run("/usr/sbin/diskutil", ["info", diskID])
         
+        // Check USB connection speed first (if applicable)
+        if output.contains("USB") {
+            let usbSpeed = detectUSBSpeed(from: output)
+            if usbSpeed == .usb1 || usbSpeed == .usb2 {
+                return .usbSlow(usbSpeed)
+            }
+        }
+        
         // Parse output for "Solid State" indication
         if output.contains("Solid State:") {
             if output.range(of: "Solid State:\\s+Yes", options: .regularExpression) != nil {
@@ -694,11 +702,50 @@ final class DiskImageService {
         return .unknown
     }
     
+    /// Detect USB connection speed from diskutil output
+    private func detectUSBSpeed(from output: String) -> USBSpeed {
+        // Check for USB speed indicators in diskutil output
+        // Example patterns:
+        // "Device / Media Name:       USB 2.0"
+        // "Device / Media Name:       USB 3.0"
+        // "Protocol:                  USB"
+        
+        // Try to find USB version
+        if let range = output.range(of: "USB\\s+([0-9.]+)", options: .regularExpression) {
+            let versionString = String(output[range])
+            if versionString.contains("3.") || versionString.contains("3 ") {
+                return .usb3OrHigher
+            } else if versionString.contains("2.") || versionString.contains("2 ") {
+                return .usb2
+            } else if versionString.contains("1.") || versionString.contains("1 ") {
+                return .usb1
+            }
+        }
+        
+        // Try system_profiler for more detailed USB info
+        // Note: This is slower but more accurate
+        if let diskBSD = output.range(of: "Device Identifier:\\s+(\\S+)", options: .regularExpression) {
+            // For now, assume USB 2.0 as safe default if we can't determine
+            return .usb2
+        }
+        
+        return .unknown
+    }
+    
+    /// USB connection speed
+    enum USBSpeed {
+        case usb1
+        case usb2
+        case usb3OrHigher
+        case unknown
+    }
+    
     /// Storage type enumeration
     enum StorageType {
         case ssd
         case hdd
         case network
+        case usbSlow(USBSpeed)  // USB 1.0 or 2.0
         case unknown
         
         var localizedDescription: String {
@@ -709,6 +756,15 @@ final class DiskImageService {
                 return String(localized: "HDD")
             case .network:
                 return String(localized: "ネットワークドライブ")
+            case .usbSlow(let speed):
+                switch speed {
+                case .usb1:
+                    return String(localized: "USB 1.0")
+                case .usb2:
+                    return String(localized: "USB 2.0")
+                default:
+                    return String(localized: "USB（低速）")
+                }
             case .unknown:
                 return String(localized: "不明")
             }
@@ -718,9 +774,30 @@ final class DiskImageService {
             switch self {
             case .ssd:
                 return false
-            case .hdd, .network, .unknown:
+            case .hdd, .network, .usbSlow, .unknown:
                 return true
             }
+        }
+        
+        var isProhibited: Bool {
+            switch self {
+            case .usbSlow(let speed):
+                return speed == .usb1 || speed == .usb2
+            default:
+                return false
+            }
+        }
+        
+        var prohibitedReason: String? {
+            switch self {
+            case .usbSlow(let speed):
+                if speed == .usb1 || speed == .usb2 {
+                    return String(localized: "USB 2.0以下の接続は遅すぎるため使用できません。\n\nUSB 3.0以上の接続、または内蔵ストレージをご使用ください。")
+                }
+            default:
+                break
+            }
+            return nil
         }
     }
 }
