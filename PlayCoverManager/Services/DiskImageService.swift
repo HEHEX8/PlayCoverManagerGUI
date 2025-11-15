@@ -685,24 +685,6 @@ final class DiskImageService {
             return .network(protocol: protocolInfo)
         }
         
-        // Check USB connection speed (reject USB 2.0 or lower)
-        if output.contains("USB") {
-            // Try to detect USB version from diskutil output first
-            let usbSpeed = detectUSBSpeedFromDiskutil(output: output)
-            
-            // If not found in diskutil, try system_profiler (may not work reliably)
-            let finalSpeed: USBSpeed
-            if usbSpeed == .unknown {
-                finalSpeed = (try? await detectUSBSpeed(for: diskID)) ?? .usb3OrHigher
-            } else {
-                finalSpeed = usbSpeed
-            }
-            
-            if finalSpeed == .usb1 || finalSpeed == .usb2 {
-                return .usbSlow(finalSpeed)
-            }
-        }
-        
         // Check if it's SSD
         if output.contains("Solid State:") {
             if output.range(of: "Solid State:\\s+Yes", options: .regularExpression) != nil {
@@ -714,55 +696,6 @@ final class DiskImageService {
         
         // Default to HDD for unknown solid state status
         return .hdd(protocol: protocolInfo)
-    }
-    
-    /// Detect USB speed from diskutil output
-    /// Looks for patterns like "USB 2.0", "USB 3.0", "USB 3.1" in Device/Media Name
-    private func detectUSBSpeedFromDiskutil(output: String) -> USBSpeed {
-        Logger.storage("diskutil出力からUSB速度を検出中...")
-        
-        // Look for "Device / Media Name:" line
-        // Examples: "Device / Media Name:  APPLE SSD AP0512M Media", "Device / Media Name:  USB 2.0"
-        if let range = output.range(of: "Device / Media Name:.*", options: .regularExpression) {
-            let line = String(output[range])
-            Logger.storage("Device/Media Name: \(line)")
-            
-            // Check for USB version in the name
-            if line.range(of: "USB\\s*3\\.", options: .regularExpression) != nil {
-                Logger.storage("diskutilからUSB 3.x検出")
-                return .usb3OrHigher
-            } else if line.range(of: "USB\\s*2\\.", options: .regularExpression) != nil {
-                Logger.storage("diskutilからUSB 2.0検出")
-                return .usb2
-            } else if line.range(of: "USB\\s*1\\.", options: .regularExpression) != nil {
-                Logger.storage("diskutilからUSB 1.x検出")
-                return .usb1
-            }
-        }
-        
-        // Try alternative: look for "Removable Media:" and any USB version nearby
-        let lines = output.components(separatedBy: .newlines)
-        for (index, line) in lines.enumerated() {
-            if line.contains("USB") {
-                Logger.storage("USB参照行発見: \(line.trimmingCharacters(in: .whitespaces))")
-                
-                // Check surrounding lines for version info
-                let searchRange = max(0, index-3)...min(lines.count-1, index+3)
-                for i in searchRange {
-                    let contextLine = lines[i]
-                    if contextLine.range(of: "USB\\s*3", options: .regularExpression) != nil {
-                        Logger.storage("周辺行からUSB 3.x検出")
-                        return .usb3OrHigher
-                    } else if contextLine.range(of: "USB\\s*2", options: .regularExpression) != nil {
-                        Logger.storage("周辺行からUSB 2.0検出")
-                        return .usb2
-                    }
-                }
-            }
-        }
-        
-        Logger.storage("diskutilからUSB速度を検出できませんでした")
-        return .unknown
     }
     
     /// Extract protocol information from diskutil output
@@ -777,206 +710,11 @@ final class DiskImageService {
         return nil
     }
     
-    /// Detect USB connection speed using ioreg
-    /// - Parameter diskID: Disk identifier (e.g., disk2, disk11)
-    /// - Returns: USB speed classification
-    private func detectUSBSpeed(for diskID: String) async throws -> USBSpeed {
-        Logger.storage("=== USB速度検出開始: デバイス \(diskID) ===")
-        
-        // STEP 0: Check if this is an APFS container and find physical device
-        let physicalDisk: String
-        do {
-            let diskutilOutput = try await processRunner.run("/usr/sbin/diskutil", ["info", diskID])
-            
-            // Check if this is APFS Container or logical volume
-            if diskutilOutput.contains("APFS Container") || diskutilOutput.contains("Synthesized") || diskutilOutput.contains("APFS Volume") {
-                Logger.storage("APFSボリューム/コンテナ検出: \(diskID)")
-                
-                // Log the entire diskutil output to debug
-                Logger.storage("--- diskutil info \(diskID) 出力（抜粋）---")
-                let lines = diskutilOutput.components(separatedBy: .newlines)
-                for line in lines {
-                    if line.contains("Part of Whole") || line.contains("APFS") || line.contains("Physical Store") {
-                        Logger.storage(line.trimmingCharacters(in: .whitespaces))
-                    }
-                }
-                
-                // Try multiple patterns to find parent device
-                // Pattern 1 (優先): "APFS Physical Store: disk10s2" -> extract "disk10"
-                if let match = diskutilOutput.range(of: "APFS Physical Store:\\s*(disk\\d+)", options: .regularExpression) {
-                    let line = String(diskutilOutput[match])
-                    if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
-                        let diskWithPartition = String(line[diskMatch])
-                        // Remove partition suffix (e.g., disk10s2 -> disk10)
-                        physicalDisk = diskWithPartition.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
-                        Logger.storage("✓ 物理デバイス発見（APFS Physical Store）: \(diskWithPartition) → \(physicalDisk)")
-                    } else {
-                        physicalDisk = diskID
-                        Logger.storage("⚠️ disk番号の抽出失敗")
-                    }
-                }
-                // Pattern 2: "Part of Whole: disk10"
-                else if let match = diskutilOutput.range(of: "Part of Whole:\\s*(disk\\d+)", options: .regularExpression) {
-                    let line = String(diskutilOutput[match])
-                    if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
-                        let extracted = String(line[diskMatch])
-                        // Remove partition suffix if exists
-                        physicalDisk = extracted.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
-                        Logger.storage("✓ 物理デバイス発見（Part of Whole）: \(extracted) → \(physicalDisk)")
-                    } else {
-                        physicalDisk = diskID
-                        Logger.storage("⚠️ disk番号の抽出失敗")
-                    }
-                }
-                // Pattern 3: "Physical Store disk10"
-                else if let match = diskutilOutput.range(of: "Physical Store\\s*(disk\\d+)", options: .regularExpression) {
-                    let line = String(diskutilOutput[match])
-                    if let diskMatch = line.range(of: "disk\\d+", options: .regularExpression) {
-                        let extracted = String(line[diskMatch])
-                        physicalDisk = extracted.replacingOccurrences(of: "s\\d+$", with: "", options: .regularExpression)
-                        Logger.storage("✓ 物理デバイス発見（Physical Store）: \(extracted) → \(physicalDisk)")
-                    } else {
-                        physicalDisk = diskID
-                        Logger.storage("⚠️ disk番号の抽出失敗")
-                    }
-                }
-                // Pattern 3: Just extract disk number (e.g., disk11 -> disk10)
-                else if diskID.hasSuffix("1") || diskID.hasSuffix("2") || diskID.hasSuffix("3") || diskID.hasSuffix("4") || diskID.hasSuffix("5") {
-                    // APFS containers typically: disk10 = physical, disk11/12/13... = volumes
-                    let baseNum = diskID.dropLast()
-                    let lastDigit = diskID.last!
-                    if let digit = Int(String(lastDigit)), digit > 0 {
-                        physicalDisk = baseNum + "0"
-                        Logger.storage("⚠️ パターンマッチ失敗、推測: \(physicalDisk)")
-                    } else {
-                        physicalDisk = diskID
-                        Logger.storage("⚠️ 推測失敗、元のIDを使用")
-                    }
-                } else {
-                    physicalDisk = diskID
-                    Logger.storage("⚠️ 物理デバイス情報なし、元のIDを使用")
-                }
-            } else {
-                physicalDisk = diskID
-                Logger.storage("物理デバイス: \(diskID)")
-            }
-        } catch {
-            physicalDisk = diskID
-            Logger.storage("diskutil infoエラー、元のIDを使用: \(error)")
-        }
-        
-        // Use ioreg to get USB device information
-        Logger.storage("ioreg -p IOUSB でUSB情報を取得中...")
-        let output = try await processRunner.run("/usr/sbin/ioreg", ["-p", "IOUSB"])
-        
-        Logger.storage("検索対象: \(physicalDisk)")
-        
-        let lines = output.components(separatedBy: .newlines)
-        
-        // Search for lines containing the physical disk and speed information
-        var foundDevice = false
-        var deviceSpeed: String?
-        
-        for (index, line) in lines.enumerated() {
-            // Look for BSD Name matching our physical disk
-            if line.contains("BSD Name") && line.contains(physicalDisk) {
-                foundDevice = true
-                Logger.storage("✓ BSD Name発見（行\(index)）: \(line.trimmingCharacters(in: .whitespaces))")
-                
-                // Search backwards to find speed information (within 50 lines)
-                let searchStart = max(0, index - 50)
-                for searchIndex in stride(from: index, through: searchStart, by: -1) {
-                    let searchLine = lines[searchIndex]
-                    
-                    // Look for speed patterns: "5 Gb/s", "480 Mb/s", "12 Mb/s", etc.
-                    if let range = searchLine.range(of: "(\\d+(?:\\.\\d+)?\\s*[GM]b/s)", options: .regularExpression) {
-                        let match = String(searchLine[range])
-                        deviceSpeed = match
-                        Logger.storage("✓ 速度情報発見（行\(searchIndex)）: \(match)")
-                        Logger.storage("  コンテキスト: \(searchLine.trimmingCharacters(in: .whitespaces))")
-                        break
-                    }
-                }
-                
-                if deviceSpeed != nil {
-                    break
-                }
-            }
-        }
-        
-        guard foundDevice else {
-            Logger.storage("⚠️ デバイス \(physicalDisk) が見つかりませんでした - USB 3.0+と仮定")
-            return .usb3OrHigher
-        }
-        
-        guard let speed = deviceSpeed else {
-            Logger.storage("⚠️ 速度情報が見つかりませんでした - USB 3.0+と仮定")
-            return .usb3OrHigher
-        }
-        
-        Logger.storage("速度文字列: \(speed)")
-        
-        // Parse speed string and classify
-        let result: USBSpeed
-        
-        // Extract numeric value and unit
-        if let match = speed.range(of: "(\\d+(?:\\.\\d+)?)\\s*([GM]b/s)", options: .regularExpression) {
-            let speedStr = String(speed[match])
-            
-            // Check if it's in Mb/s or Gb/s
-            if speedStr.contains("Mb/s") {
-                // Mbps: 1.5, 12, 480
-                if let value = Double(speedStr.replacingOccurrences(of: " Mb/s", with: "").trimmingCharacters(in: .whitespaces)) {
-                    if value <= 12 {
-                        Logger.storage("✓ 判定: USB 1.x (\(value) Mb/s)")
-                        result = .usb1
-                    } else if value <= 480 {
-                        Logger.storage("✓ 判定: USB 2.0 (\(value) Mb/s)")
-                        result = .usb2
-                    } else {
-                        Logger.storage("⚠️ 不明な速度: \(value) Mb/s - USB 3.0+と仮定")
-                        result = .usb3OrHigher
-                    }
-                } else {
-                    Logger.storage("⚠️ 速度値のパース失敗 - USB 3.0+と仮定")
-                    result = .usb3OrHigher
-                }
-            } else if speedStr.contains("Gb/s") {
-                // Gbps: 5, 10, 20, 40
-                if let value = Double(speedStr.replacingOccurrences(of: " Gb/s", with: "").trimmingCharacters(in: .whitespaces)) {
-                    Logger.storage("✓ 判定: USB 3.0以上 (\(value) Gb/s)")
-                    result = .usb3OrHigher
-                } else {
-                    Logger.storage("⚠️ 速度値のパース失敗 - USB 3.0+と仮定")
-                    result = .usb3OrHigher
-                }
-            } else {
-                Logger.storage("⚠️ 不明な単位 - USB 3.0+と仮定")
-                result = .usb3OrHigher
-            }
-        } else {
-            Logger.storage("⚠️ 速度文字列のパース失敗 - USB 3.0+と仮定")
-            result = .usb3OrHigher
-        }
-        
-        Logger.storage("=== USB速度検出終了 ===")
-        return result
-    }
-    
-    /// USB connection speed
-    enum USBSpeed {
-        case usb1
-        case usb2
-        case usb3OrHigher
-        case unknown
-    }
-    
     /// Storage type enumeration
     enum StorageType {
         case ssd(protocol: String?)  // SSD with optional protocol info
         case hdd(protocol: String?)  // HDD with optional protocol info
         case network(protocol: String?)  // Network drive with protocol
-        case usbSlow(USBSpeed)  // USB 1.0 or 2.0 (prohibited)
         case unknown
         
         var localizedDescription: String {
@@ -996,15 +734,6 @@ final class DiskImageService {
                     return "ネットワークドライブ (\(proto))"
                 }
                 return "ネットワークドライブ"
-            case .usbSlow(let speed):
-                switch speed {
-                case .usb1:
-                    return "USB 1.0（非対応）"
-                case .usb2:
-                    return "USB 2.0（非対応）"
-                default:
-                    return "USB（低速・非対応）"
-                }
             case .unknown:
                 return "不明"
             }
@@ -1014,29 +743,16 @@ final class DiskImageService {
             switch self {
             case .ssd:
                 return false
-            case .hdd, .network, .usbSlow, .unknown:
+            case .hdd, .network, .unknown:
                 return true
             }
         }
         
         var isProhibited: Bool {
-            switch self {
-            case .usbSlow(let speed):
-                return speed == .usb1 || speed == .usb2
-            default:
-                return false
-            }
+            return false
         }
         
         var prohibitedReason: String? {
-            switch self {
-            case .usbSlow(let speed):
-                if speed == .usb1 || speed == .usb2 {
-                    return String(localized: "USB 2.0以下の接続は遅すぎるため使用できません。\n\nUSB 3.0以上の接続、または内蔵ストレージをご使用ください。")
-                }
-            default:
-                break
-            }
             return nil
         }
     }
