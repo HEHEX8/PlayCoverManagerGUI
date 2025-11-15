@@ -505,17 +505,47 @@ private struct GeneralSettingsView: View {
                                 .fill(Color.orange.opacity(0.05))
                         )
                         
-                        // Always launch fullscreen toggle
+                        // PlayCoverManager always launch fullscreen toggle
                         VStack(alignment: .leading, spacing: 12 * uiScale) {
                             HStack {
-                                Text("常にフルスクリーンで起動")
+                                Text("PlayCoverManager を常にフルスクリーンで起動")
                                     .font(.system(size: 13 * uiScale, weight: .semibold))
                                     .foregroundStyle(.secondary)
                                 
                                 Spacer()
                                 
-                                Toggle("", isOn: $settingsStore.alwaysLaunchFullscreen)
-                                    .labelsHidden()
+                                Toggle("", isOn: Binding(
+                                    get: { 
+                                        UserDefaults.standard.bool(forKey: "AlwaysLaunchManagerFullscreen")
+                                    },
+                                    set: { newValue in
+                                        UserDefaults.standard.set(newValue, forKey: "AlwaysLaunchManagerFullscreen")
+                                    }
+                                ))
+                                .labelsHidden()
+                            }
+                            
+                            Text("オンの場合、PlayCoverManager起動時に常にフルスクリーンモードになります。オフの場合は、終了時のウィンドウモードを記憶します。")
+                                .font(.system(size: 11 * uiScale))
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        // iOS apps always launch fullscreen toggle
+                        VStack(alignment: .leading, spacing: 12 * uiScale) {
+                            HStack {
+                                Text("iOSアプリを常にフルスクリーンで起動")
+                                    .font(.system(size: 13 * uiScale, weight: .semibold))
+                                    .foregroundStyle(.secondary)
+                                
+                                Spacer()
+                                
+                                Toggle("", isOn: Binding(
+                                    get: { settingsStore.alwaysLaunchFullscreen },
+                                    set: { newValue in
+                                        settingsStore.alwaysLaunchFullscreen = newValue
+                                    }
+                                ))
+                                .labelsHidden()
                             }
                             
                             Text(settingsStore.alwaysLaunchFullscreen 

@@ -306,8 +306,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Window Mode Management
     
     private func restoreWindowMode() {
-        // Restore fullscreen state from UserDefaults
-        let wasFullscreen = UserDefaults.standard.bool(forKey: "WindowWasFullscreen")
+        // Check "always fullscreen" setting first
+        let alwaysFullscreen = UserDefaults.standard.bool(forKey: "AlwaysLaunchManagerFullscreen")
+        
+        // Restore fullscreen state from UserDefaults (unless always fullscreen is enabled)
+        let wasFullscreen = alwaysFullscreen || UserDefaults.standard.bool(forKey: "WindowWasFullscreen")
         
         // Wait for window to be ready
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
